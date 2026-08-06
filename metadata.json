@@ -1,0 +1,6 @@
+{
+  "name": "Yolnoma Typing",
+  "description": "Professional multi-language typing test and training platform with real-time speed metrics, global leaderboards, achievements, statistics, and dark/light themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
