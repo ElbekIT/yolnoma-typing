@@ -169,9 +169,11 @@ export const LeaderboardView: React.FC = () => {
 
   // Filter Logic
   const filtered = rankings.filter((r) => {
+    const uname = r.username || '';
+    const dname = r.displayName || '';
     const matchesSearch =
-      r.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.displayName.toLowerCase().includes(searchQuery.toLowerCase());
+      uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dname.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCountry = countryFilter === 'all' || r.country === countryFilter;
     const matchesFriends =
       !friendsOnly || (currentUser?.following && currentUser.following.includes(r.uid)) || r.uid === currentUser?.uid;

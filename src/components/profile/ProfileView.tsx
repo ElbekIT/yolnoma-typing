@@ -170,7 +170,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     };
 
     // Username change check
-    if (username.trim().toLowerCase() !== profile.username.toLowerCase()) {
+    const currentUsername = profile?.username || '';
+    if (username.trim().toLowerCase() !== currentUsername.toLowerCase()) {
       if (changesLeft <= 0) {
         addNotification('Cannot Change Username', 'You have reached the maximum limit of 2 username changes.', 'warning');
         setSaving(false);

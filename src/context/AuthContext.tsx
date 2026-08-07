@@ -240,16 +240,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        const p = await fetchOrCreateProfile(firebaseUser);
-        setProfile(p);
-      } else {
-        setUser(null);
-        setProfile(null);
-        setUserResultsHistory(getLocalResults());
+      try {
+        if (firebaseUser) {
+          setUser(firebaseUser);
+          const p = await fetchOrCreateProfile(firebaseUser);
+          setProfile(p);
+        } else {
+          setUser(null);
+          setProfile(null);
+          setUserResultsHistory(getLocalResults());
+        }
+      } catch (err) {
+        console.error('Auth state change error:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
