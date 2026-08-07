@@ -3,6 +3,8 @@ import {
   User,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -225,6 +227,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Check redirect result on mount
+    getRedirectResult(auth)
+      .then(async (res) => {
+        if (res && res.user) {
+          const p = await fetchOrCreateProfile(res.user);
+          setProfile(p);
+          addNotification('Google Login Successful', `Welcome back, ${p.displayName}!`);
+        }
+      })
+      .catch((err) => console.error('Redirect result error:', err));
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
@@ -258,9 +271,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(p);
         addNotification('Google Login Successful', `Welcome back, ${p.displayName}!`);
       }
-    } catch (err) {
-      console.error('Google Sign In Error:', err);
-      throw err;
+    } catch (err: any) {
+      console.warn('Google Popup Sign In Error, attempting redirect fallback:', err);
+      if (
+        err?.code === 'auth/popup-blocked' ||
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.code === 'auth/cancelled-popup-request' ||
+        err?.code === 'auth/unauthorized-domain'
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          console.error('Google Redirect Error:', redirectErr);
+          throw redirectErr;
+        }
+      } else {
+        throw err;
+      }
     }
   };
 

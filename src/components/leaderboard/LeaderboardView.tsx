@@ -20,7 +20,7 @@ import {
   Users
 } from 'lucide-react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { ref, get } from 'firebase/database';
+import { ref, get, onValue } from 'firebase/database';
 import { db, rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
@@ -48,12 +48,14 @@ export const LeaderboardView: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
+    let unsubscribeRtdb: (() => void) | null = null;
+
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
         const fetchedMap = new Map<string, UserProfile>();
 
-        // 1. Fetch from Firestore users collection
+        // 1. Fetch initial from Firestore users collection
         try {
           const q = query(collection(db, 'users'), orderBy('highestWpm', 'desc'), limit(100));
           const snapshot = await getDocs(q);
@@ -64,85 +66,88 @@ export const LeaderboardView: React.FC = () => {
           console.error('Firestore leaderboard query error:', e);
         }
 
-        // 2. Fetch from Firebase Realtime Database leaderboard/users
-        try {
-          const rtdbSnap = await get(ref(rtdb, 'leaderboard'));
-          if (rtdbSnap.exists()) {
-            const val = rtdbSnap.val();
-            Object.keys(val).forEach((key) => {
-              const item = val[key];
-              const existing = fetchedMap.get(key);
-              if (!existing) {
-                fetchedMap.set(key, {
-                  uid: key,
-                  email: '',
-                  username: item.username || item.displayName || 'typer',
-                  displayName: item.displayName || item.username || 'Typer',
-                  highestWpm: item.highestWpm || 0,
-                  highestAccuracy: item.highestAccuracy || 0,
-                  country: item.country || '🇺🇿 Uzbekistan',
-                  level: item.level || 1,
-                  rankTitle: item.rankTitle || 'Typing Novice',
-                  bio: item.bio || '',
-                  avatarUrl: item.avatarUrl || '',
-                  totalTests: item.totalTests || 1,
-                  totalTimeTypedSeconds: 60,
-                  totalWordsTyped: Math.round((item.highestWpm || 0)),
-                  totalCharsTyped: Math.round((item.highestWpm || 0) * 5),
-                  averageWpm: item.highestWpm || 0,
-                  currentStreak: 1,
-                  longestStreak: 1,
-                  createdAt: item.createdAt || Date.now(),
-                  lastActive: item.lastActive || Date.now(),
-                  isVerified: false,
-                  xp: (item.level || 1) * 500,
-                  role: 'user',
-                  usernameChangesLeft: 2,
-                  followers: [],
-                  following: [],
-                  followersCount: 0,
-                  followingCount: 0,
-                  pinnedAchievements: [],
-                  unlockedAchievements: ['first_test'],
-                  isPublic: true,
-                  privacy: {
-                    profileVisibility: 'public',
-                    allowMessages: 'everyone',
-                    showOnlineStatus: true,
-                    showStats: true,
-                    allowFollow: true
-                  }
-                });
-              } else {
-                // Update with highest values
-                if ((item.highestWpm || 0) > existing.highestWpm) {
-                  existing.highestWpm = item.highestWpm;
-                }
-                if (item.displayName) existing.displayName = item.displayName;
-                if (item.username) existing.username = item.username;
-                if (item.bio) existing.bio = item.bio;
-              }
-            });
+        const updateRankingsFromMap = () => {
+          let source = Array.from(fetchedMap.values());
+          if (currentUser && !fetchedMap.has(currentUser.uid)) {
+            source.push(currentUser);
           }
+          source.sort((a, b) => b.highestWpm - a.highestWpm);
+          const formatted = source.map((user, idx) => ({
+            ...user,
+            rank: idx + 1
+          }));
+          setRankings(formatted);
+        };
+
+        // 2. Real-time Database live listener
+        try {
+          const leaderboardRef = ref(rtdb, 'leaderboard');
+          unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
+            if (snapshot.exists()) {
+              const val = snapshot.val();
+              Object.keys(val).forEach((key) => {
+                const item = val[key];
+                const existing = fetchedMap.get(key);
+                if (!existing) {
+                  fetchedMap.set(key, {
+                    uid: key,
+                    email: '',
+                    username: item.username || item.displayName || 'typer',
+                    displayName: item.displayName || item.username || 'Typer',
+                    highestWpm: item.highestWpm || 0,
+                    highestAccuracy: item.highestAccuracy || 0,
+                    country: item.country || '🇺🇿 Uzbekistan',
+                    level: item.level || 1,
+                    rankTitle: item.rankTitle || 'Typing Novice',
+                    bio: item.bio || '',
+                    avatarUrl: item.avatarUrl || '',
+                    totalTests: item.totalTests || 1,
+                    totalTimeTypedSeconds: 60,
+                    totalWordsTyped: Math.round((item.highestWpm || 0)),
+                    totalCharsTyped: Math.round((item.highestWpm || 0) * 5),
+                    averageWpm: item.highestWpm || 0,
+                    currentStreak: 1,
+                    longestStreak: 1,
+                    createdAt: item.createdAt || Date.now(),
+                    lastActive: item.lastActive || Date.now(),
+                    isVerified: false,
+                    xp: (item.level || 1) * 500,
+                    role: 'user',
+                    usernameChangesLeft: 2,
+                    followers: [],
+                    following: [],
+                    followersCount: 0,
+                    followingCount: 0,
+                    pinnedAchievements: [],
+                    unlockedAchievements: ['first_test'],
+                    isPublic: true,
+                    privacy: {
+                      profileVisibility: 'public',
+                      allowMessages: 'everyone',
+                      showOnlineStatus: true,
+                      showStats: true,
+                      allowFollow: true
+                    }
+                  });
+                } else {
+                  if ((item.highestWpm || 0) > existing.highestWpm) {
+                    existing.highestWpm = item.highestWpm;
+                  }
+                  if (item.displayName) existing.displayName = item.displayName;
+                  if (item.username) existing.username = item.username;
+                  if (item.bio) existing.bio = item.bio;
+                  if (item.avatarUrl) existing.avatarUrl = item.avatarUrl;
+                  if (item.country) existing.country = item.country;
+                }
+              });
+              updateRankingsFromMap();
+            }
+          });
         } catch (e) {
-          console.error('RTDB leaderboard query error:', e);
+          console.error('RTDB realtime listener setup error:', e);
         }
 
-        let source = Array.from(fetchedMap.values());
-
-        // Ensure current logged in user is included
-        if (currentUser && !fetchedMap.has(currentUser.uid)) {
-          source.push(currentUser);
-        }
-
-        source.sort((a, b) => b.highestWpm - a.highestWpm);
-
-        const formatted = source.map((user, idx) => ({
-          ...user,
-          rank: idx + 1
-        }));
-
-        setRankings(formatted);
+        updateRankingsFromMap();
       } catch (err) {
         console.error('Error loading leaderboard from Firebase:', err);
         let source: UserProfile[] = [];
@@ -156,6 +161,10 @@ export const LeaderboardView: React.FC = () => {
     };
 
     fetchLeaderboard();
+
+    return () => {
+      if (unsubscribeRtdb) unsubscribeRtdb();
+    };
   }, [timeframe, currentUser]);
 
   // Filter Logic
