@@ -46,425 +46,6 @@ export const LeaderboardView: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Comprehensive fallback entries
-  const fallbackUsers: UserProfile[] = [
-    {
-      uid: 'user_1',
-      email: 'speed@yolnoma.app',
-      username: 'speeddemon_99',
-      displayName: 'Speed Demon ⚡',
-      highestWpm: 168,
-      highestAccuracy: 99,
-      totalTests: 1420,
-      totalTimeTypedSeconds: 84000,
-      totalWordsTyped: 42000,
-      totalCharsTyped: 210000,
-      averageWpm: 152,
-      currentStreak: 45,
-      longestStreak: 60,
-      createdAt: Date.now() - 100000000,
-      lastActive: Date.now() - 60000,
-      country: '🇺🇸 United States',
-      isVerified: true,
-      xp: 8400,
-      level: 17,
-      rankTitle: 'Cyber Legend',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 342,
-      followingCount: 12,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test', 'wpm_100', 'wpm_150', 'streak_30'],
-      isPublic: true,
-      rankChange: 'up',
-      rankChangeAmount: 1,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Professional esports typist & software developer. 168 WPM record.'
-    },
-    {
-      uid: 'user_2',
-      email: 'uzbek@yolnoma.app',
-      username: 'uzbek_typer_pro',
-      displayName: 'Klaviatura Ustasi',
-      highestWpm: 154,
-      highestAccuracy: 98,
-      totalTests: 980,
-      totalTimeTypedSeconds: 58000,
-      totalWordsTyped: 31000,
-      totalCharsTyped: 155000,
-      averageWpm: 140,
-      currentStreak: 28,
-      longestStreak: 35,
-      createdAt: Date.now() - 80000000,
-      lastActive: Date.now() - 120000,
-      country: '🇺🇿 Uzbekistan',
-      isVerified: true,
-      xp: 6200,
-      level: 13,
-      rankTitle: 'Speed Demon',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 210,
-      followingCount: 45,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test', 'wpm_100'],
-      isPublic: true,
-      rankChange: 'same',
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Oʻzbekistondagi eng tez yozuvchilardan biri. Yolnoma Typing platformasida 1-oʻrin uchun kurashaman!'
-    },
-    {
-      uid: 'user_3',
-      email: 'cyber@yolnoma.app',
-      username: 'cyberninja_x',
-      displayName: 'CyberNinja',
-      highestWpm: 142,
-      highestAccuracy: 100,
-      totalTests: 760,
-      totalTimeTypedSeconds: 45000,
-      totalWordsTyped: 24000,
-      totalCharsTyped: 120000,
-      averageWpm: 132,
-      currentStreak: 19,
-      longestStreak: 22,
-      createdAt: Date.now() - 60000000,
-      lastActive: Date.now() - 300000,
-      country: '🇬🇧 United Kingdom',
-      isVerified: false,
-      xp: 4800,
-      level: 10,
-      rankTitle: 'Speed Demon',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 88,
-      followingCount: 30,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test', 'accuracy_100'],
-      isPublic: true,
-      rankChange: 'down',
-      rankChangeAmount: 1,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Precision over speed. 100% accuracy enthusiast.'
-    },
-    {
-      uid: 'user_4',
-      email: 'tashkent@yolnoma.app',
-      username: 'tashkent_coder',
-      displayName: 'Tashkent Dev',
-      highestWpm: 135,
-      highestAccuracy: 97,
-      totalTests: 620,
-      totalTimeTypedSeconds: 38000,
-      totalWordsTyped: 19000,
-      totalCharsTyped: 95000,
-      averageWpm: 125,
-      currentStreak: 12,
-      longestStreak: 18,
-      createdAt: Date.now() - 50000000,
-      lastActive: Date.now() - 600000,
-      country: '🇺🇿 Uzbekistan',
-      isVerified: false,
-      xp: 3900,
-      level: 8,
-      rankTitle: 'Keyboard Warrior',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 64,
-      followingCount: 20,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'up',
-      rankChangeAmount: 2,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'React & Node.js Engineer from Tashkent.'
-    },
-    {
-      uid: 'user_5',
-      email: 'type@yolnoma.app',
-      username: 'typewriter_master',
-      displayName: 'TypeMaster',
-      highestWpm: 128,
-      highestAccuracy: 99,
-      totalTests: 510,
-      totalTimeTypedSeconds: 31000,
-      totalWordsTyped: 16000,
-      totalCharsTyped: 80000,
-      averageWpm: 118,
-      currentStreak: 14,
-      longestStreak: 25,
-      createdAt: Date.now() - 40000000,
-      lastActive: Date.now() - 1200000,
-      country: '🇰🇿 Kazakhstan',
-      isVerified: false,
-      xp: 3100,
-      level: 7,
-      rankTitle: 'Keyboard Warrior',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 50,
-      followingCount: 15,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'same',
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Typing on custom mechanical switches.'
-    },
-    {
-      uid: 'user_6',
-      email: 'alpha@yolnoma.app',
-      username: 'alpha_coder',
-      displayName: 'Alpha Coder',
-      highestWpm: 122,
-      highestAccuracy: 96,
-      totalTests: 450,
-      totalTimeTypedSeconds: 27000,
-      totalWordsTyped: 14000,
-      totalCharsTyped: 70000,
-      averageWpm: 112,
-      currentStreak: 8,
-      longestStreak: 15,
-      createdAt: Date.now() - 35000000,
-      lastActive: Date.now() - 2000000,
-      country: '🇩🇪 Germany',
-      isVerified: false,
-      xp: 2600,
-      level: 6,
-      rankTitle: 'Keyboard Warrior',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 42,
-      followingCount: 10,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'up',
-      rankChangeAmount: 1,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Backend developer & Linux fan.'
-    },
-    {
-      uid: 'user_7',
-      email: 'samarkand@yolnoma.app',
-      username: 'samarkand_fast',
-      displayName: 'Samarkand Typer',
-      highestWpm: 118,
-      highestAccuracy: 98,
-      totalTests: 390,
-      totalTimeTypedSeconds: 23000,
-      totalWordsTyped: 12000,
-      totalCharsTyped: 60000,
-      averageWpm: 108,
-      currentStreak: 10,
-      longestStreak: 14,
-      createdAt: Date.now() - 30000000,
-      lastActive: Date.now() - 3600000,
-      country: '🇺🇿 Uzbekistan',
-      isVerified: false,
-      xp: 2200,
-      level: 5,
-      rankTitle: 'Keyboard Warrior',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 30,
-      followingCount: 12,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'same',
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Greetings from ancient Samarkand!'
-    },
-    {
-      uid: 'user_8',
-      email: 'tokyo@yolnoma.app',
-      username: 'tokyo_keys',
-      displayName: 'Tokyo Keys',
-      highestWpm: 115,
-      highestAccuracy: 95,
-      totalTests: 340,
-      totalTimeTypedSeconds: 20000,
-      totalWordsTyped: 10000,
-      totalCharsTyped: 50000,
-      averageWpm: 104,
-      currentStreak: 5,
-      longestStreak: 10,
-      createdAt: Date.now() - 25000000,
-      lastActive: Date.now() - 7200000,
-      country: '🇯🇵 Japan',
-      isVerified: false,
-      xp: 1800,
-      level: 4,
-      rankTitle: 'Typing Novice',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 25,
-      followingCount: 8,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'down',
-      rankChangeAmount: 1,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Keyboard enthusiast from Tokyo.'
-    },
-    {
-      uid: 'user_9',
-      email: 'bukhara@yolnoma.app',
-      username: 'bukhara_pro',
-      displayName: 'Bukhara Speed',
-      highestWpm: 110,
-      highestAccuracy: 97,
-      totalTests: 290,
-      totalTimeTypedSeconds: 17000,
-      totalWordsTyped: 8500,
-      totalCharsTyped: 42500,
-      averageWpm: 99,
-      currentStreak: 7,
-      longestStreak: 11,
-      createdAt: Date.now() - 20000000,
-      lastActive: Date.now() - 10800000,
-      country: '🇺🇿 Uzbekistan',
-      isVerified: false,
-      xp: 1500,
-      level: 3,
-      rankTitle: 'Typing Novice',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 18,
-      followingCount: 5,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'up',
-      rankChangeAmount: 2,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Bukhara city typing champion.'
-    },
-    {
-      uid: 'user_10',
-      email: 'istanbul@yolnoma.app',
-      username: 'istanbul_runner',
-      displayName: 'Istanbul Fast',
-      highestWpm: 105,
-      highestAccuracy: 96,
-      totalTests: 240,
-      totalTimeTypedSeconds: 14000,
-      totalWordsTyped: 7000,
-      totalCharsTyped: 35000,
-      averageWpm: 94,
-      currentStreak: 4,
-      longestStreak: 9,
-      createdAt: Date.now() - 15000000,
-      lastActive: Date.now() - 14400000,
-      country: '🇹🇷 Turkey',
-      isVerified: false,
-      xp: 1200,
-      level: 3,
-      rankTitle: 'Typing Novice',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 15,
-      followingCount: 4,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'same',
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'F-keyboard & Q-keyboard master.'
-    },
-    {
-      uid: 'user_11',
-      email: 'fergana@yolnoma.app',
-      username: 'fergana_typer',
-      displayName: 'Fergana Valley',
-      highestWpm: 101,
-      highestAccuracy: 95,
-      totalTests: 200,
-      totalTimeTypedSeconds: 12000,
-      totalWordsTyped: 6000,
-      totalCharsTyped: 30000,
-      averageWpm: 90,
-      currentStreak: 3,
-      longestStreak: 8,
-      createdAt: Date.now() - 12000000,
-      lastActive: Date.now() - 18000000,
-      country: '🇺🇿 Uzbekistan',
-      isVerified: false,
-      xp: 950,
-      level: 2,
-      rankTitle: 'Typing Novice',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 12,
-      followingCount: 3,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'up',
-      rankChangeAmount: 1,
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Fergana valley typing league.'
-    },
-    {
-      uid: 'user_12',
-      email: 'almaty@yolnoma.app',
-      username: 'almaty_keys',
-      displayName: 'Almaty Typer',
-      highestWpm: 96,
-      highestAccuracy: 94,
-      totalTests: 170,
-      totalTimeTypedSeconds: 10000,
-      totalWordsTyped: 5000,
-      totalCharsTyped: 25000,
-      averageWpm: 86,
-      currentStreak: 2,
-      longestStreak: 6,
-      createdAt: Date.now() - 10000000,
-      lastActive: Date.now() - 21600000,
-      country: '🇰🇿 Kazakhstan',
-      isVerified: false,
-      xp: 750,
-      level: 2,
-      rankTitle: 'Typing Novice',
-      role: 'user',
-      usernameChangesLeft: 2,
-      followers: [],
-      following: [],
-      followersCount: 9,
-      followingCount: 2,
-      pinnedAchievements: [],
-      unlockedAchievements: ['first_test'],
-      isPublic: true,
-      rankChange: 'same',
-      privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
-      bio: 'Practicing daily for 100+ WPM.'
-    }
-  ];
-
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
@@ -476,9 +57,9 @@ export const LeaderboardView: React.FC = () => {
           fetched.push({ uid: docSnap.id, ...docSnap.data() } as UserProfile);
         });
 
-        let source = fetched.length > 0 ? fetched : fallbackUsers;
+        let source = fetched;
 
-        // Ensure current user is in leaderboard
+        // Ensure current logged in user is in leaderboard if not already returned
         if (currentUser && !source.some((u) => u.uid === currentUser.uid)) {
           source = [currentUser, ...source].sort((a, b) => b.highestWpm - a.highestWpm);
         }
@@ -489,10 +70,11 @@ export const LeaderboardView: React.FC = () => {
         }));
 
         setRankings(formatted);
-      } catch {
-        let source = fallbackUsers;
-        if (currentUser && !source.some((u) => u.uid === currentUser.uid)) {
-          source = [currentUser, ...source].sort((a, b) => b.highestWpm - a.highestWpm);
+      } catch (err) {
+        console.error('Error loading leaderboard from Firebase:', err);
+        let source: UserProfile[] = [];
+        if (currentUser) {
+          source = [currentUser];
         }
         setRankings(source.map((u, idx) => ({ ...u, rank: idx + 1 })));
       } finally {
@@ -501,7 +83,7 @@ export const LeaderboardView: React.FC = () => {
     };
 
     fetchLeaderboard();
-  }, [timeframe]);
+  }, [timeframe, currentUser]);
 
   // Filter Logic
   const filtered = rankings.filter((r) => {
@@ -709,8 +291,16 @@ export const LeaderboardView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--sub-alt)]">
-              {pageRankings.map((item) => {
-                const isSelf = currentUser?.uid === item.uid;
+              {pageRankings.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-10 text-center text-[var(--sub-color)]">
+                    <p className="font-semibold text-sm mb-1 text-[var(--text-color)]">Hozircha reytingda real foydalanuvchilar mavjud emas</p>
+                    <p className="text-xs">Profil oching va test topshirib 1-o'rinni egallang! Barcha natijalar Firebase bazasida saqlanadi.</p>
+                  </td>
+                </tr>
+              ) : (
+                pageRankings.map((item) => {
+                  const isSelf = currentUser?.uid === item.uid;
 
                 return (
                   <tr
@@ -779,7 +369,7 @@ export const LeaderboardView: React.FC = () => {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
