@@ -29,14 +29,37 @@ import { generateTestText, calculateWpm, calculateCpm, calculateAccuracy } from 
 
 function MainAppContent() {
   const { language } = useSettings();
-  const { saveTestResult } = useAuth();
+  const { user, profile, loading, saveTestResult } = useAuth();
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<string>('typing');
+  const prevUserRef = useRef<string | null>(null);
+  const hasAutoPromptedAuthRef = useRef(false);
 
   // Modals
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+
+  // Auto-prompt Google sign in on site open if not logged in and never completed before
+  useEffect(() => {
+    const hasCompletedAuthBefore = localStorage.getItem('yolnoma_auth_completed') === 'true';
+    if (!loading && !user && !hasAutoPromptedAuthRef.current && !hasCompletedAuthBefore) {
+      setIsAuthOpen(true);
+      hasAutoPromptedAuthRef.current = true;
+    }
+  }, [loading, user]);
+
+  // When user logs in, mark auth completed, close modal and go to profile tab
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('yolnoma_auth_completed', 'true');
+      setIsAuthOpen(false);
+      if (!prevUserRef.current) {
+        setActiveTab('profile');
+      }
+    }
+    prevUserRef.current = user ? user.uid : null;
+  }, [user]);
 
   // Test Configurations
   const [mode, setMode] = useState<TextMode>('words');
@@ -268,7 +291,12 @@ function MainAppContent() {
         {activeTab === 'statistics' && <StatisticsView />}
         {activeTab === 'achievements' && <AchievementsView />}
         {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
-        {activeTab === 'profile' && <ProfileView onOpenAuth={() => setIsAuthOpen(true)} />}
+        {activeTab === 'profile' && (
+          <ProfileView
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onSavedHome={() => setActiveTab('typing')}
+          />
+        )}
         {activeTab === 'settings' && <SettingsView />}
       </main>
 

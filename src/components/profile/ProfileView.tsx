@@ -27,12 +27,14 @@ import { UserProfile } from '../../types';
 
 interface ProfileViewProps {
   onOpenAuth?: () => void;
+  onSavedHome?: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHome }) => {
   const {
     user,
     profile,
+    loading,
     updateUserProfile,
     exportPersonalData,
     deleteAccount,
@@ -55,7 +57,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
   const [website, setWebsite] = useState(profile?.socialLinks?.website || '');
   const [saving, setSaving] = useState(false);
 
-  // Sync profile state when profile updates or editing is opened
+  // Auto-open editing for new users without bio
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.displayName || '');
@@ -67,8 +69,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
       setTwitter(profile.socialLinks?.twitter || '');
       setGithub(profile.socialLinks?.github || '');
       setWebsite(profile.socialLinks?.website || '');
+
+      if (!profile.bio || profile.bio.trim() === '') {
+        setIsEditing(true);
+      }
     }
-  }, [profile, isEditing]);
+  }, [profile]);
 
   // Deletion Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -80,25 +86,34 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
   const [adminUsersList, setAdminUsersList] = useState<UserProfile[]>([]);
 
+  if (loading) {
+    return (
+      <div className="w-full max-w-md mx-auto p-12 text-center space-y-4">
+        <div className="w-10 h-10 border-4 border-[var(--main-color)] border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs font-semibold text-[var(--sub-color)]">Profil ma'lumotlari yuklanmoqda...</p>
+      </div>
+    );
+  }
+
   if (!user || !profile) {
     return (
-      <div className="w-full max-w-2xl mx-auto p-8 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl text-center space-y-4 shadow-sm animate-in fade-in">
+      <div className="w-full max-w-lg mx-auto p-8 my-8 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl text-center space-y-5 shadow-lg animate-in fade-in">
         <div className="w-16 h-16 rounded-2xl bg-[var(--main-color)]/10 text-[var(--main-color)] flex items-center justify-center mx-auto">
           <User className="w-8 h-8" />
         </div>
-        <div className="space-y-1">
-          <h2 className="text-xl font-bold">Mexmon Profil (Guest Typer)</h2>
-          <p className="text-xs text-[var(--sub-color)] max-w-md mx-auto">
-            Testlar tarixini saqlash, WPM reytingida 1-o'ringa chiqish va o'z ismingiz hamda bio ma'lumotlaringizni tahrirlash uchun tizimga kiring!
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold">Diqqat! Ro'yhatdan o'tilmagan</h2>
+          <p className="text-sm font-medium text-[var(--sub-color)] leading-relaxed max-w-md mx-auto">
+            Oldin kirishni bosing, Google orqali ro'yhatdan o'ting, keyin bemalol profilingizga kira olasiz! Rahmat.
           </p>
         </div>
 
         {onOpenAuth && (
           <button
             onClick={onOpenAuth}
-            className="px-6 py-3 rounded-2xl bg-[var(--main-color)] text-white font-bold text-sm shadow-md hover:opacity-90 transition-all inline-flex items-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[var(--main-color)] text-white font-bold text-sm shadow-md hover:opacity-90 transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>Tizimga kirish (Google / Email)</span>
+            <span>Kirish / Google orqali ro'yhatdan o'tish</span>
           </button>
         )}
       </div>
@@ -134,11 +149,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!displayName.trim() || !bio.trim()) {
+      addNotification('Maydonlar to\'liq emas', 'Ismingiz va Bio ma\'lumotingizni kiritishingiz shart!', 'warning');
+      return;
+    }
+
     setSaving(true);
 
     const updates: Partial<UserProfile> = {
-      displayName,
-      bio,
+      displayName: displayName.trim(),
+      bio: bio.trim(),
       country,
       avatarUrl: avatarUrl || profile.avatarUrl,
       bannerColor,
@@ -161,9 +181,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
     }
 
     await updateUserProfile(updates);
+    localStorage.setItem('yolnoma_auth_completed', 'true');
     setSaving(false);
     setIsEditing(false);
-    addNotification('Profile Saved', 'Your profile details have been successfully updated.');
+    addNotification('Profil Saqlandi!', 'Profilingiz muvaffaqiyatli saqlandi. Bosh sahifaga yo\'naltirildingiz.');
+
+    if (onSavedHome) {
+      onSavedHome();
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -219,6 +244,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
 
       {activeTab === 'profile' ? (
         <>
+          {(!profile.bio || profile.bio.trim() === '') && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-semibold flex items-center justify-between gap-3 animate-pulse">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                <span>Xush kelibsiz! Profilingizni to'liq faollashtirish uchun Ismingiz va Bio ma'lumotingizni kiriting. (Ikkala maydon ham majburiy)</span>
+              </div>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-black font-bold text-xs shrink-0 cursor-pointer"
+              >
+                To'ldirish
+              </button>
+            </div>
+          )}
+
           {/* Profile Header Banner */}
           <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
             <div
@@ -416,11 +456,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
 
               {/* Display Name */}
               <div>
-                <label className="block font-semibold mb-1 text-[var(--sub-color)]">Display Name</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block font-semibold text-[var(--sub-color)]">
+                    Ismingiz (Display Name) <span className="text-rose-500 font-bold">* (Majburiy)</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-[var(--sub-color)]">{displayName.length} / 50</span>
+                </div>
                 <input
                   type="text"
                   value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  onChange={(e) => setDisplayName(e.target.value.substring(0, 50))}
+                  maxLength={50}
+                  placeholder="Ismingizni kiriting..."
+                  required
                   className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 outline-none focus:border-[var(--main-color)] font-semibold"
                 />
               </div>
@@ -457,18 +505,22 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
                 )}
               </div>
 
-              {/* Bio with 200 character counter & emojis */}
+              {/* Bio with 250 character counter & emojis */}
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="block font-semibold text-[var(--sub-color)]">Bio / About</label>
-                  <span className="text-[10px] font-mono text-[var(--sub-color)]">{bio.length} / 200</span>
+                  <label className="block font-semibold text-[var(--sub-color)]">
+                    Bio / Ma'lumot <span className="text-rose-500 font-bold">* (Majburiy)</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-[var(--sub-color)]">{bio.length} / 250</span>
                 </div>
                 <textarea
                   value={bio}
-                  onChange={(e) => setBio(e.target.value.substring(0, 200))}
+                  onChange={(e) => setBio(e.target.value.substring(0, 250))}
+                  maxLength={250}
                   rows={3}
+                  required
                   className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 outline-none focus:border-[var(--main-color)]"
-                  placeholder="Tell us about yourself..."
+                  placeholder="O'zingiz haqingizda qisqacha ma'lumot yozing..."
                 />
                 {/* Emoji Bar */}
                 <div className="flex items-center gap-1 mt-1">
@@ -477,7 +529,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
                     <button
                       key={emoji}
                       type="button"
-                      onClick={() => bio.length < 200 && setBio((prev) => (prev + emoji).substring(0, 200))}
+                      onClick={() => bio.length < 250 && setBio((prev) => (prev + emoji).substring(0, 250))}
                       className="p-1 hover:bg-[var(--sub-alt)] rounded text-xs"
                     >
                       {emoji}
