@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Edit3,
@@ -25,7 +25,11 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 
-export const ProfileView: React.FC = () => {
+interface ProfileViewProps {
+  onOpenAuth?: () => void;
+}
+
+export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth }) => {
   const {
     user,
     profile,
@@ -51,6 +55,21 @@ export const ProfileView: React.FC = () => {
   const [website, setWebsite] = useState(profile?.socialLinks?.website || '');
   const [saving, setSaving] = useState(false);
 
+  // Sync profile state when profile updates or editing is opened
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || '');
+      setUsername(profile.username || '');
+      setBio(profile.bio || '');
+      setCountry(profile.country || '🇺🇿 Uzbekistan');
+      setAvatarUrl(profile.avatarUrl || '');
+      setBannerColor(profile.bannerColor || '#38bdf8');
+      setTwitter(profile.socialLinks?.twitter || '');
+      setGithub(profile.socialLinks?.github || '');
+      setWebsite(profile.socialLinks?.website || '');
+    }
+  }, [profile, isEditing]);
+
   // Deletion Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
@@ -63,12 +82,25 @@ export const ProfileView: React.FC = () => {
 
   if (!user || !profile) {
     return (
-      <div className="w-full max-w-2xl mx-auto p-8 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl text-center space-y-3">
-        <User className="w-12 h-12 text-[var(--sub-color)] mx-auto" />
-        <h2 className="text-xl font-bold">Guest Typer</h2>
-        <p className="text-xs text-[var(--sub-color)]">
-          Sign in to save test history, track WPM trends, unlock achievement badges, and customize your profile!
-        </p>
+      <div className="w-full max-w-2xl mx-auto p-8 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl text-center space-y-4 shadow-sm animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-[var(--main-color)]/10 text-[var(--main-color)] flex items-center justify-center mx-auto">
+          <User className="w-8 h-8" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold">Mexmon Profil (Guest Typer)</h2>
+          <p className="text-xs text-[var(--sub-color)] max-w-md mx-auto">
+            Testlar tarixini saqlash, WPM reytingida 1-o'ringa chiqish va o'z ismingiz hamda bio ma'lumotlaringizni tahrirlash uchun tizimga kiring!
+          </p>
+        </div>
+
+        {onOpenAuth && (
+          <button
+            onClick={onOpenAuth}
+            className="px-6 py-3 rounded-2xl bg-[var(--main-color)] text-white font-bold text-sm shadow-md hover:opacity-90 transition-all inline-flex items-center gap-2 cursor-pointer"
+          >
+            <span>Tizimga kirish (Google / Email)</span>
+          </button>
+        )}
       </div>
     );
   }

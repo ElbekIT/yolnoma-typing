@@ -268,7 +268,7 @@ function MainAppContent() {
         {activeTab === 'statistics' && <StatisticsView />}
         {activeTab === 'achievements' && <AchievementsView />}
         {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
-        {activeTab === 'profile' && <ProfileView />}
+        {activeTab === 'profile' && <ProfileView onOpenAuth={() => setIsAuthOpen(true)} />}
         {activeTab === 'settings' && <SettingsView />}
       </main>
 
