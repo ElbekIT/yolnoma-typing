@@ -11,7 +11,8 @@ import {
   deleteUser
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { auth, db, googleProvider } from '../config/firebase';
+import { ref, set, update, push } from 'firebase/database';
+import { auth, db, rtdb, googleProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -179,6 +180,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       await setDoc(userDocRef, newProfile);
+      await set(ref(rtdb, `users/${firebaseUser.uid}`), newProfile);
+      await set(ref(rtdb, `leaderboard/${firebaseUser.uid}`), {
+        uid: firebaseUser.uid,
+        displayName: newProfile.displayName,
+        username: newProfile.username,
+        highestWpm: newProfile.highestWpm,
+        highestAccuracy: newProfile.highestAccuracy,
+        country: newProfile.country || '🇺🇿 Uzbekistan',
+        level: newProfile.level,
+        rankTitle: newProfile.rankTitle,
+        bio: newProfile.bio || '',
+        avatarUrl: newProfile.avatarUrl || '',
+        lastActive: Date.now()
+      });
     } catch {
       // Storage offline catch
     }
@@ -300,7 +315,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         await updateDoc(doc(db, 'users', user.uid), updates);
       } catch (err) {
-        console.error('Update profile error:', err);
+        console.error('Update profile firestore error:', err);
+      }
+      try {
+        await update(ref(rtdb, `users/${user.uid}`), updates);
+        await update(ref(rtdb, `leaderboard/${user.uid}`), {
+          uid: user.uid,
+          displayName: updated.displayName,
+          username: updated.username,
+          highestWpm: updated.highestWpm,
+          highestAccuracy: updated.highestAccuracy,
+          country: updated.country || '🇺🇿 Uzbekistan',
+          level: updated.level,
+          rankTitle: updated.rankTitle || 'Typing Novice',
+          bio: updated.bio || '',
+          avatarUrl: updated.avatarUrl || '',
+          lastActive: Date.now()
+        });
+      } catch (err) {
+        console.error('Update profile RTDB error:', err);
       }
     }
   };
@@ -408,10 +441,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserResultsHistory(newLocal);
 
     if (user && profile) {
-      // Save result document in Firestore
+      // Save result document in Firestore and Realtime Database
       try {
         const docRef = await addDoc(collection(db, 'typingResults'), fullResult);
         fullResult.id = docRef.id;
+
+        // Save to RTDB
+        const rtdbResultRef = push(ref(rtdb, `results/${userId}`));
+        await set(rtdbResultRef, fullResult);
 
         // Also push to leaderboards
         await addDoc(collection(db, 'leaderboards'), {

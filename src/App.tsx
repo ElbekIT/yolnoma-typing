@@ -152,12 +152,25 @@ function MainAppContent() {
           });
         }
 
-        // Capture wpm history point
-        const currentTyped = typedInput.length;
-        const currentWpm = calculateWpm(currentTyped, elapsedSeconds + 1);
+        // Capture wpm history point with real correct chars and error counts
+        const targetCharsArr = targetText.split('');
+        const typedCharsArr = typedInput.split('');
+        let currentCorrect = 0;
+        let currentErrors = 0;
+        typedCharsArr.forEach((ch, idx) => {
+          if (idx < targetCharsArr.length) {
+            if (ch === targetCharsArr[idx]) currentCorrect++;
+            else currentErrors++;
+          } else {
+            currentErrors++;
+          }
+        });
+
+        const currentWpm = calculateWpm(currentCorrect, elapsedSeconds + 1);
+        const rawWpm = calculateWpm(typedInput.length, elapsedSeconds + 1);
         setWpmHistory((prev) => [
           ...prev,
-          { time: elapsedSeconds + 1, wpm: currentWpm, rawWpm: currentWpm, errors: 0 }
+          { time: elapsedSeconds + 1, wpm: currentWpm, rawWpm, errors: currentErrors }
         ]);
       }, 1000);
     }
