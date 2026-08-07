@@ -86,7 +86,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
   const [adminUsersList, setAdminUsersList] = useState<UserProfile[]>([]);
 
-  if (loading) {
+  if (loading && user) {
     return (
       <div className="w-full max-w-md mx-auto p-12 text-center space-y-4">
         <div className="w-10 h-10 border-4 border-[var(--main-color)] border-t-transparent rounded-full animate-spin mx-auto" />

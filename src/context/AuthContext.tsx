@@ -96,10 +96,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('yolnoma_results_history', JSON.stringify(results.slice(0, 100)));
   };
 
+  const withTimeout = <T,>(promise: Promise<T>, ms = 2500): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+    ]);
+  };
+
   const fetchOrCreateProfile = async (firebaseUser: User): Promise<UserProfile> => {
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     try {
-      const snapshot = await getDoc(userDocRef);
+      const snapshot = await withTimeout(getDoc(userDocRef), 2500);
       if (snapshot.exists()) {
         const data = snapshot.data() as UserProfile;
         // Merge missing defaults if profile is legacy
@@ -238,6 +245,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
       .catch((err) => console.error('Redirect result error:', err));
 
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       try {
@@ -257,7 +268,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(safetyTimer);
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
