@@ -26,7 +26,7 @@ export const LiveStats: React.FC<LiveStatsProps> = ({
       <div className="flex items-center justify-between text-sm font-semibold px-2">
         {/* Timer / Progress Counter */}
         <div className="flex items-center gap-2 text-2xl font-mono font-bold text-[var(--main-color)]">
-          <Clock className="w-6 h-6 animate-pulse" />
+          <Clock className="w-6 h-6" />
           <span>{timeLeft}s</span>
         </div>
 

@@ -12,7 +12,9 @@ import {
   LogIn,
   LogOut,
   Target,
-  Sparkles
+  Bell,
+  Check,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -27,10 +29,13 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme } = useSettings();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const navItems = [
     { id: 'typing', label: t('typingTest', language), icon: Keyboard },
@@ -39,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'statistics', label: t('statistics', language), icon: Clock },
     { id: 'achievements', label: t('achievements', language), icon: Award },
     { id: 'challenges', label: t('challenges', language), icon: Target },
+    { id: 'profile', label: 'Profile', icon: UserIcon },
     { id: 'settings', label: t('settings', language), icon: Settings },
   ];
 
@@ -84,6 +90,60 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
         {/* Action Controls & User Auth */}
         <div className="flex items-center gap-2">
+          {/* Notifications Bell */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifMenu(!showNotifMenu)}
+              className="p-2 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] transition-all relative"
+              title="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] flex items-center justify-center shadow-sm">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifMenu && (
+              <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-2xl z-50 p-3 text-xs space-y-2">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--sub-alt)]">
+                  <span className="font-bold text-[var(--text-color)]">In-App Alerts ({notifications.length})</span>
+                  <button
+                    onClick={clearNotifications}
+                    className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-semibold"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                {notifications.length > 0 ? (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      onClick={() => markNotificationRead(n.id)}
+                      className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                        n.read
+                          ? 'bg-[var(--card-bg)] border-[var(--sub-alt)] text-[var(--sub-color)]'
+                          : 'bg-[var(--sub-alt)] border-[var(--main-color)]/40 text-[var(--text-color)] font-medium'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between font-bold mb-1">
+                        <span>{n.title}</span>
+                        <span className="text-[9px] text-[var(--sub-color)] font-mono">
+                          {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-snug">{n.message}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-[var(--sub-color)] py-4 text-xs">No notifications right now.</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Quick Language Selector Dropdown */}
           <div className="relative">
             <button

@@ -7,23 +7,33 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
-  updateProfile
+  updateProfile,
+  deleteUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../config/firebase';
-import { UserProfile, TypingResult, LanguageCode } from '../types';
+import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import confetti from 'canvas-confetti';
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  notifications: UserNotificationItem[];
+  addNotification: (title: string, message: string, type?: UserNotificationItem['type']) => void;
+  markNotificationRead: (id: string) => void;
+  clearNotifications: () => void;
   signInWithGoogle: () => Promise<void>;
   registerWithEmail: (email: string, pass: string, username: string) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  followUser: (targetUid: string) => Promise<void>;
+  unfollowUser: (targetUid: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  exportPersonalData: () => void;
+  adminUpdateUser: (targetUid: string, updates: Partial<UserProfile>) => Promise<void>;
   saveTestResult: (result: Omit<TypingResult, 'userId' | 'username'>) => Promise<TypingResult>;
   userResultsHistory: TypingResult[];
   refreshHistory: () => Promise<void>;
@@ -36,6 +46,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [userResultsHistory, setUserResultsHistory] = useState<TypingResult[]>([]);
+  const [notifications, setNotifications] = useState<UserNotificationItem[]>([
+    {
+      id: 'welcome-1',
+      title: 'Welcome to Yolnoma Typing! ⚡',
+      message: 'Practice your speed, earn XP, unlock badges, and compete globally.',
+      timestamp: Date.now() - 60000,
+      read: false,
+      type: 'info'
+    }
+  ]);
+
+  const addNotification = (title: string, message: string, type: UserNotificationItem['type'] = 'info') => {
+    const newItem: UserNotificationItem = {
+      id: `notif-${Date.now()}-${Math.random()}`,
+      title,
+      message,
+      timestamp: Date.now(),
+      read: false,
+      type
+    };
+    setNotifications((prev) => [newItem, ...prev]);
+  };
+
+  const markNotificationRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+  };
 
   // Load local results for guests or offline
   const getLocalResults = (): TypingResult[] => {
@@ -57,9 +99,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const snapshot = await getDoc(userDocRef);
       if (snapshot.exists()) {
         const data = snapshot.data() as UserProfile;
-        // Update lastActive
+        // Merge missing defaults if profile is legacy
+        const merged: UserProfile = {
+          ...data,
+          usernameChangesLeft: data.usernameChangesLeft ?? 2,
+          xp: data.xp ?? 250,
+          level: data.level ?? 1,
+          rankTitle: data.rankTitle || 'Typing Novice',
+          role: data.role || (firebaseUser.email?.includes('admin') ? 'admin' : 'user'),
+          followers: data.followers || [],
+          following: data.following || [],
+          pinnedAchievements: data.pinnedAchievements || [],
+          privacy: data.privacy || {
+            profileVisibility: 'public',
+            allowMessages: 'everyone',
+            showOnlineStatus: true,
+            showStats: true,
+            allowFollow: true
+          },
+          socialLinks: data.socialLinks || { twitter: '', github: '', discord: '', website: '' },
+          lastActive: Date.now()
+        };
+
         await updateDoc(userDocRef, { lastActive: Date.now() }).catch(() => {});
-        return { ...data, lastActive: Date.now() };
+        return merged;
       }
     } catch {
       // Offline fallback profile
@@ -67,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Default new profile
     const username = firebaseUser.displayName
-      ? firebaseUser.displayName.toLowerCase().replace(/\s+/g, '_')
+      ? firebaseUser.displayName.toLowerCase().replace(/\s+/g, '_').substring(0, 18)
       : firebaseUser.email
       ? firebaseUser.email.split('@')[0]
       : `typer_${Math.floor(1000 + Math.random() * 9000)}`;
@@ -81,9 +144,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       bannerColor: '#38bdf8',
       createdAt: Date.now(),
       lastActive: Date.now(),
+      xp: 250,
+      level: 1,
+      rankTitle: 'Typing Novice',
+      role: firebaseUser.email?.includes('admin') ? 'admin' : 'user',
+      isVerified: false,
+      usernameChangesLeft: 2,
+      followers: [],
+      following: [],
       followersCount: 0,
       followingCount: 0,
-      unlockedAchievements: [],
+      pinnedAchievements: [],
+      privacy: {
+        profileVisibility: 'public',
+        allowMessages: 'everyone',
+        showOnlineStatus: true,
+        showStats: true,
+        allowFollow: true
+      },
+      socialLinks: { twitter: '', github: '', discord: '', website: '' },
+      notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true },
+      unlockedAchievements: ['first_test'],
       totalTests: 0,
       totalTimeTypedSeconds: 0,
       totalWordsTyped: 0,
@@ -160,6 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.user) {
         const p = await fetchOrCreateProfile(res.user);
         setProfile(p);
+        addNotification('Google Login Successful', `Welcome back, ${p.displayName}!`);
       }
     } catch (err) {
       console.error('Google Sign In Error:', err);
@@ -180,6 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch {
         // Handle offline
       }
+      addNotification('Account Created!', `Welcome to Yolnoma Typing, @${username}!`);
     }
   };
 
@@ -188,11 +271,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.user) {
       const p = await fetchOrCreateProfile(res.user);
       setProfile(p);
+      addNotification('Welcome Back!', `Signed in as ${p.displayName}`);
     }
   };
 
   const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
+    addNotification('Password Reset Sent', `Check ${email} for password reset instructions.`);
   };
 
   const logout = async () => {
@@ -206,12 +291,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!profile) return;
     const updated = { ...profile, ...updates };
     setProfile(updated);
+
+    if (updates.username && updates.username !== profile.username) {
+      addNotification('Username Changed', `Your username was changed to @${updates.username}.`);
+    }
+
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid), updates);
       } catch (err) {
         console.error('Update profile error:', err);
       }
+    }
+  };
+
+  const followUser = async (targetUid: string) => {
+    if (!profile || !user) return;
+    const isFollowing = profile.following.includes(targetUid);
+    const newFollowing = isFollowing
+      ? profile.following.filter((id) => id !== targetUid)
+      : [...profile.following, targetUid];
+
+    await updateUserProfile({
+      following: newFollowing,
+      followingCount: newFollowing.length
+    });
+
+    addNotification(
+      isFollowing ? 'Unfollowed User' : 'Following User',
+      isFollowing ? 'You unfollowed this user.' : 'You are now following this user!'
+    );
+  };
+
+  const unfollowUser = async (targetUid: string) => {
+    await followUser(targetUid);
+  };
+
+  const deleteAccount = async () => {
+    if (!user) return;
+    try {
+      addNotification('Account Deleted', 'Your account and data were permanently removed.', 'warning');
+      await deleteDoc(doc(db, 'users', user.uid)).catch(() => {});
+      await deleteUser(user);
+      setUser(null);
+      setProfile(null);
+      setUserResultsHistory([]);
+      localStorage.removeItem('yolnoma_results_history');
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+      throw err;
+    }
+  };
+
+  const exportPersonalData = () => {
+    if (!profile) return;
+    const exportObject = {
+      profile,
+      typingHistory: userResultsHistory,
+      exportDate: new Date().toISOString()
+    };
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportObject, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `yolnoma_data_${profile.username}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    addNotification('Data Export Completed', 'Your personal account JSON file has been downloaded.');
+  };
+
+  const adminUpdateUser = async (targetUid: string, updates: Partial<UserProfile>) => {
+    try {
+      await updateDoc(doc(db, 'users', targetUid), updates);
+      if (profile && profile.uid === targetUid) {
+        setProfile({ ...profile, ...updates });
+      }
+      addNotification('Admin Update Executed', `Successfully updated profile for UID: ${targetUid.slice(0, 8)}...`);
+    } catch (err) {
+      console.error('Admin update failed:', err);
     }
   };
 
@@ -265,10 +423,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           language: fullResult.language,
           timeMode: fullResult.timeMode,
           timestamp: fullResult.timestamp,
-          country: profile.country || 'Global'
+          country: profile.country || '🇺🇿 Uzbekistan'
         });
 
-        // Recalculate User Profile Stats
+        // Recalculate User Profile Stats + XP Gain
+        const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
+        const newXp = profile.xp + xpEarned;
+        const newLevel = Math.floor(newXp / 500) + 1;
+
+        if (newLevel > profile.level) {
+          addNotification('LEVEL UP! 🎉', `Congratulations! You reached Level ${newLevel}!`, 'level_up');
+        }
+
+        let rankTitle = 'Typing Novice';
+        if (newLevel >= 5) rankTitle = 'Keyboard Warrior';
+        if (newLevel >= 10) rankTitle = 'Speed Demon';
+        if (newLevel >= 20) rankTitle = 'Cyber Legend';
+
         const newTotalTests = profile.totalTests + 1;
         const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
         const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
@@ -285,6 +456,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           highestWpm: newHighestWpm,
           highestAccuracy: newHighestAccuracy,
           averageWpm: newAvgWpm,
+          xp: newXp,
+          level: newLevel,
+          rankTitle,
           lastActive: Date.now()
         };
 
@@ -303,12 +477,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         profile,
         loading,
+        notifications,
+        addNotification,
+        markNotificationRead,
+        clearNotifications,
         signInWithGoogle,
         registerWithEmail,
         loginWithEmail,
         resetPassword,
         logout,
         updateUserProfile,
+        followUser,
+        unfollowUser,
+        deleteAccount,
+        exportPersonalData,
+        adminUpdateUser,
         saveTestResult,
         userResultsHistory,
         refreshHistory

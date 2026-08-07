@@ -11,6 +11,7 @@ import {
   Check
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import { themes } from '../../config/themes';
 import { languagesList } from '../../config/languages';
 import { ThemeMode, CaretStyle, SoundProfile, LanguageCode } from '../../types';
@@ -251,6 +252,113 @@ export const SettingsView: React.FC = () => {
             />
           </div>
         </div>
+      </div>
+
+      {/* Account Privacy & Security Settings */}
+      <PrivacyAndSecurityCard />
+    </div>
+  );
+};
+
+const PrivacyAndSecurityCard: React.FC = () => {
+  const { profile, updateUserProfile, resetPassword, user } = useAuth();
+  const [resetSent, setResetSent] = React.useState(false);
+
+  if (!profile) return null;
+
+  const privacy = profile.privacy || {
+    profileVisibility: 'public',
+    allowMessages: 'everyone',
+    showOnlineStatus: true,
+    showStats: true,
+    allowFollow: true
+  };
+
+  const handleTogglePrivacy = (key: keyof typeof privacy, val: any) => {
+    updateUserProfile({
+      privacy: {
+        ...privacy,
+        [key]: val
+      }
+    });
+  };
+
+  const handlePasswordReset = async () => {
+    if (user?.email) {
+      await resetPassword(user.email);
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 5000);
+    }
+  };
+
+  return (
+    <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm space-y-4">
+      <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
+        <Eye className="w-4 h-4 text-[var(--main-color)]" />
+        <span>Privacy & Account Security</span>
+      </h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <div className="space-y-3">
+          <div>
+            <label className="block font-semibold mb-1 text-[var(--sub-color)]">Profile Visibility</label>
+            <select
+              value={privacy.profileVisibility}
+              onChange={(e) => handleTogglePrivacy('profileVisibility', e.target.value)}
+              className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] outline-none"
+            >
+              <option value="public">Public (Visible to everyone)</option>
+              <option value="friends">Friends Only</option>
+              <option value="private">Private (Hidden from searches)</option>
+            </select>
+          </div>
+
+          <label className="flex items-center justify-between p-3 rounded-2xl bg-[var(--sub-alt)] cursor-pointer">
+            <span className="font-bold">Show Online / Offline Status</span>
+            <input
+              type="checkbox"
+              checked={privacy.showOnlineStatus}
+              onChange={(e) => handleTogglePrivacy('showOnlineStatus', e.target.checked)}
+              className="w-4 h-4 accent-[var(--main-color)]"
+            />
+          </label>
+        </div>
+
+        <div className="space-y-3">
+          <label className="flex items-center justify-between p-3 rounded-2xl bg-[var(--sub-alt)] cursor-pointer">
+            <span className="font-bold">Publicly Show Speed Statistics</span>
+            <input
+              type="checkbox"
+              checked={privacy.showStats}
+              onChange={(e) => handleTogglePrivacy('showStats', e.target.checked)}
+              className="w-4 h-4 accent-[var(--main-color)]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 rounded-2xl bg-[var(--sub-alt)] cursor-pointer">
+            <span className="font-bold">Allow Follow Requests</span>
+            <input
+              type="checkbox"
+              checked={privacy.allowFollow}
+              onChange={(e) => handleTogglePrivacy('allowFollow', e.target.checked)}
+              className="w-4 h-4 accent-[var(--main-color)]"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="pt-3 border-t border-[var(--sub-alt)] flex items-center justify-between">
+        <div>
+          <span className="text-xs font-bold block">Password & Security</span>
+          <span className="text-[10px] text-[var(--sub-color)]">Send a password reset link to {user?.email}</span>
+        </div>
+
+        <button
+          onClick={handlePasswordReset}
+          className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] font-bold text-xs hover:bg-[var(--main-color)] hover:text-white transition-all"
+        >
+          {resetSent ? 'Reset Link Sent ✓' : 'Reset Password'}
+        </button>
       </div>
     </div>
   );

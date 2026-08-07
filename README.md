@@ -1,12 +1,20 @@
-## Sayt haqida
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Ushbu sayt foydalanuvchilarga sun'iy intellekt asosidagi ilovani sinab ko'rish va mahalliy mashinada ishga tushirish imkonini beradi. Sayt kodlari, konfiguratsiyasi va ishlash qo'llanmasi bu repozitoriyada joylashgan.
+# Run and deploy your AI Studio app
 
-## Agar sayt o'g'irlangan bo'lsa
+This contains everything you need to run your app locally.
 
-Agar sayt yoki uning kodlari ruxsatsiz shaxs tomonidan o'g'irlangan bo'lsa, quyidagi chora-tadbirlar amalga oshirilishi kerak:
-- Huquqiy chora ko'rish: mualliflik huquqi va boshqa tegishli qonunlarga asosan shikoyat qilish.
-- Texnik chora: server kalitlari va API kalitlarini bekor qilish, parol va tokenlarni almashtirish.
-- Foydalanuvchilarni xabardor qilish: agar foydalanuvchilarning ma'lumotlari xavf ostida bo'lsa, ularni tezda ogohlantirish.
+View your app in AI Studio: https://ai.studio/apps/26a38f81-6538-495a-a2e5-5a167f8bcecc
 
-Ushbu choralar sayt xavfsizligini tiklash va zararlarni minimallashtirishga yordam beradi.
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

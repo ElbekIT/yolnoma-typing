@@ -104,11 +104,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         className="absolute opacity-0 pointer-events-none inset-0"
       />
 
-      {/* Focus Overlay warning if unfocused */}
+      {/* Simple, static hint when unfocused */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/80 backdrop-blur-sm rounded-2xl z-20 flex items-center justify-center text-xs font-semibold text-[var(--main-color)] gap-2">
-          <MousePointer className="w-5 h-5 animate-bounce" />
-          <span>Click here or press any key to focus & start typing</span>
+        <div className="absolute inset-0 bg-[var(--bg-color)]/70 rounded-2xl z-20 flex items-center justify-center text-xs font-semibold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)]">
+          <span>Click to focus and start typing</span>
         </div>
       )}
 

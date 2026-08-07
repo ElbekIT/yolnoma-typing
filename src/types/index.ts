@@ -15,6 +15,36 @@ export type CaretStyle = 'line' | 'block' | 'underline' | 'outline';
 export type SoundProfile = 'off' | 'cherry-blue' | 'cherry-red' | 'thock' | 'typewriter' | 'soft-bubble';
 export type ThemeMode = 'dark' | 'light' | 'cyberpunk' | 'serene' | 'dracula' | 'nord' | 'matrix' | 'sunset';
 
+export interface UserSocialLinks {
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  website?: string;
+}
+
+export interface UserPrivacySettings {
+  profileVisibility: 'public' | 'friends' | 'private';
+  allowMessages: 'everyone' | 'friends' | 'none';
+  showOnlineStatus: boolean;
+  showStats: boolean;
+  allowFollow: boolean;
+}
+
+export interface UserNotificationSettings {
+  emailAlerts: boolean;
+  achievementAlerts: boolean;
+  streakReminders: boolean;
+}
+
+export interface UserNotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  type: 'info' | 'success' | 'warning' | 'achievement' | 'level_up';
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -26,8 +56,34 @@ export interface UserProfile {
   bannerColor?: string;
   createdAt: number;
   lastActive: number;
+
+  // Level & XP
+  xp: number;
+  level: number;
+  rankTitle: string;
+
+  // Moderation & Verification
+  isVerified?: boolean;
+  isBanned?: boolean;
+  isSuspended?: boolean;
+  role: 'user' | 'admin';
+
+  // Username changes
+  usernameChangesLeft: number;
+
+  // Social & Privacy
+  socialLinks?: UserSocialLinks;
+  privacy: UserPrivacySettings;
+  notificationsConfig?: UserNotificationSettings;
+
+  // Social connections
+  followers: string[];
+  following: string[];
   followersCount: number;
   followingCount: number;
+  pinnedAchievements: string[];
+
+  // Stats
   unlockedAchievements: string[];
   totalTests: number;
   totalTimeTypedSeconds: number;
@@ -41,6 +97,11 @@ export interface UserProfile {
   lastTestDate?: string; // YYYY-MM-DD
   preferredLanguage?: LanguageCode;
   isPublic: boolean;
+
+  // Leaderboard dynamics
+  rankChange?: 'up' | 'down' | 'same';
+  rankChangeAmount?: number;
+  profileVisitorsCount?: number;
 }
 
 export interface TypingResult {
