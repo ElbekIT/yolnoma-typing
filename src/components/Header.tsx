@@ -36,9 +36,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme } = useSettings();
-  const [showLangMenu, setShowLangMenu] = useState(false);
-  const [showThemeMenu, setShowThemeMenu] = useState(false);
-  const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -51,20 +50,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'achievements', label: 'Yutuqlar', enLabel: 'Achievements', icon: Award },
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake, badge: 'Homiy' },
-    { id: 'profile', label: 'Profile', enLabel: 'Profile', icon: UserIcon },
+    { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
   ];
-
-  const currentLangInfo = languagesList.find((l) => l.code === language) || languagesList[0];
 
   const handleSelectTab = (id: string) => {
     setActiveTab(id);
     setIsDrawerOpen(false);
+    setShowProfileMenu(false);
   };
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/80 backdrop-blur-md border-b border-[var(--sub-alt)] px-4 py-3 transition-colors duration-200 shadow-sm">
+      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/85 backdrop-blur-md border-b border-[var(--sub-alt)] px-4 py-3 transition-colors duration-200 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Left Side: 3-lines Hamburger Menu & Brand Logo */}
           <div className="flex items-center gap-3">
@@ -94,172 +92,200 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </div>
           </div>
 
-          {/* Action Controls & User Auth */}
-          <div className="flex items-center gap-2">
-            {/* Notifications Bell */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifMenu(!showNotifMenu)}
-                className="p-2.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] transition-all relative border border-[var(--sub-color)]/10"
-                title="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] flex items-center justify-center shadow-sm">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {showNotifMenu && (
-                <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-2xl z-50 p-3 text-xs space-y-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-[var(--sub-alt)]">
-                    <span className="font-bold text-[var(--text-color)]">Aktiv Bildirishnomalar ({notifications.length})</span>
-                    <button
-                      onClick={clearNotifications}
-                      className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-semibold"
-                    >
-                      Tozalash
-                    </button>
-                  </div>
-
-                  {notifications.length > 0 ? (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => markNotificationRead(n.id)}
-                        className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                          n.read
-                            ? 'bg-[var(--card-bg)] border-[var(--sub-alt)] text-[var(--sub-color)]'
-                            : 'bg-[var(--sub-alt)] border-[var(--main-color)]/40 text-[var(--text-color)] font-medium'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between font-bold mb-1">
-                          <span>{n.title}</span>
-                          <span className="text-[9px] text-[var(--sub-color)] font-mono">
-                            {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-[11px] leading-snug">{n.message}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-[var(--sub-color)] py-4 text-xs">Hozircha yangi bildirishnoma yo'q.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Language Selector - Visible on ALL devices */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold bg-[var(--sub-alt)] text-[var(--text-color)] border border-[var(--sub-color)]/20 hover:border-[var(--main-color)] transition-all"
-                title="Tilni Tanlang"
-              >
-                <Globe className="w-3.5 h-3.5 text-[var(--main-color)]" />
-                <span>{currentLangInfo.flag}</span>
-                <span className="hidden md:inline">{currentLangInfo.nativeName}</span>
-              </button>
-
-              {showLangMenu && (
-                <div className="absolute right-0 mt-2 w-56 max-h-72 overflow-y-auto bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-2xl z-50 p-2 text-xs font-medium">
-                  <div className="px-2 py-1 text-[var(--sub-color)] font-bold uppercase text-[10px] tracking-wider">
-                    Tilni Tanlang
-                  </div>
-                  {languagesList.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        setLanguage(l.code as LanguageCode);
-                        setShowLangMenu(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors font-semibold ${
-                        language === l.code
-                          ? 'bg-[var(--main-color)] text-white'
-                          : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{l.flag}</span>
-                        <span>{l.nativeName}</span>
-                      </span>
-                      <span className="text-[10px] opacity-70">({l.script})</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Quick Theme Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setShowThemeMenu(!showThemeMenu)}
-                className="p-2.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] transition-all border border-[var(--sub-color)]/10"
-                title="Mavzuni o'zgartirish"
-              >
-                <Palette className="w-4 h-4" />
-              </button>
-
-              {showThemeMenu && (
-                <div className="absolute right-0 mt-2 w-52 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-2xl z-50 p-2 text-xs font-medium">
-                  <div className="px-2 py-1 text-[var(--sub-color)] font-bold uppercase text-[10px] tracking-wider">
-                    Mavzu Tanlang
-                  </div>
-                  {Object.values(themes).map((th) => (
-                    <button
-                      key={th.id}
-                      onClick={() => {
-                        setTheme(th.id as ThemeMode);
-                        setShowThemeMenu(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors font-semibold ${
-                        theme === th.id
-                          ? 'bg-[var(--main-color)] text-white'
-                          : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                      }`}
-                    >
-                      <span>{th.name}</span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/30 shadow-sm"
-                        style={{ backgroundColor: th.mainColor }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Auth Button / User Profile */}
+          {/* Right Side: Circular Profile Avatar with Dropdown */}
+          <div className="flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="relative">
+                {/* Circular Profile Avatar Button */}
                 <button
-                  onClick={() => handleSelectTab('profile')}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white transition-all text-xs font-bold text-[var(--text-color)] border border-[var(--sub-color)]/20"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="relative group p-0.5 rounded-full border-2 border-[var(--main-color)]/60 hover:border-[var(--main-color)] bg-[var(--sub-alt)] transition-all hover:scale-105 active:scale-95 shadow-md"
+                  title="Profil menyusi"
                 >
                   <img
                     src={profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
                     alt="avatar"
-                    className="w-5 h-5 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover"
                   />
-                  <span className="hidden sm:inline">{profile?.displayName || 'Foydalanuvchi'}</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] flex items-center justify-center animate-pulse border border-white">
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
 
-                <button
-                  onClick={logout}
-                  className="p-2.5 rounded-xl bg-[var(--sub-alt)] text-[var(--error-color)] hover:bg-[var(--error-color)] hover:text-white transition-all"
-                  title={t('signOut', language)}
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                {/* Profile Dropdown Menu */}
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-2xl z-50 p-4 text-xs space-y-3 divide-y divide-[var(--sub-alt)] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* User Info Header */}
+                    <div className="pb-3 flex items-center gap-3">
+                      <img
+                        src={profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
+                        alt="avatar"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-[var(--main-color)] p-0.5"
+                      />
+                      <div className="overflow-hidden">
+                        <h3 className="font-black text-sm text-[var(--text-color)] truncate">
+                          {profile?.displayName || 'Foydalanuvchi'}
+                        </h3>
+                        <p className="text-[11px] text-[var(--sub-color)] truncate">{user.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-2 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] font-bold text-[10px] flex items-center gap-1">
+                            <Zap className="w-3 h-3" /> {profile?.highestWpm || 0} WPM Best
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-bold text-[10px] flex items-center gap-1">
+                            <Crown className="w-3 h-3" /> Pro
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notifications (Habarnomalar) Section */}
+                    <div className="pt-3 space-y-2">
+                      <button
+                        onClick={() => setShowNotifSection(!showNotifSection)}
+                        className="w-full flex items-center justify-between p-2 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-all font-bold"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-[var(--main-color)]" />
+                          <span>Habarnomalar</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {unreadCount > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-mono font-extrabold">
+                              {unreadCount} yangi
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-[var(--sub-color)] font-normal">
+                              ({notifications.length})
+                            </span>
+                          )}
+                          <ChevronRight
+                            className={`w-4 h-4 text-[var(--sub-color)] transition-transform duration-200 ${
+                              showNotifSection ? 'rotate-90' : ''
+                            }`}
+                          />
+                        </div>
+                      </button>
+
+                      {showNotifSection && (
+                        <div className="max-h-56 overflow-y-auto space-y-2 p-1 bg-[var(--sub-alt)]/30 rounded-2xl border border-[var(--sub-alt)]">
+                          <div className="flex items-center justify-between px-2 py-1">
+                            <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider">
+                              Bildirishnomalar
+                            </span>
+                            {notifications.length > 0 && (
+                              <button
+                                onClick={clearNotifications}
+                                className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-semibold"
+                              >
+                                Tozalash
+                              </button>
+                            )}
+                          </div>
+
+                          {notifications.length > 0 ? (
+                            notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                onClick={() => markNotificationRead(n.id)}
+                                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                  n.read
+                                    ? 'bg-[var(--card-bg)] border-[var(--sub-alt)] text-[var(--sub-color)]'
+                                    : 'bg-[var(--card-bg)] border-[var(--main-color)]/40 text-[var(--text-color)] font-medium shadow-sm'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between font-bold mb-1">
+                                  <span>{n.title}</span>
+                                  <span className="text-[9px] text-[var(--sub-color)] font-mono">
+                                    {new Date(n.timestamp).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] leading-snug">{n.message}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-center text-[var(--sub-color)] py-3 text-xs">
+                              Hozircha yangi bildirishnoma yo'q
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick Navigation Menu Links */}
+                    <div className="pt-3 space-y-1">
+                      <button
+                        onClick={() => handleSelectTab('profile')}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <UserIcon className="w-4 h-4 text-[var(--main-color)]" />
+                          <span>Profilni Tahrirlash</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectTab('statistics')}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <BarChart2 className="w-4 h-4 text-emerald-500" />
+                          <span>Mening Statistikam</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectTab('achievements')}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Award className="w-4 h-4 text-amber-500" />
+                          <span>Yutuqlarim</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectTab('settings')}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Settings className="w-4 h-4 text-indigo-400" />
+                          <span>Sozlamalar</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </button>
+                    </div>
+
+                    {/* Logout Button */}
+                    <div className="pt-3">
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          logout();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all font-extrabold text-xs shadow-sm"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Tizimdan Chiqish</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[var(--main-color)] to-cyan-500 text-white font-extrabold text-xs shadow-md hover:opacity-90 transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-[var(--main-color)] to-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-[var(--main-color)]/25 hover:opacity-95 transition-all hover:scale-105 active:scale-95"
               >
                 <LogIn className="w-4 h-4" />
-                <span>{t('signIn', language)}</span>
+                <span>Kirish</span>
               </button>
             )}
           </div>
