@@ -311,6 +311,10 @@ function MainAppContent() {
               result={finalResult}
               onRestart={initTestText}
               onNextTest={initTestText}
+              onGoToLeaderboard={() => {
+                setIsTestFinished(false);
+                setActiveTab('leaderboard');
+              }}
             />
           </div>
         )}

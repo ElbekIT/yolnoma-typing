@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Trophy,
   Zap,
@@ -20,11 +20,41 @@ interface ResultModalProps {
   result: TypingResult | null;
   onRestart: () => void;
   onNextTest: () => void;
+  onGoToLeaderboard?: () => void;
 }
 
-export const ResultModal: React.FC<ResultModalProps> = ({ result, onRestart, onNextTest }) => {
+export const ResultModal: React.FC<ResultModalProps> = ({
+  result,
+  onRestart,
+  onNextTest,
+  onGoToLeaderboard
+}) => {
   const { themeConfig } = useSettings();
   const [copied, setCopied] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    if (!result) {
+      setCountdown(5);
+      return;
+    }
+
+    setCountdown(5);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          if (onGoToLeaderboard) {
+            onGoToLeaderboard();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [result, onGoToLeaderboard]);
 
   if (!result) return null;
 
@@ -38,11 +68,39 @@ export const ResultModal: React.FC<ResultModalProps> = ({ result, onRestart, onN
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-300 overflow-y-auto">
       <div className="relative w-full max-w-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 shadow-2xl text-[var(--text-color)] my-8">
+        
+        {/* Tabriklash va 5 Sekund Sanash Xabari */}
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-[var(--main-color)]/20 to-emerald-500/20 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-500 text-black font-extrabold flex items-center justify-center text-lg shadow-md animate-pulse">
+              {countdown}
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-[var(--text-color)] flex items-center gap-1.5">
+                <span>🎉 Tabriklaymiz! Test muvaffaqiyatli topshirildi!</span>
+              </h3>
+              <p className="text-xs text-[var(--sub-color)] mt-0.5">
+                Natijangiz reytingga saqlandi. <strong className="text-[var(--main-color)]">{countdown} soniya</strong>da Reyting (Leaderboard) ga o'tiladi...
+              </p>
+            </div>
+          </div>
+
+          {onGoToLeaderboard && (
+            <button
+              onClick={onGoToLeaderboard}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <Trophy className="w-4 h-4 fill-black" />
+              <span>Reytingni Ko'rish ({countdown}s)</span>
+            </button>
+          )}
+        </div>
+
         {/* Personal Best Badge */}
         {result.isPersonalBest && (
           <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold animate-bounce">
             <Trophy className="w-4 h-4 fill-amber-500" />
-            <span>NEW PERSONAL BEST RECORD!</span>
+            <span>YANGI REKORD BANT ETILDI!</span>
           </div>
         )}
 

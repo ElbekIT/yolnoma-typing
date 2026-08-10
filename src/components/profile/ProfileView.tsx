@@ -57,22 +57,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
   const [website, setWebsite] = useState(profile?.socialLinks?.website || '');
   const [saving, setSaving] = useState(false);
 
-  // Auto-open editing for new users without bio
+  // Sync form inputs with profile
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.displayName || '');
       setUsername(profile.username || '');
-      setBio(profile.bio || '');
+      setBio(profile.bio || 'Yolnoma typing ishtirokchisi');
       setCountry(profile.country || '🇺🇿 Uzbekistan');
       setAvatarUrl(profile.avatarUrl || '');
       setBannerColor(profile.bannerColor || '#38bdf8');
       setTwitter(profile.socialLinks?.twitter || '');
       setGithub(profile.socialLinks?.github || '');
       setWebsite(profile.socialLinks?.website || '');
-
-      if (!profile.bio || profile.bio.trim() === '') {
-        setIsEditing(true);
-      }
     }
   }, [profile]);
 

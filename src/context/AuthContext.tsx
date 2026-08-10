@@ -12,9 +12,8 @@ import {
   updateProfile,
   deleteUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { ref, set, update, push } from 'firebase/database';
-import { auth, db, rtdb, googleProvider } from '../config/firebase';
+import { ref, set, update, push, get, child } from 'firebase/database';
+import { auth, rtdb, googleProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -52,8 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [notifications, setNotifications] = useState<UserNotificationItem[]>([
     {
       id: 'welcome-1',
-      title: 'Welcome to Yolnoma Typing! ⚡',
-      message: 'Practice your speed, earn XP, unlock badges, and compete globally.',
+      title: 'Yolnoma Typing Platformaga Xush Kelibsiz! ⚡',
+      message: 'Klaviatura tezligingizni oshiring, darajangizni yuksaltiring va reytingda 1-o\'rinni egallang.',
       timestamp: Date.now() - 60000,
       read: false,
       type: 'info'
@@ -82,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNotifications([]);
   };
 
-  // Load local results for guests or offline
+  // Local Storage Helpers
   const getLocalResults = (): TypingResult[] => {
     try {
       const saved = localStorage.getItem('yolnoma_results_history');
@@ -93,17 +92,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const saveLocalResults = (results: TypingResult[]) => {
-    localStorage.setItem('yolnoma_results_history', JSON.stringify(results.slice(0, 100)));
+    try {
+      localStorage.setItem('yolnoma_results_history', JSON.stringify(results.slice(0, 100)));
+    } catch (e) {
+      console.warn('LocalStorage save results error:', e);
+    }
+  };
+
+  const getSavedLocalProfile = (uid: string): UserProfile | null => {
+    try {
+      const saved = localStorage.getItem(`yolnoma_user_profile_${uid}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveLocalProfile = (uid: string, prof: UserProfile) => {
+    try {
+      localStorage.setItem(`yolnoma_user_profile_${uid}`, JSON.stringify(prof));
+    } catch (e) {
+      console.warn('LocalStorage save profile error:', e);
+    }
   };
 
   const createDefaultProfile = (firebaseUser: User): UserProfile => {
+    const cached = getSavedLocalProfile(firebaseUser.uid);
+    if (cached) return cached;
+
     const username = firebaseUser.displayName
       ? firebaseUser.displayName.toLowerCase().replace(/\s+/g, '_').substring(0, 18)
       : firebaseUser.email
       ? firebaseUser.email.split('@')[0]
       : `typer_${Math.floor(1000 + Math.random() * 9000)}`;
 
-    return {
+    const fresh: UserProfile = {
       uid: firebaseUser.uid,
       email: firebaseUser.email || '',
       username,
@@ -144,109 +167,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       longestStreak: 1,
       isPublic: true,
       country: '🇺🇿 Uzbekistan',
-      bio: ''
+      bio: 'Yolnoma typing ishtirokchisi'
     };
-  };
 
-  const withTimeout = <T,>(promise: Promise<T>, ms = 1000): Promise<T> => {
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
-    ]);
+    saveLocalProfile(firebaseUser.uid, fresh);
+    return fresh;
   };
 
   const fetchOrCreateProfile = async (firebaseUser: User): Promise<UserProfile> => {
-    const fallback = createDefaultProfile(firebaseUser);
-    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    const local = getSavedLocalProfile(firebaseUser.uid);
+    const fallback = local || createDefaultProfile(firebaseUser);
+
+    // Sync from Realtime Database in background
     try {
-      const snapshot = await withTimeout(getDoc(userDocRef), 1000);
+      const dbRef = ref(rtdb);
+      const snapshot = await get(child(dbRef, `users/${firebaseUser.uid}`));
       if (snapshot.exists()) {
-        const data = snapshot.data() as UserProfile;
+        const remoteData = snapshot.val() as UserProfile;
         const merged: UserProfile = {
           ...fallback,
-          ...data,
-          usernameChangesLeft: data.usernameChangesLeft ?? 2,
-          xp: data.xp ?? 250,
-          level: data.level ?? 1,
-          rankTitle: data.rankTitle || 'Typing Novice',
-          role: data.role || (firebaseUser.email?.includes('admin') ? 'admin' : 'user'),
-          followers: data.followers || [],
-          following: data.following || [],
-          pinnedAchievements: data.pinnedAchievements || [],
+          ...remoteData,
           lastActive: Date.now()
         };
-
-        await updateDoc(userDocRef, { lastActive: Date.now() }).catch(() => {});
+        saveLocalProfile(firebaseUser.uid, merged);
         return merged;
+      } else {
+        // Save fallback to RTDB
+        await set(ref(rtdb, `users/${firebaseUser.uid}`), fallback);
+        await set(ref(rtdb, `leaderboard/${firebaseUser.uid}`), {
+          uid: fallback.uid,
+          displayName: fallback.displayName,
+          username: fallback.username,
+          highestWpm: fallback.highestWpm || 0,
+          highestAccuracy: fallback.highestAccuracy || 0,
+          country: fallback.country || '🇺🇿 Uzbekistan',
+          level: fallback.level || 1,
+          rankTitle: fallback.rankTitle || 'Typing Novice',
+          bio: fallback.bio || '',
+          avatarUrl: fallback.avatarUrl || '',
+          totalTests: fallback.totalTests || 0,
+          lastActive: Date.now()
+        });
       }
     } catch (e) {
-      console.warn('Firestore profile fetch fallback used:', e);
-    }
-
-    try {
-      await setDoc(userDocRef, fallback).catch(() => {});
-      await set(ref(rtdb, `users/${firebaseUser.uid}`), fallback).catch(() => {});
-    } catch {
-      // Offline fallback catch
+      console.warn('RTDB profile sync fallback:', e);
     }
 
     return fallback;
   };
 
   const refreshHistory = async () => {
-    if (!user) {
-      setUserResultsHistory(getLocalResults());
-      return;
-    }
-    try {
-      const q = query(
-        collection(db, 'typingResults'),
-        where('userId', '==', user.uid),
-        orderBy('timestamp', 'desc'),
-        limit(50)
-      );
-      const snapshot = await getDocs(q);
-      const items: TypingResult[] = [];
-      snapshot.forEach((docSnap) => {
-        items.push({ id: docSnap.id, ...docSnap.data() } as TypingResult);
-      });
-      setUserResultsHistory(items);
-    } catch {
-      setUserResultsHistory(getLocalResults());
-    }
+    setUserResultsHistory(getLocalResults());
   };
 
   useEffect(() => {
-    // Check redirect result on mount
+    // Handle OAuth redirect result if any
     getRedirectResult(auth)
       .then(async (res) => {
         if (res && res.user) {
           const p = await fetchOrCreateProfile(res.user);
           setProfile(p);
-          addNotification('Google Login Successful', `Welcome back, ${p.displayName}!`);
+          addNotification('Xush kelibsiz!', `Salom, ${p.displayName}!`);
         }
       })
       .catch((err) => console.error('Redirect result error:', err));
 
     const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 2500);
+    }, 1500);
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         const instantProfile = createDefaultProfile(firebaseUser);
-        setProfile((prev) => prev || instantProfile);
+        setProfile(instantProfile);
         setLoading(false);
 
-        // Fetch/merge full profile from remote in background
+        // Fetch & sync full RTDB profile in background
         fetchOrCreateProfile(firebaseUser)
           .then((p) => {
             if (p) setProfile(p);
           })
-          .catch((err) => {
-            console.warn('Async profile sync error:', err);
-          });
+          .catch((err) => console.warn('Async RTDB profile sync:', err));
       } else {
         setUser(null);
         setProfile(null);
@@ -262,11 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    if (user) {
-      refreshHistory();
-    } else {
-      setUserResultsHistory(getLocalResults());
-    }
+    refreshHistory();
   }, [user]);
 
   const signInWithGoogle = async () => {
@@ -275,22 +273,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.user) {
         const p = await fetchOrCreateProfile(res.user);
         setProfile(p);
-        addNotification('Google Login Successful', `Welcome back, ${p.displayName}!`);
+        addNotification('Google orqali kirdingiz', `Xush kelibsiz, ${p.displayName}!`);
       }
     } catch (err: any) {
-      console.warn('Google Popup Sign In Error, attempting redirect fallback:', err);
+      console.warn('Google Popup error, fallback to redirect:', err);
       if (
         err?.code === 'auth/popup-blocked' ||
         err?.code === 'auth/popup-closed-by-user' ||
         err?.code === 'auth/cancelled-popup-request' ||
         err?.code === 'auth/unauthorized-domain'
       ) {
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (redirectErr) {
-          console.error('Google Redirect Error:', redirectErr);
-          throw redirectErr;
-        }
+        await signInWithRedirect(auth, googleProvider);
       } else {
         throw err;
       }
@@ -301,16 +294,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await createUserWithEmailAndPassword(auth, email, pass);
     if (res.user) {
       await updateProfile(res.user, { displayName: username });
-      const p = await fetchOrCreateProfile(res.user);
+      const p = createDefaultProfile(res.user);
       p.username = username;
       p.displayName = username;
+      saveLocalProfile(res.user.uid, p);
       setProfile(p);
-      try {
-        await updateDoc(doc(db, 'users', res.user.uid), { username, displayName: username });
-      } catch {
-        // Handle offline
-      }
-      addNotification('Account Created!', `Welcome to Yolnoma Typing, @${username}!`);
+
+      // Async write to RTDB
+      set(ref(rtdb, `users/${res.user.uid}`), p).catch(() => {});
+      set(ref(rtdb, `leaderboard/${res.user.uid}`), {
+        uid: p.uid,
+        displayName: p.displayName,
+        username: p.username,
+        highestWpm: 0,
+        highestAccuracy: 0,
+        country: p.country,
+        level: p.level,
+        rankTitle: p.rankTitle,
+        bio: p.bio,
+        avatarUrl: p.avatarUrl,
+        totalTests: 0,
+        lastActive: Date.now()
+      }).catch(() => {});
+
+      addNotification('Ro\'yhatdan o\'tildi!', `Xush kelibsiz, @${username}!`);
     }
   };
 
@@ -319,13 +326,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.user) {
       const p = await fetchOrCreateProfile(res.user);
       setProfile(p);
-      addNotification('Welcome Back!', `Signed in as ${p.displayName}`);
+      addNotification('Xush kelibsiz!', `Tizimga kirdingiz: ${p.displayName}`);
     }
   };
 
   const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
-    addNotification('Password Reset Sent', `Check ${email} for password reset instructions.`);
+    addNotification('Parol tiklash yuborildi', `${email} pochtangizni tekshiring.`);
   };
 
   const logout = async () => {
@@ -337,46 +344,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!profile) return;
-    const updated = { ...profile, ...updates };
+    const updated: UserProfile = { ...profile, ...updates, lastActive: Date.now() };
     setProfile(updated);
 
-    if (updates.username && updates.username !== profile.username) {
-      addNotification('Username Changed', `Your username was changed to @${updates.username}.`);
-    }
-
     if (user) {
-      // Non-blocking background cloud sync with fast timeouts
-      (async () => {
-        try {
-          await withTimeout(updateDoc(doc(db, 'users', user.uid), updates), 2000);
-        } catch (err) {
-          console.warn('Update profile firestore error/timeout:', err);
-        }
-        try {
-          await withTimeout(update(ref(rtdb, `users/${user.uid}`), updates), 2000);
-          if ((updated.totalTests || 0) > 0 || (updated.highestWpm || 0) > 0) {
-            await withTimeout(
-              update(ref(rtdb, `leaderboard/${user.uid}`), {
-                uid: user.uid,
-                displayName: updated.displayName,
-                username: updated.username,
-                highestWpm: updated.highestWpm,
-                highestAccuracy: updated.highestAccuracy,
-                country: updated.country || '🇺🇿 Uzbekistan',
-                level: updated.level,
-                rankTitle: updated.rankTitle || 'Typing Novice',
-                bio: updated.bio || '',
-                avatarUrl: updated.avatarUrl || '',
-                totalTests: updated.totalTests || 1,
-                lastActive: Date.now()
-              }),
-              2000
-            );
-          }
-        } catch (err) {
-          console.warn('Update profile RTDB error/timeout:', err);
-        }
-      })();
+      saveLocalProfile(user.uid, updated);
+
+      // Sync directly to Realtime Database
+      try {
+        await update(ref(rtdb, `users/${user.uid}`), updates);
+        await update(ref(rtdb, `leaderboard/${user.uid}`), {
+          uid: user.uid,
+          displayName: updated.displayName,
+          username: updated.username,
+          highestWpm: updated.highestWpm || 0,
+          highestAccuracy: updated.highestAccuracy || 0,
+          country: updated.country || '🇺🇿 Uzbekistan',
+          level: updated.level || 1,
+          rankTitle: updated.rankTitle || 'Typing Novice',
+          bio: updated.bio || '',
+          avatarUrl: updated.avatarUrl || '',
+          totalTests: updated.totalTests || 0,
+          lastActive: Date.now()
+        });
+      } catch (err) {
+        console.warn('Update profile RTDB error:', err);
+      }
     }
   };
 
@@ -391,11 +384,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       following: newFollowing,
       followingCount: newFollowing.length
     });
-
-    addNotification(
-      isFollowing ? 'Unfollowed User' : 'Following User',
-      isFollowing ? 'You unfollowed this user.' : 'You are now following this user!'
-    );
   };
 
   const unfollowUser = async (targetUid: string) => {
@@ -405,8 +393,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteAccount = async () => {
     if (!user) return;
     try {
-      addNotification('Account Deleted', 'Your account and data were permanently removed.', 'warning');
-      await deleteDoc(doc(db, 'users', user.uid)).catch(() => {});
+      addNotification('Hisob o\'chirildi', 'Hisobingiz muvaffaqiyatli o\'chirildi.', 'warning');
+      localStorage.removeItem(`yolnoma_user_profile_${user.uid}`);
       await deleteUser(user);
       setUser(null);
       setProfile(null);
@@ -433,16 +421,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     downloadAnchor.click();
     downloadAnchor.remove();
 
-    addNotification('Data Export Completed', 'Your personal account JSON file has been downloaded.');
+    addNotification('Ma\'lumotlar yuklab olindi', 'Profilingiz fayli saqlandi.');
   };
 
   const adminUpdateUser = async (targetUid: string, updates: Partial<UserProfile>) => {
     try {
-      await updateDoc(doc(db, 'users', targetUid), updates);
+      await update(ref(rtdb, `users/${targetUid}`), updates);
       if (profile && profile.uid === targetUid) {
         setProfile({ ...profile, ...updates });
       }
-      addNotification('Admin Update Executed', `Successfully updated profile for UID: ${targetUid.slice(0, 8)}...`);
+      addNotification('Admin Update', `User updated: ${targetUid.slice(0, 8)}`);
     } catch (err) {
       console.error('Admin update failed:', err);
     }
@@ -466,7 +454,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userId = user ? user.uid : guestId;
     const username = profile ? profile.username : `guest_${guestId.replace('guest_', '')}`;
 
-    // Check personal best
     const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
     const isPersonalBest = rawResult.wpm > existingPBest;
 
@@ -500,70 +487,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserResultsHistory(newLocal);
 
     if (user && profile) {
-      // Save result document in Firestore and Realtime Database
+      // Calculate updated stats
+      const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
+      const newXp = profile.xp + xpEarned;
+      const newLevel = Math.floor(newXp / 500) + 1;
+
+      if (newLevel > profile.level) {
+        addNotification('YANGI DARAJA! 🎉', `Tabriklaymiz! ${newLevel}-darajaga erishdingiz!`, 'level_up');
+      }
+
+      let rankTitle = 'Typing Novice';
+      if (newLevel >= 5) rankTitle = 'Keyboard Warrior';
+      if (newLevel >= 10) rankTitle = 'Speed Demon';
+      if (newLevel >= 20) rankTitle = 'Cyber Legend';
+
+      const newTotalTests = profile.totalTests + 1;
+      const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
+      const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
+      const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
+      const newHighestWpm = Math.max(profile.highestWpm, fullResult.wpm);
+      const newHighestAccuracy = Math.max(profile.highestAccuracy, fullResult.accuracy);
+      const newAvgWpm = Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests);
+
+      const profileUpdates: Partial<UserProfile> = {
+        totalTests: newTotalTests,
+        totalTimeTypedSeconds: newTimeTyped,
+        totalWordsTyped: newWordsTyped,
+        totalCharsTyped: newCharsTyped,
+        highestWpm: newHighestWpm,
+        highestAccuracy: newHighestAccuracy,
+        averageWpm: newAvgWpm,
+        xp: newXp,
+        level: newLevel,
+        rankTitle,
+        lastActive: Date.now()
+      };
+
+      await updateUserProfile(profileUpdates);
+
+      // Save result in RTDB
       try {
-        const docRef = await addDoc(collection(db, 'typingResults'), fullResult);
-        fullResult.id = docRef.id;
-
-        // Save to RTDB
-        const rtdbResultRef = push(ref(rtdb, `results/${userId}`));
-        await set(rtdbResultRef, fullResult);
-
-        // Also push to leaderboards
-        await addDoc(collection(db, 'leaderboards'), {
-          resultId: docRef.id,
-          userId,
-          username,
-          wpm: fullResult.wpm,
-          accuracy: fullResult.accuracy,
-          language: fullResult.language,
-          timeMode: fullResult.timeMode,
-          timestamp: fullResult.timestamp,
-          country: profile.country || '🇺🇿 Uzbekistan'
-        });
-
-        // Recalculate User Profile Stats + XP Gain
-        const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
-        const newXp = profile.xp + xpEarned;
-        const newLevel = Math.floor(newXp / 500) + 1;
-
-        if (newLevel > profile.level) {
-          addNotification('LEVEL UP! 🎉', `Congratulations! You reached Level ${newLevel}!`, 'level_up');
-        }
-
-        let rankTitle = 'Typing Novice';
-        if (newLevel >= 5) rankTitle = 'Keyboard Warrior';
-        if (newLevel >= 10) rankTitle = 'Speed Demon';
-        if (newLevel >= 20) rankTitle = 'Cyber Legend';
-
-        const newTotalTests = profile.totalTests + 1;
-        const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
-        const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
-        const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-        const newHighestWpm = Math.max(profile.highestWpm, fullResult.wpm);
-        const newHighestAccuracy = Math.max(profile.highestAccuracy, fullResult.accuracy);
-        const newAvgWpm = Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests);
-
-        const profileUpdates: Partial<UserProfile> = {
-          totalTests: newTotalTests,
-          totalTimeTypedSeconds: newTimeTyped,
-          totalWordsTyped: newWordsTyped,
-          totalCharsTyped: newCharsTyped,
-          highestWpm: newHighestWpm,
-          highestAccuracy: newHighestAccuracy,
-          averageWpm: newAvgWpm,
-          xp: newXp,
-          level: newLevel,
-          rankTitle,
-          lastActive: Date.now()
-        };
-
-        await updateUserProfile(profileUpdates);
+        const resultRef = push(ref(rtdb, `results/${userId}`));
+        await set(resultRef, fullResult);
       } catch (err) {
-        console.error('Save to firestore error:', err);
+        console.warn('RTDB save result error:', err);
       }
     } else {
-      // Guest User - Push live score to Realtime Database Leaderboard
+      // Guest User - Push live score to RTDB Leaderboard
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));
         await set(ref(rtdb, `leaderboard/${guestId}`), {
@@ -577,7 +547,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           rankTitle: 'Mehmon Typer',
           bio: 'Tezkor Mehmon Foydalanuvchi',
           avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
-          lastActive: Date.now()
+          lastActive: Date.now(),
+          totalTests: (getLocalResults().length || 1)
         });
       } catch (e) {
         console.warn('Guest RTDB sync error:', e);
@@ -625,3 +596,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

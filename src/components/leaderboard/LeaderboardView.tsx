@@ -19,9 +19,8 @@ import {
   Zap,
   Users
 } from 'lucide-react';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { ref, get, onValue } from 'firebase/database';
-import { db, rtdb } from '../../config/firebase';
+import { ref, onValue, get } from 'firebase/database';
+import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
@@ -55,17 +54,66 @@ export const LeaderboardView: React.FC = () => {
     const fetchLeaderboard = async () => {
       const fetchedMap = new Map<string, UserProfile>();
 
-      // Load Seed Typers as baseline
-      SEED_TYPERS.forEach((st) => fetchedMap.set(st.uid, st));
-
-      if (currentUser && (currentUser.highestWpm || 0) > 0 && (currentUser.totalTests || 0) > 0) {
+      // 1. Load current user if completed tests
+      if (currentUser && (currentUser.highestWpm || 0) > 0) {
         fetchedMap.set(currentUser.uid, currentUser);
+      }
+
+      // 2. Load guest if completed test
+      try {
+        const guestId = localStorage.getItem('yolnoma_guest_id');
+        const guestBest = Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
+        if (guestId && guestBest > 0 && !currentUser) {
+          fetchedMap.set(guestId, {
+            uid: guestId,
+            email: '',
+            username: guestId,
+            displayName: `Mehmon (${guestId.replace('guest_', '')})`,
+            highestWpm: guestBest,
+            highestAccuracy: 98,
+            country: '🇺🇿 Uzbekistan',
+            level: 1,
+            rankTitle: 'Mehmon Typer',
+            bio: 'Tezkor Mehmon Foydalanuvchi',
+            avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
+            totalTests: 1,
+            totalTimeTypedSeconds: 60,
+            totalWordsTyped: guestBest,
+            totalCharsTyped: guestBest * 5,
+            averageWpm: guestBest,
+            currentStreak: 1,
+            longestStreak: 1,
+            createdAt: Date.now(),
+            lastActive: Date.now(),
+            isVerified: false,
+            xp: 250,
+            role: 'user',
+            usernameChangesLeft: 2,
+            followers: [],
+            following: [],
+            followersCount: 0,
+            followingCount: 0,
+            pinnedAchievements: [],
+            unlockedAchievements: ['first_test'],
+            isPublic: true,
+            privacy: {
+              profileVisibility: 'public',
+              allowMessages: 'everyone',
+              showOnlineStatus: true,
+              showStats: true,
+              allowFollow: true
+            },
+            socialLinks: { twitter: '', github: '', discord: '', website: '' },
+            notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
+          });
+        }
+      } catch (e) {
+        console.warn('Guest map error:', e);
       }
 
       const updateRankingsFromMap = () => {
         let source = Array.from(fetchedMap.values());
-        // Only show users who have completed at least 1 typing test
-        source = source.filter((u) => (u.highestWpm || 0) > 0 && (u.totalTests || 0) > 0);
+        source = source.filter((u) => (u.highestWpm || 0) > 0);
         source.sort((a, b) => (b.highestWpm || 0) - (a.highestWpm || 0));
         const formatted = source.map((user, idx) => ({
           ...user,
@@ -76,20 +124,7 @@ export const LeaderboardView: React.FC = () => {
 
       updateRankingsFromMap();
 
-      // 1. Fetch from Firestore users collection
-      try {
-        const q = query(collection(db, 'users'), orderBy('highestWpm', 'desc'), limit(100));
-        const snapshot = await getDocs(q);
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data() as UserProfile;
-          fetchedMap.set(docSnap.id, { uid: docSnap.id, ...data });
-        });
-        updateRankingsFromMap();
-      } catch (e) {
-        console.warn('Firestore leaderboard query fallback:', e);
-      }
-
-      // 2. Real-time Database live listener
+      // 3. Real-time Database live listener for all users & leaderboards
       try {
         const leaderboardRef = ref(rtdb, 'leaderboard');
         unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
@@ -97,6 +132,7 @@ export const LeaderboardView: React.FC = () => {
             const val = snapshot.val();
             Object.keys(val).forEach((key) => {
               const item = val[key];
+              if (!item) return;
               const existing = fetchedMap.get(key);
               if (!existing) {
                 fetchedMap.set(key, {
@@ -110,7 +146,7 @@ export const LeaderboardView: React.FC = () => {
                   level: item.level || 1,
                   rankTitle: item.rankTitle || 'Typing Novice',
                   bio: item.bio || '',
-                  avatarUrl: item.avatarUrl || '',
+                  avatarUrl: item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${key}`,
                   totalTests: item.totalTests || 1,
                   totalTimeTypedSeconds: 60,
                   totalWordsTyped: Math.round((item.highestWpm || 0)),
