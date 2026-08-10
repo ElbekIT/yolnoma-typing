@@ -27,15 +27,37 @@ interface CongratulationData {
   prevTopAccuracy?: number;
 }
 
-// Track sent ranks in session to prevent spamming duplicate messages in same browser session
-const sentRanksCache = new Set<string>();
+// Persistent storage helpers to avoid sending duplicates even after browser refresh
+const getSentKeys = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem('yolnoma_sent_tg_keys');
+    if (stored) {
+      return new Set(JSON.parse(stored));
+    }
+  } catch (e) {
+    console.warn('LocalStorage read error for Telegram keys:', e);
+  }
+  return new Set();
+};
+
+const markKeyAsSent = (key: string) => {
+  try {
+    const keys = getSentKeys();
+    keys.add(key);
+    const arr = Array.from(keys).slice(-100);
+    localStorage.setItem('yolnoma_sent_tg_keys', JSON.stringify(arr));
+  } catch (e) {
+    console.warn('LocalStorage write error for Telegram keys:', e);
+  }
+};
 
 export const sendTelegramTop3Congratulation = async (data: CongratulationData) => {
   if (data.rank < 1 || data.rank > 3) return;
 
-  const cacheKey = `${data.username || data.displayName}_rank_${data.rank}_wpm_${data.wpm}`;
-  if (sentRanksCache.has(cacheKey)) return;
-  sentRanksCache.add(cacheKey);
+  const cacheKey = `${data.username || data.displayName}_rank_${data.rank}_wpm_${data.wpm}_acc_${data.accuracy}`;
+  const sentKeys = getSentKeys();
+  if (sentKeys.has(cacheKey)) return;
+  markKeyAsSent(cacheKey);
 
   const medalEmoji = data.rank === 1 ? '🥇' : data.rank === 2 ? '🥈' : '🥉';
   const rankText = data.rank === 1 ? "1-O'RIN (CHAMPION)" : data.rank === 2 ? "2-O'RIN (SILVER)" : "3-O'RIN (BRONZE)";
@@ -43,9 +65,9 @@ export const sendTelegramTop3Congratulation = async (data: CongratulationData) =
   let recordNote = '';
   if (data.rank === 1) {
     if (data.prevTopAccuracy && data.accuracy < data.prevTopAccuracy) {
-      recordNote = `\n🔥 <b>YANGI REKORD BOSH CHARXLANDI!</b>\n⚡ Siz oldingi tezlik natijasidan o'zib ketib, mutlaq 1-o'rinni egalladingiz! Aniqligingiz (${data.accuracy}%) biroz pastroq bo'lsada, yuqori tezlik evaziga Peshqadamsiz! 💪\n`;
+      recordNote = `\n🔥 <b>YANGI REKORD BOSH CHARXLANDI!</b>\n⚡ Siz oldingi tezlik natijasidan o'zib ketib, mutlaq 1-o'rinni egalladingiz! Aniqligingiz (${data.accuracy}%) biroz pastroq bo'lsada, shiddatli tezlik (${data.wpm} WPM) evaziga Peshqadamsiz! 💪\n`;
     } else {
-      recordNote = `\n⚡ <b>MUTLAQ CHEMPIONLIK REKORDI!</b>\nYuqori yozish tezligi va yuqori aniqlik bilan peshqadamlik taxtini egalladingiz! 👑\n`;
+      recordNote = `\n⚡ <b>MUTLAQ CHEMPIONLIK REKORDI!</b>\nYuqori yozish tezligi va ajoyib aniqlik bilan peshqadamlik taxtini egalladingiz! 👑\n`;
     }
   }
 

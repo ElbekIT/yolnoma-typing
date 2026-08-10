@@ -173,7 +173,7 @@ export const LeaderboardView: React.FC = () => {
                   createdAt: item.createdAt || Date.now(),
                   lastActive: item.lastActive || Date.now(),
                   isVerified: false,
-                  xp: (item.level || 1) * 500,
+                  xp: typeof item.xp === 'number' ? item.xp : (item.level || 1) * 250,
                   role: 'user',
                   usernameChangesLeft: 2,
                   followers: [],
@@ -194,9 +194,14 @@ export const LeaderboardView: React.FC = () => {
                   notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
                 });
               } else {
-                if ((item.highestWpm || 0) > (existing.highestWpm || 0)) {
+                if (item.highestWpm !== undefined && item.highestWpm >= (existing.highestWpm || 0)) {
                   existing.highestWpm = item.highestWpm;
                 }
+                if (item.highestAccuracy !== undefined && item.highestAccuracy > 0) {
+                  existing.highestAccuracy = item.highestAccuracy;
+                }
+                if (typeof item.xp === 'number') existing.xp = item.xp;
+                if (item.level) existing.level = item.level;
                 if (item.displayName) existing.displayName = item.displayName;
                 if (item.username) existing.username = item.username;
                 if (item.bio) existing.bio = item.bio;

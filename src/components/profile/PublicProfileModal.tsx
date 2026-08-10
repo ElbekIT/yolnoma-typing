@@ -186,9 +186,9 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
           {/* Level & XP Bar */}
           {(() => {
             const calculatedXp =
-              typeof userProfile.xp === 'number' && userProfile.xp > 0
+              typeof userProfile.xp === 'number' && userProfile.xp >= 0
                 ? userProfile.xp
-                : Math.max(250, (userProfile.level || 1) * 350 + (userProfile.highestWpm || 0) * 5);
+                : (userProfile.level || 1) * 250;
             const currentLevel = userProfile.level || Math.max(1, Math.floor(calculatedXp / 500) + 1);
             const xpInLevel = calculatedXp % 500;
             const progressPercent = Math.min(100, Math.max(10, Math.round((xpInLevel / 500) * 100)));
