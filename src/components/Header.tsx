@@ -19,7 +19,8 @@ import {
   Sparkles,
   Zap,
   Handshake,
-  Crown
+  Crown,
+  Swords
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -44,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard, badge: 'Pro' },
+    { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords, badge: '1v1 🔥' },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
     { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy, badge: 'Live' },
     { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },

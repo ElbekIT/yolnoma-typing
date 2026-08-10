@@ -19,6 +19,10 @@ import { ChallengesView } from './components/challenges/ChallengesView';
 import { ProfileView } from './components/profile/ProfileView';
 import { SettingsView } from './components/settings/SettingsView';
 import { PartnersView } from './components/partners/PartnersView';
+import { BattleView } from './components/battle/BattleView';
+import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
+import { rtdb } from './config/firebase';
+import { ref, onValue, remove } from 'firebase/database';
 
 import {
   TextMode,
@@ -37,9 +41,48 @@ function MainAppContent() {
   const [activeTab, setActiveTab] = useState<string>('typing');
   const prevUserRef = useRef<string | null>(null);
 
-  // Modals
+  // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
+
+  // Realtime Battle Invites listener
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const inviteRef = ref(rtdb, `battles/invites/${user.uid}`);
+      const unsubscribe = onValue(inviteRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setIncomingInvite(data as BattleInviteData);
+        } else {
+          setIncomingInvite(null);
+        }
+      });
+      return () => unsubscribe();
+    } catch {
+      // Ignore firebase offline error
+    }
+  }, [user]);
+
+  const handleAcceptInvite = (invite: BattleInviteData) => {
+    if (user) {
+      try {
+        remove(ref(rtdb, `battles/invites/${user.uid}`));
+      } catch {}
+    }
+    setIncomingInvite(null);
+    setActiveTab('battle');
+  };
+
+  const handleDeclineInvite = (invite: BattleInviteData) => {
+    if (user) {
+      try {
+        remove(ref(rtdb, `battles/invites/${user.uid}`));
+      } catch {}
+    }
+    setIncomingInvite(null);
+  };
 
   // Test Configurations
   const [mode, setMode] = useState<TextMode>('words');
@@ -328,6 +371,7 @@ function MainAppContent() {
           </div>
         )}
 
+        {activeTab === 'battle' && <BattleView />}
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'leaderboard' && <LeaderboardView />}
         {activeTab === 'statistics' && <StatisticsView />}
@@ -345,6 +389,11 @@ function MainAppContent() {
 
       <Footer onOpenAbout={() => setIsAboutOpen(true)} />
 
+      <PubgInviteModal
+        invite={incomingInvite}
+        onAccept={handleAcceptInvite}
+        onDecline={handleDeclineInvite}
+      />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>
