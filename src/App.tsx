@@ -41,34 +41,6 @@ function MainAppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
 
-  // When user logs in, close modal and remember user
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('yolnoma_auth_completed', 'true');
-      setIsAuthOpen(false);
-    }
-    prevUserRef.current = user ? user.uid : null;
-  }, [user]);
-
-  // Loading state gate
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 animate-spin flex items-center justify-center font-black text-xl">
-          Y
-        </div>
-        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase animate-pulse">
-          Yolnoma Typing Platform Yuklanmoqda...
-        </p>
-      </div>
-    );
-  }
-
-  // Mandatory Login Gate if user is not authenticated
-  if (!user) {
-    return <LoginPage />;
-  }
-
   // Test Configurations
   const [mode, setMode] = useState<TextMode>('words');
   const [timeMode, setTimeMode] = useState<TimeMode>(30);
@@ -87,6 +59,15 @@ function MainAppContent() {
   const [finalResult, setFinalResult] = useState<TypingResult | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // When user logs in, close modal and remember user
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('yolnoma_auth_completed', 'true');
+      setIsAuthOpen(false);
+    }
+    prevUserRef.current = user ? user.uid : null;
+  }, [user]);
 
   // Initialize test text
   const initTestText = useCallback(() => {
@@ -210,6 +191,25 @@ function MainAppContent() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isTestActive, timeMode, typedInput.length, elapsedSeconds, finishTest]);
+
+  // Loading state gate (AFTER ALL HOOKS)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 animate-spin flex items-center justify-center font-black text-xl">
+          Y
+        </div>
+        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase animate-pulse">
+          Yolnoma Typing Platform Yuklanmoqda...
+        </p>
+      </div>
+    );
+  }
+
+  // Mandatory Login Gate if user is not authenticated (AFTER ALL HOOKS)
+  if (!user) {
+    return <LoginPage />;
+  }
 
   // Input change handler
   const handleInputChange = (newInput: string) => {
