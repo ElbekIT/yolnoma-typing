@@ -25,7 +25,6 @@ import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
-import { sendTelegramTop3Congratulation } from '../../services/telegramBot';
 
 interface LeaderboardEntry extends UserProfile {
   rank: number;
@@ -122,20 +121,6 @@ export const LeaderboardView: React.FC = () => {
           rank: idx + 1
         }));
         setRankings(formatted);
-
-        // Send Telegram Bot Congratulation to Channel & Groups for Top 3
-        const top2UserAcc = formatted[1]?.highestAccuracy || 99;
-        formatted.slice(0, 3).forEach((topUser) => {
-          sendTelegramTop3Congratulation({
-            rank: topUser.rank,
-            displayName: topUser.displayName || topUser.username || 'Typer',
-            username: topUser.username || '',
-            wpm: topUser.highestWpm || 0,
-            accuracy: topUser.highestAccuracy || 98,
-            xp: topUser.xp || (topUser.level || 1) * 250,
-            prevTopAccuracy: topUser.rank === 1 ? top2UserAcc : undefined
-          });
-        });
       };
 
       updateRankingsFromMap();
