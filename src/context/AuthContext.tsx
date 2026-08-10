@@ -361,6 +361,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           highestAccuracy: updated.highestAccuracy || 0,
           country: updated.country || '🇺🇿 Uzbekistan',
           level: updated.level || 1,
+          xp: updated.xp || 250,
           rankTitle: updated.rankTitle || 'Typing Novice',
           bio: updated.bio || '',
           avatarUrl: updated.avatarUrl || '',
@@ -506,7 +507,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
       const newHighestWpm = Math.max(profile.highestWpm, fullResult.wpm);
-      const newHighestAccuracy = Math.max(profile.highestAccuracy, fullResult.accuracy);
+      const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
       const newAvgWpm = Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests);
 
       const profileUpdates: Partial<UserProfile> = {

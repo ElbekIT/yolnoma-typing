@@ -17,13 +17,15 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Zap,
-  Users
+  Users,
+  Sparkles
 } from 'lucide-react';
 import { ref, onValue, get } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
+import { sendTelegramTop3Congratulation } from '../../services/telegramBot';
 
 interface LeaderboardEntry extends UserProfile {
   rank: number;
@@ -120,6 +122,20 @@ export const LeaderboardView: React.FC = () => {
           rank: idx + 1
         }));
         setRankings(formatted);
+
+        // Send Telegram Bot Congratulation to Channel & Groups for Top 3
+        const top2UserAcc = formatted[1]?.highestAccuracy || 99;
+        formatted.slice(0, 3).forEach((topUser) => {
+          sendTelegramTop3Congratulation({
+            rank: topUser.rank,
+            displayName: topUser.displayName || topUser.username || 'Typer',
+            username: topUser.username || '',
+            wpm: topUser.highestWpm || 0,
+            accuracy: topUser.highestAccuracy || 98,
+            xp: topUser.xp || (topUser.level || 1) * 250,
+            prevTopAccuracy: topUser.rank === 1 ? top2UserAcc : undefined
+          });
+        });
       };
 
       updateRankingsFromMap();
@@ -314,83 +330,101 @@ export const LeaderboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Top 3 Podium Section */}
+      {/* Top 3 Podium Section - Compact & Responsive across all devices */}
       {top3.length >= 3 && !friendsOnly && searchQuery === '' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-1">
           {/* #2 Rank SILVER */}
           <div
             onClick={() => openUserProfile(top3[1])}
-            className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl text-center flex flex-col items-center justify-center relative shadow-sm hover:border-slate-400 transition-all cursor-pointer group"
+            className="bg-[var(--card-bg)] border border-slate-700/50 p-2.5 sm:p-4 rounded-2xl text-center flex flex-col items-center justify-between relative shadow-sm hover:border-slate-400 transition-all cursor-pointer group"
           >
-            <div className="absolute top-3 left-3 text-[10px] font-bold text-slate-400 px-2.5 py-1 rounded-full bg-slate-400/10">
+            <div className="text-[9px] sm:text-[10px] font-bold text-slate-300 px-2 py-0.5 rounded-full bg-slate-700/40 font-mono">
               #2 SILVER
             </div>
-            <div className="relative my-3">
+            <div className="relative my-1.5 sm:my-2">
               <img
                 src={top3[1].avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${top3[1].uid}`}
                 alt={top3[1].username}
-                className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-400 shadow-md bg-[var(--sub-alt)] group-hover:scale-105 transition-transform"
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-slate-400 shadow bg-[var(--sub-alt)] group-hover:scale-105 transition-transform"
               />
-              <span className="absolute -bottom-2 -right-2 text-xl">🥈</span>
+              <span className="absolute -bottom-1 -right-1 text-sm sm:text-base">🥈</span>
             </div>
-            <div className="flex items-center gap-1.5 font-bold text-sm text-[var(--text-color)]">
-              <span>{top3[1].displayName}</span>
-              {top3[1].isVerified && <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400/20" />}
+            <div className="w-full text-center">
+              <div className="flex items-center justify-center gap-1 font-bold text-xs sm:text-sm text-[var(--text-color)] truncate px-1">
+                <span className="truncate">{top3[1].displayName}</span>
+                {top3[1].isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
+              </div>
+              <p className="text-[9px] sm:text-[10px] text-[var(--sub-color)] font-mono truncate mb-1">@{top3[1].username}</p>
+              
+              <div className="text-sm sm:text-lg font-black font-mono text-[var(--main-color)]">{top3[1].highestWpm} <span className="text-[9px] font-normal text-[var(--sub-color)]">WPM</span></div>
+              <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] font-mono mt-0.5">
+                <span className="text-emerald-400 font-bold">{top3[1].highestAccuracy || 98}% Acc</span>
+                <span className="text-amber-400 font-bold">• {top3[1].xp || (top3[1].level || 1) * 250} XP</span>
+              </div>
             </div>
-            <p className="text-[11px] text-[var(--sub-color)] font-mono mb-2">@{top3[1].username}</p>
-            <div className="text-2xl font-black font-mono text-[var(--main-color)]">{top3[1].highestWpm} WPM</div>
-            <span className="text-[10px] text-emerald-500 font-bold">{top3[1].highestAccuracy}% Accuracy</span>
           </div>
 
           {/* #1 Rank GOLD */}
           <div
             onClick={() => openUserProfile(top3[0])}
-            className="bg-gradient-to-b from-amber-500/15 via-[var(--card-bg)] to-[var(--card-bg)] border-2 border-amber-500/50 p-6 rounded-3xl text-center flex flex-col items-center justify-center relative shadow-xl scale-105 cursor-pointer group"
+            className="bg-gradient-to-b from-amber-500/20 via-[var(--card-bg)] to-[var(--card-bg)] border-2 border-amber-500/60 p-2.5 sm:p-4 rounded-2xl text-center flex flex-col items-center justify-between relative shadow-lg cursor-pointer group"
           >
-            <div className="absolute top-3 left-3 text-[10px] font-extrabold text-amber-500 px-2.5 py-1 rounded-full bg-amber-500/20 flex items-center gap-1">
-              <Crown className="w-3.5 h-3.5 fill-amber-500" />
+            <div className="text-[9px] sm:text-[10px] font-extrabold text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/20 flex items-center justify-center gap-1 font-mono">
+              <Crown className="w-3 h-3 fill-amber-400 shrink-0" />
               <span>#1 CHAMPION</span>
             </div>
-            <div className="relative my-3">
+            <div className="relative my-1.5 sm:my-2">
               <img
                 src={top3[0].avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${top3[0].uid}`}
                 alt={top3[0].username}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-500 shadow-lg bg-[var(--sub-alt)] group-hover:scale-105 transition-transform"
+                className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl object-cover border-2 border-amber-400 shadow-md bg-[var(--sub-alt)] group-hover:scale-105 transition-transform"
               />
-              <span className="absolute -bottom-2 -right-2 text-2xl">🥇</span>
+              <span className="absolute -bottom-1 -right-1 text-base sm:text-lg">🥇</span>
             </div>
-            <div className="flex items-center gap-1.5 font-extrabold text-base text-[var(--text-color)]">
-              <span>{top3[0].displayName}</span>
-              {top3[0].isVerified && <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400/20" />}
+            <div className="w-full text-center">
+              <div className="flex items-center justify-center gap-1 font-extrabold text-xs sm:text-base text-[var(--text-color)] truncate px-1">
+                <span className="truncate">{top3[0].displayName}</span>
+                {top3[0].isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
+              </div>
+              <p className="text-[9px] sm:text-[10px] text-[var(--sub-color)] font-mono truncate mb-1">@{top3[0].username}</p>
+              
+              <div className="text-base sm:text-xl font-black font-mono text-amber-400">{top3[0].highestWpm} <span className="text-[9px] font-normal text-[var(--sub-color)]">WPM</span></div>
+              <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] font-mono mt-0.5">
+                <span className="text-emerald-400 font-bold">{top3[0].highestAccuracy || 98}% Acc</span>
+                <span className="text-amber-400 font-bold">• {top3[0].xp || (top3[0].level || 1) * 250} XP</span>
+              </div>
             </div>
-            <p className="text-[11px] text-[var(--sub-color)] font-mono mb-2">@{top3[0].username}</p>
-            <div className="text-3xl font-black font-mono text-amber-500">{top3[0].highestWpm} WPM</div>
-            <span className="text-[10px] text-emerald-500 font-bold">{top3[0].highestAccuracy}% Accuracy</span>
           </div>
 
           {/* #3 Rank BRONZE */}
           <div
             onClick={() => openUserProfile(top3[2])}
-            className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl text-center flex flex-col items-center justify-center relative shadow-sm hover:border-amber-700 transition-all cursor-pointer group"
+            className="bg-[var(--card-bg)] border border-amber-800/40 p-2.5 sm:p-4 rounded-2xl text-center flex flex-col items-center justify-between relative shadow-sm hover:border-amber-700 transition-all cursor-pointer group"
           >
-            <div className="absolute top-3 left-3 text-[10px] font-bold text-amber-700 px-2.5 py-1 rounded-full bg-amber-700/10">
+            <div className="text-[9px] sm:text-[10px] font-bold text-amber-600 px-2 py-0.5 rounded-full bg-amber-700/20 font-mono">
               #3 BRONZE
             </div>
-            <div className="relative my-3">
+            <div className="relative my-1.5 sm:my-2">
               <img
                 src={top3[2].avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${top3[2].uid}`}
                 alt={top3[2].username}
-                className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-700 shadow-md bg-[var(--sub-alt)] group-hover:scale-105 transition-transform"
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-amber-700 shadow bg-[var(--sub-alt)] group-hover:scale-105 transition-transform"
               />
-              <span className="absolute -bottom-2 -right-2 text-xl">🥉</span>
+              <span className="absolute -bottom-1 -right-1 text-sm sm:text-base">🥉</span>
             </div>
-            <div className="flex items-center gap-1.5 font-bold text-sm text-[var(--text-color)]">
-              <span>{top3[2].displayName}</span>
-              {top3[2].isVerified && <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400/20" />}
+            <div className="w-full text-center">
+              <div className="flex items-center justify-center gap-1 font-bold text-xs sm:text-sm text-[var(--text-color)] truncate px-1">
+                <span className="truncate">{top3[2].displayName}</span>
+                {top3[2].isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
+              </div>
+              <p className="text-[9px] sm:text-[10px] text-[var(--sub-color)] font-mono truncate mb-1">@{top3[2].username}</p>
+              
+              <div className="text-sm sm:text-lg font-black font-mono text-[var(--main-color)]">{top3[2].highestWpm} <span className="text-[9px] font-normal text-[var(--sub-color)]">WPM</span></div>
+              <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] font-mono mt-0.5">
+                <span className="text-emerald-400 font-bold">{top3[2].highestAccuracy || 98}% Acc</span>
+                <span className="text-amber-400 font-bold">• {top3[2].xp || (top3[2].level || 1) * 250} XP</span>
+              </div>
             </div>
-            <p className="text-[11px] text-[var(--sub-color)] font-mono mb-2">@{top3[2].username}</p>
-            <div className="text-2xl font-black font-mono text-[var(--main-color)]">{top3[2].highestWpm} WPM</div>
-            <span className="text-[10px] text-emerald-500 font-bold">{top3[2].highestAccuracy}% Accuracy</span>
           </div>
         </div>
       )}
@@ -459,7 +493,8 @@ export const LeaderboardView: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 font-mono font-bold text-[var(--text-color)]">
-                      Lvl {item.level || 1}
+                      <span>Lvl {item.level || 1}</span>
+                      <span className="text-[10px] text-amber-400 block font-normal">{item.xp || (item.level || 1) * 250} XP</span>
                     </td>
 
                     <td className="py-3 px-4 font-mono font-extrabold text-[var(--main-color)] text-sm">
