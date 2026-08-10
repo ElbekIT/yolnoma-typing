@@ -345,32 +345,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (user) {
-      try {
-        await updateDoc(doc(db, 'users', user.uid), updates);
-      } catch (err) {
-        console.error('Update profile firestore error:', err);
-      }
-      try {
-        await update(ref(rtdb, `users/${user.uid}`), updates);
-        if ((updated.totalTests || 0) > 0 || (updated.highestWpm || 0) > 0) {
-          await update(ref(rtdb, `leaderboard/${user.uid}`), {
-            uid: user.uid,
-            displayName: updated.displayName,
-            username: updated.username,
-            highestWpm: updated.highestWpm,
-            highestAccuracy: updated.highestAccuracy,
-            country: updated.country || '🇺🇿 Uzbekistan',
-            level: updated.level,
-            rankTitle: updated.rankTitle || 'Typing Novice',
-            bio: updated.bio || '',
-            avatarUrl: updated.avatarUrl || '',
-            totalTests: updated.totalTests || 1,
-            lastActive: Date.now()
-          });
+      // Non-blocking background cloud sync with fast timeouts
+      (async () => {
+        try {
+          await withTimeout(updateDoc(doc(db, 'users', user.uid), updates), 2000);
+        } catch (err) {
+          console.warn('Update profile firestore error/timeout:', err);
         }
-      } catch (err) {
-        console.error('Update profile RTDB error:', err);
-      }
+        try {
+          await withTimeout(update(ref(rtdb, `users/${user.uid}`), updates), 2000);
+          if ((updated.totalTests || 0) > 0 || (updated.highestWpm || 0) > 0) {
+            await withTimeout(
+              update(ref(rtdb, `leaderboard/${user.uid}`), {
+                uid: user.uid,
+                displayName: updated.displayName,
+                username: updated.username,
+                highestWpm: updated.highestWpm,
+                highestAccuracy: updated.highestAccuracy,
+                country: updated.country || '🇺🇿 Uzbekistan',
+                level: updated.level,
+                rankTitle: updated.rankTitle || 'Typing Novice',
+                bio: updated.bio || '',
+                avatarUrl: updated.avatarUrl || '',
+                totalTests: updated.totalTests || 1,
+                lastActive: Date.now()
+              }),
+              2000
+            );
+          }
+        } catch (err) {
+          console.warn('Update profile RTDB error/timeout:', err);
+        }
+      })();
     }
   };
 

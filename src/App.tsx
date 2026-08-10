@@ -69,6 +69,13 @@ function MainAppContent() {
     prevUserRef.current = user ? user.uid : null;
   }, [user]);
 
+  const startTimeRef = useRef<number>(0);
+  const typedInputRef = useRef<string>('');
+  const targetTextRef = useRef<string>('');
+
+  typedInputRef.current = typedInput;
+  targetTextRef.current = targetText;
+
   // Initialize test text
   const initTestText = useCallback(() => {
     const generated = generateTestText(
@@ -85,6 +92,7 @@ function MainAppContent() {
     setFinalResult(null);
     setWpmHistory([]);
     setElapsedSeconds(0);
+    startTimeRef.current = 0;
 
     const initialTime = timeMode > 0 ? timeMode : 60;
     setTimeLeft(initialTime);
@@ -102,9 +110,13 @@ function MainAppContent() {
     setIsTestActive(false);
     setIsTestFinished(true);
 
-    const totalSeconds = elapsedSeconds > 0 ? elapsedSeconds : (timeMode > 0 ? timeMode : 1);
-    const targetChars = targetText.split('');
-    const typedChars = typedInput.split('');
+    const now = Date.now();
+    const totalSeconds = startTimeRef.current > 0
+      ? Math.max(1, Math.round((now - startTimeRef.current) / 1000))
+      : (elapsedSeconds > 0 ? elapsedSeconds : 1);
+
+    const targetChars = targetTextRef.current.split('');
+    const typedChars = typedInputRef.current.split('');
 
     let correctCount = 0;
     let wrongCount = 0;
@@ -119,9 +131,9 @@ function MainAppContent() {
     });
 
     const wpm = calculateWpm(correctCount, totalSeconds);
-    const cpm = calculateCpm(typedInput.length, totalSeconds);
-    const rawWpm = calculateWpm(typedInput.length, totalSeconds);
-    const accuracy = calculateAccuracy(correctCount, typedInput.length);
+    const cpm = calculateCpm(typedChars.length, totalSeconds);
+    const rawWpm = calculateWpm(typedChars.length, totalSeconds);
+    const accuracy = calculateAccuracy(correctCount, typedChars.length);
 
     const resultObj: Omit<TypingResult, 'userId' | 'username'> = {
       wpm,
@@ -131,8 +143,8 @@ function MainAppContent() {
       errors: wrongCount,
       correctChars: correctCount,
       wrongChars: wrongCount,
-      extraChars: Math.max(0, typedInput.length - targetText.length),
-      missedChars: Math.max(0, targetText.length - typedInput.length),
+      extraChars: Math.max(0, typedChars.length - targetChars.length),
+      missedChars: Math.max(0, targetChars.length - typedChars.length),
       backspaceCount: 0,
       testTimeSeconds: totalSeconds,
       mode,
@@ -146,27 +158,31 @@ function MainAppContent() {
 
     const saved = await saveTestResult(resultObj);
     setFinalResult(saved);
-  }, [elapsedSeconds, timeMode, targetText, typedInput, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult]);
+  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult]);
 
-  // Timer loop
+  // Timer loop (depends ONLY on isTestActive and timeMode)
   useEffect(() => {
     if (isTestActive) {
+      if (startTimeRef.current === 0) {
+        startTimeRef.current = Date.now();
+      }
+
       timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
+        const now = Date.now();
+        const elapsed = Math.max(1, Math.floor((now - startTimeRef.current) / 1000));
+        setElapsedSeconds(elapsed);
 
         if (timeMode > 0) {
-          setTimeLeft((prev) => {
-            if (prev <= 1) {
-              finishTest();
-              return 0;
-            }
-            return prev - 1;
-          });
+          const remaining = Math.max(0, timeMode - elapsed);
+          setTimeLeft(remaining);
+          if (remaining <= 0) {
+            finishTest();
+          }
         }
 
         // Capture wpm history point with real correct chars and error counts
-        const targetCharsArr = targetText.split('');
-        const typedCharsArr = typedInput.split('');
+        const targetCharsArr = targetTextRef.current.split('');
+        const typedCharsArr = typedInputRef.current.split('');
         let currentCorrect = 0;
         let currentErrors = 0;
         typedCharsArr.forEach((ch, idx) => {
@@ -178,11 +194,11 @@ function MainAppContent() {
           }
         });
 
-        const currentWpm = calculateWpm(currentCorrect, elapsedSeconds + 1);
-        const rawWpm = calculateWpm(typedInput.length, elapsedSeconds + 1);
+        const currentWpm = calculateWpm(currentCorrect, elapsed);
+        const rawWpm = calculateWpm(typedCharsArr.length, elapsed);
         setWpmHistory((prev) => [
           ...prev,
-          { time: elapsedSeconds + 1, wpm: currentWpm, rawWpm, errors: currentErrors }
+          { time: elapsed, wpm: currentWpm, rawWpm, errors: currentErrors }
         ]);
       }, 1000);
     }
@@ -190,7 +206,7 @@ function MainAppContent() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isTestActive, timeMode, typedInput.length, elapsedSeconds, finishTest]);
+  }, [isTestActive, timeMode, finishTest]);
 
   // Loading state gate (AFTER ALL HOOKS)
   if (loading) {
@@ -216,18 +232,23 @@ function MainAppContent() {
     if (isTestFinished) return;
 
     if (!isTestActive && newInput.length > 0) {
+      startTimeRef.current = Date.now();
       setIsTestActive(true);
     }
 
     setTypedInput(newInput);
 
     // If word count mode or finished text
-    if (newInput.length >= targetText.length) {
+    if (newInput.length >= targetText.length && targetText.length > 0) {
       finishTest();
     }
   };
 
   // Live stats calculation
+  const liveElapsed = startTimeRef.current > 0 && isTestActive
+    ? Math.max(1, Math.floor((Date.now() - startTimeRef.current) / 1000))
+    : (elapsedSeconds || 1);
+
   const targetChars = targetText.split('');
   const typedChars = typedInput.split('');
   let liveCorrect = 0;
@@ -235,8 +256,8 @@ function MainAppContent() {
     if (idx < targetChars.length && ch === targetChars[idx]) liveCorrect++;
   });
 
-  const liveWpm = calculateWpm(liveCorrect, elapsedSeconds || 1);
-  const liveCpm = calculateCpm(typedInput.length, elapsedSeconds || 1);
+  const liveWpm = calculateWpm(liveCorrect, liveElapsed);
+  const liveCpm = calculateCpm(typedInput.length, liveElapsed);
   const liveAcc = calculateAccuracy(liveCorrect, typedInput.length);
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
