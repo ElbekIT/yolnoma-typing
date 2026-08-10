@@ -48,9 +48,11 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
       {/* Top Brand Header */}
       <header className="max-w-7xl w-full mx-auto p-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-cyan-500/20">
-            Y
-          </div>
+          <img
+            src="/yolnoma_icon.svg"
+            alt="Yolnoma Logo"
+            className="w-11 h-11 object-contain drop-shadow-xl"
+          />
           <div>
             <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
               Yolnoma <span className="text-cyan-400 font-bold text-xs px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/30">PRO ARENA</span>

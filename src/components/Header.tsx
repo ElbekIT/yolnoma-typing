@@ -79,15 +79,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </button>
 
             {/* Brand Logo */}
-            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('typing')}>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--main-color)] via-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-[var(--main-color)]/25 font-black text-xl tracking-wider group-hover:scale-105 transition-transform">
-                Y
-              </div>
+            <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setActiveTab('typing')}>
+              <img
+                src="/yolnoma_icon.svg"
+                alt="Yolnoma Logo"
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain group-hover:scale-105 transition-transform drop-shadow-md"
+              />
               <div>
-                <h1 className="text-xl font-black tracking-tight text-[var(--text-color)] flex items-center gap-2">
-                  Yolnoma <span className="text-[var(--main-color)] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)] border border-[var(--main-color)]/30 tracking-wider">TYPING</span>
+                <h1 className="text-lg sm:text-xl font-black tracking-tight text-[var(--text-color)] flex items-center gap-1.5">
+                  Yolnoma <span className="text-[var(--main-color)] font-extrabold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-[var(--sub-alt)] border border-[var(--main-color)]/30 tracking-wider">TYPING</span>
                 </h1>
-                <p className="text-[11px] text-[var(--sub-color)] font-semibold tracking-wide hidden lg:block">Monkeytype Level Speed Arena</p>
+                <p className="text-[10px] sm:text-[11px] text-[var(--sub-color)] font-semibold tracking-wide hidden lg:block">O'zbekistondagi №1 Tez Yozish Platformasi</p>
               </div>
             </div>
           </div>
@@ -148,15 +150,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               )}
             </div>
 
-            {/* Language Selector */}
-            <div className="relative hidden sm:block">
+            {/* Language Selector - Visible on ALL devices */}
+            <div className="relative">
               <button
                 onClick={() => setShowLangMenu(!showLangMenu)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[var(--sub-alt)] text-[var(--text-color)] border border-[var(--sub-color)]/20 hover:border-[var(--main-color)] transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold bg-[var(--sub-alt)] text-[var(--text-color)] border border-[var(--sub-color)]/20 hover:border-[var(--main-color)] transition-all"
+                title="Tilni Tanlang"
               >
                 <Globe className="w-3.5 h-3.5 text-[var(--main-color)]" />
                 <span>{currentLangInfo.flag}</span>
-                <span>{currentLangInfo.nativeName}</span>
+                <span className="hidden md:inline">{currentLangInfo.nativeName}</span>
               </button>
 
               {showLangMenu && (

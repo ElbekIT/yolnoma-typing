@@ -75,6 +75,7 @@ function MainAppContent() {
 
   typedInputRef.current = typedInput;
   targetTextRef.current = targetText;
+  const totalKeystrokesRef = useRef<number>(0);
 
   // Initialize test text
   const initTestText = useCallback(() => {
@@ -93,6 +94,7 @@ function MainAppContent() {
     setWpmHistory([]);
     setElapsedSeconds(0);
     startTimeRef.current = 0;
+    totalKeystrokesRef.current = 0;
 
     const initialTime = timeMode > 0 ? timeMode : 60;
     setTimeLeft(initialTime);
@@ -212,9 +214,11 @@ function MainAppContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 animate-spin flex items-center justify-center font-black text-xl">
-          Y
-        </div>
+        <img
+          src="/yolnoma_icon.svg"
+          alt="Yolnoma"
+          className="w-16 h-16 animate-bounce drop-shadow-lg"
+        />
         <p className="text-xs font-bold text-slate-400 tracking-wider uppercase animate-pulse">
           Yolnoma Typing Platform Yuklanmoqda...
         </p>
@@ -234,6 +238,10 @@ function MainAppContent() {
     if (!isTestActive && newInput.length > 0) {
       startTimeRef.current = Date.now();
       setIsTestActive(true);
+    }
+
+    if (newInput.length > typedInput.length) {
+      totalKeystrokesRef.current += (newInput.length - typedInput.length);
     }
 
     setTypedInput(newInput);
@@ -258,7 +266,8 @@ function MainAppContent() {
 
   const liveWpm = calculateWpm(liveCorrect, liveElapsed);
   const liveCpm = calculateCpm(typedInput.length, liveElapsed);
-  const liveAcc = calculateAccuracy(liveCorrect, typedInput.length);
+  const totalAttempted = Math.max(typedInput.length, totalKeystrokesRef.current);
+  const liveAcc = calculateAccuracy(liveCorrect, totalAttempted);
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';

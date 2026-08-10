@@ -34,8 +34,9 @@ export function generateTestText(
   }
 
   if (mode === 'quotes') {
-    const quote = langInfo.quotes[Math.floor(Math.random() * langInfo.quotes.length)] || langInfo.quotes[0];
-    const text = quote.text;
+    const quoteList = langInfo.quotes && langInfo.quotes.length > 0 ? langInfo.quotes : getLanguageInfo('uz-latn').quotes;
+    const quote = quoteList[Math.floor(Math.random() * quoteList.length)];
+    const text = `${quote.text} — ${quote.author}`;
     return {
       rawText: text,
       wordsList: text.split(' ')
@@ -43,15 +44,35 @@ export function generateTestText(
   }
 
   if (mode === 'sentences' || mode === 'story') {
-    const sentence = langInfo.sentences[Math.floor(Math.random() * langInfo.sentences.length)] || langInfo.sentences[0];
+    if (mode === 'story' && langInfo.stories && langInfo.stories.length > 0) {
+      const story = langInfo.stories[Math.floor(Math.random() * langInfo.stories.length)];
+      return {
+        rawText: story,
+        wordsList: story.split(' ')
+      };
+    }
+
+    const sentencesList = langInfo.sentences && langInfo.sentences.length > 0 ? langInfo.sentences : getLanguageInfo('uz-latn').sentences;
+    // Pick 1-2 random sentences for rich typing
+    const shuffled = [...sentencesList].sort(() => 0.5 - Math.random());
+    const selectedSentences = shuffled.slice(0, Math.min(2, shuffled.length)).join(' ');
     return {
-      rawText: sentence,
-      wordsList: sentence.split(' ')
+      rawText: selectedSentences,
+      wordsList: selectedSentences.split(' ')
     };
   }
 
   // Base words pool
   let wordsPool = [...langInfo.words];
+  if (langInfo.sentences && langInfo.sentences.length > 0) {
+    // Mix in words from rich sentences
+    langInfo.sentences.forEach((s) => {
+      s.split(/\s+/).forEach((w) => {
+        const clean = w.replace(/[^a-zA-Zʻʼo'g'O'G'а-яА-ЯўЎқҚғҒҳҲ]/g, '');
+        if (clean.length > 2) wordsPool.push(clean);
+      });
+    });
+  }
 
   if (mode === 'numbers') {
     wordsPool = Array.from({ length: 50 }, () => Math.floor(Math.random() * 10000).toString());
