@@ -14,49 +14,50 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAbout }) => {
     <footer className="w-full bg-[var(--card-bg)] border-t border-[var(--sub-alt)] py-8 px-4 mt-auto transition-colors duration-200">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Official Partner Banner: Yosh Avlod Kanali & SHAMSIDDIN */}
-        <div className="bg-gradient-to-r from-amber-950/50 via-[var(--sub-alt)] to-amber-950/50 border-2 border-amber-500/40 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-amber-950/40 via-[var(--sub-alt)] to-amber-950/40 border border-amber-500/40 rounded-2xl p-3.5 sm:p-4 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           {/* Subtle Glow background */}
-          <div className="absolute -top-10 -left-10 w-60 h-60 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
           {/* Partner Info Left */}
-          <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 z-10 text-center sm:text-left">
+          <div className="flex items-center gap-3 z-10 text-left">
             {/* Golden Logo Avatar */}
             <div className="relative group flex-shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-black border-2 border-amber-500/80 p-2 shadow-2xl shadow-amber-500/30 flex items-center justify-center transition-transform group-hover:scale-105">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black border border-amber-500/80 p-1 shadow-md shadow-amber-500/20 flex items-center justify-center transition-transform group-hover:scale-105">
                 <img
                   src="/yosh_avlod_logo.svg"
                   alt="Yosh Avlod Logo"
-                  className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+                  className="w-full h-full object-contain filter drop-shadow-[0_0_4px_rgba(245,158,11,0.5)]"
                 />
               </div>
-              <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-950 p-1.5 rounded-full shadow-lg">
-                <Crown className="w-5 h-5 fill-slate-950" />
+              <span className="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-950 p-0.5 rounded-full shadow-sm">
+                <Crown className="w-3 h-3 fill-slate-950" />
               </span>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-amber-300 bg-amber-950/90 px-3.5 py-1 rounded-full border border-amber-500/50 flex items-center gap-1.5 shadow-md">
-                  <Sparkles className="w-4 h-4 text-amber-400" /> Rasmiy Bosh Hamkor
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-amber-950/90 px-2 py-0.5 rounded-md border border-amber-500/40 flex items-center gap-1 shadow-sm">
+                  <Sparkles className="w-3 h-3 text-amber-400" /> Rasmiy Bosh Hamkor
+                </span>
+                <span className="text-xs sm:text-sm font-black text-[var(--text-color)] tracking-tight flex items-center gap-1">
+                  Yosh Avlod Kanali
+                  <Tv className="w-3.5 h-3.5 text-amber-400" />
                 </span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-[var(--text-color)] tracking-tight flex items-center justify-center sm:justify-start gap-2">
-                Yosh Avlod Kanali
-                <Tv className="w-6 h-6 text-amber-400" />
-              </h3>
-              <p className="text-sm sm:text-base text-[var(--sub-color)] font-medium flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <UserCheck className="w-4 h-4 text-amber-400" />
-                <span>Kanal Asoschisi va Direktori:</span>
-                <strong className="text-amber-300 font-black text-base sm:text-lg uppercase tracking-wide bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/30">SHAMSIDDIN</strong>
+
+              <p className="text-xs text-[var(--sub-color)] font-medium flex items-center gap-1.5 flex-wrap">
+                <UserCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Asoschi va Direktor:</span>
+                <strong className="text-amber-300 font-black text-xs uppercase tracking-wide bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30">SHAMSIDDIN</strong>
               </p>
             </div>
           </div>
 
           {/* Partner Badge / Action Right */}
-          <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 z-10">
-            <div className="px-5 py-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-black text-sm sm:text-base flex items-center gap-2.5 shadow-lg shadow-amber-500/10">
-              <Crown className="w-5 h-5 text-amber-400" />
+          <div className="flex items-center gap-2 z-10 shrink-0">
+            <div className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center gap-1.5 shadow-sm">
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
               <span>Loyiha Bosh Homiysi</span>
             </div>
           </div>

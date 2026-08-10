@@ -184,18 +184,30 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
           </div>
 
           {/* Level & XP Bar */}
-          <div className="bg-[var(--sub-alt)] p-3 rounded-2xl border border-[var(--sub-color)]/10 mb-4">
-            <div className="flex justify-between items-center text-xs mb-1 font-semibold">
-              <span className="text-[var(--main-color)] font-extrabold">Level {userProfile.level || 1}</span>
-              <span className="text-[var(--sub-color)] font-mono">{userProfile.xp || 250} XP</span>
-            </div>
-            <div className="w-full bg-[var(--card-bg)] h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-[var(--main-color)] h-full transition-all duration-300"
-                style={{ width: `${Math.min(100, ((userProfile.xp || 0) % 500) / 5)}%` }}
-              />
-            </div>
-          </div>
+          {(() => {
+            const calculatedXp =
+              typeof userProfile.xp === 'number' && userProfile.xp > 0
+                ? userProfile.xp
+                : Math.max(250, (userProfile.level || 1) * 350 + (userProfile.highestWpm || 0) * 5);
+            const currentLevel = userProfile.level || Math.max(1, Math.floor(calculatedXp / 500) + 1);
+            const xpInLevel = calculatedXp % 500;
+            const progressPercent = Math.min(100, Math.max(10, Math.round((xpInLevel / 500) * 100)));
+
+            return (
+              <div className="bg-[var(--sub-alt)] p-3 rounded-2xl border border-[var(--sub-color)]/10 mb-4">
+                <div className="flex justify-between items-center text-xs mb-1 font-semibold">
+                  <span className="text-[var(--main-color)] font-extrabold">Level {currentLevel}</span>
+                  <span className="text-[var(--sub-color)] font-mono">{calculatedXp} XP</span>
+                </div>
+                <div className="w-full bg-[var(--card-bg)] h-2.5 rounded-full overflow-hidden p-0.5">
+                  <div
+                    className="bg-[var(--main-color)] h-full rounded-full transition-all duration-500 shadow-sm"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Bio Section */}
           <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 text-xs text-[var(--text-color)] leading-relaxed mb-4 whitespace-pre-wrap">
