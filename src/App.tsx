@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
 import { AboutModal } from './components/about/AboutModal';
+import { LoginPage } from './components/LoginPage';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { TypingHeader } from './components/typing/TypingHeader';
 import { LiveStats } from './components/typing/LiveStats';
@@ -17,6 +18,7 @@ import { AchievementsView } from './components/achievements/AchievementsView';
 import { ChallengesView } from './components/challenges/ChallengesView';
 import { ProfileView } from './components/profile/ProfileView';
 import { SettingsView } from './components/settings/SettingsView';
+import { PartnersView } from './components/partners/PartnersView';
 
 import {
   TextMode,
@@ -34,32 +36,38 @@ function MainAppContent() {
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<string>('typing');
   const prevUserRef = useRef<string | null>(null);
-  const hasAutoPromptedAuthRef = useRef(false);
 
   // Modals
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
 
-  // Auto-prompt Google sign in on site open if not logged in and never completed before
-  useEffect(() => {
-    const hasCompletedAuthBefore = localStorage.getItem('yolnoma_auth_completed') === 'true';
-    if (!loading && !user && !hasAutoPromptedAuthRef.current && !hasCompletedAuthBefore) {
-      setIsAuthOpen(true);
-      hasAutoPromptedAuthRef.current = true;
-    }
-  }, [loading, user]);
-
-  // When user logs in, mark auth completed, close modal and go to profile tab
+  // When user logs in, close modal and remember user
   useEffect(() => {
     if (user) {
       localStorage.setItem('yolnoma_auth_completed', 'true');
       setIsAuthOpen(false);
-      if (!prevUserRef.current) {
-        setActiveTab('profile');
-      }
     }
     prevUserRef.current = user ? user.uid : null;
   }, [user]);
+
+  // Loading state gate
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 animate-spin flex items-center justify-center font-black text-xl">
+          Y
+        </div>
+        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase animate-pulse">
+          Yolnoma Typing Platform Yuklanmoqda...
+        </p>
+      </div>
+    );
+  }
+
+  // Mandatory Login Gate if user is not authenticated
+  if (!user) {
+    return <LoginPage />;
+  }
 
   // Test Configurations
   const [mode, setMode] = useState<TextMode>('words');
@@ -291,6 +299,7 @@ function MainAppContent() {
         {activeTab === 'statistics' && <StatisticsView />}
         {activeTab === 'achievements' && <AchievementsView />}
         {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
+        {activeTab === 'partners' && <PartnersView />}
         {activeTab === 'profile' && (
           <ProfileView
             onOpenAuth={() => setIsAuthOpen(true)}

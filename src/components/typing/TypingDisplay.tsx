@@ -82,7 +82,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     <div
       ref={containerRef}
       onClick={handleContainerClick}
-      className="relative w-full max-w-4xl mx-auto my-6 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-6 sm:p-8 min-h-[180px] cursor-text select-none shadow-sm transition-all"
+      className={`relative w-full max-w-4xl mx-auto my-6 bg-[var(--card-bg)] border ${
+        isFocused ? 'border-[var(--main-color)]/50 shadow-xl shadow-[var(--main-color)]/10' : 'border-[var(--sub-alt)] shadow-md'
+      } rounded-3xl p-6 sm:p-10 min-h-[200px] cursor-text select-none transition-all duration-300`}
       style={{ fontFamily, fontSize: `${fontSize}px`, direction: isRtl ? 'rtl' : 'ltr' }}
     >
       {/* Hidden input element */}

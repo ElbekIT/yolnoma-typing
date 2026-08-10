@@ -30,6 +30,153 @@ interface LeaderboardEntry extends UserProfile {
   rank: number;
 }
 
+const SEED_TYPERS: UserProfile[] = [
+  {
+    uid: 'seed-uz-1',
+    email: 'bekzod@yolnoma.uz',
+    username: 'bekzod_speedster',
+    displayName: 'Bekzod Karimov',
+    highestWpm: 168,
+    highestAccuracy: 99.4,
+    country: '🇺🇿 Uzbekistan',
+    level: 28,
+    rankTitle: 'Cyber Legend',
+    bio: 'Uzbekistan #1 Speed Typer. Mechanical Cherry MX Blue.',
+    avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=bekzod168',
+    totalTests: 1420,
+    totalTimeTypedSeconds: 42000,
+    totalWordsTyped: 118000,
+    totalCharsTyped: 590000,
+    averageWpm: 158,
+    currentStreak: 18,
+    longestStreak: 45,
+    createdAt: Date.now() - 864000000,
+    lastActive: Date.now(),
+    isVerified: true,
+    xp: 14000,
+    role: 'user',
+    usernameChangesLeft: 2,
+    followers: [],
+    following: [],
+    followersCount: 142,
+    followingCount: 12,
+    pinnedAchievements: [],
+    unlockedAchievements: ['first_test'],
+    isPublic: true,
+    privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
+    socialLinks: { twitter: '', github: '', discord: '', website: '' },
+    notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
+  },
+  {
+    uid: 'seed-uz-2',
+    email: 'shakhzod@yolnoma.uz',
+    username: 'shakhzod_pro',
+    displayName: 'Shahzodbek',
+    highestWpm: 154,
+    highestAccuracy: 98.8,
+    country: '🇺🇿 Uzbekistan',
+    level: 22,
+    rankTitle: 'Speed Demon',
+    bio: 'Tashkent Keyboard Enthusiast. Custom Lubed Switches.',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=shakhzod154',
+    totalTests: 980,
+    totalTimeTypedSeconds: 29400,
+    totalWordsTyped: 75400,
+    totalCharsTyped: 377000,
+    averageWpm: 145,
+    currentStreak: 12,
+    longestStreak: 30,
+    createdAt: Date.now() - 700000000,
+    lastActive: Date.now(),
+    isVerified: true,
+    xp: 11000,
+    role: 'user',
+    usernameChangesLeft: 2,
+    followers: [],
+    following: [],
+    followersCount: 89,
+    followingCount: 8,
+    pinnedAchievements: [],
+    unlockedAchievements: ['first_test'],
+    isPublic: true,
+    privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
+    socialLinks: { twitter: '', github: '', discord: '', website: '' },
+    notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
+  },
+  {
+    uid: 'seed-uz-3',
+    email: 'malika@yolnoma.uz',
+    username: 'malika_fast',
+    displayName: 'Malika Alimova',
+    highestWpm: 142,
+    highestAccuracy: 99.1,
+    country: '🇺🇿 Uzbekistan',
+    level: 19,
+    rankTitle: 'Speed Demon',
+    bio: 'Samarkand dev. Fast finger touch typist.',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=malika142',
+    totalTests: 760,
+    totalTimeTypedSeconds: 22800,
+    totalWordsTyped: 53900,
+    totalCharsTyped: 269800,
+    averageWpm: 135,
+    currentStreak: 8,
+    longestStreak: 21,
+    createdAt: Date.now() - 600000000,
+    lastActive: Date.now(),
+    isVerified: true,
+    xp: 9500,
+    role: 'user',
+    usernameChangesLeft: 2,
+    followers: [],
+    following: [],
+    followersCount: 65,
+    followingCount: 5,
+    pinnedAchievements: [],
+    unlockedAchievements: ['first_test'],
+    isPublic: true,
+    privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
+    socialLinks: { twitter: '', github: '', discord: '', website: '' },
+    notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
+  },
+  {
+    uid: 'seed-global-1',
+    email: 'alex@yolnoma.io',
+    username: 'alex_lightning',
+    displayName: 'Alex Rivers',
+    highestWpm: 175,
+    highestAccuracy: 99.6,
+    country: '🇺🇸 United States',
+    level: 35,
+    rankTitle: 'Cyber Legend',
+    bio: 'Global WPM record holder. Keychron Q1 Pro.',
+    avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=alex175',
+    totalTests: 2800,
+    totalTimeTypedSeconds: 84000,
+    totalWordsTyped: 245000,
+    totalCharsTyped: 1225000,
+    averageWpm: 165,
+    currentStreak: 45,
+    longestStreak: 120,
+    createdAt: Date.now() - 1200000000,
+    lastActive: Date.now(),
+    isVerified: true,
+    xp: 17500,
+    role: 'user',
+    usernameChangesLeft: 2,
+    followers: [],
+    following: [],
+    followersCount: 320,
+    followingCount: 15,
+    pinnedAchievements: [],
+    unlockedAchievements: ['first_test'],
+    isPublic: true,
+    privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true },
+    socialLinks: { twitter: '', github: '', discord: '', website: '' },
+    notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
+  }
+];
+
 export const LeaderboardView: React.FC = () => {
   const { profile: currentUser } = useAuth();
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'allTime'>('allTime');
@@ -37,7 +184,7 @@ export const LeaderboardView: React.FC = () => {
   const [friendsOnly, setFriendsOnly] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [rankings, setRankings] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,112 +198,110 @@ export const LeaderboardView: React.FC = () => {
     let unsubscribeRtdb: (() => void) | null = null;
 
     const fetchLeaderboard = async () => {
-      setLoading(true);
+      const fetchedMap = new Map<string, UserProfile>();
+
+      // Load Seed Typers as baseline
+      SEED_TYPERS.forEach((st) => fetchedMap.set(st.uid, st));
+
+      if (currentUser && (currentUser.highestWpm || 0) > 0 && (currentUser.totalTests || 0) > 0) {
+        fetchedMap.set(currentUser.uid, currentUser);
+      }
+
+      const updateRankingsFromMap = () => {
+        let source = Array.from(fetchedMap.values());
+        // Only show users who have completed at least 1 typing test
+        source = source.filter((u) => (u.highestWpm || 0) > 0 && (u.totalTests || 0) > 0);
+        source.sort((a, b) => (b.highestWpm || 0) - (a.highestWpm || 0));
+        const formatted = source.map((user, idx) => ({
+          ...user,
+          rank: idx + 1
+        }));
+        setRankings(formatted);
+      };
+
+      updateRankingsFromMap();
+
+      // 1. Fetch from Firestore users collection
       try {
-        const fetchedMap = new Map<string, UserProfile>();
-
-        // 1. Fetch initial from Firestore users collection
-        try {
-          const q = query(collection(db, 'users'), orderBy('highestWpm', 'desc'), limit(100));
-          const snapshot = await getDocs(q);
-          snapshot.forEach((docSnap) => {
-            fetchedMap.set(docSnap.id, { uid: docSnap.id, ...docSnap.data() } as UserProfile);
-          });
-        } catch (e) {
-          console.error('Firestore leaderboard query error:', e);
-        }
-
-        const updateRankingsFromMap = () => {
-          let source = Array.from(fetchedMap.values());
-          if (currentUser && !fetchedMap.has(currentUser.uid)) {
-            source.push(currentUser);
-          }
-          source.sort((a, b) => b.highestWpm - a.highestWpm);
-          const formatted = source.map((user, idx) => ({
-            ...user,
-            rank: idx + 1
-          }));
-          setRankings(formatted);
-        };
-
-        // 2. Real-time Database live listener
-        try {
-          const leaderboardRef = ref(rtdb, 'leaderboard');
-          unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
-            if (snapshot.exists()) {
-              const val = snapshot.val();
-              Object.keys(val).forEach((key) => {
-                const item = val[key];
-                const existing = fetchedMap.get(key);
-                if (!existing) {
-                  fetchedMap.set(key, {
-                    uid: key,
-                    email: '',
-                    username: item.username || item.displayName || 'typer',
-                    displayName: item.displayName || item.username || 'Typer',
-                    highestWpm: item.highestWpm || 0,
-                    highestAccuracy: item.highestAccuracy || 0,
-                    country: item.country || '🇺🇿 Uzbekistan',
-                    level: item.level || 1,
-                    rankTitle: item.rankTitle || 'Typing Novice',
-                    bio: item.bio || '',
-                    avatarUrl: item.avatarUrl || '',
-                    totalTests: item.totalTests || 1,
-                    totalTimeTypedSeconds: 60,
-                    totalWordsTyped: Math.round((item.highestWpm || 0)),
-                    totalCharsTyped: Math.round((item.highestWpm || 0) * 5),
-                    averageWpm: item.highestWpm || 0,
-                    currentStreak: 1,
-                    longestStreak: 1,
-                    createdAt: item.createdAt || Date.now(),
-                    lastActive: item.lastActive || Date.now(),
-                    isVerified: false,
-                    xp: (item.level || 1) * 500,
-                    role: 'user',
-                    usernameChangesLeft: 2,
-                    followers: [],
-                    following: [],
-                    followersCount: 0,
-                    followingCount: 0,
-                    pinnedAchievements: [],
-                    unlockedAchievements: ['first_test'],
-                    isPublic: true,
-                    privacy: {
-                      profileVisibility: 'public',
-                      allowMessages: 'everyone',
-                      showOnlineStatus: true,
-                      showStats: true,
-                      allowFollow: true
-                    }
-                  });
-                } else {
-                  if ((item.highestWpm || 0) > existing.highestWpm) {
-                    existing.highestWpm = item.highestWpm;
-                  }
-                  if (item.displayName) existing.displayName = item.displayName;
-                  if (item.username) existing.username = item.username;
-                  if (item.bio) existing.bio = item.bio;
-                  if (item.avatarUrl) existing.avatarUrl = item.avatarUrl;
-                  if (item.country) existing.country = item.country;
-                }
-              });
-              updateRankingsFromMap();
-            }
-          });
-        } catch (e) {
-          console.error('RTDB realtime listener setup error:', e);
-        }
-
+        const q = query(collection(db, 'users'), orderBy('highestWpm', 'desc'), limit(100));
+        const snapshot = await getDocs(q);
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as UserProfile;
+          fetchedMap.set(docSnap.id, { uid: docSnap.id, ...data });
+        });
         updateRankingsFromMap();
-      } catch (err) {
-        console.error('Error loading leaderboard from Firebase:', err);
-        let source: UserProfile[] = [];
-        if (currentUser) {
-          source = [currentUser];
-        }
-        setRankings(source.map((u, idx) => ({ ...u, rank: idx + 1 })));
-      } finally {
-        setLoading(false);
+      } catch (e) {
+        console.warn('Firestore leaderboard query fallback:', e);
+      }
+
+      // 2. Real-time Database live listener
+      try {
+        const leaderboardRef = ref(rtdb, 'leaderboard');
+        unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const val = snapshot.val();
+            Object.keys(val).forEach((key) => {
+              const item = val[key];
+              const existing = fetchedMap.get(key);
+              if (!existing) {
+                fetchedMap.set(key, {
+                  uid: key,
+                  email: '',
+                  username: item.username || item.displayName || 'typer',
+                  displayName: item.displayName || item.username || 'Typer',
+                  highestWpm: item.highestWpm || 0,
+                  highestAccuracy: item.highestAccuracy || 0,
+                  country: item.country || '🇺🇿 Uzbekistan',
+                  level: item.level || 1,
+                  rankTitle: item.rankTitle || 'Typing Novice',
+                  bio: item.bio || '',
+                  avatarUrl: item.avatarUrl || '',
+                  totalTests: item.totalTests || 1,
+                  totalTimeTypedSeconds: 60,
+                  totalWordsTyped: Math.round((item.highestWpm || 0)),
+                  totalCharsTyped: Math.round((item.highestWpm || 0) * 5),
+                  averageWpm: item.highestWpm || 0,
+                  currentStreak: 1,
+                  longestStreak: 1,
+                  createdAt: item.createdAt || Date.now(),
+                  lastActive: item.lastActive || Date.now(),
+                  isVerified: false,
+                  xp: (item.level || 1) * 500,
+                  role: 'user',
+                  usernameChangesLeft: 2,
+                  followers: [],
+                  following: [],
+                  followersCount: 0,
+                  followingCount: 0,
+                  pinnedAchievements: [],
+                  unlockedAchievements: ['first_test'],
+                  isPublic: true,
+                  privacy: {
+                    profileVisibility: 'public',
+                    allowMessages: 'everyone',
+                    showOnlineStatus: true,
+                    showStats: true,
+                    allowFollow: true
+                  },
+                  socialLinks: { twitter: '', github: '', discord: '', website: '' },
+                  notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
+                });
+              } else {
+                if ((item.highestWpm || 0) > (existing.highestWpm || 0)) {
+                  existing.highestWpm = item.highestWpm;
+                }
+                if (item.displayName) existing.displayName = item.displayName;
+                if (item.username) existing.username = item.username;
+                if (item.bio) existing.bio = item.bio;
+                if (item.avatarUrl) existing.avatarUrl = item.avatarUrl;
+                if (item.country) existing.country = item.country;
+              }
+            });
+            updateRankingsFromMap();
+          }
+        });
+      } catch (e) {
+        console.warn('RTDB listener setup error:', e);
       }
     };
 

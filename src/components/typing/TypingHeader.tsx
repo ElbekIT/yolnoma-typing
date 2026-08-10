@@ -47,9 +47,9 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   const currentLang = languagesList.find((l) => l.code === language) || languagesList[0];
 
   return (
-    <div className="w-full max-w-4xl mx-auto mb-6 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-3 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-medium">
+    <div className="w-full max-w-4xl mx-auto mb-6 bg-[var(--card-bg)]/90 backdrop-blur-sm border border-[var(--sub-alt)] rounded-2xl p-2.5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-semibold">
       {/* Mode Selector */}
-      <div className="flex items-center gap-1 overflow-x-auto max-w-full py-1">
+      <div className="flex items-center gap-1 overflow-x-auto max-w-full py-1 bg-[var(--sub-alt)]/40 p-1 rounded-xl">
         {modesList.map((m) => {
           const Icon = m.icon;
           const isActive = mode === m.id;
@@ -60,9 +60,9 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                 setMode(m.id);
                 onReset();
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150 whitespace-nowrap ${
                 isActive
-                  ? 'bg-[var(--main-color)] text-white font-bold shadow-sm'
+                  ? 'bg-[var(--main-color)] text-white font-bold shadow-md shadow-[var(--main-color)]/30'
                   : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
               }`}
             >
@@ -73,13 +73,13 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         })}
       </div>
 
-      <div className="h-4 w-[1px] bg-[var(--sub-color)]/20 hidden md:block" />
+      <div className="h-5 w-[1px] bg-[var(--sub-color)]/20 hidden md:block" />
 
       {/* Sub-modes: Time or Word Count */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Time Options */}
-        <div className="flex items-center gap-1 bg-[var(--sub-alt)] p-1 rounded-xl">
-          <Clock className="w-3.5 h-3.5 text-[var(--sub-color)] ml-1.5" />
+        <div className="flex items-center gap-1 bg-[var(--sub-alt)]/60 p-1 rounded-xl border border-[var(--sub-alt)]">
+          <Clock className="w-3.5 h-3.5 text-[var(--main-color)] ml-1.5" />
           {timeOptions.map((tVal) => (
             <button
               key={tVal}
@@ -88,7 +88,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                 setWordCountMode(0);
                 onReset();
               }}
-              className={`px-2.5 py-1 rounded-lg transition-all font-mono font-bold ${
+              className={`px-2.5 py-1 rounded-lg transition-all font-mono font-bold text-xs ${
                 timeMode === tVal && wordCountMode === 0
                   ? 'bg-[var(--main-color)] text-white shadow-sm'
                   : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
@@ -100,8 +100,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         </div>
 
         {/* Word Options */}
-        <div className="flex items-center gap-1 bg-[var(--sub-alt)] p-1 rounded-xl">
-          <Type className="w-3.5 h-3.5 text-[var(--sub-color)] ml-1.5" />
+        <div className="flex items-center gap-1 bg-[var(--sub-alt)]/60 p-1 rounded-xl border border-[var(--sub-alt)]">
+          <Type className="w-3.5 h-3.5 text-[var(--main-color)] ml-1.5" />
           {wordOptions.map((wVal) => (
             <button
               key={wVal}
@@ -110,7 +110,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                 setTimeMode(0);
                 onReset();
               }}
-              className={`px-2.5 py-1 rounded-lg transition-all font-mono font-bold ${
+              className={`px-2.5 py-1 rounded-lg transition-all font-mono font-bold text-xs ${
                 wordCountMode === wVal && timeMode === 0
                   ? 'bg-[var(--main-color)] text-white shadow-sm'
                   : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
