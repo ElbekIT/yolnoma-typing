@@ -9,7 +9,8 @@ import {
   Globe,
   Flame,
   Zap,
-  Trophy
+  Trophy,
+  Clock
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
@@ -430,6 +431,7 @@ export const LeaderboardView: React.FC = () => {
                 <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
                   <th className="pb-2 px-2 w-10">#</th>
                   <th className="pb-2 px-2">name</th>
+                  <th className="pb-2 px-2 text-center">mode</th>
                   <th className="pb-2 px-2 text-right">wpm</th>
                   <th className="pb-2 px-2 text-right">accuracy</th>
                   <th className="pb-2 px-2 text-right hidden sm:table-cell">raw</th>
@@ -440,7 +442,7 @@ export const LeaderboardView: React.FC = () => {
               <tbody className="divide-y divide-[var(--sub-alt)]/40">
                 {pageRankings.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-[var(--sub-color)]">
+                    <td colSpan={8} className="py-12 text-center text-[var(--sub-color)]">
                       <p className="font-bold text-sm text-[var(--text-color)] mb-1">Foydalanuvchilar topilmadi</p>
                       <p className="text-xs">Ushbu rejimda reyting natijalari hali kiritilmagan.</p>
                     </td>
@@ -448,6 +450,18 @@ export const LeaderboardView: React.FC = () => {
                 ) : (
                   pageRankings.map((item) => {
                     const isSelf = currentUser?.uid === item.uid;
+
+                    // Compute active mode for this row
+                    const activeTimeDisplay =
+                      selectedTimeMode === 'all'
+                        ? item.time15Wpm === item.highestWpm
+                          ? '15s'
+                          : item.time30Wpm === item.highestWpm
+                          ? '30s'
+                          : item.time120Wpm === item.highestWpm
+                          ? '120s'
+                          : '60s'
+                        : `${selectedTimeMode}s`;
 
                     return (
                       <tr
@@ -474,7 +488,7 @@ export const LeaderboardView: React.FC = () => {
                               alt="avatar"
                               className="w-5 h-5 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]"
                             />
-                            <span className="text-[var(--text-color)] font-semibold truncate max-w-[130px] sm:max-w-[180px]">
+                            <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
                               {item.displayName}
                             </span>
                             {item.isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
@@ -484,6 +498,14 @@ export const LeaderboardView: React.FC = () => {
                               </span>
                             )}
                           </div>
+                        </td>
+
+                        {/* Mode */}
+                        <td className="py-2.5 px-2 text-center">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--main-color)] font-mono text-[10px] font-black border border-[var(--sub-color)]/20 shadow-xs">
+                            <Clock className="w-3 h-3 text-[var(--main-color)] shrink-0" />
+                            <span>{activeTimeDisplay}</span>
+                          </span>
                         </td>
 
                         {/* WPM */}

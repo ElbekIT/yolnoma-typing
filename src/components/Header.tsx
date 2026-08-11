@@ -310,30 +310,31 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
           />
 
           {/* Drawer Container */}
-          <div className="relative w-72 sm:w-80 max-w-[85vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-250">
+          <div className="relative w-80 sm:w-96 md:w-[380px] max-w-[90vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-6 flex flex-col justify-between shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-250">
             {/* Top Drawer Section */}
             <div>
-              {/* Minimalist Drawer Header */}
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--sub-alt)]/60">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between pb-5 mb-5 border-b border-[var(--sub-alt)]/60">
                 <div
-                  className="flex items-center gap-2.5 cursor-pointer group"
+                  className="flex items-center gap-3 cursor-pointer group"
                   onClick={() => handleSelectTab('typing')}
                 >
                   <img
                     src="/yolnoma_icon.svg"
                     alt="Yolnoma Logo"
-                    className="w-8 h-8 object-contain group-hover:scale-105 transition-transform"
+                    className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
                   />
                   <div>
-                    <h2 className="text-base font-black tracking-tight text-[var(--text-color)]">
-                      Yolnoma <span className="text-[var(--main-color)] text-xs font-bold">Typing</span>
+                    <h2 className="text-lg font-black tracking-tight text-[var(--text-color)]">
+                      Yolnoma <span className="text-[var(--main-color)] text-sm font-bold">Typing</span>
                     </h2>
+                    <p className="text-[11px] text-[var(--sub-color)] font-medium">O'zbekiston №1 Tez Yozish Platformasi</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsDrawerOpen(false)}
-                  className="p-1.5 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-all"
+                  className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-all"
                   title="Yopish"
                 >
                   <X className="w-5 h-5" />
@@ -341,8 +342,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </div>
 
               {/* Clean Navigation Menu Links */}
-              <div className="space-y-1">
-                <div className="px-2 py-1 text-[10px] font-extrabold uppercase text-[var(--sub-color)] tracking-wider">
+              <div className="space-y-1.5">
+                <div className="px-2.5 py-1 text-[11px] font-black uppercase text-[var(--sub-color)] tracking-wider">
                   Bo'limlar
                 </div>
 
@@ -355,25 +356,25 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     <button
                       key={item.id}
                       onClick={() => handleSelectTab(item.id)}
-                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 group ${
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-150 group ${
                         isActive
-                          ? 'bg-[var(--main-color)] text-white font-bold shadow-md shadow-[var(--main-color)]/25 scale-[1.01]'
+                          ? 'bg-[var(--main-color)] text-white shadow-lg shadow-[var(--main-color)]/25 scale-[1.01]'
                           : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]/70 hover:text-[var(--main-color)]'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3.5">
                         <Icon
-                          className={`w-4 h-4 transition-colors ${
+                          className={`w-5 h-5 transition-colors ${
                             isActive
                               ? 'text-white'
                               : 'text-[var(--sub-color)] group-hover:text-[var(--main-color)]'
                           }`}
                         />
-                        <span className="text-xs font-bold tracking-wide">{displayLabel}</span>
+                        <span className="text-sm font-extrabold tracking-wide">{displayLabel}</span>
                       </div>
 
                       <ChevronRight
-                        className={`w-3.5 h-3.5 transition-transform ${
+                        className={`w-4 h-4 transition-transform ${
                           isActive
                             ? 'text-white translate-x-0.5'
                             : 'opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5'
@@ -386,23 +387,23 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </div>
 
             {/* Bottom Minimalist User Footer */}
-            <div className="pt-4 border-t border-[var(--sub-alt)]/60 mt-4">
+            <div className="pt-5 border-t border-[var(--sub-alt)]/60 mt-5">
               {user ? (
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]">
-                  <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]">
+                  <div className="flex items-center gap-3 overflow-hidden">
                     <img
                       src={
                         profile?.avatarUrl ||
                         `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`
                       }
                       alt="avatar"
-                      className="w-8 h-8 rounded-full object-cover border border-[var(--main-color)]/50"
+                      className="w-9 h-9 rounded-full object-cover border-2 border-[var(--main-color)]/60"
                     />
                     <div className="text-xs truncate">
-                      <div className="font-bold text-[var(--text-color)] truncate max-w-[130px]">
+                      <div className="font-black text-sm text-[var(--text-color)] truncate max-w-[150px]">
                         {profile?.displayName || 'Foydalanuvchi'}
                       </div>
-                      <div className="text-[10px] text-[var(--main-color)] font-mono font-bold">
+                      <div className="text-[11px] text-[var(--main-color)] font-mono font-bold">
                         {profile?.highestWpm || 0} WPM Best
                       </div>
                     </div>
@@ -410,10 +411,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
                   <button
                     onClick={logout}
-                    className="p-1.5 rounded-lg text-[var(--sub-color)] hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                    className="p-2 rounded-xl text-[var(--sub-color)] hover:text-rose-500 hover:bg-rose-500/10 transition-all"
                     title="Chiqish"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-5 h-5" />
                   </button>
                 </div>
               ) : (
@@ -422,9 +423,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     setIsDrawerOpen(false);
                     onOpenAuth();
                   }}
-                  className="w-full py-2.5 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2 hover:opacity-95 transition-all"
+                  className="w-full py-3 rounded-2xl bg-[var(--main-color)] text-white font-extrabold text-sm shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2.5 hover:opacity-95 transition-all"
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-5 h-5" />
                   <span>Tizimga Kirish</span>
                 </button>
               )}
