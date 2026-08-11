@@ -25,13 +25,13 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
 
         <div className="space-y-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30 inline-flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5" /> Kirish Cheklangan
+            <AlertTriangle className="w-3.5 h-3.5" /> Kirish Butunlay Cheklangan
           </span>
           <h1 className="text-2xl font-black text-white tracking-tight">
-            Akkauntingiz Bloklandi!
+            Siz Bloklangansiz va Qayta Kira Olmaysiz!
           </h1>
-          <p className="text-xs text-slate-400 font-medium">
-            Sizning akkauntingiz admin tomonidan yoki Anti-Cheat avto-sistemasi tomonidan cheklovga uchradi.
+          <p className="text-xs text-rose-300 font-medium leading-relaxed">
+            Akkountingiz qoidalarni buzgani uchun doimiy bloklandi. Saytdan foydalanish va yozish testlariga kirish ruxsati bekor qilingan.
           </p>
         </div>
 

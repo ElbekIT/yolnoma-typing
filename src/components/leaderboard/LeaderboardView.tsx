@@ -114,7 +114,7 @@ export const LeaderboardView: React.FC = () => {
 
       const updateRankingsFromMap = () => {
         let source = Array.from(fetchedMap.values());
-        source = source.filter((u) => (u.highestWpm || 0) > 0);
+        source = source.filter((u) => (u.highestWpm || 0) > 0 && !u.isBanned && !u.isBlocked);
         source.sort((a, b) => (b.highestWpm || 0) - (a.highestWpm || 0));
         const formatted = source.map((user, idx) => ({
           ...user,
@@ -192,6 +192,23 @@ export const LeaderboardView: React.FC = () => {
                 if (item.bio) existing.bio = item.bio;
                 if (item.avatarUrl) existing.avatarUrl = item.avatarUrl;
                 if (item.country) existing.country = item.country;
+                if (item.isBanned !== undefined) existing.isBanned = item.isBanned;
+              }
+            });
+            updateRankingsFromMap();
+          }
+        });
+
+        // Also listen to users node for ban flags
+        const usersRef = ref(rtdb, 'users');
+        onValue(usersRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const usersVal = snapshot.val();
+            Object.keys(usersVal).forEach((uid) => {
+              const uData = usersVal[uid];
+              const existing = fetchedMap.get(uid);
+              if (existing) {
+                existing.isBanned = !!uData.isBanned;
               }
             });
             updateRankingsFromMap();
