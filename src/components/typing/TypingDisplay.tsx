@@ -138,7 +138,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [currentTypedLen, targetText]);
 
-  // Handle smooth Monkeytype 3-line scrolling
+  // Handle smooth 3-line scrolling
   useLayoutEffect(() => {
     const activeEl = wordRefs.current[activeWordIdx];
     const firstEl = wordRefs.current[0];
@@ -185,12 +185,12 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       {/* Focus hint when unfocused */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/95 rounded-2xl z-20 flex items-center justify-center text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)]">
-          <span>Sichqonchani bosing yoki tugmani bosing yozishni boshlash uchun</span>
+        <div className="absolute inset-0 bg-[var(--bg-color)]/80 backdrop-blur-[2px] rounded-2xl z-20 flex items-center justify-center text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer">
+          <span>Sichqonchani bosing yoki har qanday tugmani bosing yozishni boshlash uchun</span>
         </div>
       )}
 
-      {/* Monkeytype 3-Line Scroll Viewport */}
+      {/* 3-Line Scroll Viewport */}
       <div
         className="relative w-full overflow-hidden"
         style={{ height: `${containerHeight}px` }}
@@ -222,11 +222,11 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   let charClass = 'relative inline-block transition-colors duration-75 ';
 
                   if (!isTyped) {
-                    charClass += 'text-[#646669] ';
+                    charClass += 'text-[var(--sub-color)] opacity-70 ';
                   } else if (isCorrect) {
-                    charClass += 'text-[#d1d0c5] font-semibold ';
+                    charClass += 'text-[var(--text-color)] font-bold ';
                   } else {
-                    charClass += 'text-[#ca4754] bg-[#ca4754]/20 rounded-[2px] font-bold ';
+                    charClass += 'text-red-400 bg-red-500/20 rounded-[2px] font-bold ';
                   }
 
                   // Caret style
@@ -235,22 +235,22 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                     if (caretStyle === 'line' || !caretStyle) {
                       caretElement = (
                         <span
-                          className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[#e2b714] rounded-full ${
+                          className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
                             smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                           }`}
                         />
                       );
                     } else if (caretStyle === 'block') {
                       caretElement = (
-                        <span className="absolute inset-0 bg-[#e2b714]/40 rounded-[2px] animate-pulse" />
+                        <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
                       );
                     } else if (caretStyle === 'underline') {
                       caretElement = (
-                        <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#e2b714] rounded-full animate-pulse" />
+                        <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
                       );
                     } else if (caretStyle === 'outline') {
                       caretElement = (
-                        <span className="absolute inset-0 border-2 border-[#e2b714] rounded-[2px] animate-pulse" />
+                        <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
                       );
                     }
                   }
@@ -273,18 +273,18 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
                   let spaceClass = 'relative inline-block ';
                   if (!isTypedSpace) {
-                    spaceClass += 'text-[#646669] opacity-30 ';
+                    spaceClass += 'text-[var(--sub-color)] opacity-50 ';
                   } else if (isCorrectSpace) {
-                    spaceClass += 'text-[#d1d0c5] ';
+                    spaceClass += 'text-[var(--text-color)] ';
                   } else {
-                    spaceClass += 'text-[#ca4754] bg-[#ca4754]/30 rounded-[2px] ';
+                    spaceClass += 'text-red-400 bg-red-500/30 rounded-[2px] ';
                   }
 
                   let spaceCaret = null;
                   if (isCurrentSpace && isFocused && !isTestFinished) {
                     spaceCaret = (
                       <span
-                        className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[#e2b714] rounded-full ${
+                        className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
                           smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                         }`}
                       />
@@ -307,7 +307,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
             typedChars.slice(targetText.length).map((extraChar, extraIdx) => (
               <span
                 key={`extra-${extraIdx}`}
-                className="text-[#f87171] bg-[#f87171]/20 font-bold px-0.5 rounded-[2px]"
+                className="text-red-400 bg-red-500/20 font-bold px-0.5 rounded-[2px]"
               >
                 {extraChar === ' ' ? '\u00A0' : extraChar}
               </span>
@@ -328,23 +328,22 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="p-3 rounded-xl text-[#646669] hover:text-[#e2b714] transition-all group opacity-70 hover:opacity-100 cursor-pointer"
-          title="Restart Test (Tab + Enter)"
+          className="p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-all group opacity-70 hover:opacity-100 cursor-pointer"
+          title="Qayta boshlash (Tab + Enter)"
         >
           <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
         </button>
 
-        {/* Monkeytype Shortcut Footer Hints */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 text-[#646669] text-xs font-mono select-none">
+        {/* Shortcut Footer Hints */}
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-[var(--sub-color)] text-xs font-mono select-none">
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-[#2c2e31] border border-[#323437] text-[#646669] text-[10px]">tab</kbd>
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">tab</kbd>
             <span>+</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-[#2c2e31] border border-[#323437] text-[#646669] text-[10px]">enter</kbd>
-            <span className="ml-1">- restart test</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">enter</kbd>
+            <span className="ml-1">- qayta boshlash</span>
           </div>
         </div>
       </div>
     </div>
   );
 };
-
