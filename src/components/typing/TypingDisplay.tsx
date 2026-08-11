@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { languagesList } from '../../config/languages';
@@ -22,6 +22,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const { language, caretStyle, smoothCaret, soundProfile, fontFamily, fontSize } = useSettings();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wordRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [scrollOffset, setScrollOffset] = useState(0);
   const [isFocused, setIsFocused] = useState(true);
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
@@ -53,7 +55,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       return;
     }
 
-    // Play sound asynchronously to avoid input delay / lag
+    // Play sound asynchronously
     if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
       const charAtPress = typedInput.length;
       setTimeout(() => {
@@ -107,12 +109,53 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const typedChars = typedInput.split('');
   const currentTypedLen = typedInput.length;
 
+  // Active word index calculation
+  const activeWordIdx = useMemo(() => {
+    for (let i = 0; i < parsedWords.length; i++) {
+      const wordObj = parsedWords[i];
+      const wordEndIndex =
+        wordObj.spaceGlobalIndex !== null
+          ? wordObj.spaceGlobalIndex
+          : wordObj.chars[wordObj.chars.length - 1]?.globalIndex ?? 0;
+      if (currentTypedLen <= wordEndIndex) {
+        return i;
+      }
+    }
+    return Math.max(0, parsedWords.length - 1);
+  }, [parsedWords, currentTypedLen]);
+
+  // Reset scroll on test restart
+  useEffect(() => {
+    if (currentTypedLen === 0) {
+      setScrollOffset(0);
+    }
+  }, [currentTypedLen]);
+
+  // Handle smooth Monkeytype 3-line scrolling
+  useLayoutEffect(() => {
+    const activeEl = wordRefs.current[activeWordIdx];
+    const firstEl = wordRefs.current[0];
+    if (activeEl && firstEl) {
+      const lineDifference = activeEl.offsetTop - firstEl.offsetTop;
+      if (lineDifference !== scrollOffset) {
+        setScrollOffset(lineDifference);
+      }
+    }
+  }, [activeWordIdx, parsedWords.length]);
+
+  const calculatedFontSize = Math.max(20, fontSize);
+  const containerHeight = Math.round(calculatedFontSize * 1.65 * 3); // 3 lines height
+
   return (
     <div
       ref={containerRef}
       onClick={handleContainerClick}
-      className={`relative w-full max-w-5xl mx-auto my-4 bg-transparent border-0 rounded-2xl p-4 sm:p-8 min-h-[180px] cursor-text select-none transition-all duration-200`}
-      style={{ fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`, fontSize: `${Math.max(20, fontSize)}px`, direction: isRtl ? 'rtl' : 'ltr' }}
+      className="relative w-full max-w-5xl mx-auto my-4 bg-transparent border-0 rounded-2xl p-4 sm:p-6 cursor-text select-none transition-all duration-200"
+      style={{
+        fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`,
+        fontSize: `${calculatedFontSize}px`,
+        direction: isRtl ? 'rtl' : 'ltr'
+      }}
     >
       {/* Hidden input element */}
       <input
@@ -140,109 +183,126 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         </div>
       )}
 
-      {/* Clean, Monospace Word-Grouped Typing Container (Monkeytype style) */}
-      <div className="flex flex-wrap leading-relaxed tracking-normal text-left relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
-        {parsedWords.map((wordObj) => (
-          <div key={wordObj.wordIdx} className="inline-block whitespace-nowrap my-1 mr-[0.45em]">
-            {/* Word Characters */}
-            {wordObj.chars.map(({ char, globalIndex }) => {
-              const typedChar = typedChars[globalIndex];
-              const isCurrent = globalIndex === currentTypedLen;
-              const isTyped = typedChar !== undefined;
-              const isCorrect = isTyped && typedChar === char;
+      {/* Monkeytype 3-Line Scroll Viewport */}
+      <div
+        className="relative w-full overflow-hidden transition-all duration-200"
+        style={{ height: `${containerHeight}px` }}
+      >
+        <div
+          className="flex flex-wrap leading-relaxed tracking-normal text-left relative transition-transform duration-250 ease-out"
+          style={{
+            transform: `translateY(-${scrollOffset}px)`,
+            direction: isRtl ? 'rtl' : 'ltr'
+          }}
+        >
+          {parsedWords.map((wordObj, idx) => (
+            <div
+              key={wordObj.wordIdx}
+              ref={(el) => {
+                wordRefs.current[idx] = el;
+              }}
+              className="inline-block whitespace-nowrap my-1 mr-[0.45em]"
+            >
+              {/* Word Characters */}
+              {wordObj.chars.map(({ char, globalIndex }) => {
+                const typedChar = typedChars[globalIndex];
+                const isCurrent = globalIndex === currentTypedLen;
+                const isTyped = typedChar !== undefined;
+                const isCorrect = isTyped && typedChar === char;
 
-              let charClass = 'relative inline-block transition-colors duration-75 ';
+                let charClass = 'relative inline-block transition-colors duration-75 ';
 
-              if (!isTyped) {
-                charClass += 'text-[var(--sub-color)] opacity-40 ';
-              } else if (isCorrect) {
-                charClass += 'text-[var(--text-color)] font-semibold ';
-              } else {
-                charClass += 'text-[#f87171] bg-[#f87171]/20 rounded-[2px] font-bold ';
-              }
+                if (!isTyped) {
+                  charClass += 'text-[var(--sub-color)] opacity-40 ';
+                } else if (isCorrect) {
+                  charClass += 'text-[var(--text-color)] font-semibold ';
+                } else {
+                  charClass += 'text-[#f87171] bg-[#f87171]/20 rounded-[2px] font-bold ';
+                }
 
-              // Caret style
-              let caretElement = null;
-              if (isCurrent && isFocused && !isTestFinished) {
-                if (caretStyle === 'line' || !caretStyle) {
-                  caretElement = (
+                // Caret style
+                let caretElement = null;
+                if (isCurrent && isFocused && !isTestFinished) {
+                  if (caretStyle === 'line' || !caretStyle) {
+                    caretElement = (
+                      <span
+                        className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                          smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
+                        }`}
+                      />
+                    );
+                  } else if (caretStyle === 'block') {
+                    caretElement = (
+                      <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
+                    );
+                  } else if (caretStyle === 'underline') {
+                    caretElement = (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
+                    );
+                  } else if (caretStyle === 'outline') {
+                    caretElement = (
+                      <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
+                    );
+                  }
+                }
+
+                return (
+                  <span key={globalIndex} className={charClass}>
+                    {caretElement}
+                    {char}
+                  </span>
+                );
+              })}
+
+              {/* Trailing Space Character */}
+              {wordObj.spaceGlobalIndex !== null && (() => {
+                const spaceIdx = wordObj.spaceGlobalIndex;
+                const typedSpace = typedChars[spaceIdx];
+                const isCurrentSpace = spaceIdx === currentTypedLen;
+                const isTypedSpace = typedSpace !== undefined;
+                const isCorrectSpace = isTypedSpace && typedSpace === ' ';
+
+                let spaceClass = 'relative inline-block transition-colors duration-75 ';
+                if (!isTypedSpace) {
+                  spaceClass += 'text-[var(--sub-color)] opacity-20 ';
+                } else if (isCorrectSpace) {
+                  spaceClass += 'text-[var(--text-color)] ';
+                } else {
+                  spaceClass += 'text-[#f87171] bg-[#f87171]/30 rounded-[2px] ';
+                }
+
+                let spaceCaret = null;
+                if (isCurrentSpace && isFocused && !isTestFinished) {
+                  spaceCaret = (
                     <span
                       className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
                         smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
                       }`}
                     />
                   );
-                } else if (caretStyle === 'block') {
-                  caretElement = (
-                    <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
-                  );
-                } else if (caretStyle === 'underline') {
-                  caretElement = (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
-                  );
-                } else if (caretStyle === 'outline') {
-                  caretElement = (
-                    <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
-                  );
                 }
-              }
 
-              return (
-                <span key={globalIndex} className={charClass}>
-                  {caretElement}
-                  {char}
-                </span>
-              );
-            })}
-
-            {/* Trailing Space Character */}
-            {wordObj.spaceGlobalIndex !== null && (() => {
-              const spaceIdx = wordObj.spaceGlobalIndex;
-              const typedSpace = typedChars[spaceIdx];
-              const isCurrentSpace = spaceIdx === currentTypedLen;
-              const isTypedSpace = typedSpace !== undefined;
-              const isCorrectSpace = isTypedSpace && typedSpace === ' ';
-
-              let spaceClass = 'relative inline-block transition-colors duration-75 ';
-              if (!isTypedSpace) {
-                spaceClass += 'text-[var(--sub-color)] opacity-20 ';
-              } else if (isCorrectSpace) {
-                spaceClass += 'text-[var(--text-color)] ';
-              } else {
-                spaceClass += 'text-[#f87171] bg-[#f87171]/30 rounded-[2px] ';
-              }
-
-              let spaceCaret = null;
-              if (isCurrentSpace && isFocused && !isTestFinished) {
-                spaceCaret = (
-                  <span
-                    className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-                      smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
-                    }`}
-                  />
+                return (
+                  <span key={`space-${spaceIdx}`} className={spaceClass}>
+                    {spaceCaret}
+                    {'\u00A0'}
+                  </span>
                 );
-              }
-
-              return (
-                <span key={`space-${spaceIdx}`} className={spaceClass}>
-                  {spaceCaret}
-                  {'\u00A0'}
-                </span>
-              );
-            })()}
-          </div>
-        ))}
-
-        {/* Extra characters typed past targetText length */}
-        {typedChars.length > targetText.length &&
-          typedChars.slice(targetText.length).map((extraChar, extraIdx) => (
-            <span
-              key={`extra-${extraIdx}`}
-              className="text-[#f87171] bg-[#f87171]/20 font-bold px-0.5 rounded-[2px]"
-            >
-              {extraChar === ' ' ? '\u00A0' : extraChar}
-            </span>
+              })()}
+            </div>
           ))}
+
+          {/* Extra characters typed past targetText length */}
+          {typedChars.length > targetText.length &&
+            typedChars.slice(targetText.length).map((extraChar, extraIdx) => (
+              <span
+                key={`extra-${extraIdx}`}
+                className="text-[#f87171] bg-[#f87171]/20 font-bold px-0.5 rounded-[2px]"
+              >
+                {extraChar === ' ' ? '\u00A0' : extraChar}
+              </span>
+            ))}
+        </div>
       </div>
 
       {/* Quick Restart Button */}
@@ -261,3 +321,4 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     </div>
   );
 };
+

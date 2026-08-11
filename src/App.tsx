@@ -126,11 +126,12 @@ function MainAppContent() {
 
   // Initialize test text
   const initTestText = useCallback(() => {
+    const wordCountToGenerate = timeMode > 0 ? Math.max(120, wordCountMode) : wordCountMode;
     const generated = generateTestText(
       mode,
       language,
       difficulty,
-      wordCountMode,
+      wordCountToGenerate,
       customText
     );
     setTargetText(generated.rawText);
@@ -331,9 +332,20 @@ function MainAppContent() {
 
     setTypedInput(newInput);
 
-    // If word count mode or finished text
-    if (newInput.length >= targetText.length && targetText.length > 0) {
-      finishTest();
+    // Infinite Word Expansion for Time Mode
+    if (timeMode > 0 && mode !== 'custom') {
+      const remainingChars = targetText.length - newInput.length;
+      if (remainingChars < 120) {
+        const extraBatch = generateTestText(mode, language, difficulty, 60);
+        setTargetText((prev) => prev + ' ' + extraBatch.rawText);
+      }
+    }
+
+    // Finish test logic: for word count mode or custom text mode
+    if (timeMode === 0 || mode === 'custom') {
+      if (newInput.length >= targetText.length && targetText.length > 0) {
+        finishTest();
+      }
     }
   };
 
