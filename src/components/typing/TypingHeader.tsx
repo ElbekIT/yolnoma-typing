@@ -16,6 +16,7 @@ interface TypingHeaderProps {
   customText: string;
   setCustomText: (txt: string) => void;
   onReset: () => void;
+  isTestActive?: boolean;
 }
 
 export const TypingHeader: React.FC<TypingHeaderProps> = ({
@@ -29,7 +30,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   setDifficulty,
   customText,
   setCustomText,
-  onReset
+  onReset,
+  isTestActive = false
 }) => {
   const { language, setLanguage } = useSettings();
   const [showLangMenu, setShowLangMenu] = React.useState(false);
@@ -48,7 +50,11 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   const currentLang = languagesList.find((l) => l.code === language) || languagesList[0];
 
   return (
-    <div className="w-full max-w-4xl mx-auto mb-6 flex flex-col gap-2.5">
+    <div
+      className={`w-full max-w-4xl mx-auto mb-4 flex flex-col gap-2 transition-all duration-300 transform ${
+        isTestActive ? 'opacity-0 pointer-events-none -translate-y-4 scale-95 h-0 overflow-hidden mb-0' : 'opacity-100 translate-y-0 scale-100'
+      }`}
+    >
       {/* Explicit Language Bar on ALL Devices */}
       <div className="flex items-center justify-between bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl px-3.5 py-2 shadow-sm text-xs font-bold">
         <div className="flex items-center gap-2 text-[var(--sub-color)]">

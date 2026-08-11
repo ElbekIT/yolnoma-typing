@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { MousePointer, RefreshCw } from 'lucide-react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { languagesList } from '../../config/languages';
 import { soundSynth } from '../../utils/audio';
@@ -53,39 +53,66 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       return;
     }
 
-    // Play sound feedback
+    // Play sound asynchronously to avoid input delay / lag
     if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
-      const currentIndex = typedInput.length;
-      if (e.key !== 'Backspace' && currentIndex < targetText.length) {
-        const targetChar = targetText[currentIndex];
-        if (e.key === targetChar) {
-          soundSynth.playKeyPress(soundProfile);
+      const charAtPress = typedInput.length;
+      setTimeout(() => {
+        if (e.key !== 'Backspace' && charAtPress < targetText.length) {
+          const targetChar = targetText[charAtPress];
+          if (e.key === targetChar) {
+            soundSynth.playKeyPress(soundProfile);
+          } else {
+            soundSynth.playErrorSound();
+          }
         } else {
-          soundSynth.playErrorSound();
+          soundSynth.playKeyPress(soundProfile);
         }
-      } else {
-        soundSynth.playKeyPress(soundProfile);
-      }
+      }, 0);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isTestFinished) return;
-    onInputChange(e.target.value);
-  };
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (isTestFinished) return;
+      onInputChange(e.target.value);
+    },
+    [isTestFinished, onInputChange]
+  );
 
-  // Render text character by character
-  const targetChars = targetText.split('');
+  // Group text into whole words so words NEVER break mid-word across lines
+  const parsedWords = useMemo(() => {
+    if (!targetText) return [];
+    const wordsList = targetText.split(' ');
+    let charOffset = 0;
+
+    return wordsList.map((wordStr, wordIdx) => {
+      const startIndex = charOffset;
+      const chars = wordStr.split('').map((char, charInWordIdx) => ({
+        char,
+        globalIndex: startIndex + charInWordIdx
+      }));
+
+      const hasTrailingSpace = wordIdx < wordsList.length - 1;
+      const spaceGlobalIndex = hasTrailingSpace ? startIndex + wordStr.length : null;
+      charOffset += wordStr.length + (hasTrailingSpace ? 1 : 0);
+
+      return {
+        wordIdx,
+        chars,
+        spaceGlobalIndex
+      };
+    });
+  }, [targetText]);
+
   const typedChars = typedInput.split('');
+  const currentTypedLen = typedInput.length;
 
   return (
     <div
       ref={containerRef}
       onClick={handleContainerClick}
-      className={`relative w-full max-w-4xl mx-auto my-6 bg-[var(--card-bg)] border ${
-        isFocused ? 'border-[var(--main-color)]/50 shadow-xl shadow-[var(--main-color)]/10' : 'border-[var(--sub-alt)] shadow-md'
-      } rounded-3xl p-6 sm:p-10 min-h-[200px] cursor-text select-none transition-all duration-300`}
-      style={{ fontFamily, fontSize: `${fontSize}px`, direction: isRtl ? 'rtl' : 'ltr' }}
+      className={`relative w-full max-w-5xl mx-auto my-4 bg-transparent border-0 rounded-2xl p-4 sm:p-8 min-h-[180px] cursor-text select-none transition-all duration-200`}
+      style={{ fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`, fontSize: `${Math.max(20, fontSize)}px`, direction: isRtl ? 'rtl' : 'ltr' }}
     >
       {/* Hidden input element */}
       <input
@@ -106,86 +133,127 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         className="absolute opacity-0 pointer-events-none inset-0"
       />
 
-      {/* Simple, static hint when unfocused */}
+      {/* Focus hint when unfocused */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/70 rounded-2xl z-20 flex items-center justify-center text-xs font-semibold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)]">
-          <span>Click to focus and start typing</span>
+        <div className="absolute inset-0 bg-[var(--bg-color)]/80 backdrop-blur-xs rounded-2xl z-20 flex items-center justify-center text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)]">
+          <span>Sichqonchani bosing yoki tugmani bosing yozishni boshlash uchun</span>
         </div>
       )}
 
-      {/* Main Text Content */}
-      <div className="flex flex-wrap leading-relaxed tracking-wide text-left relative break-words" dir={isRtl ? 'rtl' : 'ltr'}>
-        {targetChars.map((char, index) => {
-          const typedChar = typedChars[index];
-          const isCurrent = index === typedChars.length;
-          const isTyped = typedChar !== undefined;
-          const isCorrect = isTyped && typedChar === char;
+      {/* Clean, Monospace Word-Grouped Typing Container (Monkeytype style) */}
+      <div className="flex flex-wrap leading-relaxed tracking-normal text-left relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+        {parsedWords.map((wordObj) => (
+          <div key={wordObj.wordIdx} className="inline-block whitespace-nowrap my-1 mr-[0.45em]">
+            {/* Word Characters */}
+            {wordObj.chars.map(({ char, globalIndex }) => {
+              const typedChar = typedChars[globalIndex];
+              const isCurrent = globalIndex === currentTypedLen;
+              const isTyped = typedChar !== undefined;
+              const isCorrect = isTyped && typedChar === char;
 
-          let charClass = 'transition-colors duration-100 relative ';
+              let charClass = 'relative inline-block transition-colors duration-75 ';
 
-          if (!isTyped) {
-            charClass += 'text-[var(--sub-color)] opacity-60 ';
-          } else if (isCorrect) {
-            charClass += 'text-[var(--correct-color)] font-medium ';
-          } else {
-            charClass += 'text-[var(--error-color)] bg-[var(--error-color)]/15 rounded-sm font-bold ';
-          }
+              if (!isTyped) {
+                charClass += 'text-[var(--sub-color)] opacity-40 ';
+              } else if (isCorrect) {
+                charClass += 'text-[var(--text-color)] font-semibold ';
+              } else {
+                charClass += 'text-[#f87171] bg-[#f87171]/20 rounded-[2px] font-bold ';
+              }
 
-          // Caret style
-          let caretElement = null;
-          if (isCurrent && isFocused && !isTestFinished) {
-            if (caretStyle === 'line') {
-              caretElement = (
-                <span
-                  className={`absolute -left-0.5 top-0 bottom-0 w-[2.5px] bg-[var(--caret-color)] rounded-full ${
-                    smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
-                  }`}
-                />
-              );
-            } else if (caretStyle === 'block') {
-              caretElement = (
-                <span className="absolute inset-0 bg-[var(--caret-color)]/40 rounded-sm animate-pulse" />
-              );
-            } else if (caretStyle === 'underline') {
-              caretElement = (
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[var(--caret-color)] rounded-full animate-pulse" />
-              );
-            } else if (caretStyle === 'outline') {
-              caretElement = (
-                <span className="absolute inset-0 border-2 border-[var(--caret-color)] rounded-sm animate-pulse" />
-              );
-            }
-          }
+              // Caret style
+              let caretElement = null;
+              if (isCurrent && isFocused && !isTestFinished) {
+                if (caretStyle === 'line' || !caretStyle) {
+                  caretElement = (
+                    <span
+                      className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                        smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
+                      }`}
+                    />
+                  );
+                } else if (caretStyle === 'block') {
+                  caretElement = (
+                    <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
+                  );
+                } else if (caretStyle === 'underline') {
+                  caretElement = (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
+                  );
+                } else if (caretStyle === 'outline') {
+                  caretElement = (
+                    <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
+                  );
+                }
+              }
 
-          return (
-            <span key={index} className={charClass}>
-              {caretElement}
-              {char === ' ' ? '\u00A0' : char}
-            </span>
-          );
-        })}
+              return (
+                <span key={globalIndex} className={charClass}>
+                  {caretElement}
+                  {char}
+                </span>
+              );
+            })}
+
+            {/* Trailing Space Character */}
+            {wordObj.spaceGlobalIndex !== null && (() => {
+              const spaceIdx = wordObj.spaceGlobalIndex;
+              const typedSpace = typedChars[spaceIdx];
+              const isCurrentSpace = spaceIdx === currentTypedLen;
+              const isTypedSpace = typedSpace !== undefined;
+              const isCorrectSpace = isTypedSpace && typedSpace === ' ';
+
+              let spaceClass = 'relative inline-block transition-colors duration-75 ';
+              if (!isTypedSpace) {
+                spaceClass += 'text-[var(--sub-color)] opacity-20 ';
+              } else if (isCorrectSpace) {
+                spaceClass += 'text-[var(--text-color)] ';
+              } else {
+                spaceClass += 'text-[#f87171] bg-[#f87171]/30 rounded-[2px] ';
+              }
+
+              let spaceCaret = null;
+              if (isCurrentSpace && isFocused && !isTestFinished) {
+                spaceCaret = (
+                  <span
+                    className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                      smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
+                    }`}
+                  />
+                );
+              }
+
+              return (
+                <span key={`space-${spaceIdx}`} className={spaceClass}>
+                  {spaceCaret}
+                  {'\u00A0'}
+                </span>
+              );
+            })()}
+          </div>
+        ))}
 
         {/* Extra characters typed past targetText length */}
-        {typedChars.length > targetChars.length &&
-          typedChars.slice(targetChars.length).map((extraChar, extraIdx) => (
+        {typedChars.length > targetText.length &&
+          typedChars.slice(targetText.length).map((extraChar, extraIdx) => (
             <span
               key={`extra-${extraIdx}`}
-              className="text-[var(--extra-color)] bg-[var(--extra-color)]/20 font-bold px-0.5 rounded-sm"
+              className="text-[#f87171] bg-[#f87171]/20 font-bold px-0.5 rounded-[2px]"
             >
               {extraChar === ' ' ? '\u00A0' : extraChar}
             </span>
           ))}
       </div>
 
-      {/* Quick Restart Action Floating Button */}
+      {/* Quick Restart Button */}
       <div className="mt-8 flex items-center justify-center">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onRestart();
           }}
-          className="p-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--card-bg)] border border-[var(--sub-color)]/20 shadow-sm transition-all group"
-          title="Restart Test (Tab + Enter)"
+          className="p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-all group opacity-60 hover:opacity-100"
+          title="Qayta boshlash (Tab + Enter)"
         >
           <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
         </button>

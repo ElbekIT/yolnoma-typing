@@ -1,5 +1,4 @@
 import React from 'react';
-import { Activity, Target, Clock, Zap } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 
 interface LiveStatsProps {
@@ -13,45 +12,40 @@ interface LiveStatsProps {
 
 export const LiveStats: React.FC<LiveStatsProps> = ({
   wpm,
-  cpm,
   accuracy,
   timeLeft,
-  progressPercent,
-  isTestActive
+  progressPercent
 }) => {
   const { showLiveWpm } = useSettings();
 
   return (
-    <div className="w-full max-w-4xl mx-auto mb-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between text-sm font-semibold px-2">
-        {/* Timer / Progress Counter */}
-        <div className="flex items-center gap-2 text-2xl font-mono font-bold text-[var(--main-color)]">
-          <Clock className="w-6 h-6" />
-          <span>{timeLeft}s</span>
+    <div className="w-full max-w-5xl mx-auto mb-2 flex flex-col gap-1 px-4">
+      <div className="flex items-center justify-between text-sm font-semibold">
+        {/* Large Clean Timer */}
+        <div className="text-3xl font-mono font-bold text-[var(--main-color)] tracking-tight">
+          {timeLeft}s
         </div>
 
         {/* Live WPM & Accuracy */}
         {showLiveWpm && (
-          <div className="flex items-center gap-6 text-xs font-medium">
-            <div className="flex items-center gap-1.5 bg-[var(--card-bg)] px-3 py-1.5 rounded-xl border border-[var(--sub-alt)]">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <span className="text-[var(--sub-color)]">WPM:</span>
-              <span className="font-mono font-bold text-base text-[var(--text-color)]">{wpm}</span>
+          <div className="flex items-center gap-6 text-sm font-mono opacity-80">
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--sub-color)] text-xs uppercase font-sans">WPM</span>
+              <span className="font-bold text-lg text-[var(--text-color)]">{wpm}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-[var(--card-bg)] px-3 py-1.5 rounded-xl border border-[var(--sub-alt)]">
-              <Target className="w-4 h-4 text-emerald-500" />
-              <span className="text-[var(--sub-color)]">ACC:</span>
-              <span className="font-mono font-bold text-base text-[var(--text-color)]">{accuracy}%</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--sub-color)] text-xs uppercase font-sans">ACC</span>
+              <span className="font-bold text-lg text-[var(--text-color)]">{accuracy}%</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full bg-[var(--sub-alt)] h-1.5 rounded-full overflow-hidden">
+      {/* Subtle Progress Bar */}
+      <div className="w-full bg-[var(--sub-alt)]/40 h-1 rounded-full overflow-hidden mt-1">
         <div
-          className="bg-[var(--main-color)] h-full transition-all duration-200"
+          className="bg-[var(--main-color)] h-full transition-all duration-150"
           style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
         />
       </div>

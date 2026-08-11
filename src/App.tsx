@@ -338,6 +338,7 @@ function MainAppContent() {
               customText={customText}
               setCustomText={setCustomText}
               onReset={initTestText}
+              isTestActive={isTestActive}
             />
 
             <LiveStats
