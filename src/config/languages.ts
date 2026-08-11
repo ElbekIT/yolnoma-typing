@@ -175,7 +175,18 @@ export const languagesList: LanguageInfo[] = [
 ];
 
 export function getLanguageInfo(code: LanguageCode): LanguageInfo {
-  const found = languagesList.find((l) => l.code === code);
+  let customLangs: LanguageInfo[] = [];
+  try {
+    const raw = localStorage.getItem('yolnoma_owner_custom_languages');
+    if (raw) {
+      customLangs = JSON.parse(raw);
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  const allLangs = [...languagesList, ...customLangs];
+  const found = allLangs.find((l) => l.code.toLowerCase() === code.toLowerCase());
   if (found) return found;
 
   return {
