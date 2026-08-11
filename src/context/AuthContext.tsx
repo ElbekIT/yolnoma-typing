@@ -387,6 +387,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           displayName: updated.displayName,
           username: updated.username,
           highestWpm: updated.highestWpm || 0,
+          time15Wpm: updated.time15Wpm || 0,
+          time30Wpm: updated.time30Wpm || 0,
+          time60Wpm: updated.time60Wpm || 0,
+          time120Wpm: updated.time120Wpm || 0,
           highestAccuracy: updated.highestAccuracy || 0,
           country: updated.country || '🇺🇿 Uzbekistan',
           level: updated.level || 1,
@@ -535,7 +539,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
       const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-      const newHighestWpm = Math.max(profile.highestWpm, fullResult.wpm);
+      const newHighestWpm = Math.max(profile.highestWpm || 0, fullResult.wpm);
+
+      const newTime15 = fullResult.timeMode === 15 ? Math.max(profile.time15Wpm || 0, fullResult.wpm) : (profile.time15Wpm || 0);
+      const newTime30 = fullResult.timeMode === 30 ? Math.max(profile.time30Wpm || 0, fullResult.wpm) : (profile.time30Wpm || 0);
+      const newTime60 = fullResult.timeMode === 60 ? Math.max(profile.time60Wpm || 0, fullResult.wpm) : (profile.time60Wpm || 0);
+      const newTime120 = fullResult.timeMode === 120 ? Math.max(profile.time120Wpm || 0, fullResult.wpm) : (profile.time120Wpm || 0);
+
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
       const newAvgWpm = Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests);
 
@@ -545,6 +555,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalWordsTyped: newWordsTyped,
         totalCharsTyped: newCharsTyped,
         highestWpm: newHighestWpm,
+        time15Wpm: newTime15,
+        time30Wpm: newTime30,
+        time60Wpm: newTime60,
+        time120Wpm: newTime120,
         highestAccuracy: newHighestAccuracy,
         averageWpm: newAvgWpm,
         xp: newXp,
@@ -566,11 +580,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Guest User - Push live score to RTDB Leaderboard
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));
+        const guest15 = rawResult.timeMode === 15 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0);
+        const guest30 = rawResult.timeMode === 30 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_30_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_30_wpm') || 0);
+        const guest60 = rawResult.timeMode === 60 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_60_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_60_wpm') || 0);
+        const guest120 = rawResult.timeMode === 120 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_120_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_120_wpm') || 0);
+
+        if (rawResult.timeMode === 15) localStorage.setItem('yolnoma_guest_15_wpm', String(guest15));
+        if (rawResult.timeMode === 30) localStorage.setItem('yolnoma_guest_30_wpm', String(guest30));
+        if (rawResult.timeMode === 60) localStorage.setItem('yolnoma_guest_60_wpm', String(guest60));
+        if (rawResult.timeMode === 120) localStorage.setItem('yolnoma_guest_120_wpm', String(guest120));
+
         await set(ref(rtdb, `leaderboard/${guestId}`), {
           uid: guestId,
           displayName: `Mehmon (${guestId.replace('guest_', '')})`,
           username: guestId,
           highestWpm: guestBest,
+          time15Wpm: guest15,
+          time30Wpm: guest30,
+          time60Wpm: guest60,
+          time120Wpm: guest120,
           highestAccuracy: rawResult.accuracy,
           country: '🇺🇿 Uzbekistan',
           level: 1,

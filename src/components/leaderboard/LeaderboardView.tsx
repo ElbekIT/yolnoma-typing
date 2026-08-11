@@ -29,7 +29,7 @@ export const LeaderboardView: React.FC = () => {
 
   // Mode selections (Monkeytype style)
   const [selectedCategory, setSelectedCategory] = useState<'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily'>('all-time-uzbek');
-  const [selectedTimeMode, setSelectedTimeMode] = useState<15 | 30 | 60 | 120>(15);
+  const [selectedTimeMode, setSelectedTimeMode] = useState<'all' | 15 | 30 | 60 | 120>('all');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [rankings, setRankings] = useState<LeaderboardEntry[]>([]);
@@ -107,6 +107,14 @@ export const LeaderboardView: React.FC = () => {
         console.warn('Guest profile load error:', e);
       }
 
+      const getWpmForSelectedMode = (user: UserProfile) => {
+        if (selectedTimeMode === 15) return user.time15Wpm || user.highestWpm || 0;
+        if (selectedTimeMode === 30) return user.time30Wpm || user.highestWpm || 0;
+        if (selectedTimeMode === 60) return user.time60Wpm || user.highestWpm || 0;
+        if (selectedTimeMode === 120) return user.time120Wpm || user.highestWpm || 0;
+        return user.highestWpm || 0;
+      };
+
       const updateRankingsFromMap = () => {
         let source = Array.from(fetchedMap.values());
         source = source.filter((u) => (u.highestWpm || 0) > 0 && !u.isBanned && !u.isBlocked);
@@ -115,11 +123,11 @@ export const LeaderboardView: React.FC = () => {
         if (selectedCategory === 'weekly-xp') {
           source.sort((a, b) => (b.xp || 0) - (a.xp || 0));
         } else {
-          source.sort((a, b) => (b.highestWpm || 0) - (a.highestWpm || 0));
+          source.sort((a, b) => getWpmForSelectedMode(b) - getWpmForSelectedMode(a));
         }
 
         const formatted = source.map((user, idx) => {
-          const wpmVal = user.highestWpm || 0;
+          const wpmVal = getWpmForSelectedMode(user);
           const rawWpmVal = Math.round(wpmVal * 1.05);
           const consistencyVal = Math.min(99.9, Math.max(82.0, (user.highestAccuracy || 98) - 2.5));
           const dateStr = user.lastActive
@@ -132,6 +140,7 @@ export const LeaderboardView: React.FC = () => {
 
           return {
             ...user,
+            highestWpm: wpmVal, // display the mode-specific WPM
             rank: idx + 1,
             rawWpm: rawWpmVal,
             consistency: Number(consistencyVal.toFixed(2)),
@@ -162,6 +171,10 @@ export const LeaderboardView: React.FC = () => {
                   username: item.username || item.displayName || 'typer',
                   displayName: item.displayName || item.username || 'Typer',
                   highestWpm: item.highestWpm || 0,
+                  time15Wpm: item.time15Wpm || 0,
+                  time30Wpm: item.time30Wpm || 0,
+                  time60Wpm: item.time60Wpm || 0,
+                  time120Wpm: item.time120Wpm || 0,
                   highestAccuracy: item.highestAccuracy || 0,
                   country: item.country || '🇺🇿 Uzbekistan',
                   level: item.level || 1,
@@ -250,10 +263,11 @@ export const LeaderboardView: React.FC = () => {
   };
 
   const getHeaderTitle = () => {
-    if (selectedCategory === 'all-time-uzbek') return `All-time Uzbek Time ${selectedTimeMode} Leaderboard`;
-    if (selectedCategory === 'all-time-english') return `All-time English Time ${selectedTimeMode} Leaderboard`;
+    const timeLabel = selectedTimeMode === 'all' ? 'All Times' : `Time ${selectedTimeMode}`;
+    if (selectedCategory === 'all-time-uzbek') return `All-time Uzbek ${timeLabel} Leaderboard`;
+    if (selectedCategory === 'all-time-english') return `All-time English ${timeLabel} Leaderboard`;
     if (selectedCategory === 'weekly-xp') return `Weekly XP Leaderboard`;
-    return `Daily Time ${selectedTimeMode} Leaderboard`;
+    return `Daily ${timeLabel} Leaderboard`;
   };
 
   return (
@@ -336,7 +350,7 @@ export const LeaderboardView: React.FC = () => {
           {/* Time Mode Sub-Group */}
           {selectedCategory !== 'weekly-xp' && (
             <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-              {([15, 30, 60, 120] as const).map((tm) => (
+              {(['all', 15, 30, 60, 120] as const).map((tm) => (
                 <button
                   key={tm}
                   onClick={() => {
@@ -350,7 +364,7 @@ export const LeaderboardView: React.FC = () => {
                   }`}
                 >
                   <Trophy className="w-3.5 h-3.5 opacity-70" />
-                  <span>time {tm}</span>
+                  <span>{tm === 'all' ? 'all' : `time ${tm}`}</span>
                 </button>
               ))}
             </div>

@@ -73,32 +73,38 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
           </button>
 
           {showLangMenu && (
-            <div className="absolute right-0 mt-2 w-60 max-h-72 overflow-y-auto bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-2xl z-50 p-2 text-xs font-semibold">
-              <div className="px-2 py-1 text-[var(--sub-color)] font-extrabold uppercase text-[10px] tracking-wider pb-1 border-b border-[var(--sub-alt)] mb-1">
-                Matn Tilini Tanlang
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/20"
+                onClick={() => setShowLangMenu(false)}
+              />
+              <div className="absolute right-0 mt-2 w-60 max-h-72 overflow-y-auto bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-2xl z-50 p-2 text-xs font-semibold">
+                <div className="px-2 py-1 text-[var(--sub-color)] font-extrabold uppercase text-[10px] tracking-wider pb-1 border-b border-[var(--sub-alt)] mb-1">
+                  Matn Tilini Tanlang
+                </div>
+                {languagesList.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLanguage(l.code as LanguageCode);
+                      setShowLangMenu(false);
+                      onReset();
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all font-bold ${
+                      language === l.code
+                        ? 'bg-[var(--main-color)] text-white shadow-md'
+                        : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-base">{l.flag}</span>
+                      <span>{l.nativeName}</span>
+                    </span>
+                    <span className="text-[10px] opacity-70">({l.script})</span>
+                  </button>
+                ))}
               </div>
-              {languagesList.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => {
-                    setLanguage(l.code as LanguageCode);
-                    setShowLangMenu(false);
-                    onReset();
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all font-bold ${
-                    language === l.code
-                      ? 'bg-[var(--main-color)] text-white shadow-md'
-                      : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-base">{l.flag}</span>
-                    <span>{l.nativeName}</span>
-                  </span>
-                  <span className="text-[10px] opacity-70">({l.script})</span>
-                </button>
-              ))}
-            </div>
+            </>
           )}
         </div>
       </div>

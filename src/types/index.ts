@@ -92,6 +92,10 @@ export interface UserProfile {
   totalWordsTyped: number;
   totalCharsTyped: number;
   highestWpm: number;
+  time15Wpm?: number;
+  time30Wpm?: number;
+  time60Wpm?: number;
+  time120Wpm?: number;
   highestAccuracy: number;
   averageWpm: number;
   currentStreak: number;

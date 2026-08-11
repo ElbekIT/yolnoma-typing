@@ -318,9 +318,15 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       {/* Quick Restart Button */}
       <div className="mt-8 flex items-center justify-center">
         <button
+          type="button"
+          tabIndex={-1}
           onClick={(e) => {
             e.stopPropagation();
             onRestart();
+            if (inputRef.current) {
+              inputRef.current.focus();
+              setIsFocused(true);
+            }
           }}
           className="p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-all group opacity-60 hover:opacity-100"
           title="Qayta boshlash (Tab + Enter)"
