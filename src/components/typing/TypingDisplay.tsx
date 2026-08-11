@@ -124,6 +124,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
 
+  // Windowed word rendering for ultra-fast performance (renders only words in viewport)
+  const visibleWords = useMemo(() => {
+    const start = Math.max(0, activeWordIdx - 20);
+    const end = Math.min(parsedWords.length, activeWordIdx + 50);
+    return parsedWords.slice(start, end);
+  }, [parsedWords, activeWordIdx]);
+
   // Reset scroll on test restart
   useEffect(() => {
     if (currentTypedLen === 0) {
@@ -150,7 +157,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     <div
       ref={containerRef}
       onClick={handleContainerClick}
-      className="relative w-full max-w-5xl mx-auto my-4 bg-transparent border-0 rounded-2xl p-4 sm:p-6 cursor-text select-none transition-all duration-200"
+      className="relative w-full max-w-5xl mx-auto my-4 bg-transparent border-0 rounded-2xl p-4 sm:p-6 cursor-text select-none"
       style={{
         fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`,
         fontSize: `${calculatedFontSize}px`,
@@ -178,119 +185,122 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       {/* Focus hint when unfocused */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/80 backdrop-blur-xs rounded-2xl z-20 flex items-center justify-center text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)]">
+        <div className="absolute inset-0 bg-[var(--bg-color)]/95 rounded-2xl z-20 flex items-center justify-center text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)]">
           <span>Sichqonchani bosing yoki tugmani bosing yozishni boshlash uchun</span>
         </div>
       )}
 
       {/* Monkeytype 3-Line Scroll Viewport */}
       <div
-        className="relative w-full overflow-hidden transition-all duration-200"
+        className="relative w-full overflow-hidden"
         style={{ height: `${containerHeight}px` }}
       >
         <div
-          className="flex flex-wrap leading-relaxed tracking-normal text-left relative transition-transform duration-250 ease-out"
+          className="flex flex-wrap leading-relaxed tracking-normal text-left relative transition-transform duration-200 ease-out"
           style={{
             transform: `translateY(-${scrollOffset}px)`,
             direction: isRtl ? 'rtl' : 'ltr'
           }}
         >
-          {parsedWords.map((wordObj, idx) => (
-            <div
-              key={wordObj.wordIdx}
-              ref={(el) => {
-                wordRefs.current[idx] = el;
-              }}
-              className="inline-block whitespace-nowrap my-1 mr-[0.45em]"
-            >
-              {/* Word Characters */}
-              {wordObj.chars.map(({ char, globalIndex }) => {
-                const typedChar = typedChars[globalIndex];
-                const isCurrent = globalIndex === currentTypedLen;
-                const isTyped = typedChar !== undefined;
-                const isCorrect = isTyped && typedChar === char;
+          {visibleWords.map((wordObj) => {
+            const idx = wordObj.wordIdx;
+            return (
+              <div
+                key={wordObj.wordIdx}
+                ref={(el) => {
+                  wordRefs.current[idx] = el;
+                }}
+                className="inline-block whitespace-nowrap my-1 mr-[0.45em]"
+              >
+                {/* Word Characters */}
+                {wordObj.chars.map(({ char, globalIndex }) => {
+                  const typedChar = typedChars[globalIndex];
+                  const isCurrent = globalIndex === currentTypedLen;
+                  const isTyped = typedChar !== undefined;
+                  const isCorrect = isTyped && typedChar === char;
 
-                let charClass = 'relative inline-block transition-colors duration-75 ';
+                  let charClass = 'relative inline-block ';
 
-                if (!isTyped) {
-                  charClass += 'text-[var(--sub-color)] opacity-40 ';
-                } else if (isCorrect) {
-                  charClass += 'text-[var(--text-color)] font-semibold ';
-                } else {
-                  charClass += 'text-[#f87171] bg-[#f87171]/20 rounded-[2px] font-bold ';
-                }
+                  if (!isTyped) {
+                    charClass += 'text-[var(--sub-color)] opacity-40 ';
+                  } else if (isCorrect) {
+                    charClass += 'text-[var(--text-color)] font-semibold ';
+                  } else {
+                    charClass += 'text-[#f87171] bg-[#f87171]/20 rounded-[2px] font-bold ';
+                  }
 
-                // Caret style
-                let caretElement = null;
-                if (isCurrent && isFocused && !isTestFinished) {
-                  if (caretStyle === 'line' || !caretStyle) {
-                    caretElement = (
+                  // Caret style
+                  let caretElement = null;
+                  if (isCurrent && isFocused && !isTestFinished) {
+                    if (caretStyle === 'line' || !caretStyle) {
+                      caretElement = (
+                        <span
+                          className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                            smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
+                          }`}
+                        />
+                      );
+                    } else if (caretStyle === 'block') {
+                      caretElement = (
+                        <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
+                      );
+                    } else if (caretStyle === 'underline') {
+                      caretElement = (
+                        <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
+                      );
+                    } else if (caretStyle === 'outline') {
+                      caretElement = (
+                        <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
+                      );
+                    }
+                  }
+
+                  return (
+                    <span key={globalIndex} className={charClass}>
+                      {caretElement}
+                      {char}
+                    </span>
+                  );
+                })}
+
+                {/* Trailing Space Character */}
+                {wordObj.spaceGlobalIndex !== null && (() => {
+                  const spaceIdx = wordObj.spaceGlobalIndex;
+                  const typedSpace = typedChars[spaceIdx];
+                  const isCurrentSpace = spaceIdx === currentTypedLen;
+                  const isTypedSpace = typedSpace !== undefined;
+                  const isCorrectSpace = isTypedSpace && typedSpace === ' ';
+
+                  let spaceClass = 'relative inline-block ';
+                  if (!isTypedSpace) {
+                    spaceClass += 'text-[var(--sub-color)] opacity-20 ';
+                  } else if (isCorrectSpace) {
+                    spaceClass += 'text-[var(--text-color)] ';
+                  } else {
+                    spaceClass += 'text-[#f87171] bg-[#f87171]/30 rounded-[2px] ';
+                  }
+
+                  let spaceCaret = null;
+                  if (isCurrentSpace && isFocused && !isTestFinished) {
+                    spaceCaret = (
                       <span
                         className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-                          smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
+                          smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                         }`}
                       />
                     );
-                  } else if (caretStyle === 'block') {
-                    caretElement = (
-                      <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
-                    );
-                  } else if (caretStyle === 'underline') {
-                    caretElement = (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
-                    );
-                  } else if (caretStyle === 'outline') {
-                    caretElement = (
-                      <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
-                    );
                   }
-                }
 
-                return (
-                  <span key={globalIndex} className={charClass}>
-                    {caretElement}
-                    {char}
-                  </span>
-                );
-              })}
-
-              {/* Trailing Space Character */}
-              {wordObj.spaceGlobalIndex !== null && (() => {
-                const spaceIdx = wordObj.spaceGlobalIndex;
-                const typedSpace = typedChars[spaceIdx];
-                const isCurrentSpace = spaceIdx === currentTypedLen;
-                const isTypedSpace = typedSpace !== undefined;
-                const isCorrectSpace = isTypedSpace && typedSpace === ' ';
-
-                let spaceClass = 'relative inline-block transition-colors duration-75 ';
-                if (!isTypedSpace) {
-                  spaceClass += 'text-[var(--sub-color)] opacity-20 ';
-                } else if (isCorrectSpace) {
-                  spaceClass += 'text-[var(--text-color)] ';
-                } else {
-                  spaceClass += 'text-[#f87171] bg-[#f87171]/30 rounded-[2px] ';
-                }
-
-                let spaceCaret = null;
-                if (isCurrentSpace && isFocused && !isTestFinished) {
-                  spaceCaret = (
-                    <span
-                      className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-                        smoothCaret ? 'transition-all duration-100' : 'animate-pulse'
-                      }`}
-                    />
+                  return (
+                    <span key={`space-${spaceIdx}`} className={spaceClass}>
+                      {spaceCaret}
+                      {'\u00A0'}
+                    </span>
                   );
-                }
-
-                return (
-                  <span key={`space-${spaceIdx}`} className={spaceClass}>
-                    {spaceCaret}
-                    {'\u00A0'}
-                  </span>
-                );
-              })()}
-            </div>
-          ))}
+                })()}
+              </div>
+            );
+          })}
 
           {/* Extra characters typed past targetText length */}
           {typedChars.length > targetText.length &&
