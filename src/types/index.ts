@@ -4,7 +4,7 @@ export type LanguageCode =
   | 'it' | 'nl' | 'pl' | 'cs' | 'sk' | 'ro' | 'hu' | 'fi' | 'sv'
   | 'no' | 'da' | 'el' | 'he' | 'fa' | 'ur' | 'hi' | 'bn' | 'ta'
   | 'te' | 'ml' | 'kn' | 'pa' | 'gu' | 'mr' | 'zh-hans' | 'zh-hant'
-  | 'ja' | 'ko' | 'th' | 'vi' | 'id' | 'ms' | (string & {});
+  | 'ja' | 'ko' | 'th' | 'vi' | 'id' | 'ms';
 
 export type TextMode = 'words' | 'sentences' | 'quotes' | 'code' | 'numbers' | 'symbols' | 'story' | 'custom';
 export type TimeMode = 15 | 30 | 60 | 120 | 300 | 0; // 0 for custom/word-count

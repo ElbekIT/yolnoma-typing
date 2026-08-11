@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Clock, Type, Layers, Globe, Sparkles, Check, Search, X, Crown, Plus } from 'lucide-react';
+import { Clock, Type, Code, Layers, Globe, Sparkles, Check, Search, X } from 'lucide-react';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode, LanguageCode } from '../../types';
+import { languagesList } from '../../config/languages';
 import { useSettings } from '../../context/SettingsContext';
-import { getAllLanguages } from '../../utils/customContentStore';
-import { OwnerPanelModal } from '../admin/OwnerPanelModal';
 
 interface TypingHeaderProps {
   mode: TextMode;
@@ -36,9 +35,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
 }) => {
   const { language, setLanguage } = useSettings();
   const [showLangModal, setShowLangModal] = useState(false);
-  const [showOwnerModal, setShowOwnerModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [languagesList, setLanguagesList] = useState(getAllLanguages());
 
   const timeOptions: TimeMode[] = [15, 30, 60, 120];
   const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
@@ -47,16 +44,6 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
     { id: 'sentences', label: 'Jumlalar', icon: Layers },
     { id: 'story', label: 'Hikoyalar', icon: Sparkles },
   ];
-
-  // Refresh languages list when custom content is updated
-  const handleContentUpdated = (selectedLangCode?: string) => {
-    const updated = getAllLanguages();
-    setLanguagesList(updated);
-    if (selectedLangCode) {
-      setLanguage(selectedLangCode as LanguageCode);
-    }
-    onReset();
-  };
 
   const currentLang = languagesList.find((l) => l.code === language) || languagesList[0];
 
@@ -78,39 +65,26 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
       >
         {/* Yolnoma Control Bar */}
         <div className="w-full bg-[var(--card-bg)]/90 backdrop-blur-md border border-[var(--sub-alt)] rounded-2xl p-2.5 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs font-semibold">
-          {/* Language Selector Button & Owner Quick Trigger */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setLanguagesList(getAllLanguages());
-                setShowLangModal(true);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:border-[var(--main-color)] border border-[var(--sub-color)]/20 hover:bg-[var(--sub-alt)]/80 transition-all font-bold group shrink-0 cursor-pointer"
-              title="Matn tilini o'zgartirish"
-            >
-              <Globe className="w-3.5 h-3.5 text-[var(--main-color)] group-hover:rotate-45 transition-transform duration-300" />
-              <span className="text-sm">{currentLang.flag}</span>
-              <span className="text-xs font-extrabold">{currentLang.nativeName}</span>
-              <span className="text-[10px] text-[var(--main-color)] font-mono uppercase bg-[var(--main-color)]/15 px-1.5 py-0.5 rounded font-black">
-                {currentLang.code}
-              </span>
-            </button>
-
-            {/* Owner Quick Button */}
-            <button
-              onClick={() => setShowOwnerModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all font-bold cursor-pointer"
-              title="Owner Panel: Til va Matnlar Qo'shish"
-            >
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[11px]">Owner Panel</span>
-            </button>
-          </div>
+          {/* Language Selector Button */}
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setShowLangModal(true);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:border-[var(--main-color)] border border-[var(--sub-color)]/20 hover:bg-[var(--sub-alt)]/80 transition-all font-bold group shrink-0 cursor-pointer"
+            title="Matn tilini o'zgartirish"
+          >
+            <Globe className="w-3.5 h-3.5 text-[var(--main-color)] group-hover:rotate-45 transition-transform duration-300" />
+            <span className="text-sm">{currentLang.flag}</span>
+            <span className="text-xs font-extrabold">{currentLang.nativeName}</span>
+            <span className="text-[10px] text-[var(--main-color)] font-mono uppercase bg-[var(--main-color)]/15 px-1.5 py-0.5 rounded font-black">
+              {currentLang.code}
+            </span>
+          </button>
 
           <div className="h-5 w-[1px] bg-[var(--sub-color)]/20 hidden sm:block" />
 
-          {/* Mode Selector (So'zlar, Jumlalar, Hikoyalar) */}
+          {/* Mode Selector (So'zlar, Jumlalar, Hikoyalar, Shaxsiy Matn) */}
           <div className="flex items-center gap-1 overflow-x-auto max-w-full py-0.5 bg-[var(--sub-alt)]/40 p-1 rounded-xl">
             {modesList.map((m) => {
               const Icon = m.icon;
@@ -216,31 +190,17 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
               </button>
             </div>
 
-            {/* Search Bar & Owner Add Language Button */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Tilni izlash..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)] font-bold text-xs transition-all"
-                  autoFocus
-                />
-              </div>
-
-              <button
-                onClick={() => {
-                  setShowLangModal(false);
-                  setShowOwnerModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 font-bold transition-all cursor-pointer whitespace-nowrap"
-                title="Yangi til yoki matn qo'shish (Owner)"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Qo'shish</span>
-              </button>
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Tilni izlash..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)] font-bold text-xs transition-all"
+                autoFocus
+              />
             </div>
 
             {/* Language List */}
@@ -285,13 +245,6 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
           </div>
         </div>
       )}
-
-      {/* Owner Admin Modal */}
-      <OwnerPanelModal
-        isOpen={showOwnerModal}
-        onClose={() => setShowOwnerModal(false)}
-        onContentUpdated={handleContentUpdated}
-      />
     </>
   );
 };

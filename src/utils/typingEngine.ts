@@ -1,6 +1,5 @@
 import { TextMode, DifficultyMode, LanguageCode } from '../types';
 import { getLanguageInfo, codeSnippets } from '../config/languages';
-import { getCustomTextsForLanguage } from './customContentStore';
 
 export interface GeneratedText {
   rawText: string;
@@ -25,18 +24,6 @@ export function generateTestText(
 ): GeneratedText {
   if (mode === 'custom' && customText && customText.trim().length > 0) {
     const raw = customText.trim();
-    return {
-      rawText: raw,
-      wordsList: raw.split(/\s+/)
-    };
-  }
-
-  // Check if owner has added custom text for this language
-  const customTexts = getCustomTextsForLanguage(language);
-  if (customTexts && customTexts.length > 0) {
-    // Pick one of the owner's custom texts randomly, or combine if short
-    const chosen = customTexts[Math.floor(Math.random() * customTexts.length)];
-    const raw = chosen.content.trim();
     return {
       rawText: raw,
       wordsList: raw.split(/\s+/)
