@@ -219,14 +219,14 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   const isTyped = typedChar !== undefined;
                   const isCorrect = isTyped && typedChar === char;
 
-                  let charClass = 'relative inline-block ';
+                  let charClass = 'relative inline-block transition-colors duration-75 ';
 
                   if (!isTyped) {
-                    charClass += 'text-[var(--sub-color)] opacity-40 ';
+                    charClass += 'text-[#646669] ';
                   } else if (isCorrect) {
-                    charClass += 'text-[var(--text-color)] font-semibold ';
+                    charClass += 'text-[#d1d0c5] font-semibold ';
                   } else {
-                    charClass += 'text-[#f87171] bg-[#f87171]/20 rounded-[2px] font-bold ';
+                    charClass += 'text-[#ca4754] bg-[#ca4754]/20 rounded-[2px] font-bold ';
                   }
 
                   // Caret style
@@ -235,22 +235,22 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                     if (caretStyle === 'line' || !caretStyle) {
                       caretElement = (
                         <span
-                          className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                          className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[#e2b714] rounded-full ${
                             smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                           }`}
                         />
                       );
                     } else if (caretStyle === 'block') {
                       caretElement = (
-                        <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
+                        <span className="absolute inset-0 bg-[#e2b714]/40 rounded-[2px] animate-pulse" />
                       );
                     } else if (caretStyle === 'underline') {
                       caretElement = (
-                        <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
+                        <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#e2b714] rounded-full animate-pulse" />
                       );
                     } else if (caretStyle === 'outline') {
                       caretElement = (
-                        <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
+                        <span className="absolute inset-0 border-2 border-[#e2b714] rounded-[2px] animate-pulse" />
                       );
                     }
                   }
@@ -273,18 +273,18 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
                   let spaceClass = 'relative inline-block ';
                   if (!isTypedSpace) {
-                    spaceClass += 'text-[var(--sub-color)] opacity-20 ';
+                    spaceClass += 'text-[#646669] opacity-30 ';
                   } else if (isCorrectSpace) {
-                    spaceClass += 'text-[var(--text-color)] ';
+                    spaceClass += 'text-[#d1d0c5] ';
                   } else {
-                    spaceClass += 'text-[#f87171] bg-[#f87171]/30 rounded-[2px] ';
+                    spaceClass += 'text-[#ca4754] bg-[#ca4754]/30 rounded-[2px] ';
                   }
 
                   let spaceCaret = null;
                   if (isCurrentSpace && isFocused && !isTestFinished) {
                     spaceCaret = (
                       <span
-                        className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                        className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[#e2b714] rounded-full ${
                           smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                         }`}
                       />
@@ -316,7 +316,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       </div>
 
       {/* Quick Restart Button */}
-      <div className="mt-8 flex items-center justify-center">
+      <div className="mt-8 flex flex-col items-center justify-center gap-3">
         <button
           type="button"
           tabIndex={-1}
@@ -328,11 +328,21 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-all group opacity-60 hover:opacity-100"
-          title="Qayta boshlash (Tab + Enter)"
+          className="p-3 rounded-xl text-[#646669] hover:text-[#e2b714] transition-all group opacity-70 hover:opacity-100 cursor-pointer"
+          title="Restart Test (Tab + Enter)"
         >
           <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
         </button>
+
+        {/* Monkeytype Shortcut Footer Hints */}
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-[#646669] text-xs font-mono select-none">
+          <div className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 rounded bg-[#2c2e31] border border-[#323437] text-[#646669] text-[10px]">tab</kbd>
+            <span>+</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-[#2c2e31] border border-[#323437] text-[#646669] text-[10px]">enter</kbd>
+            <span className="ml-1">- restart test</span>
+          </div>
+        </div>
       </div>
     </div>
   );

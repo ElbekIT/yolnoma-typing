@@ -22,21 +22,21 @@ export const LiveStats: React.FC<LiveStatsProps> = ({
     <div className="w-full max-w-5xl mx-auto mb-2 flex flex-col gap-1 px-4">
       <div className="flex items-center justify-between text-sm font-semibold">
         {/* Large Clean Timer */}
-        <div className="text-3xl font-mono font-bold text-[var(--main-color)] tracking-tight">
-          {timeLeft}s
+        <div className="text-3xl font-mono font-extrabold text-[#e2b714] tracking-tight">
+          {timeLeft}
         </div>
 
         {/* Live WPM & Accuracy */}
         {showLiveWpm && (
-          <div className="flex items-center gap-6 text-sm font-mono opacity-80">
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--sub-color)] text-xs uppercase font-sans">WPM</span>
-              <span className="font-bold text-lg text-[var(--text-color)]">{wpm}</span>
+          <div className="flex items-center gap-6 text-sm font-mono text-[#646669]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs uppercase font-mono">wpm:</span>
+              <span className="font-bold text-lg text-[#d1d0c5]">{wpm}</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--sub-color)] text-xs uppercase font-sans">ACC</span>
-              <span className="font-bold text-lg text-[var(--text-color)]">{accuracy}%</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs uppercase font-mono">acc:</span>
+              <span className="font-bold text-lg text-[#d1d0c5]">{accuracy}%</span>
             </div>
           </div>
         )}
