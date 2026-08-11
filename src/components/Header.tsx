@@ -48,16 +48,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const isOwnerAdmin = user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' || profile?.role === 'admin';
 
   const navItems = [
-    { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard, badge: 'Pro' },
-    { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap, badge: 'Yangi 🔥' },
-    { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords, badge: '1v1 🔥' },
+    { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
+    { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
+    { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
-    { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy, badge: 'Live' },
+    { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy },
     { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },
     { id: 'achievements', label: 'Yutuqlar', enLabel: 'Achievements', icon: Award },
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
-    { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake, badge: 'Homiy' },
-    ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert, badge: 'Owner' }] : []),
+    { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake },
+    ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
   ];
@@ -305,38 +305,45 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop Overlay */}
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsDrawerOpen(false)}
           />
 
           {/* Drawer Container */}
-          <div className="relative w-80 sm:w-96 max-w-[85vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-6 flex flex-col justify-between shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-300">
+          <div className="relative w-72 sm:w-80 max-w-[85vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-250">
             {/* Top Drawer Section */}
             <div>
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-6 mb-6 border-b border-[var(--sub-alt)]">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleSelectTab('typing')}>
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--main-color)] via-cyan-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-[var(--main-color)]/30">
-                    Y
-                  </div>
+              {/* Minimalist Drawer Header */}
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--sub-alt)]/60">
+                <div
+                  className="flex items-center gap-2.5 cursor-pointer group"
+                  onClick={() => handleSelectTab('typing')}
+                >
+                  <img
+                    src="/yolnoma_icon.svg"
+                    alt="Yolnoma Logo"
+                    className="w-8 h-8 object-contain group-hover:scale-105 transition-transform"
+                  />
                   <div>
-                    <h2 className="text-lg font-black tracking-tight text-[var(--text-color)]">Yolnoma Typing</h2>
-                    <p className="text-[11px] text-[var(--sub-color)] font-semibold">Boshqaruv va Navigatsiya</p>
+                    <h2 className="text-base font-black tracking-tight text-[var(--text-color)]">
+                      Yolnoma <span className="text-[var(--main-color)] text-xs font-bold">Typing</span>
+                    </h2>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsDrawerOpen(false)}
-                  className="p-2 rounded-xl bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--error-color)]/20 hover:text-rose-500 transition-all"
+                  className="p-1.5 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-all"
+                  title="Yopish"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Navigation Menu Links */}
-              <div className="space-y-1.5">
-                <div className="px-3 py-1 text-[10px] font-black uppercase text-[var(--sub-color)] tracking-wider">
-                  Asosiy Bo'limlar
+              {/* Clean Navigation Menu Links */}
+              <div className="space-y-1">
+                <div className="px-2 py-1 text-[10px] font-extrabold uppercase text-[var(--sub-color)] tracking-wider">
+                  Bo'limlar
                 </div>
 
                 {navItems.map((item) => {
@@ -348,100 +355,62 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     <button
                       key={item.id}
                       onClick={() => handleSelectTab(item.id)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 group ${
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 group ${
                         isActive
-                          ? 'bg-[var(--main-color)] text-white shadow-lg shadow-[var(--main-color)]/30 scale-[1.01]'
-                          : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                          ? 'bg-[var(--main-color)] text-white font-bold shadow-md shadow-[var(--main-color)]/25 scale-[1.01]'
+                          : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]/70 hover:text-[var(--main-color)]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl ${
-                          isActive ? 'bg-white/20 text-white' : 'bg-[var(--sub-alt)] text-[var(--main-color)] group-hover:bg-[var(--main-color)] group-hover:text-white transition-colors'
-                        }`}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-bold tracking-wide">{displayLabel}</span>
+                        <Icon
+                          className={`w-4 h-4 transition-colors ${
+                            isActive
+                              ? 'text-white'
+                              : 'text-[var(--sub-color)] group-hover:text-[var(--main-color)]'
+                          }`}
+                        />
+                        <span className="text-xs font-bold tracking-wide">{displayLabel}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        {item.badge && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-black ${
-                            isActive ? 'bg-white text-[var(--main-color)]' : 'bg-[var(--main-color)]/20 text-[var(--main-color)]'
-                          }`}>
-                            {item.badge}
-                          </span>
-                        )}
-                        <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? 'translate-x-0.5' : 'opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5'}`} />
-                      </div>
+                      <ChevronRight
+                        className={`w-3.5 h-3.5 transition-transform ${
+                          isActive
+                            ? 'text-white translate-x-0.5'
+                            : 'opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5'
+                        }`}
+                      />
                     </button>
                   );
                 })}
               </div>
-
-              {/* Quick Settings Section inside Drawer */}
-              <div className="mt-8 pt-6 border-t border-[var(--sub-alt)] space-y-4">
-                <div className="px-3 text-[10px] font-black uppercase text-[var(--sub-color)] tracking-wider">
-                  Tezkor Sozlamalar
-                </div>
-
-                {/* Theme Pills */}
-                <div className="bg-[var(--sub-alt)]/50 p-3 rounded-2xl border border-[var(--sub-alt)] space-y-2">
-                  <div className="text-[11px] font-bold text-[var(--sub-color)] flex items-center justify-between">
-                    <span>Mavzuni Tanlang</span>
-                    <Palette className="w-3.5 h-3.5 text-[var(--main-color)]" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {Object.values(themes).slice(0, 4).map((th) => (
-                      <button
-                        key={th.id}
-                        onClick={() => setTheme(th.id as ThemeMode)}
-                        className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold flex items-center justify-between transition-all ${
-                          theme === th.id
-                            ? 'bg-[var(--main-color)] text-white shadow-sm font-bold'
-                            : 'bg-[var(--card-bg)] text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                        }`}
-                      >
-                        <span className="truncate">{th.name}</span>
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: th.mainColor }} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick Shortcuts */}
-                <div className="bg-[var(--sub-alt)]/30 p-3 rounded-2xl border border-[var(--sub-alt)] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-[var(--sub-color)] font-medium">
-                    <Zap className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Tezkor Qayta Boshlash:</span>
-                  </div>
-                  <div className="flex items-center gap-1 font-mono text-[10px] font-bold">
-                    <kbd className="px-2 py-0.5 rounded-md bg-[var(--card-bg)] border border-[var(--sub-color)]/30">Tab</kbd>
-                    <span>+</span>
-                    <kbd className="px-2 py-0.5 rounded-md bg-[var(--card-bg)] border border-[var(--sub-color)]/30">Enter</kbd>
-                  </div>
-                </div>
-              </div>
             </div>
 
-            {/* Bottom Drawer User Card */}
-            <div className="pt-6 border-t border-[var(--sub-alt)] mt-6">
+            {/* Bottom Minimalist User Footer */}
+            <div className="pt-4 border-t border-[var(--sub-alt)]/60 mt-4">
               {user ? (
-                <div className="bg-[var(--sub-alt)] p-3 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
                     <img
-                      src={profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
+                      src={
+                        profile?.avatarUrl ||
+                        `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`
+                      }
                       alt="avatar"
-                      className="w-9 h-9 rounded-full object-cover border border-[var(--main-color)]"
+                      className="w-8 h-8 rounded-full object-cover border border-[var(--main-color)]/50"
                     />
-                    <div className="text-xs">
-                      <div className="font-extrabold text-[var(--text-color)] truncate max-w-[120px]">{profile?.displayName || 'User'}</div>
-                      <div className="text-[10px] text-[var(--main-color)] font-mono font-bold">WPM Best: {profile?.highestWpm || 0}</div>
+                    <div className="text-xs truncate">
+                      <div className="font-bold text-[var(--text-color)] truncate max-w-[130px]">
+                        {profile?.displayName || 'Foydalanuvchi'}
+                      </div>
+                      <div className="text-[10px] text-[var(--main-color)] font-mono font-bold">
+                        {profile?.highestWpm || 0} WPM Best
+                      </div>
                     </div>
                   </div>
 
                   <button
                     onClick={logout}
-                    className="p-2 rounded-xl bg-[var(--card-bg)] text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold"
+                    className="p-1.5 rounded-lg text-[var(--sub-color)] hover:text-rose-500 hover:bg-rose-500/10 transition-all"
                     title="Chiqish"
                   >
                     <LogOut className="w-4 h-4" />
@@ -453,10 +422,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     setIsDrawerOpen(false);
                     onOpenAuth();
                   }}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-[var(--main-color)] to-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-[var(--main-color)]/30 flex items-center justify-center gap-2 hover:opacity-95 transition-all"
+                  className="w-full py-2.5 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2 hover:opacity-95 transition-all"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Tizimga Kirish / Ro'yxatdan O'tish</span>
+                  <LogIn className="w-4 h-4" />
+                  <span>Tizimga Kirish</span>
                 </button>
               )}
             </div>
