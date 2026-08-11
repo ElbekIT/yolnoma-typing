@@ -65,6 +65,8 @@ export interface UserProfile {
   // Moderation & Verification
   isVerified?: boolean;
   isBanned?: boolean;
+  isBlocked?: boolean;
+  blockReason?: string;
   isSuspended?: boolean;
   role: 'user' | 'admin';
 

@@ -22,7 +22,10 @@ import { PartnersView } from './components/partners/PartnersView';
 import { BattleView } from './components/battle/BattleView';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
-import { ref, onValue, remove } from 'firebase/database';
+import { ref, onValue, remove, update } from 'firebase/database';
+import { BlockedScreen } from './components/BlockedScreen';
+import { LessonsView } from './components/lessons/LessonsView';
+import { AdminView } from './components/admin/AdminView';
 
 import {
   TextMode,
@@ -119,6 +122,7 @@ function MainAppContent() {
   typedInputRef.current = typedInput;
   targetTextRef.current = targetText;
   const totalKeystrokesRef = useRef<number>(0);
+  const keyTimestampsRef = useRef<number[]>([]);
 
   // Initialize test text
   const initTestText = useCallback(() => {
@@ -138,6 +142,7 @@ function MainAppContent() {
     setElapsedSeconds(0);
     startTimeRef.current = 0;
     totalKeystrokesRef.current = 0;
+    keyTimestampsRef.current = [];
 
     const initialTime = timeMode > 0 ? timeMode : 60;
     setTimeLeft(initialTime);
@@ -274,9 +279,46 @@ function MainAppContent() {
     return <LoginPage />;
   }
 
+  // Blocked / Banned User Gate
+  if (profile?.isBanned) {
+    return <BlockedScreen reason={profile?.blockReason} />;
+  }
+
   // Input change handler
   const handleInputChange = (newInput: string) => {
     if (isTestFinished) return;
+
+    const now = Date.now();
+    keyTimestampsRef.current.push(now);
+
+    // Anti-cheat Bot Detection Engine
+    if (keyTimestampsRef.current.length >= 15) {
+      const timestamps = keyTimestampsRef.current.slice(-20);
+      const intervals: number[] = [];
+      for (let i = 1; i < timestamps.length; i++) {
+        intervals.push(timestamps[i] - timestamps[i - 1]);
+      }
+
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const variance = intervals.reduce((a, b) => a + Math.pow(b - avgInterval, 2), 0) / intervals.length;
+
+      // Bot rules:
+      // 1. Average interval < 12ms (unrealistically fast > 1000 WPM)
+      // 2. Variance == 0 (robotic constant timer)
+      // 3. Impossibly high WPM (> 320 WPM)
+      if (avgInterval < 12 || (variance === 0 && intervals.length > 10) || liveWpm > 320) {
+        if (user) {
+          const reason = 'Anti-Cheat: Avto-kliker yoki robot/bot dasturi ishlatilgani sababli akkauntingiz bloklandi.';
+          try {
+            update(ref(rtdb, `users/${user.uid}`), {
+              isBanned: true,
+              blockReason: reason
+            });
+          } catch {}
+        }
+        return;
+      }
+    }
 
     if (!isTestActive && newInput.length > 0) {
       startTimeRef.current = Date.now();
@@ -372,6 +414,7 @@ function MainAppContent() {
           </div>
         )}
 
+        {activeTab === 'lessons' && <LessonsView />}
         {activeTab === 'battle' && <BattleView />}
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'leaderboard' && <LeaderboardView />}
@@ -379,6 +422,7 @@ function MainAppContent() {
         {activeTab === 'achievements' && <AchievementsView />}
         {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
         {activeTab === 'partners' && <PartnersView />}
+        {activeTab === 'admin' && <AdminView />}
         {activeTab === 'profile' && (
           <ProfileView
             onOpenAuth={() => setIsAuthOpen(true)}

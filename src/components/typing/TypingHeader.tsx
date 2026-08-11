@@ -39,12 +39,10 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   const timeOptions: TimeMode[] = [15, 30, 60, 120];
   const wordOptions: WordCountMode[] = [10, 25, 50, 100];
   const modesList: { id: TextMode; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'words', label: 'Words', icon: Type },
-    { id: 'quotes', label: 'Quotes', icon: Quote },
-    { id: 'code', label: 'Code Syntax', icon: Code },
-    { id: 'numbers', label: 'Numbers', icon: Hash },
-    { id: 'symbols', label: 'Symbols', icon: Sliders },
-    { id: 'custom', label: 'Custom Text', icon: Sparkles },
+    { id: 'words', label: 'Soʻzlar', icon: Type },
+    { id: 'sentences', label: 'Jumlalar', icon: Layers },
+    { id: 'story', label: 'Hikoyalar', icon: Sparkles },
+    { id: 'custom', label: 'Shaxsiy Matn', icon: Code },
   ];
 
   const currentLang = languagesList.find((l) => l.code === language) || languagesList[0];

@@ -12,7 +12,7 @@ import {
   updateProfile,
   deleteUser
 } from 'firebase/auth';
-import { ref, set, update, push, get, child } from 'firebase/database';
+import { ref, set, update, push, get, child, onValue } from 'firebase/database';
 import { auth, rtdb, googleProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import confetti from 'canvas-confetti';
@@ -236,12 +236,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }, 1500);
 
+    let rtdbUnsub: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (rtdbUnsub) {
+        rtdbUnsub();
+        rtdbUnsub = null;
+      }
+
       if (firebaseUser) {
         setUser(firebaseUser);
         const instantProfile = createDefaultProfile(firebaseUser);
         setProfile(instantProfile);
         setLoading(false);
+
+        // Live Realtime listener for Instant Bans / Admin Updates
+        try {
+          const userRef = ref(rtdb, `users/${firebaseUser.uid}`);
+          rtdbUnsub = onValue(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+              const liveData = snapshot.val() as Partial<UserProfile>;
+              setProfile((prev) => {
+                if (!prev) return liveData as UserProfile;
+                return {
+                  ...prev,
+                  ...liveData,
+                  isBanned: !!liveData.isBanned,
+                  blockReason: liveData.blockReason || prev.blockReason
+                };
+              });
+            }
+          });
+        } catch (err) {
+          console.warn('Realtime profile listener error:', err);
+        }
 
         // Fetch & sync full RTDB profile in background
         fetchOrCreateProfile(firebaseUser)
@@ -259,6 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       clearTimeout(safetyTimer);
+      if (rtdbUnsub) rtdbUnsub();
       unsubscribe();
     };
   }, []);

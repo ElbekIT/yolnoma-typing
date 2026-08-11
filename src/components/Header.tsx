@@ -20,7 +20,9 @@ import {
   Zap,
   Handshake,
   Crown,
-  Swords
+  Swords,
+  GraduationCap,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -43,8 +45,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const isOwnerAdmin = user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' || profile?.role === 'admin';
+
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard, badge: 'Pro' },
+    { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap, badge: 'Yangi 🔥' },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords, badge: '1v1 🔥' },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
     { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy, badge: 'Live' },
@@ -52,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'achievements', label: 'Yutuqlar', enLabel: 'Achievements', icon: Award },
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake, badge: 'Homiy' },
+    ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert, badge: 'Owner' }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
   ];

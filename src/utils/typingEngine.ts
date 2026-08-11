@@ -86,7 +86,7 @@ export function generateTestText(
     wordsPool = wordsPool.filter((w) => w.length >= 5);
   }
 
-  const count = wordCount > 0 ? wordCount : 40;
+  const count = wordCount > 0 ? wordCount : 250;
   const selectedWords: string[] = [];
   for (let i = 0; i < count; i++) {
     const randomWord = wordsPool[Math.floor(Math.random() * wordsPool.length)];
