@@ -8,7 +8,7 @@ export type LanguageCode =
 
 export type TextMode = 'words' | 'sentences' | 'quotes' | 'code' | 'numbers' | 'symbols' | 'story' | 'custom';
 export type TimeMode = 15 | 30 | 60 | 120 | 300 | 0; // 0 for custom/word-count
-export type WordCountMode = 10 | 25 | 50 | 100 | 200 | 0; // 0 for time-based
+export type WordCountMode = 100 | 200 | 300 | 400 | 500 | 10 | 25 | 50 | 0; // 0 for time-based
 export type DifficultyMode = 'easy' | 'medium' | 'hard' | 'expert';
 
 export type CaretStyle = 'line' | 'block' | 'underline' | 'outline';

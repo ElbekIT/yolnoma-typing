@@ -38,12 +38,11 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   const timeOptions: TimeMode[] = [15, 30, 60, 120];
-  const wordOptions: WordCountMode[] = [10, 25, 50, 100];
+  const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
   const modesList: { id: TextMode; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'words', label: "So'zlar", icon: Type },
     { id: 'sentences', label: 'Jumlalar', icon: Layers },
     { id: 'story', label: 'Hikoyalar', icon: Sparkles },
-    { id: 'custom', label: 'Shaxsiy Matn', icon: Code },
   ];
 
   const currentLang = languagesList.find((l) => l.code === language) || languagesList[0];
@@ -159,25 +158,6 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Custom Text Box */}
-        {mode === 'custom' && (
-          <div className="w-full max-w-xl bg-[var(--card-bg)] p-4 rounded-2xl border border-[var(--sub-alt)] space-y-2 shadow-lg animate-in slide-in-from-top-2 duration-200">
-            <label className="text-xs font-bold text-[var(--sub-color)] block uppercase font-mono">
-              Shaxsiy Matningizni Kiriting:
-            </label>
-            <textarea
-              rows={3}
-              value={customText}
-              onChange={(e) => {
-                setCustomText(e.target.value);
-                onReset();
-              }}
-              placeholder="Bu yerga o'z matningizni qo'ying va yozishni boshlang..."
-              className="w-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] rounded-xl p-3 text-xs text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)] font-mono resize-none"
-            />
-          </div>
-        )}
       </div>
 
       {/* Centered Modal for Language Selection */}
