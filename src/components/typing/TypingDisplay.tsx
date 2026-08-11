@@ -131,12 +131,12 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return parsedWords.slice(start, end);
   }, [parsedWords, activeWordIdx]);
 
-  // Reset scroll on test restart
+  // Reset scroll on test restart or text change
   useEffect(() => {
     if (currentTypedLen === 0) {
       setScrollOffset(0);
     }
-  }, [currentTypedLen]);
+  }, [currentTypedLen, targetText]);
 
   // Handle smooth Monkeytype 3-line scrolling
   useLayoutEffect(() => {

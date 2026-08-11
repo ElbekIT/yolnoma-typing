@@ -6,6 +6,15 @@ export interface GeneratedText {
   wordsList: string[];
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export function generateTestText(
   mode: TextMode,
   language: LanguageCode,
@@ -53,9 +62,9 @@ export function generateTestText(
     }
 
     const sentencesList = langInfo.sentences && langInfo.sentences.length > 0 ? langInfo.sentences : getLanguageInfo('uz-latn').sentences;
-    // Pick 1-2 random sentences for rich typing
-    const shuffled = [...sentencesList].sort(() => 0.5 - Math.random());
-    const selectedSentences = shuffled.slice(0, Math.min(2, shuffled.length)).join(' ');
+    // Pick 2-3 random sentences
+    const shuffled = shuffleArray(sentencesList);
+    const selectedSentences = shuffled.slice(0, Math.min(3, shuffled.length)).join(' ');
     return {
       rawText: selectedSentences,
       wordsList: selectedSentences.split(' ')
@@ -65,17 +74,19 @@ export function generateTestText(
   // Base words pool
   let wordsPool = [...langInfo.words];
   if (langInfo.sentences && langInfo.sentences.length > 0) {
-    // Mix in words from rich sentences
+    // Mix in clean words from sentences for rich variety
     langInfo.sentences.forEach((s) => {
       s.split(/\s+/).forEach((w) => {
         const clean = w.replace(/[^a-zA-Zʻʼo'g'O'G'а-яА-ЯўЎқҚғҒҳҲ]/g, '');
-        if (clean.length > 2) wordsPool.push(clean);
+        if (clean.length > 2 && !wordsPool.includes(clean)) {
+          wordsPool.push(clean);
+        }
       });
     });
   }
 
   if (mode === 'numbers') {
-    wordsPool = Array.from({ length: 50 }, () => Math.floor(Math.random() * 10000).toString());
+    wordsPool = Array.from({ length: 80 }, () => Math.floor(Math.random() * 10000).toString());
   } else if (mode === 'symbols') {
     const syms = ['!@#$', '%^&*', '()_+', '{}[]', ':;"\'', '<>,.?', '/|\\-'];
     wordsPool = wordsPool.map((w, idx) => (idx % 2 === 0 ? w + syms[idx % syms.length] : w));
@@ -88,9 +99,24 @@ export function generateTestText(
 
   const count = wordCount > 0 ? wordCount : 250;
   const selectedWords: string[] = [];
+
+  let currentShuffle = shuffleArray(wordsPool);
+  let shuffleIndex = 0;
+
   for (let i = 0; i < count; i++) {
-    const randomWord = wordsPool[Math.floor(Math.random() * wordsPool.length)];
-    selectedWords.push(randomWord);
+    if (shuffleIndex >= currentShuffle.length) {
+      currentShuffle = shuffleArray(wordsPool);
+      shuffleIndex = 0;
+    }
+
+    let word = currentShuffle[shuffleIndex++];
+    // Prevent consecutive identical words
+    if (selectedWords.length > 0 && selectedWords[selectedWords.length - 1] === word && currentShuffle.length > 1) {
+      if (shuffleIndex < currentShuffle.length) {
+        word = currentShuffle[shuffleIndex];
+      }
+    }
+    selectedWords.push(word);
   }
 
   const rawText = selectedWords.join(' ');
