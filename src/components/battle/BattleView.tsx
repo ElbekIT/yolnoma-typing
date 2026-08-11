@@ -15,7 +15,7 @@ import {
   Share2,
   Target,
   Bot,
-  Link,
+  Link as LinkIcon,
   Check,
   AlertCircle
 } from 'lucide-react';
@@ -39,30 +39,45 @@ interface RealPlayerItem {
   level?: number;
 }
 
-// Generate 8-character custom room code (e.g. "14shH4$s")
-const generate8CharRoomCode = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!$#@';
+// Generate clean 6-character uppercase room code (e.g. "K7N9XP") - 100% valid in Firebase RTDB paths
+const generateCleanRoomCode = (): string => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confused I, O, 0, 1 & Firebase illegal characters
   let result = '';
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 6; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 };
 
-export const BattleView: React.FC = () => {
+interface BattleViewProps {
+  initialRoomCode?: string | null;
+  onClearInitialRoomCode?: () => void;
+}
+
+export const BattleView: React.FC<BattleViewProps> = ({
+  initialRoomCode,
+  onClearInitialRoomCode
+}) => {
   const { user, profile } = useAuth();
   const { language } = useSettings();
 
   // Match States: 'lobby' | 'waiting' | 'countdown' | 'racing' | 'finished'
   const [gameState, setGameState] = useState<'lobby' | 'waiting' | 'countdown' | 'racing' | 'finished'>('lobby');
+  const gameStateRef = useRef<string>('lobby');
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   const [activeRoomCode, setActiveRoomCode] = useState<string>('');
   const [inputRoomCode, setInputRoomCode] = useState<string>('');
   const [isHost, setIsHost] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   const [countdown, setCountdown] = useState<number>(5);
+  const isCountingDownRef = useRef<boolean>(false);
 
   // Text & Typing Engine
   const [targetText, setTargetText] = useState<string>('');
@@ -83,8 +98,8 @@ export const BattleView: React.FC = () => {
   };
 
   const currentUid = user?.uid || getGuestId();
-  const currentName = profile?.displayName || `Mehmon_${currentUid.slice(-4)}`;
-  const currentAvatar = profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUid}`;
+  const currentName = profile?.displayName || user?.displayName || `Mehmon_${currentUid.slice(-4)}`;
+  const currentAvatar = profile?.avatarUrl || user?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUid}`;
 
   // Player Stats
   const [myProgress, setMyProgress] = useState<RacerProgress>({
@@ -118,6 +133,95 @@ export const BattleView: React.FC = () => {
   const botTimerRef = useRef<NodeJS.Timeout | null>(null);
   const roomUnsubRef = useRef<(() => void) | null>(null);
 
+  // Check URL parameters for room code on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room');
+    if (roomParam) {
+      const cleanCode = roomParam.trim().toUpperCase();
+      setInputRoomCode(cleanCode);
+    }
+  }, []);
+
+  // Handle incoming initialRoomCode from props (e.g. invite modal)
+  useEffect(() => {
+    if (initialRoomCode) {
+      const cleanCode = initialRoomCode.trim().toUpperCase();
+      setInputRoomCode(cleanCode);
+      handleJoinRoom(cleanCode);
+      if (onClearInitialRoomCode) {
+        onClearInitialRoomCode();
+      }
+    }
+  }, [initialRoomCode]);
+
+  // 2. Join Room using Room Code
+  const handleJoinRoom = async (codeToJoin?: string) => {
+    const rawCode = codeToJoin || inputRoomCode;
+    const code = rawCode.trim().toUpperCase();
+
+    if (!code) {
+      setJoinError('Iltimos, xona kodini kiriting!');
+      return;
+    }
+
+    setJoinError(null);
+    try {
+      let snapshot = await get(ref(rtdb, `battles/rooms/${code}`));
+      if (!snapshot.exists()) {
+        // Retry once after brief delay in case room creation was delayed
+        await new Promise((res) => setTimeout(res, 400));
+        snapshot = await get(ref(rtdb, `battles/rooms/${code}`));
+      }
+
+      if (!snapshot.exists()) {
+        setJoinError(`"${code}" kodi bo'yicha xona topilmadi! Kodni tekshirib qayta kiriting.`);
+        return;
+      }
+
+      const roomVal = snapshot.val();
+      if (roomVal.status !== 'waiting' && roomVal.status !== 'countdown' && roomVal.guest?.id !== currentUid) {
+        setJoinError("Bu xonada poyga allaqachon boshlangan yoki xona to'la!");
+        return;
+      }
+
+      setActiveRoomCode(code);
+      setTargetText(roomVal.targetText);
+      setIsHost(false);
+      setIsBotMatch(false);
+      setTypedInput('');
+      setWinnerId(null);
+
+      const guestData: RacerProgress = {
+        id: currentUid,
+        name: currentName,
+        avatarUrl: currentAvatar,
+        wpm: 0,
+        accuracy: 100,
+        progressPercent: 0,
+        carColor: 'red'
+      };
+
+      setMyProgress(guestData);
+      setOpponentProgress(roomVal.host);
+
+      // Join room in Firebase & set status to 'countdown'
+      await update(ref(rtdb, `battles/rooms/${code}`), {
+        guest: guestData,
+        status: 'countdown'
+      });
+
+      // Immediately start 5s countdown for guest
+      start5SecCountdown(false, roomVal.targetText);
+
+      // Listen to room updates
+      listenToRoom(code, false);
+    } catch (err) {
+      console.error('Error joining RTDB room:', err);
+      setJoinError("Xonaga ulanishda xatolik yuz berdi. Kodni to'g'ri kiritganingizni tekshiring.");
+    }
+  };
+
   // Load Real Users from Firebase RTDB Leaderboard node
   useEffect(() => {
     try {
@@ -143,7 +247,6 @@ export const BattleView: React.FC = () => {
               });
             }
           });
-          // Sort by WPM descending
           items.sort((a, b) => b.highestWpm - a.highestWpm);
           setRealPlayers(items);
         } else {
@@ -167,10 +270,10 @@ export const BattleView: React.FC = () => {
     return langInfo.words.slice(0, 22).join(' ');
   };
 
-  // 1. Create a Custom 8-Character Room (e.g. "14shH4$s")
+  // 1. Create a Custom Room Code (e.g. "K7N9XP")
   const handleCreateRoom = async () => {
     setJoinError(null);
-    const code = generate8CharRoomCode();
+    const code = generateCleanRoomCode();
     const text = generateBattleText();
 
     setActiveRoomCode(code);
@@ -192,7 +295,7 @@ export const BattleView: React.FC = () => {
     setMyProgress(initialHostData);
     setOpponentProgress({
       id: 'waiting',
-      name: "Ikkinchi O'yinchini Kutilmoqda...",
+      name: "Raqib kutilmoqda...",
       avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=waiting',
       wpm: 0,
       accuracy: 100,
@@ -216,60 +319,7 @@ export const BattleView: React.FC = () => {
       listenToRoom(code, true);
     } catch (err) {
       console.error('Failed to create RTDB room:', err);
-    }
-  };
-
-  // 2. Join Room using 8-Character Code
-  const handleJoinRoom = async (codeToJoin?: string) => {
-    const code = (codeToJoin || inputRoomCode).trim();
-    if (!code) {
-      setJoinError('Iltimos, 8 xonali xona kodini kiriting!');
-      return;
-    }
-
-    setJoinError(null);
-    try {
-      const snapshot = await get(ref(rtdb, `battles/rooms/${code}`));
-      if (!snapshot.exists()) {
-        setJoinError(`"${code}" kodi bo'yicha xona topilmadi! Kodni tekshirib qayta kiriting.`);
-        return;
-      }
-
-      const roomVal = snapshot.val();
-      if (roomVal.status !== 'waiting' && roomVal.guest?.id !== currentUid) {
-        setJoinError('Bu xonada poyga allaqachon boshlangan yoki to\'la!');
-        return;
-      }
-
-      setActiveRoomCode(code);
-      setTargetText(roomVal.targetText);
-      setIsHost(false);
-      setIsBotMatch(false);
-
-      const guestData: RacerProgress = {
-        id: currentUid,
-        name: currentName,
-        avatarUrl: currentAvatar,
-        wpm: 0,
-        accuracy: 100,
-        progressPercent: 0,
-        carColor: 'red'
-      };
-
-      setMyProgress(guestData);
-      setOpponentProgress(roomVal.host);
-
-      // Join room in Firebase & set status to 'countdown'
-      await update(ref(rtdb, `battles/rooms/${code}`), {
-        guest: guestData,
-        status: 'countdown'
-      });
-
-      // Listen to room updates
-      listenToRoom(code, false);
-    } catch (err) {
-      console.error('Error joining RTDB room:', err);
-      setJoinError('Xonaga ulanishda xatolik yuz berdi.');
+      setJoinError('Xona yaratishda xatolik yuz berdi. Internetingizni tekshirib qayta urinib ko\'ring.');
     }
   };
 
@@ -282,19 +332,17 @@ export const BattleView: React.FC = () => {
       if (!snapshot.exists()) return;
       const data = snapshot.val();
 
-      const myRoleData = amIHost ? data.host : data.guest;
       const opponentRoleData = amIHost ? data.guest : data.host;
-
       if (opponentRoleData) {
         setOpponentProgress(opponentRoleData);
       }
 
       // Handle status transitions
-      if (data.status === 'countdown' && gameState === 'waiting') {
-        start5SecCountdown();
+      if (data.status === 'countdown' && (gameStateRef.current === 'waiting' || gameStateRef.current === 'lobby')) {
+        start5SecCountdown(false, data.targetText);
       }
 
-      if (data.status === 'racing' && gameState === 'countdown') {
+      if (data.status === 'racing' && gameStateRef.current === 'countdown') {
         setGameState('racing');
         startTimeRef.current = Date.now();
         setTimeout(() => inputRef.current?.focus(), 100);
@@ -302,7 +350,9 @@ export const BattleView: React.FC = () => {
 
       if (data.status === 'finished') {
         setGameState('finished');
-        setWinnerId(data.winnerUid);
+        if (data.winnerUid) {
+          setWinnerId(data.winnerUid);
+        }
       }
     });
 
@@ -311,7 +361,7 @@ export const BattleView: React.FC = () => {
 
   // 3. Invite a Real Registered Player from the List
   const handleInvitePlayer = async (player: RealPlayerItem) => {
-    const code = generate8CharRoomCode();
+    const code = generateCleanRoomCode();
     setInviteSentStatus(`⚔️ @${player.username} ga taklifnoma yuborildi (Kodi: ${code}). Kutilmoqda...`);
 
     // Create room
@@ -377,7 +427,7 @@ export const BattleView: React.FC = () => {
     setWinnerId(null);
     setIsBotMatch(true);
 
-    const generatedCode = generate8CharRoomCode();
+    const generatedCode = generateCleanRoomCode();
     setActiveRoomCode(generatedCode);
 
     setMyProgress({
@@ -406,6 +456,9 @@ export const BattleView: React.FC = () => {
 
   // 5-Second Countdown Logic
   const start5SecCountdown = (isBot = false, textToUse?: string) => {
+    if (isCountingDownRef.current && gameStateRef.current === 'countdown') return;
+    isCountingDownRef.current = true;
+
     setGameState('countdown');
     setCountdown(5);
 
@@ -416,6 +469,7 @@ export const BattleView: React.FC = () => {
 
       if (currentCount <= 0) {
         clearInterval(interval);
+        isCountingDownRef.current = false;
         setGameState('racing');
         startTimeRef.current = Date.now();
 
@@ -532,6 +586,15 @@ export const BattleView: React.FC = () => {
     }
   };
 
+  const handleCopyLink = () => {
+    if (activeRoomCode) {
+      const directUrl = `${window.location.origin}${window.location.pathname}?room=${activeRoomCode}`;
+      navigator.clipboard.writeText(directUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -542,7 +605,7 @@ export const BattleView: React.FC = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 animate-in fade-in duration-200">
-      {/* Sleek Compact Title Header */}
+      {/* Sleek Header Title */}
       <div className="bg-gradient-to-r from-[#0c1322] via-[#11192e] to-[#0c1322] border border-cyan-500/30 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-white">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-md shadow-cyan-500/20 shrink-0">
@@ -553,7 +616,7 @@ export const BattleView: React.FC = () => {
               BATTLE ARENA <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">1v1 REAL TIME</span>
             </h1>
             <p className="text-[11px] text-slate-400">
-              Ishtirokchilar bilan real vaqt rejimida yozish poygasiga kirishing!
+              Ishtirokchilar bilan real vaqt rejimida tezkor yozish dueliga kirishing!
             </p>
           </div>
         </div>
@@ -566,6 +629,7 @@ export const BattleView: React.FC = () => {
               setGameState('lobby');
               setActiveRoomCode('');
               setInviteSentStatus(null);
+              setJoinError(null);
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700"
           >
@@ -575,7 +639,7 @@ export const BattleView: React.FC = () => {
         )}
       </div>
 
-      {/* Global Status Banner Notification if Invite Sent */}
+      {/* Invite Notification Banner */}
       {inviteSentStatus && (
         <div className="bg-cyan-950/90 border border-cyan-500 text-cyan-200 px-4 py-2.5 rounded-xl text-xs font-bold font-mono flex items-center justify-between shadow-lg animate-pulse">
           <span>{inviteSentStatus}</span>
@@ -594,37 +658,37 @@ export const BattleView: React.FC = () => {
                 <span>Xona Yaratish Va Kirish</span>
               </div>
 
-              {/* Create 8-Char Custom Code Room Button */}
+              {/* Create Custom Room Button */}
               <button
                 onClick={handleCreateRoom}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-black text-xs uppercase tracking-wider hover:opacity-95 transition-all shadow-md shadow-cyan-500/20 active:scale-95"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-black text-xs uppercase tracking-wider hover:opacity-95 transition-all shadow-md shadow-cyan-500/20 active:scale-95"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>8-XONALI XONA YARATISH ✨</span>
+                <span>XONA YARATISH ✨</span>
               </button>
 
               {/* Room Code Join Box */}
               <div className="pt-2 space-y-2 border-t border-slate-800">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  8-Xonali Kod Bilan Kirish
+                  Xona Kodi Bilan Kirish
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={inputRoomCode}
-                    onChange={(e) => setInputRoomCode(e.target.value)}
-                    placeholder="Masalan: 14shH4$s"
-                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                    onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
+                    placeholder="Kodni kiriting (masalan: K7N9XP)"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono uppercase focus:outline-none focus:border-cyan-500"
                   />
                   <button
                     onClick={() => handleJoinRoom()}
-                    className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-all"
+                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-all shadow-sm active:scale-95 shrink-0"
                   >
                     Kirish
                   </button>
                 </div>
                 {joinError && (
-                  <p className="text-[11px] text-rose-400 font-medium flex items-center gap-1 mt-1">
+                  <p className="text-[11px] text-rose-400 font-medium flex items-center gap-1 mt-1 bg-rose-950/40 p-2 rounded-lg border border-rose-500/20">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {joinError}
                   </p>
                 )}
@@ -637,7 +701,7 @@ export const BattleView: React.FC = () => {
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 font-bold text-xs transition-all border border-slate-700"
                 >
                   <Bot className="w-4 h-4 text-cyan-400" />
-                  <span>KIBER BOT BILAN AMALIYOT 🤖</span>
+                  <span>KIBER BOT BILAN MASHQ QILISH 🤖</span>
                 </button>
               </div>
             </div>
@@ -649,7 +713,7 @@ export const BattleView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-cyan-400" />
                 <h3 className="font-bold text-xs text-white uppercase font-mono">
-                  Real Ishtirokchilar (Firebase DB)
+                  Ishtirokchilar Ro'yxati
                 </h3>
               </div>
               <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
@@ -661,12 +725,12 @@ export const BattleView: React.FC = () => {
             <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
               {loadingPlayers ? (
                 <div className="py-8 text-center text-xs text-slate-400 font-mono">
-                  Firebase Ma'lumotlar Bazasi Yuklanmoqda...
+                  Ishtirokchilar ro'yxati yuklanmoqda...
                 </div>
               ) : realPlayers.length === 0 ? (
                 <div className="py-8 text-center text-xs text-slate-400">
-                  Hozircha bazada boshqa real ishtirokchilar topilmadi.
-                  <p className="text-[11px] text-cyan-400 mt-1">Yuqoridagi 8-Xonali kod bilan do'stingizni poygaga taklif qiling!</p>
+                  Hozircha boshqa ishtirokchilar topilmadi.
+                  <p className="text-[11px] text-cyan-400 mt-1">Xona yaratib do'stingizga kodni yuboring!</p>
                 </div>
               ) : (
                 realPlayers.map((p, idx) => {
@@ -717,43 +781,54 @@ export const BattleView: React.FC = () => {
         </div>
       )}
 
-      {/* 2. WAITING FOR OPPONENT STATE (8-Char Code Share Screen) */}
+      {/* 2. WAITING FOR OPPONENT STATE (Room Code Share Screen) */}
       {gameState === 'waiting' && (
         <div className="bg-[#0e1626] border-2 border-cyan-500/50 rounded-2xl p-6 text-center text-white space-y-4 shadow-xl">
           <div className="space-y-1">
             <h2 className="text-lg font-black uppercase font-mono tracking-wider text-cyan-300 flex items-center justify-center gap-2">
-              <Users className="w-5 h-5 text-amber-400 animate-pulse" /> XONA YARATILDI — RIVAL KUTILMOQDA...
+              <Users className="w-5 h-5 text-amber-400 animate-pulse" /> XONA YARATILDI — RAQIB KUTILMOQDA...
             </h2>
-            <p className="text-xs text-slate-400">
-              Quyidagi 8 xonali xona kodini nusxalab do'stingizga yuboring! U kirgach, poyga avtomobil rejimida avtomatcha boshlanadi!
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Quyidagi xona kodini do'stingizga berishingiz yoki to'g'ridan-to'g'ri ssilkani ulashishingiz mumkin! U kirgan zahoti duel avtomatik boshlanadi.
             </p>
           </div>
 
-          {/* Giant 8-Char Room Code Box */}
-          <div className="bg-slate-950/90 border-2 border-cyan-400/80 p-4 rounded-2xl max-w-sm mx-auto space-y-2 shadow-inner">
+          {/* Room Code Display Box */}
+          <div className="bg-slate-950/90 border-2 border-cyan-400/80 p-5 rounded-2xl max-w-md mx-auto space-y-3 shadow-inner">
             <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
-              XONA KODI (8 XONALI)
+              XONA KODI
             </span>
-            <div className="text-3xl font-black font-mono tracking-wider text-amber-400 flex items-center justify-center gap-3">
+            <div className="text-4xl font-black font-mono tracking-widest text-amber-400 flex items-center justify-center gap-3">
               <span>{activeRoomCode}</span>
             </div>
-            <button
-              onClick={handleCopyCode}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase font-mono transition-all"
-            >
-              {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedCode ? 'Nusxalandi! ✅' : 'Kodni Nusxalash'}</span>
-            </button>
+
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                onClick={handleCopyCode}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase font-mono transition-all active:scale-95 shadow-md"
+              >
+                {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedCode ? 'Nusxalandi! ✅' : 'Kodni Nusxalash'}</span>
+              </button>
+
+              <button
+                onClick={handleCopyLink}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase font-mono transition-all active:scale-95 shadow-md"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <LinkIcon className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? 'Ssilka Nusxalandi! ✅' : 'Ssilkani Nusxalash'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="pt-2 text-xs text-slate-400 font-mono flex items-center justify-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span>Kutilmoqda... Do'stingiz "8-xonali kod bilan kirish" tugmasiga bu kodni kiritsin.</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+            <span>Kutilmoqda... Do'stingiz "Xona kodi bilan kirish" joyiga kiritishi kerak.</span>
           </div>
         </div>
       )}
 
-      {/* 3. COUNTDOWN STATE (5, 4, 3, 2, 1) */}
+      {/* 3. COUNTDOWN STATE */}
       {gameState === 'countdown' && (
         <div className="bg-[#0d1322] border-2 border-cyan-500/50 rounded-2xl p-8 text-center text-white space-y-4 shadow-xl">
           <div className="space-y-1">
@@ -761,7 +836,7 @@ export const BattleView: React.FC = () => {
               <Sparkles className="w-5 h-5 animate-spin" /> BATTLE TAYYORGARLIGI!
             </h2>
             <p className="text-xs text-slate-400">
-              Barmoqlaringizni klaviaturaga qo'ying! 5 soniyadan so'ng poyga boshlanadi!
+              Tayyor turing! Soniyalar tugagach, duel boshlanadi!
             </p>
           </div>
 
@@ -836,7 +911,7 @@ export const BattleView: React.FC = () => {
             </div>
 
             <p className="text-center text-[11px] text-slate-400 font-mono italic">
-              💡 Yozish uchun matn ustiga bosing va harflarni ketma-ket kiriting!
+              💡 Yozish uchun matn ustiga bosing va tugmalarni ketma-ket bosing!
             </p>
           </div>
 
@@ -887,4 +962,3 @@ export const BattleView: React.FC = () => {
     </div>
   );
 };
-

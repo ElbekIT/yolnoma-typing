@@ -48,12 +48,18 @@ function MainAppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
+  const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
 
-  // Realtime Battle Invites listener
+  // Realtime Battle Invites listener (Supports both authenticated users and guests)
   useEffect(() => {
-    if (!user) return;
+    let myUid = user?.uid;
+    if (!myUid) {
+      myUid = localStorage.getItem('yolnoma_guest_id') || undefined;
+    }
+    if (!myUid) return;
+
     try {
-      const inviteRef = ref(rtdb, `battles/invites/${user.uid}`);
+      const inviteRef = ref(rtdb, `battles/invites/${myUid}`);
       const unsubscribe = onValue(inviteRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -69,19 +75,24 @@ function MainAppContent() {
   }, [user]);
 
   const handleAcceptInvite = (invite: BattleInviteData) => {
-    if (user) {
+    const myUid = user?.uid || localStorage.getItem('yolnoma_guest_id');
+    if (myUid) {
       try {
-        remove(ref(rtdb, `battles/invites/${user.uid}`));
+        remove(ref(rtdb, `battles/invites/${myUid}`));
       } catch {}
     }
     setIncomingInvite(null);
+    if (invite.roomId) {
+      setPendingBattleRoomCode(invite.roomId);
+    }
     setActiveTab('battle');
   };
 
   const handleDeclineInvite = (invite: BattleInviteData) => {
-    if (user) {
+    const myUid = user?.uid || localStorage.getItem('yolnoma_guest_id');
+    if (myUid) {
       try {
-        remove(ref(rtdb, `battles/invites/${user.uid}`));
+        remove(ref(rtdb, `battles/invites/${myUid}`));
       } catch {}
     }
     setIncomingInvite(null);
@@ -427,7 +438,12 @@ function MainAppContent() {
         )}
 
         {activeTab === 'lessons' && <LessonsView />}
-        {activeTab === 'battle' && <BattleView />}
+        {activeTab === 'battle' && (
+          <BattleView
+            initialRoomCode={pendingBattleRoomCode}
+            onClearInitialRoomCode={() => setPendingBattleRoomCode(null)}
+          />
+        )}
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'leaderboard' && <LeaderboardView />}
         {activeTab === 'statistics' && <StatisticsView />}
