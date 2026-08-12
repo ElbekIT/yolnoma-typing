@@ -323,8 +323,12 @@ function MainAppContent() {
 
   // Blocked / Banned User Gate (Cloud & Device Local Anti-Cheat)
   const deviceBan = antiCheatManager.isDeviceBanned();
-  if (profile?.isBanned || deviceBan.banned) {
-    return <BlockedScreen reason={deviceBan.reason || profile?.blockReason} />;
+  if (profile && !profile.isBanned && deviceBan.banned) {
+    antiCheatManager.clearDeviceBan();
+  }
+
+  if (profile?.role !== 'admin' && (profile?.isBanned || antiCheatManager.isDeviceBanned().banned)) {
+    return <BlockedScreen reason={profile?.blockReason || antiCheatManager.isDeviceBanned().reason || undefined} />;
   }
 
   // Input change handler

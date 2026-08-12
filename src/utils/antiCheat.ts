@@ -1,21 +1,17 @@
 /**
  * Advanced Anti-Cheat & Code Security System for Yolnoma Typing
- * Protects against:
- * - Auto-typers & Google Chrome Extensions (bot detection via keystroke timing dynamics)
- * - Copy/Paste (Ctrl+C, Ctrl+V, Ctrl+X, right-click paste)
- * - DevTools Inspection (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Right-click context menu)
- * - PrintScreen & Screenshot shortcuts
- * - Persistent Local & Cloud Device Banning
+ *
+ * Security Features:
+ * - Anti Auto-Typer & Chrome Extensions: Detects untrusted events & inhuman keystroke intervals (<8ms continuous).
+ * - Silent Copy/Paste/Cut Disabling: Ctrl+C, Ctrl+V, Ctrl+X, and Right-Click paste are disabled (prevented) silently WITHOUT banning the user.
+ * - DevTools Inspection Disabling: F12, Ctrl+Shift+I/J/C, Ctrl+U, Ctrl+S, Right-Click menu are blocked.
+ * - PrintScreen protection: Clears clipboard on PrintScreen press.
+ * - Persistent Device & Account Ban for Auto-Typer Bots.
  */
 
 import { ref, update } from 'firebase/database';
 import { rtdb } from '../config/firebase';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-
-export interface AntiCheatState {
-  isCheatDetected: boolean;
-  cheatReason: string | null;
-}
 
 class AntiCheatSystem {
   private keyTimes: number[] = [];
@@ -44,6 +40,15 @@ class AntiCheatSystem {
       return { banned, reason };
     } catch {
       return { banned: false, reason: null };
+    }
+  }
+
+  public clearDeviceBan() {
+    try {
+      localStorage.removeItem('yolnoma_device_banned');
+      localStorage.removeItem('yolnoma_ban_reason');
+    } catch (e) {
+      console.warn('LocalStorage unban error:', e);
     }
   }
 
@@ -124,13 +129,13 @@ class AntiCheatSystem {
   }
 
   private attachGlobalSecurityListeners() {
-    // Disable Right-Click Context Menu
+    // Disable Right-Click Context Menu (Silently)
     document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       return false;
     });
 
-    // Disable Selection across entire body
+    // Disable Selection across entire body (Silently)
     document.addEventListener('selectstart', (e) => {
       const target = e.target as HTMLElement;
       if (target && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
@@ -138,7 +143,7 @@ class AntiCheatSystem {
       }
     });
 
-    // Disable Copy, Cut, Paste globally
+    // Disable Copy, Cut, Paste globally SILENTLY without banning
     document.addEventListener('copy', (e) => {
       e.preventDefault();
     });
@@ -147,7 +152,7 @@ class AntiCheatSystem {
     });
     document.addEventListener('paste', (e) => {
       e.preventDefault();
-      this.banDeviceAndUser('Saytda matn nusxalash yoki joylashtirish (Paste) taqiqlangan!');
+      // SILENT PREVENTION: Stop pasting, do NOT ban!
     });
 
     // Global Keydown protections (F12, DevTools, View Source, PrintScreen)

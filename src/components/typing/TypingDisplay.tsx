@@ -125,11 +125,19 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (isTestFinished) return;
+
+      // Anti-Cheat: Detect untrusted synthetic input from extension scripts
+      if (e.nativeEvent && e.nativeEvent.isTrusted === false) {
+        antiCheatManager.banDeviceAndUser('Avto-Typer (Grom/Google Chrome) kengaytmasi aniqlandi va kirish bloklandi!');
+        window.location.reload();
+        return;
+      }
+
       const newValue = e.target.value;
 
-      // Anti-Cheat: Detect multi-character sudden injection (Paste or Auto-Typer bot)
-      if (newValue.length - typedInput.length > 3) {
-        antiCheatManager.banDeviceAndUser('Ketma-ket ko\'p harflar kiritish (Auto-Typer Bot / Paste) aniqlandi va kirish bloklandi!');
+      // If text jump is abnormally large (>10 characters at once from injection script)
+      if (newValue.length - typedInput.length > 10) {
+        antiCheatManager.banDeviceAndUser('Robotik (Auto-Typer Bot) yozuv aniqlandi va kirish bloklandi!');
         window.location.reload();
         return;
       }

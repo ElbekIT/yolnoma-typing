@@ -123,6 +123,8 @@ export const AdminView: React.FC = () => {
           blockReason: ''
         });
       } catch {}
+
+      alert(`"${user.displayName}" muvaffaqiyatli BAN'dan chiqarildi! Endi saytdan bemalol foydalanishi mumkin.`);
     } catch (e) {
       alert('Foydalanuvchini blokdan chiqarishda xatolik: ' + e);
     }
