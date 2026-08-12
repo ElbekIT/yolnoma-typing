@@ -1,8 +1,10 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffect } from 'react';
-import { RefreshCw, Smartphone } from 'lucide-react';
+import { RefreshCw, Smartphone, MousePointer, Sparkles, ShieldCheck } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import { languagesList } from '../../config/languages';
 import { soundSynth } from '../../utils/audio';
+import { antiCheatManager } from '../../utils/antiCheat';
 
 interface TypingDisplayProps {
   targetText: string;
@@ -20,20 +22,60 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   isTestFinished
 }) => {
   const { language, caretStyle, smoothCaret, soundProfile, fontFamily, fontSize } = useSettings();
+  const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isFocused, setIsFocused] = useState(true);
+  const [mouseHidden, setMouseHidden] = useState(false);
+  const mouseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
+
+  // Initialize global anti-cheat listeners with user ID
+  useEffect(() => {
+    antiCheatManager.init((reason) => {
+      // Instantly trigger device & user ban
+      antiCheatManager.banDeviceAndUser(reason);
+      window.location.reload();
+    }, user?.uid);
+  }, [user]);
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, [targetText]);
+
+  // Hide mouse cursor during active typing (Monkeytype style)
+  useEffect(() => {
+    if (typedInput.length > 0 && !isTestFinished) {
+      if (mouseTimerRef.current) clearTimeout(mouseTimerRef.current);
+      mouseTimerRef.current = setTimeout(() => {
+        setMouseHidden(true);
+      }, 1200);
+    } else {
+      setMouseHidden(false);
+    }
+
+    return () => {
+      if (mouseTimerRef.current) clearTimeout(mouseTimerRef.current);
+    };
+  }, [typedInput, isTestFinished]);
+
+  const handleMouseMove = () => {
+    if (mouseHidden) {
+      setMouseHidden(false);
+    }
+    if (typedInput.length > 0 && !isTestFinished) {
+      if (mouseTimerRef.current) clearTimeout(mouseTimerRef.current);
+      mouseTimerRef.current = setTimeout(() => {
+        setMouseHidden(true);
+      }, 1200);
+    }
+  };
 
   const handleContainerClick = () => {
     if (inputRef.current) {
@@ -52,6 +94,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     if (e.key === 'Escape') {
       if (inputRef.current) inputRef.current.blur();
       setIsFocused(false);
+      return;
+    }
+
+    // Anti-cheat keystroke check
+    const isValid = antiCheatManager.registerKeystroke(e, typedInput.length);
+    if (!isValid) {
+      e.preventDefault();
       return;
     }
 
@@ -76,9 +125,18 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (isTestFinished) return;
-      onInputChange(e.target.value);
+      const newValue = e.target.value;
+
+      // Anti-Cheat: Detect multi-character sudden injection (Paste or Auto-Typer bot)
+      if (newValue.length - typedInput.length > 3) {
+        antiCheatManager.banDeviceAndUser('Ketma-ket ko\'p harflar kiritish (Auto-Typer Bot / Paste) aniqlandi va kirish bloklandi!');
+        window.location.reload();
+        return;
+      }
+
+      onInputChange(newValue);
     },
-    [isTestFinished, onInputChange]
+    [isTestFinished, typedInput.length, onInputChange]
   );
 
   // Group text into whole words so words NEVER break mid-word across lines
@@ -124,7 +182,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
 
-  // Windowed word rendering for ultra-fast performance (renders only words in viewport)
+  // Windowed word rendering for ultra-fast performance
   const visibleWords = useMemo(() => {
     const start = Math.max(0, activeWordIdx - 20);
     const end = Math.min(parsedWords.length, activeWordIdx + 50);
@@ -158,7 +216,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       ref={containerRef}
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
-      className="relative w-full max-w-5xl mx-auto my-2 sm:my-4 bg-transparent border-0 rounded-2xl p-3 sm:p-6 cursor-text select-none gpu-accelerated"
+      onMouseMove={handleMouseMove}
+      className={`relative w-full max-w-5xl mx-auto my-2 sm:my-4 bg-transparent border-0 rounded-2xl p-3 sm:p-6 select-none gpu-accelerated transition-all duration-300 ${
+        mouseHidden ? 'cursor-none' : 'cursor-text'
+      }`}
       style={{
         fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`,
         fontSize: `${calculatedFontSize}px`,
@@ -184,19 +245,21 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         className="absolute opacity-0 w-full h-full inset-0 z-10 cursor-default focus:outline-none"
       />
 
-      {/* Focus hint when unfocused */}
+      {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/85 backdrop-blur-[4px] rounded-2xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center animate-in fade-in">
-          <div className="flex items-center gap-2 bg-[var(--main-color)]/10 px-4 py-2 rounded-full border border-[var(--main-color)]/20">
+        <div className="absolute inset-0 bg-[var(--bg-color)]/85 backdrop-blur-[4px] rounded-2xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 bg-[var(--main-color)]/10 px-5 py-2.5 rounded-full border border-[var(--main-color)]/20 shadow-lg group hover:bg-[var(--main-color)]/20 transition-all">
+            <MousePointer className="w-4 h-4 text-[var(--main-color)] animate-bounce" />
             <Smartphone className="w-4 h-4 sm:hidden animate-bounce" />
-            <span>Bosib yozishni boshlang</span>
+            <span>Sichqoncha yoki ekranga bosing (yozish uchun)</span>
           </div>
         </div>
       )}
 
-      {/* 3-Line Scroll Viewport */}
+      {/* 3-Line Scroll Viewport with smooth text fade on text key change */}
       <div
-        className="relative w-full overflow-hidden"
+        key={targetText.slice(0, 15)}
+        className="relative w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         style={{ height: `${containerHeight}px` }}
       >
         <div
@@ -319,32 +382,40 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         </div>
       </div>
 
-      {/* Quick Restart Button */}
+      {/* Quick Mouse & Keyboard Controls Bar */}
       <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3">
-        <button
-          type="button"
-          tabIndex={-1}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRestart();
-            if (inputRef.current) {
-              inputRef.current.focus();
-              setIsFocused(true);
-            }
-          }}
-          className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-all group opacity-80 hover:opacity-100 cursor-pointer shadow-sm active:scale-95"
-          title="Qayta boshlash (Tab + Enter)"
-        >
-          <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRestart();
+              if (inputRef.current) {
+                inputRef.current.focus();
+                setIsFocused(true);
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-all group opacity-85 hover:opacity-100 cursor-pointer shadow-sm active:scale-95 font-semibold text-xs"
+            title="Sichqoncha bilan yangilash yoki Tab + Enter"
+          >
+            <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300 text-[var(--main-color)]" />
+            <span>Matnni yangilash</span>
+          </button>
+        </div>
 
         {/* Shortcut Footer Hints */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none">
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-80">
           <div className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">tab</kbd>
             <span>+</span>
             <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">enter</kbd>
-            <span className="ml-1">- qayta boshlash</span>
+            <span className="ml-1">- yangi matn</span>
+          </div>
+          <span className="hidden sm:inline text-[var(--sub-color)]/40">•</span>
+          <div className="flex items-center gap-1 text-[10px]">
+            <Sparkles className="w-3 h-3 text-[var(--main-color)]" />
+            <span>Sichqonchani surish orqali boshqarish</span>
           </div>
         </div>
       </div>

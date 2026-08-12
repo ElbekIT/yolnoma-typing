@@ -26,6 +26,7 @@ import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
 import { AdminView } from './components/admin/AdminView';
+import { antiCheatManager } from './utils/antiCheat';
 
 import {
   TextMode,
@@ -168,11 +169,30 @@ function MainAppContent() {
     const handleContentUpdate = () => {
       initTestText();
     };
+
+    // Auto-refresh text when switching back to tab/window (Monkeytype style)
+    const handleFocus = () => {
+      if (!startTimeRef.current && typedInputRef.current.length === 0) {
+        initTestText();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !startTimeRef.current && typedInputRef.current.length === 0) {
+        initTestText();
+      }
+    };
+
     window.addEventListener('custom-content-updated', handleContentUpdate);
     window.addEventListener('storage', handleContentUpdate);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.removeEventListener('custom-content-updated', handleContentUpdate);
       window.removeEventListener('storage', handleContentUpdate);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [initTestText]);
 
@@ -301,9 +321,10 @@ function MainAppContent() {
     return <LoginPage />;
   }
 
-  // Blocked / Banned User Gate
-  if (profile?.isBanned) {
-    return <BlockedScreen reason={profile?.blockReason} />;
+  // Blocked / Banned User Gate (Cloud & Device Local Anti-Cheat)
+  const deviceBan = antiCheatManager.isDeviceBanned();
+  if (profile?.isBanned || deviceBan.banned) {
+    return <BlockedScreen reason={deviceBan.reason || profile?.blockReason} />;
   }
 
   // Input change handler
