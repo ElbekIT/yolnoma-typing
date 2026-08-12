@@ -11,12 +11,17 @@ import {
   Zap,
   Mail,
   Shield,
-  X
+  X,
+  Crown,
+  FileText,
+  Globe,
+  Plus
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update } from 'firebase/database';
-import { doc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../../types';
+import { OwnerPanelModal } from './OwnerPanelModal';
 
 export const AdminView: React.FC = () => {
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
@@ -27,6 +32,9 @@ export const AdminView: React.FC = () => {
   // Ban Modal
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [banReason, setBanReason] = useState('Nomaʼlum qoida buzilishi / Avto-kliker dastur ishlatilgan.');
+
+  // Owner Content Modal State
+  const [showContentModal, setShowContentModal] = useState(false);
 
   // Fetch users from Firebase Realtime DB & Leaderboard
   useEffect(() => {
@@ -134,38 +142,49 @@ export const AdminView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-rose-950/80 via-[var(--card-bg)] to-slate-900 border border-rose-500/40 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-amber-950/80 via-[var(--card-bg)] to-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400">
-            <ShieldAlert className="w-8 h-8" />
+          <div className="p-4 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400">
+            <Crown className="w-8 h-8 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white font-mono font-extrabold text-[10px] uppercase tracking-wider">
-                Owner Dashboard
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-black font-mono font-extrabold text-[10px] uppercase tracking-wider">
+                VERIFIED OWNER
               </span>
-              <span className="text-xs font-mono text-slate-400">yuldashivagavharoy@gmail.com</span>
+              <span className="text-xs font-mono text-amber-300/80">yuldashivagavharoy@gmail.com</span>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight mt-1">
-              Bosh Admin Boshqaruv Paneli
+              Owner & Admin Boshqaruv Paneli
             </h1>
             <p className="text-xs text-slate-400 font-medium">
-              Foydalanuvchilar holatini nazorat qilish, modratsiya va avto-robot bloklash paneli
+              Aynan <strong className="text-amber-400">yuldashivagavharoy@gmail.com</strong> uchun cheksiz matnlar kiritish va foydalanuvchilarni nazorat qilish paneli
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-slate-950/60 p-4 rounded-2xl border border-rose-500/20">
-          <div className="text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase block">Jami Foydalanuvchi</span>
-            <span className="text-xl font-mono font-black text-white">{usersList.length}</span>
-          </div>
-          <div className="h-8 w-px bg-slate-800" />
-          <div className="text-center">
-            <span className="text-[10px] font-bold text-rose-400 uppercase block">Bloklanganlar</span>
-            <span className="text-xl font-mono font-black text-rose-400">
-              {usersList.filter((u) => u.isBanned).length}
-            </span>
+        <div className="flex items-center gap-3">
+          {/* Action Button to Open Content Modal */}
+          <button
+            onClick={() => setShowContentModal(true)}
+            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Matnlar & Tillar Kiratish</span>
+          </button>
+
+          <div className="flex items-center gap-4 bg-slate-950/60 p-3.5 rounded-2xl border border-amber-500/20">
+            <div className="text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Jami A'zo</span>
+              <span className="text-lg font-mono font-black text-white">{usersList.length}</span>
+            </div>
+            <div className="h-6 w-px bg-slate-800" />
+            <div className="text-center">
+              <span className="text-[10px] font-bold text-rose-400 uppercase block">Bloklangan</span>
+              <span className="text-lg font-mono font-black text-rose-400">
+                {usersList.filter((u) => u.isBanned).length}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -251,8 +270,8 @@ export const AdminView: React.FC = () => {
                           <div className="font-extrabold text-[var(--text-color)] flex items-center gap-1.5">
                             <span>{u.displayName}</span>
                             {u.role === 'admin' && (
-                              <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded text-[9px] font-mono uppercase">
-                                Admin
+                              <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded text-[9px] font-mono uppercase font-black">
+                                Owner
                               </span>
                             )}
                           </div>
@@ -299,7 +318,7 @@ export const AdminView: React.FC = () => {
                       {u.isBanned ? (
                         <button
                           onClick={() => handleUnblockUser(u)}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1.5 ml-auto"
+                          className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
                         >
                           <UserCheck className="w-3.5 h-3.5" />
                           <span>Blokdan Chiqarish</span>
@@ -307,7 +326,7 @@ export const AdminView: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => setSelectedUser(u)}
-                          className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] border border-rose-500/40 transition-all flex items-center gap-1.5 ml-auto"
+                          className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] border border-rose-500/40 transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
                         >
                           <UserX className="w-3.5 h-3.5" />
                           <span>Bloklash</span>
@@ -333,7 +352,7 @@ export const AdminView: React.FC = () => {
               </div>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -368,14 +387,14 @@ export const AdminView: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-bold"
+                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-bold cursor-pointer"
               >
                 Bekor qilish
               </button>
 
               <button
                 onClick={handleBlockUser}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30"
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 cursor-pointer"
               >
                 Tasdiqlash & Bloklash
               </button>
@@ -383,6 +402,13 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Owner Content Modal */}
+      <OwnerPanelModal
+        isOpen={showContentModal}
+        onClose={() => setShowContentModal(false)}
+        onContentUpdated={() => window.dispatchEvent(new Event('storage'))}
+      />
     </div>
   );
 };
