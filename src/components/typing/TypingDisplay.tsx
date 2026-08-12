@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffect } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Smartphone } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { languagesList } from '../../config/languages';
 import { soundSynth } from '../../utils/audio';
@@ -150,21 +150,22 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [activeWordIdx, parsedWords.length]);
 
-  const calculatedFontSize = Math.max(20, fontSize);
+  const calculatedFontSize = Math.max(18, fontSize);
   const containerHeight = Math.round(calculatedFontSize * 1.65 * 3); // 3 lines height
 
   return (
     <div
       ref={containerRef}
       onClick={handleContainerClick}
-      className="relative w-full max-w-5xl mx-auto my-4 bg-transparent border-0 rounded-2xl p-4 sm:p-6 cursor-text select-none"
+      onTouchStart={handleContainerClick}
+      className="relative w-full max-w-5xl mx-auto my-2 sm:my-4 bg-transparent border-0 rounded-2xl p-3 sm:p-6 cursor-text select-none gpu-accelerated"
       style={{
         fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`,
         fontSize: `${calculatedFontSize}px`,
         direction: isRtl ? 'rtl' : 'ltr'
       }}
     >
-      {/* Hidden input element */}
+      {/* Hidden input element optimized for Mobile iOS & Android soft keyboard */}
       <input
         ref={inputRef}
         type="text"
@@ -180,13 +181,16 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         autoCorrect="off"
         spellCheck="false"
         disabled={isTestFinished}
-        className="absolute opacity-0 pointer-events-none inset-0"
+        className="absolute opacity-0 w-full h-full inset-0 z-10 cursor-default focus:outline-none"
       />
 
       {/* Focus hint when unfocused */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/80 backdrop-blur-[2px] rounded-2xl z-20 flex items-center justify-center text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer">
-          <span>Sichqonchani bosing yoki har qanday tugmani bosing yozishni boshlash uchun</span>
+        <div className="absolute inset-0 bg-[var(--bg-color)]/85 backdrop-blur-[4px] rounded-2xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center animate-in fade-in">
+          <div className="flex items-center gap-2 bg-[var(--main-color)]/10 px-4 py-2 rounded-full border border-[var(--main-color)]/20">
+            <Smartphone className="w-4 h-4 sm:hidden animate-bounce" />
+            <span>Bosib yozishni boshlang</span>
+          </div>
         </div>
       )}
 
@@ -316,7 +320,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       </div>
 
       {/* Quick Restart Button */}
-      <div className="mt-8 flex flex-col items-center justify-center gap-3">
+      <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3">
         <button
           type="button"
           tabIndex={-1}
@@ -328,14 +332,14 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-all group opacity-70 hover:opacity-100 cursor-pointer"
+          className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-all group opacity-80 hover:opacity-100 cursor-pointer shadow-sm active:scale-95"
           title="Qayta boshlash (Tab + Enter)"
         >
           <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
         </button>
 
         {/* Shortcut Footer Hints */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 text-[var(--sub-color)] text-xs font-mono select-none">
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none">
           <div className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">tab</kbd>
             <span>+</span>

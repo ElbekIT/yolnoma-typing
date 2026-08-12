@@ -6,7 +6,7 @@ interface VirtualKeyboardProps {
 }
 
 const KeyCap = memo(({ keyLabel, isPressed, isActiveTarget }: { keyLabel: string; isPressed: boolean; isActiveTarget: boolean }) => {
-  let base = 'h-9 px-2.5 rounded-lg flex items-center justify-center font-mono text-xs font-semibold uppercase border transition-colors duration-75 ';
+  let base = 'h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg flex items-center justify-center font-mono text-[10px] sm:text-xs font-semibold uppercase border transition-colors duration-75 shrink-0 ';
 
   if (isActiveTarget) {
     base += 'bg-[var(--main-color)] text-white border-[var(--main-color)] ring-2 ring-[var(--main-color)]/30 ';
@@ -17,7 +17,7 @@ const KeyCap = memo(({ keyLabel, isPressed, isActiveTarget }: { keyLabel: string
   }
 
   return (
-    <div className={`${base} ${keyLabel === 'space' ? 'w-64' : ''}`}>
+    <div className={`${base} ${keyLabel === 'space' ? 'w-48 sm:w-64' : 'min-w-[24px] sm:min-w-[32px]'}`}>
       {keyLabel}
     </div>
   );
@@ -55,9 +55,9 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
   const normalizedActive = activeChar ? activeChar.toLowerCase() : '';
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-3 bg-[var(--card-bg)]/40 border border-[var(--sub-alt)]/60 rounded-xl my-4 opacity-75 hover:opacity-100 transition-opacity">
-      <div className="flex flex-col items-center gap-1.5">
-        <div className="flex gap-1.5">
+    <div className="w-full max-w-2xl mx-auto p-2 sm:p-3 bg-[var(--card-bg)]/40 border border-[var(--sub-alt)]/60 rounded-2xl my-4 opacity-80 hover:opacity-100 transition-opacity overflow-x-auto no-scrollbar">
+      <div className="flex flex-col items-center gap-1 sm:gap-1.5 min-w-[320px]">
+        <div className="flex gap-1 sm:gap-1.5">
           {row1.map((k) => (
             <KeyCap
               key={k}
@@ -68,7 +68,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
           ))}
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 sm:gap-1.5">
           {row2.map((k) => (
             <KeyCap
               key={k}
@@ -79,7 +79,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
           ))}
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 sm:gap-1.5">
           {row3.map((k) => (
             <KeyCap
               key={k}
@@ -90,7 +90,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
           ))}
         </div>
 
-        <div className="flex gap-1.5 w-full justify-center mt-1">
+        <div className="flex gap-1 sm:gap-1.5 w-full justify-center mt-0.5">
           <KeyCap
             keyLabel="space"
             isPressed={pressedKey === ' '}
