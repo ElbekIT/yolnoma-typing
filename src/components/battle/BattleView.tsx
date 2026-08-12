@@ -23,7 +23,7 @@ import { RaceTrack, RacerProgress } from './RaceTrack';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { getLanguageInfo } from '../../config/languages';
-import { calculateWpm, calculateAccuracy } from '../../utils/typingEngine';
+import { calculateWpm, calculateAccuracy, calculateNetWpm } from '../../utils/typingEngine';
 import { rtdb } from '../../config/firebase';
 import { ref, set, onValue, update, remove, get } from 'firebase/database';
 
@@ -124,6 +124,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   });
 
   const [winnerId, setWinnerId] = useState<string | null>(null);
+  const [disqualifiedReason, setDisqualifiedReason] = useState<string | null>(null);
   const [inviteSentStatus, setInviteSentStatus] = useState<string | null>(null);
   const [isBotMatch, setIsBotMatch] = useState<boolean>(false);
 
@@ -539,7 +540,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }
     });
 
-    const liveWpm = calculateWpm(correctCount, elapsedSeconds);
+    // Net WPM: mistake penalty lowers WPM instead of increasing it!
+    const liveWpm = calculateNetWpm(correctCount, val.length, elapsedSeconds);
     const liveAcc = calculateAccuracy(correctCount, val.length);
     const progress = Math.min(100, (val.length / Math.max(1, targetText.length)) * 100);
 
@@ -566,14 +568,34 @@ export const BattleView: React.FC<BattleViewProps> = ({
     if (val.length >= targetText.length) {
       if (botTimerRef.current) clearInterval(botTimerRef.current);
       setGameState('finished');
-      setWinnerId(currentUid);
-      setMyProgress((prev) => ({ ...prev, isWinner: true }));
 
-      if (activeRoomCode && !isBotMatch) {
-        update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {
-          status: 'finished',
-          winnerUid: currentUid
-        }).catch(() => {});
+      const errorsCount = val.length - correctCount;
+      const isDisqualified = liveAcc < 80 || liveWpm === 0 || errorsCount > Math.max(5, targetText.length * 0.2);
+
+      if (isDisqualified) {
+        const reasonText = `Juda ko'p xatolar qilindi! Aniqligingiz ${liveAcc}% (minimum 80% talab qilinadi). Ataylab noto'g'ri yozganingiz uchun mag'lubiyat berildi!`;
+        setDisqualifiedReason(reasonText);
+        const actualWinner = opponentProgress.id;
+        setWinnerId(actualWinner);
+        setOpponentProgress((prev) => ({ ...prev, isWinner: true }));
+
+        if (activeRoomCode && !isBotMatch) {
+          update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {
+            status: 'finished',
+            winnerUid: actualWinner
+          }).catch(() => {});
+        }
+      } else {
+        setDisqualifiedReason(null);
+        setWinnerId(currentUid);
+        setMyProgress((prev) => ({ ...prev, isWinner: true }));
+
+        if (activeRoomCode && !isBotMatch) {
+          update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {
+            status: 'finished',
+            winnerUid: currentUid
+          }).catch(() => {});
+        }
       }
     }
   };
@@ -915,28 +937,56 @@ export const BattleView: React.FC<BattleViewProps> = ({
             </p>
           </div>
 
-          {/* Victory Modal Overlay if Finished */}
+          {/* Victory / Result Modal Overlay if Finished */}
           {gameState === 'finished' && (
-            <div className="bg-gradient-to-br from-[#0c1322] to-[#131d33] border-2 border-amber-500/60 rounded-2xl p-6 text-center text-white space-y-4 shadow-2xl">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400 text-amber-400 mb-1 animate-bounce">
-                <Crown className="w-8 h-8" />
+            <div className={`border-2 rounded-2xl p-6 text-center text-white space-y-4 shadow-2xl ${
+              disqualifiedReason
+                ? 'bg-gradient-to-br from-[#1a0c0c] to-[#2b1212] border-rose-500/80'
+                : winnerId === currentUid
+                  ? 'bg-gradient-to-br from-[#0c1322] to-[#131d33] border-amber-500/60'
+                  : 'bg-gradient-to-br from-[#131722] to-[#1c2233] border-slate-700'
+            }`}>
+              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl border mb-1 ${
+                disqualifiedReason
+                  ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
+                  : winnerId === currentUid
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-400 animate-bounce'
+                    : 'bg-slate-800 border-slate-700 text-slate-400'
+              }`}>
+                {disqualifiedReason ? <AlertCircle className="w-8 h-8" /> : <Crown className="w-8 h-8" />}
               </div>
 
               <div className="space-y-1">
-                <h2 className="text-xl font-black uppercase font-mono tracking-wider text-amber-400">
-                  {winnerId === currentUid ? "Siz G'olib Bo'ldingiz! 🏆" : "Raqib Birinchi Yakunladi! 🏁"}
+                <h2 className={`text-xl font-black uppercase font-mono tracking-wider ${
+                  disqualifiedReason ? 'text-rose-400' : winnerId === currentUid ? 'text-amber-400' : 'text-slate-300'
+                }`}>
+                  {disqualifiedReason
+                    ? "Siz Yutqazdingiz! (Disvalifikatsiya) ❌"
+                    : winnerId === currentUid
+                      ? "Siz G'olib Bo'ldingiz! 🏆"
+                      : "Raqib G'olib Bo'ldi! 🏁"}
                 </h2>
                 <p className="text-xs text-slate-300">
-                  Ajoyib poyga natijasi! Shaxsiy tezligingiz va aniqligingiz qayd etildi.
+                  {disqualifiedReason
+                    ? "Poygada ko'p xatolar va past aniqlik sababli g'oliblik bekor qilindi."
+                    : "Ajoyib poyga natijasi! Shaxsiy tezligingiz va aniqligingiz qayd etildi."}
                 </p>
               </div>
+
+              {disqualifiedReason && (
+                <div className="bg-rose-950/80 border border-rose-500/50 rounded-xl p-3 text-rose-200 text-xs font-mono max-w-md mx-auto shadow-inner text-center">
+                  ⚠️ {disqualifiedReason}
+                </div>
+              )}
 
               {/* Match Stats Comparison Grid */}
               <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                 <div className="space-y-0.5 text-left border-r border-slate-800 pr-2">
                   <span className="text-[9px] text-cyan-400 font-mono block">Sizning Natijangiz</span>
                   <p className="text-base font-black font-mono text-white">{myProgress.wpm} WPM</p>
-                  <p className="text-[11px] font-mono text-emerald-400">{myProgress.accuracy}% Accuracy</p>
+                  <p className={`text-[11px] font-mono ${myProgress.accuracy < 80 ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
+                    {myProgress.accuracy}% Accuracy
+                  </p>
                 </div>
 
                 <div className="space-y-0.5 text-left pl-2">
@@ -949,7 +999,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
               {/* Action Buttons */}
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
-                  onClick={() => setGameState('lobby')}
+                  onClick={() => {
+                    setGameState('lobby');
+                    setDisqualifiedReason(null);
+                  }}
                   className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700"
                 >
                   <span>LOBBIYGA QAYTISH</span>

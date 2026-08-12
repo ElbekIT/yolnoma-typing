@@ -146,6 +146,15 @@ export function calculateWpm(correctCharsCount: number, elapsedSeconds: number):
   return Math.max(0, Math.round(wordsTyped / timeInMinutes));
 }
 
+export function calculateNetWpm(correctCharsCount: number, totalTypedCharsCount: number, elapsedSeconds: number): number {
+  if (elapsedSeconds <= 0) return 0;
+  const timeInMinutes = elapsedSeconds / 60;
+  const incorrectCount = Math.max(0, totalTypedCharsCount - correctCharsCount);
+  // Subtract penalty for incorrect characters (1.5 chars penalty per error)
+  const netCorrectWords = Math.max(0, (correctCharsCount - (incorrectCount * 1.5)) / 5);
+  return Math.max(0, Math.round(netCorrectWords / timeInMinutes));
+}
+
 export function calculateCpm(typedCharsCount: number, elapsedSeconds: number): number {
   if (elapsedSeconds <= 0) return 0;
   const timeInMinutes = elapsedSeconds / 60;
