@@ -164,6 +164,16 @@ function MainAppContent() {
 
   useEffect(() => {
     initTestText();
+
+    const handleContentUpdate = () => {
+      initTestText();
+    };
+    window.addEventListener('custom-content-updated', handleContentUpdate);
+    window.addEventListener('storage', handleContentUpdate);
+    return () => {
+      window.removeEventListener('custom-content-updated', handleContentUpdate);
+      window.removeEventListener('storage', handleContentUpdate);
+    };
   }, [initTestText]);
 
   // Handle finish test
