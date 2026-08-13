@@ -23,7 +23,7 @@ import { RaceTrack, RacerProgress } from './RaceTrack';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { getLanguageInfo } from '../../config/languages';
-import { calculateWpm, calculateAccuracy, calculateNetWpm } from '../../utils/typingEngine';
+import { calculateWpm, calculateAccuracy, calculateNetWpm, getLockedMinLength, getNextWordStartIndexOnSpace } from '../../utils/typingEngine';
 import { rtdb } from '../../config/firebase';
 import { ref, set, onValue, update, remove, get } from 'firebase/database';
 
@@ -521,13 +521,34 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }, intervalMs);
   };
 
-  // Handle My Typing Input & RTDB update
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle My Typing KeyDown
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (gameState !== 'racing') return;
 
-    const val = e.target.value;
-    setTypedInput(val);
+    // Lock completed words: Cannot backspace into previous words once space is typed
+    if (e.key === 'Backspace') {
+      const minLen = getLockedMinLength(targetText, typedInput);
+      if (typedInput.length <= minLen) {
+        e.preventDefault();
+        return;
+      }
+    }
 
+    // Space Key: Pad input to jump directly to start of next word
+    if (e.key === ' ') {
+      const targetNextIdx = getNextWordStartIndexOnSpace(targetText, typedInput);
+      if (targetNextIdx && typedInput.length < targetNextIdx) {
+        e.preventDefault();
+        const paddedInput = typedInput.padEnd(targetNextIdx, ' ');
+        setTypedInput(paddedInput);
+        processTypedInputUpdate(paddedInput);
+        return;
+      }
+    }
+  };
+
+  // Process progress and check win condition
+  const processTypedInputUpdate = (val: string) => {
     const elapsedSeconds = Math.max(1, (Date.now() - startTimeRef.current) / 1000);
 
     let correctCount = 0;
@@ -598,6 +619,22 @@ export const BattleView: React.FC<BattleViewProps> = ({
         }
       }
     }
+  };
+
+  // Handle My Typing Input & RTDB update
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (gameState !== 'racing') return;
+
+    const val = e.target.value;
+
+    // Word Boundary Lock: Prevent backspacing into completed words
+    const minLen = getLockedMinLength(targetText, typedInput);
+    if (val.length < minLen) {
+      return;
+    }
+
+    setTypedInput(val);
+    processTypedInputUpdate(val);
   };
 
   const handleCopyCode = () => {
@@ -905,6 +942,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
               type="text"
               value={typedInput}
               onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               disabled={gameState === 'finished'}
               className="absolute opacity-0 pointer-events-none"
               autoFocus

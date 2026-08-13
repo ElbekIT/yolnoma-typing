@@ -166,3 +166,50 @@ export function calculateAccuracy(correctChars: number, totalTypedChars: number)
   const acc = (correctChars / totalTypedChars) * 100;
   return Math.max(0, Math.min(100, Math.round(acc)));
 }
+
+/**
+ * Calculates the locked minimum input length for word boundary protection.
+ * Once a space in typedInput is typed, or a space in targetText is passed,
+ * backspace cannot delete past spaceIndex + 1 into previous words.
+ */
+export function getLockedMinLength(targetText: string, typedInput: string): number {
+  if (!targetText || !typedInput) return 0;
+
+  // 1. Check last space typed in typedInput
+  const lastSpaceIdx = typedInput.lastIndexOf(' ');
+  let lockedMin = lastSpaceIdx !== -1 ? lastSpaceIdx + 1 : 0;
+
+  // 2. Check spaces in targetText that have been passed by typedInput
+  for (let i = 0; i < targetText.length; i++) {
+    if (targetText[i] === ' ') {
+      if (typedInput.length > i) {
+        lockedMin = Math.max(lockedMin, i + 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  return lockedMin;
+}
+
+/**
+ * Calculates target index to jump/pad to when Space key is pressed.
+ */
+export function getNextWordStartIndexOnSpace(targetText: string, typedInput: string): number | null {
+  if (!targetText) return null;
+  const words = targetText.split(' ');
+  let charOffset = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    const wordLen = words[i].length;
+    const spaceIdx = charOffset + wordLen;
+
+    if (typedInput.length <= spaceIdx) {
+      return spaceIdx + 1;
+    }
+    charOffset += wordLen + 1;
+  }
+
+  return null;
+}

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { languagesList } from '../../config/languages';
 import { soundSynth } from '../../utils/audio';
 import { antiCheatManager } from '../../utils/antiCheat';
+import { getLockedMinLength, getNextWordStartIndexOnSpace } from '../../utils/typingEngine';
 
 interface TypingDisplayProps {
   targetText: string;
@@ -97,6 +98,26 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       return;
     }
 
+    // Lock completed words: Cannot backspace into previous words once space is typed
+    if (e.key === 'Backspace') {
+      const minLen = getLockedMinLength(targetText, typedInput);
+      if (typedInput.length <= minLen) {
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Space Key: Pad input to jump directly to start of next word
+    if (e.key === ' ') {
+      const targetNextIdx = getNextWordStartIndexOnSpace(targetText, typedInput);
+      if (targetNextIdx && typedInput.length < targetNextIdx) {
+        e.preventDefault();
+        const paddedInput = typedInput.padEnd(targetNextIdx, ' ');
+        onInputChange(paddedInput);
+        return;
+      }
+    }
+
     // Anti-cheat keystroke check
     const isValid = antiCheatManager.registerKeystroke(e, typedInput.length);
     if (!isValid) {
@@ -139,6 +160,12 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       if (newValue.length - typedInput.length > 10) {
         antiCheatManager.banDeviceAndUser('Robotik (Auto-Typer Bot) yozuv aniqlandi va kirish bloklandi!');
         window.location.reload();
+        return;
+      }
+
+      // Word Boundary Lock: Prevent backspacing into completed words
+      const minLen = getLockedMinLength(targetText, typedInput);
+      if (newValue.length < minLen) {
         return;
       }
 
