@@ -55,50 +55,162 @@ export const AdminView: React.FC = () => {
   // Owner Content Modal State
   const [showContentModal, setShowContentModal] = useState(false);
 
-  // Fetch users from Firebase Realtime DB
+  const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
+
+  // Fetch users & leaderboard from Firebase Realtime DB with exact LeaderboardView synchronization
   useEffect(() => {
     try {
+      const bannedRef = ref(rtdb, 'bannedUsers');
+      const leaderboardRef = ref(rtdb, 'leaderboard');
       const usersRef = ref(rtdb, 'users');
-      const unsubscribe = onValue(usersRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const val = snapshot.val();
-          const list: UserProfile[] = Object.keys(val).map((uid) => ({
-            uid,
-            email: val[uid].email || `${uid.slice(0, 8)}@yolnoma.uz`,
-            username: val[uid].username || val[uid].displayName || 'Foydalanuvchi',
-            displayName: val[uid].displayName || val[uid].username || 'Foydalanuvchi',
-            highestWpm: val[uid].highestWpm || val[uid].wpm || 0,
-            highestAccuracy: val[uid].highestAccuracy || val[uid].accuracy || 98,
-            level: val[uid].level || 1,
-            rankTitle: val[uid].rankTitle || 'Typing Master',
-            xp: val[uid].xp || 250,
-            isBanned: !!val[uid].isBanned,
-            blockReason: val[uid].blockReason || '',
-            createdAt: val[uid].createdAt || Date.now(),
-            lastActive: val[uid].lastActive || Date.now(),
-            role: val[uid].role || 'user',
+
+      let bannedSet = new Set<string>();
+      let rawLeaderboard: Record<string, any> = {};
+      let rawUsers: Record<string, any> = {};
+
+      const rebuildLists = () => {
+        const profileMap = new Map<string, UserProfile>();
+
+        // 1. Process leaderboard node
+        Object.keys(rawLeaderboard).forEach((key) => {
+          const item = rawLeaderboard[key];
+          if (!item) return;
+
+          const isBanned = bannedSet.has(key) || !!item.isBanned || !!item.isBlocked;
+          if (isBanned) return;
+
+          const wpm = item.highestWpm || item.wpm || 0;
+          const acc = item.highestAccuracy || item.accuracy || 98;
+
+          profileMap.set(key, {
+            uid: key,
+            email: item.email || `${key.slice(0, 8)}@yolnoma.uz`,
+            username: item.username || item.displayName || 'Foydalanuvchi',
+            displayName: item.displayName || item.username || 'Foydalanuvchi',
+            highestWpm: wpm,
+            highestAccuracy: acc,
+            level: item.level || 1,
+            rankTitle: item.rankTitle || 'Typing Master',
+            xp: item.xp || 250,
+            isBanned: false,
+            blockReason: '',
+            createdAt: item.createdAt || Date.now(),
+            lastActive: item.lastActive || Date.now(),
+            role: item.role || 'user',
             followers: [],
             following: [],
             followersCount: 0,
             followingCount: 0,
             pinnedAchievements: [],
             unlockedAchievements: [],
-            totalTests: val[uid].totalTests || 0,
+            totalTests: item.totalTests || 1,
             totalTimeTypedSeconds: 0,
             totalWordsTyped: 0,
             totalCharsTyped: 0,
-            averageWpm: val[uid].highestWpm || 0,
+            averageWpm: wpm,
             currentStreak: 1,
             longestStreak: 1,
             isPublic: true,
             usernameChangesLeft: 2,
             privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true }
-          }));
-          setUsersList(list);
-        }
+          });
+        });
+
+        // 2. Process users node
+        Object.keys(rawUsers).forEach((uid) => {
+          const u = rawUsers[uid];
+          if (!u) return;
+
+          const isBanned = bannedSet.has(uid) || !!u.isBanned;
+          const userWpm = Math.max(u.highestWpm || 0, u.wpm || 0);
+          const userAcc = Math.max(u.highestAccuracy || 0, u.accuracy || 0) || 98;
+
+          if (profileMap.has(uid)) {
+            const existing = profileMap.get(uid)!;
+            existing.email = u.email || existing.email;
+            existing.isBanned = isBanned;
+            existing.blockReason = u.blockReason || existing.blockReason;
+            existing.role = u.role || existing.role;
+            existing.highestWpm = Math.max(existing.highestWpm, userWpm);
+            existing.highestAccuracy = Math.max(existing.highestAccuracy, userAcc);
+            existing.level = u.level || existing.level;
+            existing.rankTitle = u.rankTitle || existing.rankTitle;
+            existing.totalTests = u.totalTests || existing.totalTests;
+          } else {
+            profileMap.set(uid, {
+              uid,
+              email: u.email || `${uid.slice(0, 8)}@yolnoma.uz`,
+              username: u.username || u.displayName || 'Foydalanuvchi',
+              displayName: u.displayName || u.username || 'Foydalanuvchi',
+              highestWpm: userWpm,
+              highestAccuracy: userAcc,
+              level: u.level || 1,
+              rankTitle: u.rankTitle || 'Typing Master',
+              xp: u.xp || 250,
+              isBanned,
+              blockReason: u.blockReason || '',
+              createdAt: u.createdAt || Date.now(),
+              lastActive: u.lastActive || Date.now(),
+              role: u.role || 'user',
+              followers: [],
+              following: [],
+              followersCount: 0,
+              followingCount: 0,
+              pinnedAchievements: [],
+              unlockedAchievements: [],
+              totalTests: u.totalTests || 0,
+              totalTimeTypedSeconds: 0,
+              totalWordsTyped: 0,
+              totalCharsTyped: 0,
+              averageWpm: userWpm,
+              currentStreak: 1,
+              longestStreak: 1,
+              isPublic: true,
+              usernameChangesLeft: 2,
+              privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true }
+            });
+          }
+        });
+
+        const allUsersList = Array.from(profileMap.values());
+        setUsersList(allUsersList);
+
+        // Leaderboard List: Only users with highestWpm > 0 and NOT banned, sorted by WPM DESC, then Accuracy DESC
+        const sortedLeaderboard = allUsersList
+          .filter((u) => !u.isBanned && u.highestWpm > 0)
+          .sort((a, b) => {
+            if (b.highestWpm !== a.highestWpm) return b.highestWpm - a.highestWpm;
+            return b.highestAccuracy - a.highestAccuracy;
+          });
+
+        setLeaderboardList(sortedLeaderboard);
         setLoading(false);
+      };
+
+      const unsubBanned = onValue(bannedRef, (snap) => {
+        bannedSet.clear();
+        if (snap.exists()) {
+          const val = snap.val();
+          Object.keys(val).forEach((id) => { if (val[id]) bannedSet.add(id); });
+        }
+        rebuildLists();
       });
-      return () => unsubscribe();
+
+      const unsubLeaderboard = onValue(leaderboardRef, (snap) => {
+        rawLeaderboard = snap.exists() ? snap.val() : {};
+        rebuildLists();
+      });
+
+      const unsubUsers = onValue(usersRef, (snap) => {
+        rawUsers = snap.exists() ? snap.val() : {};
+        rebuildLists();
+      });
+
+      return () => {
+        unsubBanned();
+        unsubLeaderboard();
+        unsubUsers();
+      };
     } catch (e) {
       console.warn('Realtime DB fetch error in Admin:', e);
       setLoading(false);
@@ -241,11 +353,6 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  // Leaderboard Users (Users with WPM > 0 and NOT banned)
-  const leaderboardUsers = usersList
-    .filter((u) => !u.isBanned && u.highestWpm > 0)
-    .sort((a, b) => b.highestWpm - a.highestWpm);
-
   const filteredUsers = usersList.filter((u) => {
     const matchesSearch =
       u.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -257,7 +364,7 @@ export const AdminView: React.FC = () => {
     return matchesSearch;
   });
 
-  const filteredLeaderboard = leaderboardUsers.filter((u) =>
+  const filteredLeaderboard = leaderboardList.filter((u) =>
     u.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -299,7 +406,7 @@ export const AdminView: React.FC = () => {
           <div className="flex items-center gap-4 bg-slate-950/60 p-3.5 rounded-2xl border border-amber-500/20">
             <div className="text-center">
               <span className="text-[10px] font-bold text-slate-400 uppercase block">Reytingdagilar</span>
-              <span className="text-lg font-mono font-black text-amber-400">{leaderboardUsers.length}</span>
+              <span className="text-lg font-mono font-black text-amber-400">{leaderboardList.length}</span>
             </div>
             <div className="h-6 w-px bg-slate-800" />
             <div className="text-center">
@@ -321,7 +428,7 @@ export const AdminView: React.FC = () => {
           }`}
         >
           <Trophy className="w-4 h-4" />
-          <span>🏆 Reyting Boshqaruvi ({leaderboardUsers.length})</span>
+          <span>🏆 Reyting Boshqaruvi ({leaderboardList.length})</span>
         </button>
 
         <button
