@@ -222,7 +222,7 @@ function MainAppContent() {
       }
     });
 
-    const wpm = calculateWpm(correctCount, totalSeconds);
+    const wpm = calculateWpm(correctCount, totalSeconds, typedChars.length);
     const cpm = calculateCpm(typedChars.length, totalSeconds);
     const rawWpm = calculateWpm(typedChars.length, totalSeconds);
     const accuracy = calculateAccuracy(correctCount, typedChars.length);
@@ -286,7 +286,7 @@ function MainAppContent() {
           }
         });
 
-        const currentWpm = calculateWpm(currentCorrect, elapsed);
+        const currentWpm = calculateWpm(currentCorrect, elapsed, typedCharsArr.length);
         const rawWpm = calculateWpm(typedCharsArr.length, elapsed);
         setWpmHistory((prev) => [
           ...prev,
@@ -407,9 +407,9 @@ function MainAppContent() {
     if (idx < targetChars.length && ch === targetChars[idx]) liveCorrect++;
   });
 
-  const liveWpm = calculateWpm(liveCorrect, liveElapsed);
-  const liveCpm = calculateCpm(typedInput.length, liveElapsed);
   const totalAttempted = Math.max(typedInput.length, totalKeystrokesRef.current);
+  const liveWpm = calculateWpm(liveCorrect, liveElapsed, totalAttempted);
+  const liveCpm = calculateCpm(typedInput.length, liveElapsed);
   const liveAcc = calculateAccuracy(liveCorrect, totalAttempted);
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
