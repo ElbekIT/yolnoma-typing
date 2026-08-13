@@ -18,7 +18,7 @@ import {
   Plus
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, onValue, update, set, remove } from 'firebase/database';
 import { doc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
@@ -89,12 +89,18 @@ export const AdminView: React.FC = () => {
   const handleBlockUser = async () => {
     if (!selectedUser) return;
     try {
-      // Update in RTDB
+      // Update in RTDB users node
       await update(ref(rtdb, `users/${selectedUser.uid}`), {
         isBanned: true,
         blockReason: banReason,
         bannedAt: Date.now()
       });
+
+      // Set in bannedUsers node
+      await set(ref(rtdb, `bannedUsers/${selectedUser.uid}`), true);
+
+      // Immediately REMOVE from leaderboard in RTDB
+      await remove(ref(rtdb, `leaderboard/${selectedUser.uid}`));
 
       // Update in Firestore
       try {
@@ -116,6 +122,8 @@ export const AdminView: React.FC = () => {
         isBanned: false,
         blockReason: ''
       });
+
+      await remove(ref(rtdb, `bannedUsers/${user.uid}`));
 
       try {
         await updateDoc(doc(db, 'users', user.uid), {

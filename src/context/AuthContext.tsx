@@ -12,7 +12,7 @@ import {
   updateProfile,
   deleteUser
 } from 'firebase/auth';
-import { ref, set, update, push, get, child, onValue } from 'firebase/database';
+import { ref, set, update, push, get, child, onValue, remove } from 'firebase/database';
 import { auth, rtdb, googleProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import confetti from 'canvas-confetti';
@@ -378,6 +378,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (user) {
       saveLocalProfile(user.uid, updated);
+
+      if (updated.isBanned) {
+        try {
+          await remove(ref(rtdb, `leaderboard/${user.uid}`));
+        } catch {}
+        return;
+      }
 
       // Sync directly to Realtime Database
       try {

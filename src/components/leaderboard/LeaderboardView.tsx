@@ -157,13 +157,47 @@ export const LeaderboardView: React.FC = () => {
 
       // Realtime Firebase DB sync
       try {
+        const bannedSet = new Set<string>();
+
+        // Listen to banned users list in real-time
+        const bannedRef = ref(rtdb, 'bannedUsers');
+        onValue(bannedRef, (bannedSnap) => {
+          bannedSet.clear();
+          if (bannedSnap.exists()) {
+            const bannedObj = bannedSnap.val();
+            Object.keys(bannedObj).forEach((id) => {
+              if (bannedObj[id]) bannedSet.add(id);
+            });
+          }
+          // Remove banned users from map
+          bannedSet.forEach((bannedId) => {
+            fetchedMap.delete(bannedId);
+          });
+          updateRankingsFromMap();
+        });
+
         const leaderboardRef = ref(rtdb, 'leaderboard');
         unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
           if (snapshot.exists()) {
             const val = snapshot.val();
+            // Delete removed keys from fetchedMap
+            const activeKeys = new Set(Object.keys(val));
+            fetchedMap.forEach((_, mapKey) => {
+              if (!activeKeys.has(mapKey) && mapKey !== currentUser?.uid && !mapKey.startsWith('guest_')) {
+                fetchedMap.delete(mapKey);
+              }
+            });
+
             Object.keys(val).forEach((key) => {
               const item = val[key];
               if (!item) return;
+
+              // Skip if banned
+              if (bannedSet.has(key) || item.isBanned || item.isBlocked) {
+                fetchedMap.delete(key);
+                return;
+              }
+
               const existing = fetchedMap.get(key);
               if (!existing) {
                 fetchedMap.set(key, {
