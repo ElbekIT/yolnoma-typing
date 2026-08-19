@@ -33,14 +33,16 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
+import { AdminInboxTab } from './AdminInboxTab';
 
 export const AdminView: React.FC = () => {
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'notifications'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
+  const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
   // Ban Modal
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -211,10 +213,23 @@ export const AdminView: React.FC = () => {
         rebuildLists();
       });
 
+      // Listen for unread inbox messages count
+      const adminMessagesRef = ref(rtdb, 'admin_messages');
+      const unsubMessages = onValue(adminMessagesRef, (snap) => {
+        if (snap.exists()) {
+          const val = snap.val();
+          const unread = Object.keys(val).filter((k) => !val[k]?.isRead).length;
+          setUnreadInboxCount(unread);
+        } else {
+          setUnreadInboxCount(0);
+        }
+      });
+
       return () => {
         unsubBanned();
         unsubLeaderboard();
         unsubUsers();
+        unsubMessages();
       };
     } catch (e) {
       console.warn('Realtime DB fetch error in Admin:', e);
@@ -449,6 +464,23 @@ export const AdminView: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('inbox')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer relative ${
+            activeTab === 'inbox'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>💬 Kelgan Murojaatlar</span>
+          {unreadInboxCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono font-extrabold text-[10px] animate-pulse">
+              {unreadInboxCount}
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => {
             setActiveTab('notifications');
             setTargetUserForMessage(null);
@@ -465,7 +497,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -758,7 +790,12 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: HABAR YUBORISH / XABARNOMALAR */}
+      {/* TAB 3: KELGAN MUROJAATLAR / INBOX */}
+      {activeTab === 'inbox' && (
+        <AdminInboxTab />
+      )}
+
+      {/* TAB 4: HABAR YUBORISH / XABARNOMALAR */}
       {activeTab === 'notifications' && (
         <AdminNotificationsTab
           usersList={usersList}

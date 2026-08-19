@@ -21,9 +21,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  UserCheck
+  UserCheck,
+  Inbox
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { rtdb } from '../../config/firebase';
+import { ref, push, set } from 'firebase/database';
 
 interface OwnerAboutViewProps {
   onStartTyping?: () => void;
@@ -49,49 +52,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   const [sendSuccess, setSendSuccess] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
-  // Security & Anti-Proxy/Bot states
-  const [formRenderTime] = useState<number>(() => Date.now());
-  const [secChallenge, setSecChallenge] = useState<{
-    token: string;
-    timestamp: number;
-    nonce: string;
-  } | null>(null);
-
   const phoneNumber = '+998904063090';
   const formattedPhone = '+998 90 406 30 90';
   const developerName = 'Elbek Qoriyev';
   const developerRole = 'Full-Stack Web Dasturchi & Platforma Asoschisi';
-
-  // Get or create persistent device fingerprint (bypasses proxy IP rotations)
-  const getOrCreateDeviceId = (): string => {
-    try {
-      let dId = localStorage.getItem('yolnoma_device_sec_id');
-      if (!dId) {
-        const raw = `${navigator.userAgent}_${window.screen.width}x${window.screen.height}_${Intl.DateTimeFormat().resolvedOptions().timeZone}_${Date.now()}_${Math.random()}`;
-        dId = 'dev_' + btoa(raw).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
-        localStorage.setItem('yolnoma_device_sec_id', dId);
-      }
-      return dId;
-    } catch {
-      return 'dev_fallback_' + Date.now();
-    }
-  };
-
-  // Fetch security verification challenge on mount
-  useEffect(() => {
-    fetch('/api/security/challenge')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.token) {
-          setSecChallenge({
-            token: data.token,
-            timestamp: data.timestamp,
-            nonce: data.nonce
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Auto-fill user information if logged in
   useEffect(() => {
@@ -129,144 +93,34 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
       uid: user?.uid || ''
     };
 
-    const deviceId = getOrCreateDeviceId();
-    const BOT_TOKEN = '8591793719:AAEK0fsg9zUtkKpLcI9YT8fkQwealbBLGLg';
-    const CHAT_ID = '8269163077';
-
-    // Helper to format direct telegram HTML message
-    const buildTelegramMessage = () => {
-      const escapeHtml = (text: string) =>
-        String(text || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-
-      const safeName = escapeHtml(feedbackName.trim());
-      const safeContact = escapeHtml(feedbackPhone.trim() || 'Kiritilmagan');
-      const safeMsg = escapeHtml(feedbackMsg.trim());
-
-      const formattedDate = new Date().toLocaleString('uz-UZ', {
-        timeZone: 'Asia/Tashkent',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      return `
-🚀 <b>YANGI MUROJAAT — Yolnoma Typing</b>
-
-👤 <b>Yuboruvchi:</b> ${safeName}
-📞 <b>Telefon / Telegram:</b> ${safeContact}
-💬 <b>Xabar matni:</b>
-${safeMsg}
-
-━━━━━━━━━━━━━━━━━━━━
-📊 <b>Foydalanuvchi ma'lumotlari:</b>
-• <b>Holat:</b> ${userContext.isAuth ? '✅ Tizimga kirgan aʼzo' : '👤 Mehmon (Guest)'}
-${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName)}
-• <b>Email:</b> <code>${escapeHtml(userContext.email)}</code>
-• <b>Daraja:</b> LVL ${userContext.level}
-• <b>Eng yuqori WPM:</b> ${userContext.wpm} WPM
-• <b>Jami testlar:</b> ${userContext.tests} ta` : ''}
-🛡️ <b>Xavfsizlik:</b> Himoyalangan Sessiya
-⏰ <b>Vaqt:</b> ${formattedDate} (Toshkent)
-      `.trim();
-    };
-
-    let sentSuccessfully = false;
-
-    // 1. Try Backend Proxy /api/contact first
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: feedbackName.trim(),
-          phone: feedbackPhone.trim(),
-          message: feedbackMsg.trim(),
-          userContext,
-          deviceId,
-          renderTime: formRenderTime,
-          secToken: secChallenge?.token,
-          secTimestamp: secChallenge?.timestamp,
-          secNonce: secChallenge?.nonce,
-          _hp: honeypot
-        })
+      // Save directly to Firebase Realtime Database for Admin Panel
+      const messagesRef = ref(rtdb, 'admin_messages');
+      const newMsgRef = push(messagesRef);
+      await set(newMsgRef, {
+        id: newMsgRef.key,
+        name: feedbackName.trim(),
+        phone: feedbackPhone.trim(),
+        message: feedbackMsg.trim(),
+        timestamp: Date.now(),
+        isRead: false,
+        status: 'unread',
+        userContext
       });
 
-      const responseText = await response.text();
-      let data: any = null;
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        data = null;
-      }
-
-      if (response.ok && data?.success) {
-        sentSuccessfully = true;
-      } else if (response.status === 429 && data?.error) {
-        // Rate limited by backend
-        throw new Error(data.error);
-      }
-    } catch (apiErr: any) {
-      if (apiErr.message && apiErr.message.includes('chegarasi')) {
-        setSendError(apiErr.message);
-        setIsSending(false);
-        return;
-      }
-      // If backend returned 404 or HTML (e.g., static hosting on yolnoma.uz), fallback to direct API
-    }
-
-    // 2. Direct Telegram API Fallback (if backend is not mounted or static hosting)
-    if (!sentSuccessfully) {
-      try {
-        const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text: buildTelegramMessage(),
-            parse_mode: 'HTML'
-          })
-        });
-
-        const tgText = await tgRes.text();
-        let tgData: any = null;
-        try {
-          tgData = JSON.parse(tgText);
-        } catch {
-          tgData = null;
-        }
-
-        if (tgRes.ok && tgData?.ok) {
-          sentSuccessfully = true;
-        } else {
-          throw new Error(tgData?.description || 'Telegramga yuborishda xatolik');
-        }
-      } catch (tgErr: any) {
-        console.error('Direct Telegram send error:', tgErr);
-      }
-    }
-
-    if (sentSuccessfully) {
       setSendSuccess(true);
       setFeedbackMsg('');
       if (!user) {
         setFeedbackName('');
         setFeedbackPhone('');
       }
-      setTimeout(() => setSendSuccess(false), 5000);
-    } else {
+      setTimeout(() => setSendSuccess(false), 6000);
+    } catch (err: any) {
+      console.error('Error sending feedback to Admin panel:', err);
       setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
+    } finally {
+      setIsSending(false);
     }
-
-    setIsSending(false);
   };
 
   const platformFeatures = [
@@ -316,7 +170,7 @@ ${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName
     { name: "Cloud Firestore", category: "Persistent Database", level: "Database" },
     { name: "Web Audio API", category: "Sound Synthesizer", level: "Interactive" },
     { name: "Anti-Cheat Engine", category: "Keystroke Validation", level: "Security" },
-    { name: "Telegram Bot API", category: "Instant Direct Feedback", level: "Integration" }
+    { name: "Admin Realtime Inbox", category: "Realtime Direct Feedback", level: "Integration" }
   ];
 
   const faqs = [
@@ -506,7 +360,7 @@ ${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName
               Dasturchiga Xabar Qoldirish
             </h3>
             <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-              Xabaringiz <strong className="text-[var(--text-color)]">Telegram Bot</strong> orqali bevosita Elbek Qoriyevga soniyalar ichida yetib boradi. Fikr-mulohazalaringiz yoki hamkorlik takliflaringizni yozib qoldirishingiz mumkin.
+              Xabaringiz to'g'ridan-to'g'ri <strong className="text-[var(--text-color)]">Admin Boshqaruv Paneliga</strong> yetkaziladi. Fikr-mulohazalaringiz yoki takliflaringizni yozib qoldirishingiz mumkin.
             </p>
           </div>
 
@@ -538,10 +392,11 @@ ${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName
             <div className="flex items-center justify-between">
               <h4 className="text-base sm:text-lg font-black text-[var(--text-color)] flex items-center gap-2">
                 <Send className="w-4 h-4 text-[var(--main-color)]" />
-                <span>To'g'ridan-to'g'ri Xabar Qoldirish</span>
+                <span>To'g'ridan-to'g'ri Murojaat Yuborish</span>
               </h4>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-500 border border-sky-500/20">
-                Telegram Bot Ulangan
+              <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                <Inbox className="w-3 h-3" />
+                <span>Admin Panelga Ulanadi</span>
               </span>
             </div>
 
@@ -551,7 +406,7 @@ ${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName
                 <div className="text-xs">
                   <h5 className="font-bold text-emerald-500 text-sm">Xabaringiz Muvaffaqiyatli Yuborildi!</h5>
                   <p className="text-[var(--sub-color)] mt-0.5">
-                    Xabar Telegram orqali dasturchiga yetkazildi. Tez orada siz bilan bog'laniladi.
+                    Murojaat Admin boshqaruv paneliga yetkazildi. Dasturchi Elbek Qoriyev uni tez orada ko'rib chiqadi.
                   </p>
                 </div>
               </div>
@@ -623,12 +478,12 @@ ${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName
               {isSending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Telegramga Yuborilmoqda...</span>
+                  <span>Admin Panelga Yuborilmoqda...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Xabarni Yuborish</span>
+                  <span>Xabarni Admin Panelga Yuborish</span>
                 </>
               )}
             </button>
