@@ -184,7 +184,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     },
     {
       q: "Dasturchi bilan qanday loyihalar bo'yicha bog'lanish mumkin?",
-      a: "Web-saytlar, murakkab CRM tizimlar, Telegram botlar, Full-Stack web ilovalar, startap loyihalar yoki ta'limiy platformalarni noldan yaratish bo'yicha bevosita Elbek Qoriyev bilan bog'lanishingiz mumkin."
+      a: "Web-saytlar, murakkab CRM tizimlar, Full-Stack web ilovalar, startap loyihalar yoki ta'limiy platformalarni noldan yaratish bo'yicha bevosita Elbek Qoriyev bilan bog'lanishingiz mumkin."
     }
   ];
 
@@ -322,17 +322,14 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 </div>
               </div>
 
-              {/* Telegram link */}
+              {/* Direct Communication Channels */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--sub-color)]/15 text-xs">
                 <a
-                  href="https://t.me/qoriyev_elbek"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 transition-colors font-bold"
+                  href={`tel:${phoneNumber}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors font-bold"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Telegram: @qoriyev_elbek</span>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Qo'ng'iroq: {formattedPhone}</span>
                 </a>
 
                 <a
@@ -348,7 +345,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
       </section>
 
-      {/* 3. DIRECT TELEGRAM FEEDBACK FORM (Fast, Connected to Bot) */}
+      {/* 3. DIRECT ADMIN INBOX FEEDBACK FORM */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between space-y-6">
           <div className="space-y-2.5">
@@ -447,10 +444,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Telegram</label>
+                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Aloqa manzili</label>
                 <input
                   type="text"
-                  placeholder="+998 90 ... yoki @username"
+                  placeholder="+998 90 123 45 67 yoki email..."
                   value={feedbackPhone}
                   onChange={(e) => setFeedbackPhone(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
