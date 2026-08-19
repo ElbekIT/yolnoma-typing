@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { rtdb } from '../../config/firebase';
+import { ref, push, set } from 'firebase/database';
 import {
   Sparkles,
   Code2,
@@ -17,7 +20,11 @@ import {
   Layers,
   CheckCircle2,
   Send,
-  Telegram
+  Telegram,
+  UserCheck,
+  Inbox,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 
 interface OwnerAboutViewProps {
@@ -622,6 +629,16 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             >
               <GraduationCap className="w-4 h-4 text-emerald-400" />
               <span>Saboqlar</span>
+            </button>
+          )}
+
+          {onGoToLeaderboard && (
+            <button
+              onClick={onGoToLeaderboard}
+              className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Reyting</span>
             </button>
           )}
         </div>
