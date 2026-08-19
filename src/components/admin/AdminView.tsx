@@ -22,20 +22,25 @@ import {
   Save,
   RotateCcw,
   Sparkles,
-  Award
+  Award,
+  Bell,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
 import { doc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
+import { AdminNotificationsTab } from './AdminNotificationsTab';
 
 export const AdminView: React.FC = () => {
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'notifications'>('leaderboard');
+  const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
 
   // Ban Modal
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -418,7 +423,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Admin Tab Switcher */}
-      <div className="flex items-center gap-3 border-b border-[var(--sub-alt)] pb-2">
+      <div className="flex items-center gap-3 border-b border-[var(--sub-alt)] pb-2 flex-wrap">
         <button
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
@@ -442,56 +447,73 @@ export const AdminView: React.FC = () => {
           <Users className="w-4 h-4" />
           <span>👥 Barcha Foydalanuvchilar ({usersList.length})</span>
         </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('notifications');
+            setTargetUserForMessage(null);
+          }}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'notifications'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span>📢 Habar Yuborish / Xabarnomalar</span>
+        </button>
       </div>
 
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Qidiruv (ism, username, email)..."
-            className="w-full pl-10 pr-4 py-2 bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
-          />
-        </div>
-
-        {activeTab === 'users' && (
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => setFilterStatus('all')}
-              className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
-                filterStatus === 'all'
-                  ? 'bg-[var(--main-color)] text-white shadow-sm'
-                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-              }`}
-            >
-              Barchasi ({usersList.length})
-            </button>
-            <button
-              onClick={() => setFilterStatus('active')}
-              className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
-                filterStatus === 'active'
-                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-              }`}
-            >
-              Aktiv ({usersList.filter((u) => !u.isBanned).length})
-            </button>
-            <button
-              onClick={() => setFilterStatus('blocked')}
-              className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
-                filterStatus === 'blocked'
-                  ? 'bg-rose-500 text-white shadow-sm'
-                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-              }`}
-            >
-              Bloklangan ({usersList.filter((u) => u.isBanned).length})
-            </button>
+      {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
+      {activeTab !== 'notifications' && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Qidiruv (ism, username, email)..."
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+            />
           </div>
-        )}
-      </div>
+
+          {activeTab === 'users' && (
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                  filterStatus === 'all'
+                    ? 'bg-[var(--main-color)] text-white shadow-sm'
+                    : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+              >
+                Barchasi ({usersList.length})
+              </button>
+              <button
+                onClick={() => setFilterStatus('active')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                  filterStatus === 'active'
+                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                    : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+              >
+                Aktiv ({usersList.filter((u) => !u.isBanned).length})
+              </button>
+              <button
+                onClick={() => setFilterStatus('blocked')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                  filterStatus === 'blocked'
+                    ? 'bg-rose-500 text-white shadow-sm'
+                    : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+              >
+                Bloklangan ({usersList.filter((u) => u.isBanned).length})
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: REYTING BOSHQARUVI */}
       {activeTab === 'leaderboard' && (
@@ -678,6 +700,18 @@ export const AdminView: React.FC = () => {
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            onClick={() => {
+                              setTargetUserForMessage(u);
+                              setActiveTab('notifications');
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-white font-bold text-[11px] border border-sky-500/40 transition-all flex items-center gap-1 cursor-pointer"
+                            title="Foydalanuvchiga shaxsiy habar yuborish"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Habar</span>
+                          </button>
+
+                          <button
                             onClick={() => openEditModal(u)}
                             className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
                             title="Tahrirlash"
@@ -722,6 +756,15 @@ export const AdminView: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB 3: HABAR YUBORISH / XABARNOMALAR */}
+      {activeTab === 'notifications' && (
+        <AdminNotificationsTab
+          usersList={usersList}
+          preselectedUser={targetUserForMessage}
+          onClearPreselectedUser={() => setTargetUserForMessage(null)}
+        />
       )}
 
       {/* EDIT LEADERBOARD / USER MODAL */}

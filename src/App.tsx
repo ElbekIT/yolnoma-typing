@@ -417,16 +417,16 @@ function MainAppContent() {
   const currentTargetChar = targetText[typedInput.length] || '';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
         {activeTab === 'typing' && (
-          <div className="flex flex-col items-center justify-center py-4">
+          <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
             <TypingHeader
               mode={mode}
               setMode={setMode}
