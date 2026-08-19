@@ -803,6 +803,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addNotification,
         markNotificationRead,
         clearNotifications,
+        sendAdminNotification,
+        deleteAdminNotification,
         signInWithGoogle,
         registerWithEmail,
         loginWithEmail,

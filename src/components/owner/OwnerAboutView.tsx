@@ -44,14 +44,54 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   const [feedbackName, setFeedbackName] = useState('');
   const [feedbackPhone, setFeedbackPhone] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [honeypot, setHoneypot] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+
+  // Security & Anti-Proxy/Bot states
+  const [formRenderTime] = useState<number>(() => Date.now());
+  const [secChallenge, setSecChallenge] = useState<{
+    token: string;
+    timestamp: number;
+    nonce: string;
+  } | null>(null);
 
   const phoneNumber = '+998904063090';
   const formattedPhone = '+998 90 406 30 90';
   const developerName = 'Elbek Qoriyev';
   const developerRole = 'Full-Stack Web Dasturchi & Platforma Asoschisi';
+
+  // Get or create persistent device fingerprint (bypasses proxy IP rotations)
+  const getOrCreateDeviceId = (): string => {
+    try {
+      let dId = localStorage.getItem('yolnoma_device_sec_id');
+      if (!dId) {
+        const raw = `${navigator.userAgent}_${window.screen.width}x${window.screen.height}_${Intl.DateTimeFormat().resolvedOptions().timeZone}_${Date.now()}_${Math.random()}`;
+        dId = 'dev_' + btoa(raw).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
+        localStorage.setItem('yolnoma_device_sec_id', dId);
+      }
+      return dId;
+    } catch {
+      return 'dev_fallback_' + Date.now();
+    }
+  };
+
+  // Fetch security verification challenge on mount
+  useEffect(() => {
+    fetch('/api/security/challenge')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.token) {
+          setSecChallenge({
+            token: data.token,
+            timestamp: data.timestamp,
+            nonce: data.nonce
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-fill user information if logged in
   useEffect(() => {
@@ -70,76 +110,50 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     e.preventDefault();
     if (!feedbackName.trim() || !feedbackMsg.trim()) return;
 
+    // Honeypot check (Silent trap for bots)
+    if (honeypot) {
+      setSendSuccess(true);
+      return;
+    }
+
     setIsSending(true);
     setSendError(null);
 
-    const BOT_TOKEN = '8591793719:AAEMGGe7Hh-olimHmtzesr4GeK2KYOSzegE';
-    const CHAT_ID = '8269163077';
+    const userContext = {
+      isAuth: !!user,
+      email: user?.email || '',
+      displayName: profile?.displayName || user?.displayName || '',
+      wpm: profile?.highestWpm || 0,
+      tests: profile?.totalTests || 0,
+      level: profile?.level || 1,
+      uid: user?.uid || ''
+    };
 
-    // Format current local time
-    const now = new Date();
-    const formattedDate = now.toLocaleString('uz-UZ', {
-      timeZone: 'Asia/Tashkent',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    const isUserAuth = !!user;
-    const userEmail = user?.email || 'Mavjud emas';
-    const userDisplayName = profile?.displayName || user?.displayName || 'Noma\'lum';
-    const userWpm = profile?.highestWpm || 0;
-    const userTests = profile?.totalTests || 0;
-    const userUid = user?.uid || 'Mehmon';
-
-    // Clean HTML escape
-    const escapeHtml = (text: string) =>
-      text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    const safeName = escapeHtml(feedbackName.trim());
-    const safeContact = escapeHtml(feedbackPhone.trim() || 'Kiritilmagan');
-    const safeMsg = escapeHtml(feedbackMsg.trim());
-
-    const messageHtml = `
-🚀 <b>YANGI MUROJAAT — Yolnoma Typing</b>
-
-👤 <b>Ism:</b> ${safeName}
-📞 <b>Telefon / Telegram:</b> ${safeContact}
-💬 <b>Xabar:</b>
-${safeMsg}
-
-━━━━━━━━━━━━━━━━━━━━
-📊 <b>Foydalanuvchi profili:</b>
-• <b>Holat:</b> ${isUserAuth ? '✅ Akkauntga kirgan' : '👤 Mehmon (Guest)'}
-${isUserAuth ? `• <b>Foydalanuvchi:</b> ${escapeHtml(userDisplayName)}
-• <b>Email:</b> <code>${escapeHtml(userEmail)}</code>
-• <b>Eng yuqori WPM:</b> ${userWpm} WPM
-• <b>Testlar soni:</b> ${userTests} ta
-• <b>UID:</b> <code>${userUid}</code>` : ''}
-⏰ <b>Vaqt:</b> ${formattedDate} (Toshkent)
-    `.trim();
+    const deviceId = getOrCreateDeviceId();
 
     try {
-      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: messageHtml,
-          parse_mode: 'HTML',
-        }),
+          name: feedbackName.trim(),
+          phone: feedbackPhone.trim(),
+          message: feedbackMsg.trim(),
+          userContext,
+          deviceId,
+          renderTime: formRenderTime,
+          secToken: secChallenge?.token,
+          secTimestamp: secChallenge?.timestamp,
+          secNonce: secChallenge?.nonce,
+          _hp: honeypot
+        })
       });
 
       const data = await response.json();
 
-      if (data.ok) {
+      if (response.ok && data.success) {
         setSendSuccess(true);
         setFeedbackMsg('');
         if (!user) {
@@ -148,11 +162,11 @@ ${isUserAuth ? `• <b>Foydalanuvchi:</b> ${escapeHtml(userDisplayName)}
         }
         setTimeout(() => setSendSuccess(false), 5000);
       } else {
-        throw new Error(data.description || 'Telegramga yuborishda xatolik yuz berdi');
+        throw new Error(data.error || 'Xabar yuborishda xatolik yuz berdi');
       }
     } catch (err: any) {
-      console.error('Error sending message to telegram:', err);
-      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos, to\'g\'ridan-to\'g\'ri Telegram orqali bog\'laning.');
+      console.error('Error sending contact message:', err);
+      setSendError(err.message || 'Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
     } finally {
       setIsSending(false);
     }
@@ -455,6 +469,18 @@ ${isUserAuth ? `• <b>Foydalanuvchi:</b> ${escapeHtml(userDisplayName)}
                 </div>
               </div>
             )}
+
+            {/* Honeypot field (hidden from real users, traps spambots) */}
+            <input
+              type="text"
+              name="_hp"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              className="hidden"
+              aria-hidden="true"
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
