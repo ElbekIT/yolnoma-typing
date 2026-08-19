@@ -22,11 +22,7 @@ import {
   Crown,
   Swords,
   GraduationCap,
-  ShieldAlert,
-  Info,
-  Check,
-  AlertCircle,
-  MessageSquare
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -61,7 +57,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'achievements', label: 'Yutuqlar', enLabel: 'Achievements', icon: Award },
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake },
-    { id: 'owner', label: 'Sayt Haqida & Muallif', enLabel: 'About & Creator', icon: Sparkles },
     ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
@@ -146,8 +141,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           <span className="px-2 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] font-bold text-[10px] flex items-center gap-1">
                             <Zap className="w-3 h-3" /> {profile?.highestWpm || 0} WPM Best
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-black text-[10px] flex items-center gap-1 font-mono">
-                            <Award className="w-3 h-3" /> LVL {profile?.level || 1}
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-bold text-[10px] flex items-center gap-1">
+                            <Crown className="w-3 h-3" /> Pro
                           </span>
                         </div>
                       </div>
@@ -182,90 +177,46 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       </button>
 
                       {showNotifSection && (
-                        <div className="max-h-72 overflow-y-auto space-y-2 p-1.5 bg-[var(--sub-alt)]/30 rounded-2xl border border-[var(--sub-alt)]">
+                        <div className="max-h-56 overflow-y-auto space-y-2 p-1 bg-[var(--sub-alt)]/30 rounded-2xl border border-[var(--sub-alt)]">
                           <div className="flex items-center justify-between px-2 py-1">
-                            <span className="text-[10px] font-black text-[var(--sub-color)] uppercase tracking-wider flex items-center gap-1.5">
-                              <Bell className="w-3 h-3 text-[var(--main-color)]" />
-                              <span>Bildirishnomalar</span>
+                            <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider">
+                              Bildirishnomalar
                             </span>
                             {notifications.length > 0 && (
                               <button
                                 onClick={clearNotifications}
-                                className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-bold transition-colors"
+                                className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-semibold"
                               >
-                                Hammasini o'qildi qilish
+                                Tozalash
                               </button>
                             )}
                           </div>
 
                           {notifications.length > 0 ? (
-                            notifications.map((n) => {
-                              const isUnread = !n.read;
-                              let badgeColor = 'bg-sky-500/15 text-sky-400 border-sky-500/20';
-                              let icon = <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />;
-
-                              if (n.type === 'success') {
-                                badgeColor = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
-                                icon = <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />;
-                              } else if (n.type === 'warning') {
-                                badgeColor = 'bg-amber-500/15 text-amber-400 border-amber-500/20';
-                                icon = <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />;
-                              } else if (n.type === 'achievement' || n.type === 'level_up') {
-                                badgeColor = 'bg-purple-500/15 text-purple-400 border-purple-500/20';
-                                icon = <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />;
-                              }
-
-                              return (
-                                <div
-                                  key={n.id}
-                                  onClick={() => markNotificationRead(n.id)}
-                                  className={`p-3 rounded-2xl border transition-all cursor-pointer relative group ${
-                                    isUnread
-                                      ? 'bg-[var(--card-bg)] border-[var(--main-color)]/50 shadow-md ring-1 ring-[var(--main-color)]/20'
-                                      : 'bg-[var(--card-bg)]/80 border-[var(--sub-alt)] opacity-85 hover:opacity-100'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                      {icon}
-                                      <span className="font-black text-xs text-[var(--text-color)] truncate">
-                                        {n.title}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      {isUnread && (
-                                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                                      )}
-                                      <span className="text-[9px] text-[var(--sub-color)] font-mono">
-                                        {new Date(n.timestamp).toLocaleTimeString([], {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <p className="text-[11px] text-[var(--text-color)]/90 leading-relaxed whitespace-pre-wrap pl-5">
-                                    {n.message}
-                                  </p>
-
-                                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--sub-alt)]/60 text-[10px] pl-5">
-                                    <span className="font-semibold text-[var(--main-color)]">
-                                      {n.sender || 'Admin (Yolnoma)'}
-                                    </span>
-                                    {isUnread ? (
-                                      <span className="text-emerald-500 font-bold hover:underline">
-                                        O'qildi deb belgilash ✓
-                                      </span>
-                                    ) : (
-                                      <span className="text-[var(--sub-color)] font-mono">O'qilgan</span>
-                                    )}
-                                  </div>
+                            notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                onClick={() => markNotificationRead(n.id)}
+                                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                  n.read
+                                    ? 'bg-[var(--card-bg)] border-[var(--sub-alt)] text-[var(--sub-color)]'
+                                    : 'bg-[var(--card-bg)] border-[var(--main-color)]/40 text-[var(--text-color)] font-medium shadow-sm'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between font-bold mb-1">
+                                  <span>{n.title}</span>
+                                  <span className="text-[9px] text-[var(--sub-color)] font-mono">
+                                    {new Date(n.timestamp).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
                                 </div>
-                              );
-                            })
+                                <p className="text-[11px] leading-snug">{n.message}</p>
+                              </div>
+                            ))
                           ) : (
-                            <p className="text-center text-[var(--sub-color)] py-4 text-xs font-medium">
+                            <p className="text-center text-[var(--sub-color)] py-3 text-xs">
                               Hozircha yangi bildirishnoma yo'q
                             </p>
                           )}
@@ -317,17 +268,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           <span>Sozlamalar</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                      </button>
-
-                      <button
-                        onClick={() => handleSelectTab('owner')}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group bg-[var(--main-color)]/5 border border-[var(--main-color)]/20"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Sparkles className="w-4 h-4 text-[var(--main-color)]" />
-                          <span className="text-[var(--main-color)]">Sayt Haqida & Muallif</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--main-color)] opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                       </button>
                     </div>
 
@@ -463,9 +403,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       <div className="font-black text-sm text-[var(--text-color)] truncate max-w-[150px]">
                         {profile?.displayName || 'Foydalanuvchi'}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold">
-                        <span className="text-[var(--main-color)]">{profile?.highestWpm || 0} WPM</span>
-                        <span className="text-amber-500">• LVL {profile?.level || 1}</span>
+                      <div className="text-[11px] text-[var(--main-color)] font-mono font-bold">
+                        {profile?.highestWpm || 0} WPM Best
                       </div>
                     </div>
                   </div>

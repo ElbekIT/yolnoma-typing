@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Clock,
   Zap,
+  Mail,
   Shield,
   X,
   Crown,
@@ -417,7 +418,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Admin Tab Switcher */}
-      <div className="flex items-center gap-3 border-b border-[var(--sub-alt)] pb-2 flex-wrap">
+      <div className="flex items-center gap-3 border-b border-[var(--sub-alt)] pb-2">
         <button
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
@@ -441,59 +442,56 @@ export const AdminView: React.FC = () => {
           <Users className="w-4 h-4" />
           <span>👥 Barcha Foydalanuvchilar ({usersList.length})</span>
         </button>
-
       </div>
 
-      {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {(
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Qidiruv (ism, username, email)..."
-              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
-            />
-          </div>
-
-          {activeTab === 'users' && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => setFilterStatus('all')}
-                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
-                  filterStatus === 'all'
-                    ? 'bg-[var(--main-color)] text-white shadow-sm'
-                    : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-                }`}
-              >
-                Barchasi ({usersList.length})
-              </button>
-              <button
-                onClick={() => setFilterStatus('active')}
-                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
-                  filterStatus === 'active'
-                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                    : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-                }`}
-              >
-                Aktiv ({usersList.filter((u) => !u.isBanned).length})
-              </button>
-              <button
-                onClick={() => setFilterStatus('blocked')}
-                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
-                  filterStatus === 'blocked'
-                    ? 'bg-rose-500 text-white shadow-sm'
-                    : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-                }`}
-              >
-                Bloklangan ({usersList.filter((u) => u.isBanned).length})
-              </button>
-            </div>
-          )}
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Qidiruv (ism, username, email)..."
+            className="w-full pl-10 pr-4 py-2 bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+          />
         </div>
-      )}
+
+        {activeTab === 'users' && (
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                filterStatus === 'all'
+                  ? 'bg-[var(--main-color)] text-white shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              Barchasi ({usersList.length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('active')}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                filterStatus === 'active'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              Aktiv ({usersList.filter((u) => !u.isBanned).length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('blocked')}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                filterStatus === 'blocked'
+                  ? 'bg-rose-500 text-white shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              Bloklangan ({usersList.filter((u) => u.isBanned).length})
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* TAB 1: REYTING BOSHQARUVI */}
       {activeTab === 'leaderboard' && (
@@ -725,8 +723,6 @@ export const AdminView: React.FC = () => {
           )}
         </div>
       )}
-
-
 
       {/* EDIT LEADERBOARD / USER MODAL */}
       {editingUser && (

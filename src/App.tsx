@@ -26,7 +26,6 @@ import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
 import { AdminView } from './components/admin/AdminView';
-import { OwnerAboutView } from './components/owner/OwnerAboutView';
 import { antiCheatManager } from './utils/antiCheat';
 
 import {
@@ -417,16 +416,16 @@ function MainAppContent() {
   const currentTargetChar = targetText[typedInput.length] || '';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200">
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
         {activeTab === 'typing' && (
-          <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
+          <div className="flex flex-col items-center justify-center py-4">
             <TypingHeader
               mode={mode}
               setMode={setMode}
@@ -486,14 +485,6 @@ function MainAppContent() {
         {activeTab === 'achievements' && <AchievementsView />}
         {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
         {activeTab === 'partners' && <PartnersView />}
-        {activeTab === 'owner' && (
-          <OwnerAboutView
-            onStartTyping={() => setActiveTab('typing')}
-            onGoToBattle={() => setActiveTab('battle')}
-            onGoToLessons={() => setActiveTab('lessons')}
-            onGoToLeaderboard={() => setActiveTab('leaderboard')}
-          />
-        )}
         {activeTab === 'admin' && <AdminView />}
         {activeTab === 'profile' && (
           <ProfileView
@@ -504,10 +495,7 @@ function MainAppContent() {
         {activeTab === 'settings' && <SettingsView />}
       </main>
 
-      <Footer
-        onOpenAbout={() => setIsAboutOpen(true)}
-        onOpenOwner={() => setActiveTab('owner')}
-      />
+      <Footer onOpenAbout={() => setIsAboutOpen(true)} />
 
       <PubgInviteModal
         invite={incomingInvite}

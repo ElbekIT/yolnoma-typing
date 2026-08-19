@@ -25,8 +25,6 @@ interface AuthContextType {
   addNotification: (title: string, message: string, type?: UserNotificationItem['type']) => void;
   markNotificationRead: (id: string) => void;
   clearNotifications: () => void;
-  sendAdminNotification: (target: 'all' | string, title: string, message: string, type?: UserNotificationItem['type'], targetName?: string) => Promise<void>;
-  deleteAdminNotification: (id: string, target?: 'all' | string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   registerWithEmail: (email: string, pass: string, username: string) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
@@ -50,205 +48,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [userResultsHistory, setUserResultsHistory] = useState<TypingResult[]>([]);
-  const [localNotifications, setLocalNotifications] = useState<UserNotificationItem[]>([
+  const [notifications, setNotifications] = useState<UserNotificationItem[]>([
     {
       id: 'welcome-1',
       title: 'Yolnoma Typing Platformaga Xush Kelibsiz! ⚡',
       message: 'Klaviatura tezligingizni oshiring, darajangizni yuksaltiring va reytingda 1-o\'rinni egallang.',
       timestamp: Date.now() - 60000,
       read: false,
-      type: 'info',
-      sender: 'Yolnoma Team'
+      type: 'info'
     }
   ]);
-  const [remoteNotifications, setRemoteNotifications] = useState<UserNotificationItem[]>([]);
-
-  // Get set of read notification IDs from localStorage
-  const getReadNotificationIds = (): Set<string> => {
-    try {
-      const saved = localStorage.getItem('yolnoma_read_notifications');
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  };
-
-  const markNotificationRead = (id: string) => {
-    try {
-      const readSet = getReadNotificationIds();
-      readSet.add(id);
-      localStorage.setItem('yolnoma_read_notifications', JSON.stringify(Array.from(readSet)));
-    } catch (e) {
-      console.warn('Error saving read notification:', e);
-    }
-
-    setLocalNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-    setRemoteNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-
-    // If user is logged in, mark as read in RTDB if it exists in user's direct notifications
-    if (user?.uid) {
-      try {
-        const notifRef = ref(rtdb, `notifications/${user.uid}/${id}`);
-        update(notifRef, { read: true }).catch(() => {});
-      } catch {}
-    }
-  };
-
-  const clearNotifications = () => {
-    try {
-      const allIds = [...localNotifications, ...remoteNotifications].map((n) => n.id);
-      localStorage.setItem('yolnoma_read_notifications', JSON.stringify(allIds));
-    } catch {}
-    setLocalNotifications([]);
-    setRemoteNotifications([]);
-  };
 
   const addNotification = (title: string, message: string, type: UserNotificationItem['type'] = 'info') => {
     const newItem: UserNotificationItem = {
-      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `notif-${Date.now()}-${Math.random()}`,
       title,
       message,
       timestamp: Date.now(),
       read: false,
       type
     };
-    setLocalNotifications((prev) => [newItem, ...prev]);
+    setNotifications((prev) => [newItem, ...prev]);
   };
 
-  // Realtime listeners for Global Announcements & User Direct Notifications
-  useEffect(() => {
-    const readSet = getReadNotificationIds();
-
-    const globalRef = ref(rtdb, 'global_announcements');
-    const unsubGlobal = onValue(globalRef, (snapshot) => {
-      const list: UserNotificationItem[] = [];
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        Object.keys(data).forEach((key) => {
-          const item = data[key];
-          if (item) {
-            list.push({
-              id: key,
-              title: item.title || 'Eʼlon',
-              message: item.message || '',
-              timestamp: item.timestamp || Date.now(),
-              read: readSet.has(key),
-              type: item.type || 'info',
-              sender: item.sender || 'Admin (Yolnoma)',
-              target: 'all'
-            });
-          }
-        });
-      }
-
-      setRemoteNotifications((prev) => {
-        const directOnly = prev.filter((p) => p.target !== 'all');
-        return [...list, ...directOnly].sort((a, b) => b.timestamp - a.timestamp);
-      });
-    });
-
-    let unsubUserNotif: (() => void) | null = null;
-    if (user?.uid) {
-      const userNotifRef = ref(rtdb, `notifications/${user.uid}`);
-      unsubUserNotif = onValue(userNotifRef, (snapshot) => {
-        const directList: UserNotificationItem[] = [];
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.keys(data).forEach((key) => {
-            const item = data[key];
-            if (item) {
-              directList.push({
-                id: key,
-                title: item.title || 'Shaxsiy Xabar',
-                message: item.message || '',
-                timestamp: item.timestamp || Date.now(),
-                read: item.read || readSet.has(key),
-                type: item.type || 'info',
-                sender: item.sender || 'Admin',
-                target: user.uid,
-                targetName: item.targetName
-              });
-            }
-          });
-        }
-
-        setRemoteNotifications((prev) => {
-          const globalOnly = prev.filter((p) => p.target === 'all');
-          return [...globalOnly, ...directList].sort((a, b) => b.timestamp - a.timestamp);
-        });
-      });
-    }
-
-    return () => {
-      unsubGlobal();
-      if (unsubUserNotif) unsubUserNotif();
-    };
-  }, [user?.uid]);
-
-  // Combined notifications list
-  const notifications = React.useMemo(() => {
-    const combined = [...remoteNotifications, ...localNotifications];
-    const uniqueMap = new Map<string, UserNotificationItem>();
-    combined.forEach((n) => {
-      if (!uniqueMap.has(n.id)) {
-        uniqueMap.set(n.id, n);
-      }
-    });
-    return Array.from(uniqueMap.values()).sort((a, b) => b.timestamp - a.timestamp);
-  }, [remoteNotifications, localNotifications]);
-
-  // Send Admin Notification to All or Specific User
-  const sendAdminNotification = async (
-    target: 'all' | string,
-    title: string,
-    message: string,
-    type: UserNotificationItem['type'] = 'info',
-    targetName?: string
-  ) => {
-    if (!title.trim() || !message.trim()) {
-      throw new Error('Sarlavha va xabar matnini kiritish majburiy!');
-    }
-
-    if (target === 'all') {
-      const newRef = push(ref(rtdb, 'global_announcements'));
-      const notifData: Omit<UserNotificationItem, 'read'> = {
-        id: newRef.key as string,
-        title: title.trim(),
-        message: message.trim(),
-        timestamp: Date.now(),
-        type,
-        sender: 'Admin (Yolnoma)',
-        target: 'all'
-      };
-      await set(newRef, notifData);
-    } else {
-      const newRef = push(ref(rtdb, `notifications/${target}`));
-      const notifData: UserNotificationItem = {
-        id: newRef.key as string,
-        title: title.trim(),
-        message: message.trim(),
-        timestamp: Date.now(),
-        read: false,
-        type,
-        sender: 'Admin (Yolnoma)',
-        target,
-        targetName: targetName || 'Foydalanuvchi'
-      };
-      await set(newRef, notifData);
-    }
+  const markNotificationRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
   };
 
-  // Delete Admin Notification
-  const deleteAdminNotification = async (id: string, target: 'all' | string = 'all') => {
-    if (target === 'all') {
-      await remove(ref(rtdb, `global_announcements/${id}`));
-    } else {
-      await remove(ref(rtdb, `notifications/${target}/${id}`));
-    }
+  const clearNotifications = () => {
+    setNotifications([]);
   };
 
   // Local Storage Helpers
@@ -803,8 +633,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addNotification,
         markNotificationRead,
         clearNotifications,
-        sendAdminNotification,
-        deleteAdminNotification,
         signInWithGoogle,
         registerWithEmail,
         loginWithEmail,

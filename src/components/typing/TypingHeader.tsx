@@ -26,6 +26,10 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   setTimeMode,
   wordCountMode,
   setWordCountMode,
+  difficulty,
+  setDifficulty,
+  customText,
+  setCustomText,
   onReset,
   isTestActive = false
 }) => {
@@ -54,70 +58,68 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   return (
     <>
       <div
-        className={`w-full max-w-4xl mx-auto mb-3 sm:mb-5 px-1 transition-all duration-300 transform ${
+        className={`w-full max-w-4xl mx-auto mb-5 flex flex-col items-center gap-3 transition-all duration-300 transform ${
           isTestActive
             ? 'opacity-0 pointer-events-none -translate-y-4 scale-95 h-0 overflow-hidden mb-0'
             : 'opacity-100 translate-y-0 scale-100'
         }`}
       >
-        {/* Yolnoma Control Bar - Responsive Mobile & Desktop Layout */}
-        <div className="w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs font-semibold">
-          
-          {/* Top Row on Mobile: Language Selector & Mode Selector */}
-          <div className="flex items-center justify-between gap-1.5 sm:gap-2 w-full md:w-auto">
-            {/* Language Selector Button */}
+        {/* Yolnoma Control Bar */}
+        <div className="w-full bg-[var(--card-bg)]/90 backdrop-blur-md border border-[var(--sub-alt)] rounded-2xl p-2.5 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs font-semibold">
+          {/* Language Selector Button */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setSearchQuery('');
                 setLanguagesList(getAllLanguages());
                 setShowLangModal(true);
               }}
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:border-[var(--main-color)] border border-[var(--sub-color)]/20 hover:bg-[var(--sub-alt)]/80 transition-all font-bold shrink-0 cursor-pointer text-xs"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:border-[var(--main-color)] border border-[var(--sub-color)]/20 hover:bg-[var(--sub-alt)]/80 transition-all font-bold group shrink-0 cursor-pointer"
               title="Matn tilini o'zgartirish"
             >
-              <Globe className="w-3.5 h-3.5 text-[var(--main-color)] shrink-0" />
+              <Globe className="w-3.5 h-3.5 text-[var(--main-color)] group-hover:rotate-45 transition-transform duration-300" />
               <span className="text-sm">{currentLang.flag}</span>
-              <span className="text-xs font-extrabold max-w-[70px] sm:max-w-none truncate">{currentLang.nativeName}</span>
-              <span className="text-[9px] sm:text-[10px] text-[var(--main-color)] font-mono uppercase bg-[var(--main-color)]/15 px-1 sm:px-1.5 py-0.5 rounded font-black">
+              <span className="text-xs font-extrabold">{currentLang.nativeName}</span>
+              <span className="text-[10px] text-[var(--main-color)] font-mono uppercase bg-[var(--main-color)]/15 px-1.5 py-0.5 rounded font-black">
                 {currentLang.code}
               </span>
             </button>
+          </div>
 
-            <div className="h-5 w-[1px] bg-[var(--sub-color)]/20 hidden md:block" />
+          <div className="h-5 w-[1px] bg-[var(--sub-color)]/20 hidden sm:block" />
 
-            {/* Mode Selector (So'zlar, Jumlalar, Hikoyalar) */}
-            <div className="flex items-center gap-1 bg-[var(--sub-alt)]/40 p-0.5 sm:p-1 rounded-xl overflow-x-auto no-scrollbar">
-              {modesList.map((m) => {
-                const Icon = m.icon;
-                const isActive = mode === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setMode(m.id);
-                      onReset();
-                    }}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all duration-150 whitespace-nowrap cursor-pointer text-[11px] sm:text-xs ${
-                      isActive
-                        ? 'bg-[var(--main-color)] text-white font-bold shadow-md shadow-[var(--main-color)]/30'
-                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                    }`}
-                  >
-                    <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span>{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Mode Selector (So'zlar, Jumlalar, Hikoyalar) */}
+          <div className="flex items-center gap-1 overflow-x-auto max-w-full py-0.5 bg-[var(--sub-alt)]/40 p-1 rounded-xl">
+            {modesList.map((m) => {
+              const Icon = m.icon;
+              const isActive = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    setMode(m.id);
+                    onReset();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-[var(--main-color)] text-white font-bold shadow-md shadow-[var(--main-color)]/30'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{m.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="h-5 w-[1px] bg-[var(--sub-color)]/20 hidden md:block" />
 
-          {/* Sub-modes: Time or Word Count (Horizontal scrolling with no-scrollbar on mobile) */}
-          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pt-0.5 md:pt-0">
+          {/* Sub-modes: Time or Word Count */}
+          <div className="flex items-center gap-2">
             {/* Time Options */}
-            <div className="flex items-center gap-0.5 sm:gap-1 bg-[var(--sub-alt)]/60 p-0.5 sm:p-1 rounded-xl border border-[var(--sub-alt)] shrink-0">
-              <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[var(--main-color)] ml-1 shrink-0" />
+            <div className="flex items-center gap-1 bg-[var(--sub-alt)]/60 p-1 rounded-xl border border-[var(--sub-alt)]">
+              <Clock className="w-3.5 h-3.5 text-[var(--main-color)] ml-1" />
               {timeOptions.map((tVal) => (
                 <button
                   key={tVal}
@@ -126,7 +128,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setWordCountMode(0);
                     onReset();
                   }}
-                  className={`px-1.5 sm:px-2.5 py-1 rounded-lg transition-all font-mono font-bold text-[11px] sm:text-xs cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg transition-all font-mono font-bold text-xs cursor-pointer ${
                     timeMode === tVal && wordCountMode === 0
                       ? 'bg-[var(--main-color)] text-white shadow-sm'
                       : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
@@ -138,9 +140,9 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             </div>
 
             {/* Word Options */}
-            <div className="flex items-center gap-0.5 sm:gap-1 bg-[var(--sub-alt)]/60 p-0.5 sm:p-1 rounded-xl border border-[var(--sub-alt)] shrink-0">
-              <Type className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[var(--main-color)] ml-1 shrink-0" />
-              {wordOptions.slice(0, 3).map((wVal) => (
+            <div className="flex items-center gap-1 bg-[var(--sub-alt)]/60 p-1 rounded-xl border border-[var(--sub-alt)]">
+              <Type className="w-3.5 h-3.5 text-[var(--main-color)] ml-1" />
+              {wordOptions.map((wVal) => (
                 <button
                   key={wVal}
                   onClick={() => {
@@ -148,7 +150,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setTimeMode(0);
                     onReset();
                   }}
-                  className={`px-1.5 sm:px-2.5 py-1 rounded-lg transition-all font-mono font-bold text-[11px] sm:text-xs cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg transition-all font-mono font-bold text-xs cursor-pointer ${
                     wordCountMode === wVal && timeMode === 0
                       ? 'bg-[var(--main-color)] text-white shadow-sm'
                       : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
@@ -164,7 +166,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
 
       {/* Centered Modal for Language Selection */}
       {showLangModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop Overlay */}
           <div
             className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
@@ -172,9 +174,9 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
           />
 
           {/* Modal Container */}
-          <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-2xl p-4 sm:p-6 z-50 text-xs space-y-4 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+          <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-2xl p-6 z-50 text-xs space-y-4 animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--sub-alt)] shrink-0">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--sub-alt)]">
               <div className="flex items-center gap-2.5 text-[var(--text-color)]">
                 <div className="p-2 rounded-xl bg-[var(--main-color)]/15 text-[var(--main-color)]">
                   <Globe className="w-5 h-5" />
@@ -193,7 +195,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             </div>
 
             {/* Search Bar */}
-            <div className="relative shrink-0">
+            <div className="relative">
               <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -206,7 +208,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             </div>
 
             {/* Language List */}
-            <div className="overflow-y-auto space-y-1.5 pr-1 flex-1">
+            <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
               {filteredLanguages.length > 0 ? (
                 filteredLanguages.map((l) => {
                   const isSelected = language === l.code;
