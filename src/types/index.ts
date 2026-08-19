@@ -43,6 +43,9 @@ export interface UserNotificationItem {
   timestamp: number;
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'achievement' | 'level_up';
+  sender?: string;
+  target?: 'all' | string;
+  targetName?: string;
 }
 
 export interface UserProfile {
