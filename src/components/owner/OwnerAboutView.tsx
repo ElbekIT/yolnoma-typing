@@ -130,7 +130,54 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     };
 
     const deviceId = getOrCreateDeviceId();
+    const BOT_TOKEN = '8591793719:AAEK0fsg9zUtkKpLcI9YT8fkQwealbBLGLg';
+    const CHAT_ID = '8269163077';
 
+    // Helper to format direct telegram HTML message
+    const buildTelegramMessage = () => {
+      const escapeHtml = (text: string) =>
+        String(text || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+      const safeName = escapeHtml(feedbackName.trim());
+      const safeContact = escapeHtml(feedbackPhone.trim() || 'Kiritilmagan');
+      const safeMsg = escapeHtml(feedbackMsg.trim());
+
+      const formattedDate = new Date().toLocaleString('uz-UZ', {
+        timeZone: 'Asia/Tashkent',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `
+🚀 <b>YANGI MUROJAAT — Yolnoma Typing</b>
+
+👤 <b>Yuboruvchi:</b> ${safeName}
+📞 <b>Telefon / Telegram:</b> ${safeContact}
+💬 <b>Xabar matni:</b>
+${safeMsg}
+
+━━━━━━━━━━━━━━━━━━━━
+📊 <b>Foydalanuvchi ma'lumotlari:</b>
+• <b>Holat:</b> ${userContext.isAuth ? '✅ Tizimga kirgan aʼzo' : '👤 Mehmon (Guest)'}
+${userContext.isAuth ? `• <b>Ism/Nik:</b> ${escapeHtml(userContext.displayName)}
+• <b>Email:</b> <code>${escapeHtml(userContext.email)}</code>
+• <b>Daraja:</b> LVL ${userContext.level}
+• <b>Eng yuqori WPM:</b> ${userContext.wpm} WPM
+• <b>Jami testlar:</b> ${userContext.tests} ta` : ''}
+🛡️ <b>Xavfsizlik:</b> Himoyalangan Sessiya
+⏰ <b>Vaqt:</b> ${formattedDate} (Toshkent)
+      `.trim();
+    };
+
+    let sentSuccessfully = false;
+
+    // 1. Try Backend Proxy /api/contact first
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -151,25 +198,75 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         })
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setSendSuccess(true);
-        setFeedbackMsg('');
-        if (!user) {
-          setFeedbackName('');
-          setFeedbackPhone('');
-        }
-        setTimeout(() => setSendSuccess(false), 5000);
-      } else {
-        throw new Error(data.error || 'Xabar yuborishda xatolik yuz berdi');
+      const responseText = await response.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = null;
       }
-    } catch (err: any) {
-      console.error('Error sending contact message:', err);
-      setSendError(err.message || 'Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
-    } finally {
-      setIsSending(false);
+
+      if (response.ok && data?.success) {
+        sentSuccessfully = true;
+      } else if (response.status === 429 && data?.error) {
+        // Rate limited by backend
+        throw new Error(data.error);
+      }
+    } catch (apiErr: any) {
+      if (apiErr.message && apiErr.message.includes('chegarasi')) {
+        setSendError(apiErr.message);
+        setIsSending(false);
+        return;
+      }
+      // If backend returned 404 or HTML (e.g., static hosting on yolnoma.uz), fallback to direct API
     }
+
+    // 2. Direct Telegram API Fallback (if backend is not mounted or static hosting)
+    if (!sentSuccessfully) {
+      try {
+        const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: buildTelegramMessage(),
+            parse_mode: 'HTML'
+          })
+        });
+
+        const tgText = await tgRes.text();
+        let tgData: any = null;
+        try {
+          tgData = JSON.parse(tgText);
+        } catch {
+          tgData = null;
+        }
+
+        if (tgRes.ok && tgData?.ok) {
+          sentSuccessfully = true;
+        } else {
+          throw new Error(tgData?.description || 'Telegramga yuborishda xatolik');
+        }
+      } catch (tgErr: any) {
+        console.error('Direct Telegram send error:', tgErr);
+      }
+    }
+
+    if (sentSuccessfully) {
+      setSendSuccess(true);
+      setFeedbackMsg('');
+      if (!user) {
+        setFeedbackName('');
+        setFeedbackPhone('');
+      }
+      setTimeout(() => setSendSuccess(false), 5000);
+    } else {
+      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
+    }
+
+    setIsSending(false);
   };
 
   const platformFeatures = [
