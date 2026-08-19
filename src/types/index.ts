@@ -169,3 +169,22 @@ export interface CharacterStat {
   errors: number;
   accuracy: number;
 }
+
+export interface AdminInboxMessage {
+  id: string;
+  name: string;
+  phone?: string;
+  message: string;
+  timestamp: number;
+  isRead: boolean;
+  status?: 'unread' | 'read' | 'replied';
+  userContext?: {
+    isAuth: boolean;
+    email?: string;
+    displayName?: string;
+    wpm?: number;
+    tests?: number;
+    level?: number;
+    uid?: string;
+  };
+}
