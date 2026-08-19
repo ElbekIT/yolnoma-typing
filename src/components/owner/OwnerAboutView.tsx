@@ -21,12 +21,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  UserCheck,
-  Inbox
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { rtdb } from '../../config/firebase';
-import { ref, push, set } from 'firebase/database';
 
 interface OwnerAboutViewProps {
   onStartTyping?: () => void;
@@ -47,10 +44,6 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   const [feedbackName, setFeedbackName] = useState('');
   const [feedbackPhone, setFeedbackPhone] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [honeypot, setHoneypot] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [sendSuccess, setSendSuccess] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
 
   const phoneNumber = '+998904063090';
   const formattedPhone = '+998 90 406 30 90';
@@ -86,57 +79,11 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     setTimeout(() => setCopiedPhone(false), 2000);
   };
 
-  const handleSendFeedback = async (e: React.FormEvent) => {
+  const handleSendFeedback = (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackName.trim() || !feedbackMsg.trim()) return;
 
-    // Honeypot check (Silent trap for bots)
-    if (honeypot) {
-      setSendSuccess(true);
-      return;
-    }
-
-    setIsSending(true);
-    setSendError(null);
-
-    const userContext = {
-      isAuth: !!user,
-      email: user?.email || '',
-      displayName: profile?.displayName || user?.displayName || '',
-      wpm: profile?.highestWpm || 0,
-      tests: profile?.totalTests || 0,
-      level: profile?.level || 1,
-      uid: user?.uid || ''
-    };
-
-    try {
-      // Save directly to Firebase Realtime Database for Admin Panel
-      const messagesRef = ref(rtdb, 'admin_messages');
-      const newMsgRef = push(messagesRef);
-      await set(newMsgRef, {
-        id: newMsgRef.key,
-        name: feedbackName.trim(),
-        phone: feedbackPhone.trim(),
-        message: feedbackMsg.trim(),
-        timestamp: Date.now(),
-        isRead: false,
-        status: 'unread',
-        userContext
-      });
-
-      setSendSuccess(true);
-      setFeedbackMsg('');
-      if (!user) {
-        setFeedbackName('');
-        setFeedbackPhone('');
-      }
-      setTimeout(() => setSendSuccess(false), 6000);
-    } catch (err: any) {
-      console.error('Error sending feedback to Admin panel:', err);
-      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
-    } finally {
-      setIsSending(false);
-    }
+    handleOpenTelegram();
   };
 
   const platformFeatures = [
@@ -185,8 +132,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     { name: "Firebase RTDB", category: "Realtime Battle & Sockets", level: "Architecture" },
     { name: "Cloud Firestore", category: "Persistent Database", level: "Database" },
     { name: "Web Audio API", category: "Sound Synthesizer", level: "Interactive" },
-    { name: "Anti-Cheat Engine", category: "Keystroke Validation", level: "Security" },
-    { name: "Admin Realtime Inbox", category: "Realtime Direct Feedback", level: "Integration" }
+    { name: "Anti-Cheat Engine", category: "Keystroke Validation", level: "Security" }
   ];
 
   const faqs = [

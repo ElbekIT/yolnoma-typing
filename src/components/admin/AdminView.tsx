@@ -9,7 +9,6 @@ import {
   CheckCircle,
   Clock,
   Zap,
-  Mail,
   Shield,
   X,
   Crown,
@@ -22,27 +21,20 @@ import {
   Save,
   RotateCcw,
   Sparkles,
-  Award,
-  Bell,
-  Send,
-  MessageSquare
+  Award
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
 import { doc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
-import { AdminNotificationsTab } from './AdminNotificationsTab';
-import { AdminInboxTab } from './AdminInboxTab';
 
 export const AdminView: React.FC = () => {
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications'>('leaderboard');
-  const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
-  const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users'>('leaderboard');
 
   // Ban Modal
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -213,23 +205,10 @@ export const AdminView: React.FC = () => {
         rebuildLists();
       });
 
-      // Listen for unread inbox messages count
-      const adminMessagesRef = ref(rtdb, 'admin_messages');
-      const unsubMessages = onValue(adminMessagesRef, (snap) => {
-        if (snap.exists()) {
-          const val = snap.val();
-          const unread = Object.keys(val).filter((k) => !val[k]?.isRead).length;
-          setUnreadInboxCount(unread);
-        } else {
-          setUnreadInboxCount(0);
-        }
-      });
-
       return () => {
         unsubBanned();
         unsubLeaderboard();
         unsubUsers();
-        unsubMessages();
       };
     } catch (e) {
       console.warn('Realtime DB fetch error in Admin:', e);
@@ -463,41 +442,10 @@ export const AdminView: React.FC = () => {
           <span>👥 Barcha Foydalanuvchilar ({usersList.length})</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('inbox')}
-          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer relative ${
-            activeTab === 'inbox'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>💬 Kelgan Murojaatlar</span>
-          {unreadInboxCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono font-extrabold text-[10px] animate-pulse">
-              {unreadInboxCount}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('notifications');
-            setTargetUserForMessage(null);
-          }}
-          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
-            activeTab === 'notifications'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          <span>📢 Habar Yuborish / Xabarnomalar</span>
-        </button>
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && (
+      {(
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -732,18 +680,6 @@ export const AdminView: React.FC = () => {
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => {
-                              setTargetUserForMessage(u);
-                              setActiveTab('notifications');
-                            }}
-                            className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-white font-bold text-[11px] border border-sky-500/40 transition-all flex items-center gap-1 cursor-pointer"
-                            title="Foydalanuvchiga shaxsiy habar yuborish"
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                            <span>Habar</span>
-                          </button>
-
-                          <button
                             onClick={() => openEditModal(u)}
                             className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
                             title="Tahrirlash"
@@ -790,19 +726,7 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: KELGAN MUROJAATLAR / INBOX */}
-      {activeTab === 'inbox' && (
-        <AdminInboxTab />
-      )}
 
-      {/* TAB 4: HABAR YUBORISH / XABARNOMALAR */}
-      {activeTab === 'notifications' && (
-        <AdminNotificationsTab
-          usersList={usersList}
-          preselectedUser={targetUserForMessage}
-          onClearPreselectedUser={() => setTargetUserForMessage(null)}
-        />
-      )}
 
       {/* EDIT LEADERBOARD / USER MODAL */}
       {editingUser && (
