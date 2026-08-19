@@ -56,6 +56,22 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   const formattedPhone = '+998 90 406 30 90';
   const developerName = 'Elbek Qoriyev';
   const developerRole = 'Full-Stack Web Dasturchi & Platforma Asoschisi';
+  const telegramLink = 'https://t.me/elbekdesign_va_webdasturchi_uz';
+
+  const handleOpenTelegram = () => {
+    const lines = [
+      feedbackName.trim() ? `Ism: ${feedbackName.trim()}` : '',
+      feedbackPhone.trim() ? `Telefon: ${feedbackPhone.trim()}` : '',
+      feedbackMsg.trim() ? `Xabar: ${feedbackMsg.trim()}` : ''
+    ].filter(Boolean);
+
+    const text = lines.join('\n');
+    const targetUrl = text
+      ? `${telegramLink}?text=${encodeURIComponent(text)}`
+      : telegramLink;
+
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  };
 
   // Auto-fill user information if logged in
   useEffect(() => {
@@ -345,26 +361,26 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
       </section>
 
-      {/* 3. DIRECT ADMIN INBOX FEEDBACK FORM */}
+      {/* 3. TELEGRAM CONTACT FORM */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between space-y-6">
           <div className="space-y-2.5">
             <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[var(--main-color)] tracking-wider">
               <MessageSquare className="w-4 h-4" />
-              <span>To'g'ridan-to'g'ri Aloqa</span>
+              <span>To'g'ridan-to'g'ri aloqa</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
-              Dasturchiga Xabar Qoldirish
+              Dasturchiga xabar qoldirish
             </h3>
             <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-              Xabaringiz to'g'ridan-to'g'ri <strong className="text-[var(--text-color)]">Admin Boshqaruv Paneliga</strong> yetkaziladi. Fikr-mulohazalaringiz yoki takliflaringizni yozib qoldirishingiz mumkin.
+              Xabaringizni Telegram orqali yo'llashing uchun quyidagi formani to'ldiring. Telegramga kirib, yozgan ma'lumotlar avtomatik ravishda olib boriladi.
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 space-y-2.5">
             <div className="text-xs font-bold text-[var(--text-color)] flex items-center gap-2">
               <UserCheck className="w-4 h-4 text-[var(--main-color)]" />
-              <span>Sizning Ma'lumotlaringiz:</span>
+              <span>Sizning ma'lumotlaringiz:</span>
             </div>
             <div className="text-xs text-[var(--sub-color)] space-y-1">
               <div>
@@ -372,7 +388,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 {user ? (
                   <span className="text-emerald-500 font-bold">Akkauntga kirilgan ({user.email})</span>
                 ) : (
-                  <span className="text-amber-500 font-bold">Mehmon (Kiritilgan ma'lumotlar bilan yuboriladi)</span>
+                  <span className="text-amber-500 font-bold">Mehmon</span>
                 )}
               </div>
               {profile?.highestWpm ? (
@@ -385,58 +401,28 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
 
         <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
-          <form onSubmit={handleSendFeedback} className="space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-base sm:text-lg font-black text-[var(--text-color)] flex items-center gap-2">
                 <Send className="w-4 h-4 text-[var(--main-color)]" />
-                <span>To'g'ridan-to'g'ri Murojaat Yuborish</span>
+                <span>To'g'ridan-to'g'ri xabar yuborish</span>
               </h4>
-              <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                <Inbox className="w-3 h-3" />
-                <span>Admin Panelga Ulanadi</span>
-              </span>
+              <a
+                href={telegramLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[var(--main-color)]/30 bg-[var(--main-color)]/5 text-[var(--main-color)] text-[10px] font-bold uppercase tracking-wide"
+              >
+                <MessageSquare className="w-3 h-3" />
+                <span>Telegram bot ulanmagan</span>
+              </a>
             </div>
-
-            {sendSuccess && (
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <h5 className="font-bold text-emerald-500 text-sm">Xabaringiz Muvaffaqiyatli Yuborildi!</h5>
-                  <p className="text-[var(--sub-color)] mt-0.5">
-                    Murojaat Admin boshqaruv paneliga yetkazildi. Dasturchi Elbek Qoriyev uni tez orada ko'rib chiqadi.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {sendError && (
-              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <h5 className="font-bold text-rose-500 text-sm">Yuborishda xatolik</h5>
-                  <p className="text-[var(--sub-color)] mt-0.5">{sendError}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Honeypot field (hidden from real users, traps spambots) */}
-            <input
-              type="text"
-              name="_hp"
-              value={honeypot}
-              onChange={(e) => setHoneypot(e.target.value)}
-              tabIndex={-1}
-              autoComplete="off"
-              className="hidden"
-              aria-hidden="true"
-            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-color)]">Ismingiz</label>
                 <input
                   type="text"
-                  required
                   placeholder="Ismingizni kiriting..."
                   value={feedbackName}
                   onChange={(e) => setFeedbackName(e.target.value)}
@@ -444,10 +430,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Aloqa manzili</label>
+                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Telegram</label>
                 <input
                   type="text"
-                  placeholder="+998 90 123 45 67 yoki email..."
+                  placeholder="+998 90 123 45 67 yoki @username"
                   value={feedbackPhone}
                   onChange={(e) => setFeedbackPhone(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
@@ -456,10 +442,9 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[var(--text-color)]">Xabaringiz / Fikringiz</label>
+              <label className="text-xs font-bold text-[var(--text-color)]">Xabaringiz / fikringiz</label>
               <textarea
                 rows={4}
-                required
                 placeholder="Platforma haqida fikringiz yoki hamkorlik taklifingizni yozing..."
                 value={feedbackMsg}
                 onChange={(e) => setFeedbackMsg(e.target.value)}
@@ -468,23 +453,14 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             </div>
 
             <button
-              type="submit"
-              disabled={isSending}
-              className="w-full py-3 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              type="button"
+              onClick={handleOpenTelegram}
+              className="w-full py-3 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer"
             >
-              {isSending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Admin Panelga Yuborilmoqda...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  <span>Xabarni Admin Panelga Yuborish</span>
-                </>
-              )}
+              <Send className="w-4 h-4" />
+              <span>Xabarni Telegramga yuborish</span>
             </button>
-          </form>
+          </div>
         </div>
       </section>
 
