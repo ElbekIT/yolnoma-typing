@@ -19,7 +19,7 @@ export const LiveStats: React.FC<LiveStatsProps> = ({
   const { showLiveWpm } = useSettings();
 
   return (
-    <div className="w-full max-w-5xl mx-auto mb-2 flex flex-col gap-1 px-4">
+    <div className="w-full max-w-4xl mx-auto mb-2 flex flex-col gap-1 px-1 sm:px-2">
       <div className="flex items-center justify-between text-sm font-semibold">
         {/* Large Clean Timer - uses theme main color */}
         <div className="text-3xl font-mono font-extrabold text-[var(--main-color)] tracking-tight transition-colors duration-200">

@@ -143,8 +143,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           <span className="px-2 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] font-bold text-[10px] flex items-center gap-1">
                             <Zap className="w-3 h-3" /> {profile?.highestWpm || 0} WPM Best
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-bold text-[10px] flex items-center gap-1">
-                            <Crown className="w-3 h-3" /> Pro
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-black text-[10px] flex items-center gap-1 font-mono">
+                            <Award className="w-3 h-3" /> LVL {profile?.level || 1}
                           </span>
                         </div>
                       </div>
@@ -416,8 +416,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       <div className="font-black text-sm text-[var(--text-color)] truncate max-w-[150px]">
                         {profile?.displayName || 'Foydalanuvchi'}
                       </div>
-                      <div className="text-[11px] text-[var(--main-color)] font-mono font-bold">
-                        {profile?.highestWpm || 0} WPM Best
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold">
+                        <span className="text-[var(--main-color)]">{profile?.highestWpm || 0} WPM</span>
+                        <span className="text-amber-500">• LVL {profile?.level || 1}</span>
                       </div>
                     </div>
                   </div>

@@ -275,13 +275,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                     <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[var(--card-bg)]" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-2xl font-extrabold text-[var(--text-color)]">{profile.displayName}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-color)]">{profile.displayName}</h2>
                       {profile.isVerified && (
                         <CheckCircle2 className="w-5 h-5 text-sky-400 fill-sky-400/20" title="Verified User" />
                       )}
                       <span className="px-2.5 py-0.5 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)] text-[10px] font-extrabold uppercase">
                         {profile.rankTitle || 'Typing Novice'}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-black uppercase font-mono flex items-center gap-1">
+                        <Award className="w-3 h-3" /> LVL {profile.level || 1}
                       </span>
                     </div>
                     <p className="text-xs text-[var(--sub-color)] font-mono">@{profile.username}</p>
