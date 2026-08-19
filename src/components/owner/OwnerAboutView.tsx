@@ -21,12 +21,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  UserCheck,
-  Inbox
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { rtdb } from '../../config/firebase';
-import { ref, push, set } from 'firebase/database';
 
 interface OwnerAboutViewProps {
   onStartTyping?: () => void;
@@ -47,7 +44,6 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   const [feedbackName, setFeedbackName] = useState('');
   const [feedbackPhone, setFeedbackPhone] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [honeypot, setHoneypot] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -74,50 +70,89 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     e.preventDefault();
     if (!feedbackName.trim() || !feedbackMsg.trim()) return;
 
-    // Honeypot check (Silent trap for bots)
-    if (honeypot) {
-      setSendSuccess(true);
-      return;
-    }
-
     setIsSending(true);
     setSendError(null);
 
-    const userContext = {
-      isAuth: !!user,
-      email: user?.email || '',
-      displayName: profile?.displayName || user?.displayName || '',
-      wpm: profile?.highestWpm || 0,
-      tests: profile?.totalTests || 0,
-      level: profile?.level || 1,
-      uid: user?.uid || ''
-    };
+    const BOT_TOKEN = '8591793719:AAEMGGe7Hh-olimHmtzesr4GeK2KYOSzegE';
+    const CHAT_ID = '8269163077';
+
+    // Format current local time
+    const now = new Date();
+    const formattedDate = now.toLocaleString('uz-UZ', {
+      timeZone: 'Asia/Tashkent',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const isUserAuth = !!user;
+    const userEmail = user?.email || 'Mavjud emas';
+    const userDisplayName = profile?.displayName || user?.displayName || 'Noma\'lum';
+    const userWpm = profile?.highestWpm || 0;
+    const userTests = profile?.totalTests || 0;
+    const userUid = user?.uid || 'Mehmon';
+
+    // Clean HTML escape
+    const escapeHtml = (text: string) =>
+      text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const safeName = escapeHtml(feedbackName.trim());
+    const safeContact = escapeHtml(feedbackPhone.trim() || 'Kiritilmagan');
+    const safeMsg = escapeHtml(feedbackMsg.trim());
+
+    const messageHtml = `
+🚀 <b>YANGI MUROJAAT — Yolnoma Typing</b>
+
+👤 <b>Ism:</b> ${safeName}
+📞 <b>Telefon / Telegram:</b> ${safeContact}
+💬 <b>Xabar:</b>
+${safeMsg}
+
+━━━━━━━━━━━━━━━━━━━━
+📊 <b>Foydalanuvchi profili:</b>
+• <b>Holat:</b> ${isUserAuth ? '✅ Akkauntga kirgan' : '👤 Mehmon (Guest)'}
+${isUserAuth ? `• <b>Foydalanuvchi:</b> ${escapeHtml(userDisplayName)}
+• <b>Email:</b> <code>${escapeHtml(userEmail)}</code>
+• <b>Eng yuqori WPM:</b> ${userWpm} WPM
+• <b>Testlar soni:</b> ${userTests} ta
+• <b>UID:</b> <code>${userUid}</code>` : ''}
+⏰ <b>Vaqt:</b> ${formattedDate} (Toshkent)
+    `.trim();
 
     try {
-      // Save directly to Firebase Realtime Database for Admin Panel
-      const messagesRef = ref(rtdb, 'admin_messages');
-      const newMsgRef = push(messagesRef);
-      await set(newMsgRef, {
-        id: newMsgRef.key,
-        name: feedbackName.trim(),
-        phone: feedbackPhone.trim(),
-        message: feedbackMsg.trim(),
-        timestamp: Date.now(),
-        isRead: false,
-        status: 'unread',
-        userContext
+      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: messageHtml,
+          parse_mode: 'HTML',
+        }),
       });
 
-      setSendSuccess(true);
-      setFeedbackMsg('');
-      if (!user) {
-        setFeedbackName('');
-        setFeedbackPhone('');
+      const data = await response.json();
+
+      if (data.ok) {
+        setSendSuccess(true);
+        setFeedbackMsg('');
+        if (!user) {
+          setFeedbackName('');
+          setFeedbackPhone('');
+        }
+        setTimeout(() => setSendSuccess(false), 5000);
+      } else {
+        throw new Error(data.description || 'Telegramga yuborishda xatolik yuz berdi');
       }
-      setTimeout(() => setSendSuccess(false), 6000);
     } catch (err: any) {
-      console.error('Error sending feedback to Admin panel:', err);
-      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
+      console.error('Error sending message to telegram:', err);
+      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos, to\'g\'ridan-to\'g\'ri Telegram orqali bog\'laning.');
     } finally {
       setIsSending(false);
     }
@@ -170,7 +205,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     { name: "Cloud Firestore", category: "Persistent Database", level: "Database" },
     { name: "Web Audio API", category: "Sound Synthesizer", level: "Interactive" },
     { name: "Anti-Cheat Engine", category: "Keystroke Validation", level: "Security" },
-    { name: "Admin Realtime Inbox", category: "Realtime Direct Feedback", level: "Integration" }
+    { name: "Telegram Bot API", category: "Instant Direct Feedback", level: "Integration" }
   ];
 
   const faqs = [
@@ -184,7 +219,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     },
     {
       q: "Dasturchi bilan qanday loyihalar bo'yicha bog'lanish mumkin?",
-      a: "Web-saytlar, murakkab CRM tizimlar, Full-Stack web ilovalar, startap loyihalar yoki ta'limiy platformalarni noldan yaratish bo'yicha bevosita Elbek Qoriyev bilan bog'lanishingiz mumkin."
+      a: "Web-saytlar, murakkab CRM tizimlar, Telegram botlar, Full-Stack web ilovalar, startap loyihalar yoki ta'limiy platformalarni noldan yaratish bo'yicha bevosita Elbek Qoriyev bilan bog'lanishingiz mumkin."
     }
   ];
 
@@ -322,14 +357,17 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 </div>
               </div>
 
-              {/* Direct Communication Channels */}
+              {/* Telegram link */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--sub-color)]/15 text-xs">
                 <a
-                  href={`tel:${phoneNumber}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors font-bold"
+                  href="https://t.me/qoriyev_elbek"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 transition-colors font-bold"
                 >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Qo'ng'iroq: {formattedPhone}</span>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Telegram: @qoriyev_elbek</span>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
 
                 <a
@@ -345,7 +383,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
       </section>
 
-      {/* 3. DIRECT ADMIN INBOX FEEDBACK FORM */}
+      {/* 3. DIRECT TELEGRAM FEEDBACK FORM (Fast, Connected to Bot) */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between space-y-6">
           <div className="space-y-2.5">
@@ -357,7 +395,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               Dasturchiga Xabar Qoldirish
             </h3>
             <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-              Xabaringiz to'g'ridan-to'g'ri <strong className="text-[var(--text-color)]">Admin Boshqaruv Paneliga</strong> yetkaziladi. Fikr-mulohazalaringiz yoki takliflaringizni yozib qoldirishingiz mumkin.
+              Xabaringiz <strong className="text-[var(--text-color)]">Telegram Bot</strong> orqali bevosita Elbek Qoriyevga soniyalar ichida yetib boradi. Fikr-mulohazalaringiz yoki hamkorlik takliflaringizni yozib qoldirishingiz mumkin.
             </p>
           </div>
 
@@ -389,11 +427,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             <div className="flex items-center justify-between">
               <h4 className="text-base sm:text-lg font-black text-[var(--text-color)] flex items-center gap-2">
                 <Send className="w-4 h-4 text-[var(--main-color)]" />
-                <span>To'g'ridan-to'g'ri Murojaat Yuborish</span>
+                <span>To'g'ridan-to'g'ri Xabar Qoldirish</span>
               </h4>
-              <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                <Inbox className="w-3 h-3" />
-                <span>Admin Panelga Ulanadi</span>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-500 border border-sky-500/20">
+                Telegram Bot Ulangan
               </span>
             </div>
 
@@ -403,7 +440,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 <div className="text-xs">
                   <h5 className="font-bold text-emerald-500 text-sm">Xabaringiz Muvaffaqiyatli Yuborildi!</h5>
                   <p className="text-[var(--sub-color)] mt-0.5">
-                    Murojaat Admin boshqaruv paneliga yetkazildi. Dasturchi Elbek Qoriyev uni tez orada ko'rib chiqadi.
+                    Xabar Telegram orqali dasturchiga yetkazildi. Tez orada siz bilan bog'laniladi.
                   </p>
                 </div>
               </div>
@@ -419,18 +456,6 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               </div>
             )}
 
-            {/* Honeypot field (hidden from real users, traps spambots) */}
-            <input
-              type="text"
-              name="_hp"
-              value={honeypot}
-              onChange={(e) => setHoneypot(e.target.value)}
-              tabIndex={-1}
-              autoComplete="off"
-              className="hidden"
-              aria-hidden="true"
-            />
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-color)]">Ismingiz</label>
@@ -444,10 +469,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Aloqa manzili</label>
+                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Telegram</label>
                 <input
                   type="text"
-                  placeholder="+998 90 123 45 67 yoki email..."
+                  placeholder="+998 90 ... yoki @username"
                   value={feedbackPhone}
                   onChange={(e) => setFeedbackPhone(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
@@ -475,12 +500,12 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               {isSending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Admin Panelga Yuborilmoqda...</span>
+                  <span>Telegramga Yuborilmoqda...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Xabarni Admin Panelga Yuborish</span>
+                  <span>Xabarni Yuborish</span>
                 </>
               )}
             </button>
