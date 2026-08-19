@@ -1,20 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Code2,
   Phone,
+  PhoneCall,
+  Send,
+  Copy,
+  Check,
   Globe,
   ShieldCheck,
+  Zap,
   Keyboard,
   Trophy,
   Swords,
   GraduationCap,
+  ExternalLink,
   MessageSquare,
   Cpu,
   Layers,
   CheckCircle2,
-  Telegram
+  AlertCircle,
+  Loader2,
+  UserCheck,
+  Inbox
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { rtdb } from '../../config/firebase';
+import { ref, push, set } from 'firebase/database';
 
 interface OwnerAboutViewProps {
   onStartTyping?: () => void;
@@ -29,9 +41,103 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   onGoToLessons,
   onGoToLeaderboard
 }) => {
-  const telegramLink = 'https://t.me/elbekdesign_va_webdasturchi_uz';
+  const { user, profile } = useAuth();
+
+  const [copiedPhone, setCopiedPhone] = useState(false);
+  const [feedbackName, setFeedbackName] = useState('');
+  const [feedbackPhone, setFeedbackPhone] = useState('');
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  const phoneNumber = '+998904063090';
+  const formattedPhone = '+998 90 406 30 90';
   const developerName = 'Elbek Qoriyev';
   const developerRole = 'Full-Stack Web Dasturchi & Platforma Asoschisi';
+  const telegramLink = 'https://t.me/elbekdesign_va_webdasturchi_uz';
+
+  const handleOpenTelegram = () => {
+    const lines = [
+      feedbackName.trim() ? `Ism: ${feedbackName.trim()}` : '',
+      feedbackPhone.trim() ? `Telefon: ${feedbackPhone.trim()}` : '',
+      feedbackMsg.trim() ? `Xabar: ${feedbackMsg.trim()}` : ''
+    ].filter(Boolean);
+
+    const text = lines.join('\n');
+    const targetUrl = text
+      ? `${telegramLink}?text=${encodeURIComponent(text)}`
+      : telegramLink;
+
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // Auto-fill user information if logged in
+  useEffect(() => {
+    if (user && !feedbackName) {
+      setFeedbackName(profile?.displayName || user.displayName || '');
+    }
+  }, [user, profile]);
+
+  const handleCopyPhone = () => {
+    navigator.clipboard.writeText(formattedPhone);
+    setCopiedPhone(true);
+    setTimeout(() => setCopiedPhone(false), 2000);
+  };
+
+  const handleSendFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackName.trim() || !feedbackMsg.trim()) return;
+
+    // Honeypot check (Silent trap for bots)
+    if (honeypot) {
+      setSendSuccess(true);
+      return;
+    }
+
+    setIsSending(true);
+    setSendError(null);
+
+    const userContext = {
+      isAuth: !!user,
+      email: user?.email || '',
+      displayName: profile?.displayName || user?.displayName || '',
+      wpm: profile?.highestWpm || 0,
+      tests: profile?.totalTests || 0,
+      level: profile?.level || 1,
+      uid: user?.uid || ''
+    };
+
+    try {
+      // Save directly to Firebase Realtime Database for Admin Panel
+      const messagesRef = ref(rtdb, 'admin_messages');
+      const newMsgRef = push(messagesRef);
+      await set(newMsgRef, {
+        id: newMsgRef.key,
+        name: feedbackName.trim(),
+        phone: feedbackPhone.trim(),
+        message: feedbackMsg.trim(),
+        timestamp: Date.now(),
+        isRead: false,
+        status: 'unread',
+        userContext
+      });
+
+      setSendSuccess(true);
+      setFeedbackMsg('');
+      if (!user) {
+        setFeedbackName('');
+        setFeedbackPhone('');
+      }
+      setTimeout(() => setSendSuccess(false), 6000);
+    } catch (err: any) {
+      console.error('Error sending feedback to Admin panel:', err);
+      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const platformFeatures = [
     {
@@ -181,46 +287,73 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               </p>
             </div>
 
-            {/* Telegram Contact */}
+            {/* Direct Contact Phone Box */}
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[var(--main-color)]/15 text-[var(--main-color)] flex items-center justify-center shrink-0">
-                    <Telegram className="w-5 h-5" />
+                    <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider block">Telegram orqali bog'lanish</span>
+                    <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider block">To'g'ridan-to'g'ri Telefon</span>
                     <a
-                      href={telegramLink}
-                      target="_blank"
-                      rel="noreferrer"
+                      href={`tel:${phoneNumber}`}
                       className="text-base sm:text-lg font-mono font-black text-[var(--text-color)] hover:text-[var(--main-color)] transition-colors"
                     >
-                      @elbekdesign_va_webdasturchi_uz
+                      {formattedPhone}
                     </a>
                   </div>
                 </div>
 
-                <a
-                  href={telegramLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
-                >
-                  <Telegram className="w-3.5 h-3.5" />
-                  <span>Telegramga yozish</span>
-                </a>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCopyPhone}
+                    className={`px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      copiedPhone
+                        ? 'bg-emerald-500 text-white font-black'
+                        : 'bg-[var(--card-bg)] hover:bg-[var(--card-bg)]/80 text-[var(--text-color)] border border-[var(--sub-color)]/20'
+                    }`}
+                    title="Raqamdan nusxa olish"
+                  >
+                    {copiedPhone ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Nusxa Olindi!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Nusxa olish</span>
+                      </>
+                    )}
+                  </button>
+
+                  <a
+                    href={`tel:${phoneNumber}`}
+                    className="px-3.5 py-2 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>Qo'ng'iroq</span>
+                  </a>
+                </div>
               </div>
 
+              {/* Direct Communication Channels */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--sub-color)]/15 text-xs">
                 <a
-                  href={telegramLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 transition-colors font-bold"
+                  href={`tel:${phoneNumber}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors font-bold"
                 >
-                  <Telegram className="w-3.5 h-3.5" />
-                  <span>Telegram orqali murojat qilish</span>
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Qo'ng'iroq: {formattedPhone}</span>
+                </a>
+
+                <a
+                  href={`sms:${phoneNumber}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors font-bold"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>SMS Yuborish</span>
                 </a>
               </div>
             </div>
@@ -228,31 +361,106 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
       </section>
 
-      {/* 3. TELEGRAM CONTACT CTA */}
-      <section className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div className="space-y-2.5 max-w-xl">
+      {/* 3. TELEGRAM CONTACT FORM */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between space-y-6">
+          <div className="space-y-2.5">
             <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[var(--main-color)] tracking-wider">
-              <Telegram className="w-4 h-4" />
-              <span>Telegram orqali aloqa</span>
+              <MessageSquare className="w-4 h-4" />
+              <span>To'g'ridan-to'g'ri aloqa</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
-              Murojaat qilish uchun Telegramga o'ting
+              Dasturchiga xabar qoldirish
             </h3>
             <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-              Fikr, taklif yoki loyiha bo'yicha savolaringiz bo'lsa, quyidagi Telegram kanaliga kirib bemalol murojaat qilishingiz mumkin.
+              Xabaringizni Telegram orqali yo'llashing uchun quyidagi formani to'ldiring. Telegramga kirib, yozgan ma'lumotlar avtomatik ravishda olib boriladi.
             </p>
           </div>
 
-          <a
-            href={telegramLink}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity"
-          >
-            <Telegram className="w-4 h-4" />
-            <span>Telegramga kirish</span>
-          </a>
+          <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 space-y-2.5">
+            <div className="text-xs font-bold text-[var(--text-color)] flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-[var(--main-color)]" />
+              <span>Sizning ma'lumotlaringiz:</span>
+            </div>
+            <div className="text-xs text-[var(--sub-color)] space-y-1">
+              <div>
+                <strong className="text-[var(--text-color)]">Holat:</strong>{' '}
+                {user ? (
+                  <span className="text-emerald-500 font-bold">Akkauntga kirilgan ({user.email})</span>
+                ) : (
+                  <span className="text-amber-500 font-bold">Mehmon</span>
+                )}
+              </div>
+              {profile?.highestWpm ? (
+                <div>
+                  <strong className="text-[var(--text-color)]">Shaxsiy rekord:</strong> {profile.highestWpm} WPM
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-base sm:text-lg font-black text-[var(--text-color)] flex items-center gap-2">
+                <Send className="w-4 h-4 text-[var(--main-color)]" />
+                <span>To'g'ridan-to'g'ri xabar yuborish</span>
+              </h4>
+              <a
+                href={telegramLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[var(--main-color)]/30 bg-[var(--main-color)]/5 text-[var(--main-color)] text-[10px] font-bold uppercase tracking-wide"
+              >
+                <MessageSquare className="w-3 h-3" />
+                <span>Telegram bot ulanmagan</span>
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[var(--text-color)]">Ismingiz</label>
+                <input
+                  type="text"
+                  placeholder="Ismingizni kiriting..."
+                  value={feedbackName}
+                  onChange={(e) => setFeedbackName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Telegram</label>
+                <input
+                  type="text"
+                  placeholder="+998 90 123 45 67 yoki @username"
+                  value={feedbackPhone}
+                  onChange={(e) => setFeedbackPhone(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[var(--text-color)]">Xabaringiz / fikringiz</label>
+              <textarea
+                rows={4}
+                placeholder="Platforma haqida fikringiz yoki hamkorlik taklifingizni yozing..."
+                value={feedbackMsg}
+                onChange={(e) => setFeedbackMsg(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)] resize-none"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleOpenTelegram}
+              className="w-full py-3 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Send className="w-4 h-4" />
+              <span>Xabarni Telegramga yuborish</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -398,16 +606,6 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             >
               <GraduationCap className="w-4 h-4 text-emerald-400" />
               <span>Saboqlar</span>
-            </button>
-          )}
-
-          {onGoToLeaderboard && (
-            <button
-              onClick={onGoToLeaderboard}
-              className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <Trophy className="w-4 h-4 text-amber-400" />
-              <span>Reyting</span>
             </button>
           )}
         </div>
