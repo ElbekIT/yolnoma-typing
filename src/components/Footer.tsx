@@ -5,9 +5,10 @@ import { t } from '../config/languages';
 
 interface FooterProps {
   onOpenAbout: () => void;
+  onOpenOwner?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenAbout }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenOwner }) => {
   const { language } = useSettings();
 
   return (
@@ -39,6 +40,16 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAbout }) => {
 
         {/* Right Links */}
         <div className="flex items-center gap-4 font-medium">
+          {onOpenOwner && (
+            <button
+              onClick={onOpenOwner}
+              className="hover:text-[var(--main-color)] text-[var(--main-color)] transition-colors flex items-center gap-1 font-bold"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Sayt Haqida & Muallif</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenAbout}
             className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1"

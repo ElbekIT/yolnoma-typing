@@ -26,6 +26,7 @@ import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
 import { AdminView } from './components/admin/AdminView';
+import { OwnerAboutView } from './components/owner/OwnerAboutView';
 import { antiCheatManager } from './utils/antiCheat';
 
 import {
@@ -485,6 +486,14 @@ function MainAppContent() {
         {activeTab === 'achievements' && <AchievementsView />}
         {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
         {activeTab === 'partners' && <PartnersView />}
+        {activeTab === 'owner' && (
+          <OwnerAboutView
+            onStartTyping={() => setActiveTab('typing')}
+            onGoToBattle={() => setActiveTab('battle')}
+            onGoToLessons={() => setActiveTab('lessons')}
+            onGoToLeaderboard={() => setActiveTab('leaderboard')}
+          />
+        )}
         {activeTab === 'admin' && <AdminView />}
         {activeTab === 'profile' && (
           <ProfileView
@@ -495,7 +504,10 @@ function MainAppContent() {
         {activeTab === 'settings' && <SettingsView />}
       </main>
 
-      <Footer onOpenAbout={() => setIsAboutOpen(true)} />
+      <Footer
+        onOpenAbout={() => setIsAboutOpen(true)}
+        onOpenOwner={() => setActiveTab('owner')}
+      />
 
       <PubgInviteModal
         invite={incomingInvite}

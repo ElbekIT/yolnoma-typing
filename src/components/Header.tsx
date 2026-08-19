@@ -22,7 +22,8 @@ import {
   Crown,
   Swords,
   GraduationCap,
-  ShieldAlert
+  ShieldAlert,
+  Info
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -57,6 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'achievements', label: 'Yutuqlar', enLabel: 'Achievements', icon: Award },
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake },
+    { id: 'owner', label: 'Sayt Haqida & Muallif', enLabel: 'About & Creator', icon: Sparkles },
     ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
@@ -268,6 +270,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           <span>Sozlamalar</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectTab('owner')}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group bg-[var(--main-color)]/5 border border-[var(--main-color)]/20"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Sparkles className="w-4 h-4 text-[var(--main-color)]" />
+                          <span className="text-[var(--main-color)]">Sayt Haqida & Muallif</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--main-color)] opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                       </button>
                     </div>
 
