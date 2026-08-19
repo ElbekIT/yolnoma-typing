@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Code2,
   Phone,
   PhoneCall,
-  Mail,
   Send,
   Copy,
   Check,
   Globe,
   ShieldCheck,
   Zap,
-  Award,
   Keyboard,
   Trophy,
   Swords,
   GraduationCap,
-  Heart,
   ExternalLink,
   MessageSquare,
   Cpu,
   Layers,
   CheckCircle2,
-  Users,
-  Star,
-  ChevronRight,
-  Terminal
+  AlertCircle,
+  Loader2,
+  UserCheck
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface OwnerAboutViewProps {
   onStartTyping?: () => void;
@@ -41,77 +38,162 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   onGoToLessons,
   onGoToLeaderboard
 }) => {
+  const { user, profile } = useAuth();
+
   const [copiedPhone, setCopiedPhone] = useState(false);
-  const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackName, setFeedbackName] = useState('');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
   const [feedbackPhone, setFeedbackPhone] = useState('');
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const phoneNumber = '+998904063090';
   const formattedPhone = '+998 90 406 30 90';
   const developerName = 'Elbek Qoriyev';
   const developerRole = 'Full-Stack Web Dasturchi & Platforma Asoschisi';
 
+  // Auto-fill user information if logged in
+  useEffect(() => {
+    if (user && !feedbackName) {
+      setFeedbackName(profile?.displayName || user.displayName || '');
+    }
+  }, [user, profile]);
+
   const handleCopyPhone = () => {
     navigator.clipboard.writeText(formattedPhone);
     setCopiedPhone(true);
-    setTimeout(() => setCopiedPhone(false), 2500);
+    setTimeout(() => setCopiedPhone(false), 2000);
   };
 
-  const handleSendFeedback = (e: React.FormEvent) => {
+  const handleSendFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!feedbackMsg.trim()) return;
-    setFeedbackSent(true);
-    setTimeout(() => {
-      setFeedbackName('');
-      setFeedbackPhone('');
-      setFeedbackMsg('');
-      setFeedbackSent(false);
-    }, 4000);
+    if (!feedbackName.trim() || !feedbackMsg.trim()) return;
+
+    setIsSending(true);
+    setSendError(null);
+
+    const BOT_TOKEN = '8591793719:AAEMGGe7Hh-olimHmtzesr4GeK2KYOSzegE';
+    const CHAT_ID = '8269163077';
+
+    // Format current local time
+    const now = new Date();
+    const formattedDate = now.toLocaleString('uz-UZ', {
+      timeZone: 'Asia/Tashkent',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const isUserAuth = !!user;
+    const userEmail = user?.email || 'Mavjud emas';
+    const userDisplayName = profile?.displayName || user?.displayName || 'Noma\'lum';
+    const userWpm = profile?.highestWpm || 0;
+    const userTests = profile?.totalTests || 0;
+    const userUid = user?.uid || 'Mehmon';
+
+    // Clean HTML escape
+    const escapeHtml = (text: string) =>
+      text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const safeName = escapeHtml(feedbackName.trim());
+    const safeContact = escapeHtml(feedbackPhone.trim() || 'Kiritilmagan');
+    const safeMsg = escapeHtml(feedbackMsg.trim());
+
+    const messageHtml = `
+🚀 <b>YANGI MUROJAAT — Yolnoma Typing</b>
+
+👤 <b>Ism:</b> ${safeName}
+📞 <b>Telefon / Telegram:</b> ${safeContact}
+💬 <b>Xabar:</b>
+${safeMsg}
+
+━━━━━━━━━━━━━━━━━━━━
+📊 <b>Foydalanuvchi profili:</b>
+• <b>Holat:</b> ${isUserAuth ? '✅ Akkauntga kirgan' : '👤 Mehmon (Guest)'}
+${isUserAuth ? `• <b>Foydalanuvchi:</b> ${escapeHtml(userDisplayName)}
+• <b>Email:</b> <code>${escapeHtml(userEmail)}</code>
+• <b>Eng yuqori WPM:</b> ${userWpm} WPM
+• <b>Testlar soni:</b> ${userTests} ta
+• <b>UID:</b> <code>${userUid}</code>` : ''}
+⏰ <b>Vaqt:</b> ${formattedDate} (Toshkent)
+    `.trim();
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: messageHtml,
+          parse_mode: 'HTML',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.ok) {
+        setSendSuccess(true);
+        setFeedbackMsg('');
+        if (!user) {
+          setFeedbackName('');
+          setFeedbackPhone('');
+        }
+        setTimeout(() => setSendSuccess(false), 5000);
+      } else {
+        throw new Error(data.description || 'Telegramga yuborishda xatolik yuz berdi');
+      }
+    } catch (err: any) {
+      console.error('Error sending message to telegram:', err);
+      setSendError('Xabarni yuborishda xatolik yuz berdi. Iltimos, to\'g\'ridan-to\'g\'ri Telegram orqali bog\'laning.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const platformFeatures = [
     {
       icon: Keyboard,
       title: "Real-time Tezlik O'lchash",
-      desc: "WPM (so'z/daqiqa), CPM (belgi/daqiqa) va Aniqlik (%) ko'rsatkichlarini soniyaning har bir mikrolahzasida hisoblovchi matematik motor.",
-      badge: "Tezkor Motor",
-      color: "from-blue-500 to-cyan-400"
+      desc: "WPM (so'z/daqiqa), CPM (belgi/daqiqa) va Aniqlik (%) ko'rsatkichlarini har lahzada hisoblovchi matematik dvigatel.",
+      badge: "Tezkor Motor"
     },
     {
       icon: Swords,
       title: "Jonli Battle Arena",
-      desc: "Do'stlar va onlayn foydalanuvchilar bilan real-vaqtda klaviatura poygalari o'tkazish, taklifnoma yuborish va PUBG-uslubidagi jang tizimi.",
-      badge: "Realtime Multiplayer",
-      color: "from-rose-500 to-amber-500"
+      desc: "Do'stlar va onlayn ishtirokchilar bilan real-vaqtda klaviatura poygalari o'tkazish hamda PUBG uslubidagi taklifnomalar.",
+      badge: "Realtime Battle"
     },
     {
       icon: GraduationCap,
       title: "Interaktiv Saboqlar & Mashqlar",
-      desc: "10 barmoq bilan ko'r-ko'rona yozish (touch typing) metodikasi, barmoqlar pozitsiyasi va bosqichma-bosqich malaka oshirish kurslari.",
-      badge: "Ta'limiy Darslar",
-      color: "from-emerald-500 to-teal-400"
+      desc: "10 barmoq bilan ko'r-ko'rona yozish (touch typing) metodikasi va bosqichma-bosqich malaka oshirish darslari.",
+      badge: "Ta'limiy Darslar"
     },
     {
       icon: Trophy,
       title: "Global & Milliy Reyting",
       desc: "Doimiy avtomatik yangilanuvchi yetakchilar jadvali, ligalar, chempionlik unvonlari va eng yuqori natijalar ro'yxati.",
-      badge: "Jonli Sinxronlash",
-      color: "from-amber-500 to-yellow-400"
+      badge: "Jonli Reyting"
     },
     {
       icon: ShieldCheck,
       title: "Xavfsizlik & Anti-Cheat",
-      desc: "Nusxa ko'chirish (paste), sun'iy skriptlar va botlarni bir zumda aniqlab, soxta natijalarni reytingdan cheklovchi xavfsizlik algoritmi.",
-      badge: "100% Halol Natija",
-      color: "from-indigo-500 to-purple-500"
+      desc: "Nusxa ko'chirish (paste), botlar va soxta natijalarni aniqlab, reytingni halol saqlovchi xavfsizlik filtri.",
+      badge: "100% Halol"
     },
     {
       icon: Globe,
       title: "50+ Tillar va RTL Qo'llab-quvvatlash",
-      desc: "O'zbekcha (Lotin/Kirill), Ingliz, Rus, Arab va 50 dan ortiq dunyo tillarida yozish imkoniyati hamda Right-To-Left yozuv tizimi.",
-      badge: "Universal Ekotizim",
-      color: "from-teal-500 to-emerald-400"
+      desc: "O'zbekcha (Lotin/Kirill), Ingliz, Rus, Arab va 50 dan ortiq dunyo tillarida yozish imkoniyati.",
+      badge: "Universal"
     }
   ];
 
@@ -120,132 +202,122 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     { name: "TypeScript", category: "Type Safety & Robust Logic", level: "Advanced" },
     { name: "Tailwind CSS", category: "Modern Responsive UI/UX", level: "Expert" },
     { name: "Firebase RTDB", category: "Realtime Battle & Sockets", level: "Architecture" },
-    { name: "Cloud Firestore", category: "Persistent Big Data", level: "Database" },
-    { name: "Web Audio API", category: "Mechanical Switch Sound Synthesizer", level: "Interactive" },
-    { name: "Anti-Cheat Engine", category: "Keystroke Timing Validation", level: "Security" },
-    { name: "PWA & Cloud Run", category: "Cloud Deployment & Scale", level: "DevOps" }
+    { name: "Cloud Firestore", category: "Persistent Database", level: "Database" },
+    { name: "Web Audio API", category: "Sound Synthesizer", level: "Interactive" },
+    { name: "Anti-Cheat Engine", category: "Keystroke Validation", level: "Security" },
+    { name: "Telegram Bot API", category: "Instant Direct Feedback", level: "Integration" }
   ];
 
   const faqs = [
     {
       q: "Yolnoma Typing nima uchun yaratilgan?",
-      a: "Yolnoma platformasi O'zbekistonda yoshlar, dasturchilar, talabalar va barcha kasb egalarining klaviaturada tez va aniq yozish ko'nikmalarini oshirish, ularning mehnat unumdorligini 3-5 baravarga ko'paytirish maqsadida yaratilgan zamonaviy milliy ekotizimdir."
+      a: "Yolnoma platformasi O'zbekistonda yoshlar, dasturchilar, talabalar va barcha foydalanuvchilarning klaviaturada 10 barmoq bilan tez va aniq yozish ko'nikmalarini oshirish maqsadida yaratilgan milliy tizimdir."
     },
     {
       q: "WPM va Aniqlik qanday hisoblanadi?",
-      a: "WPM (Words Per Minute) xalqaro standart bo'yicha har 5 ta to'g'ri terilgan belgi 1 ta standart so'z hisoblanadi va sarflangan daqiqaga bo'linadi. Aniqlik esa umumiy bosilgan tugmalar ichida to'g'ri kiritilgan belgilar foizini ifodalaydi."
+      a: "WPM (Words Per Minute) har 5 ta to'g'ri kiritilgan belgi 1 ta standart so'z hisoblanadi va sarflangan daqiqaga bo'linadi. Aniqlik esa to'g'ri kiritilgan belgilarning umumiy bosilgan tugmalarga nisbatidir."
     },
     {
-      q: "Sayt orqali dasturchi bilan qanday loyihalar bo'yicha bog'lanish mumkin?",
+      q: "Dasturchi bilan qanday loyihalar bo'yicha bog'lanish mumkin?",
       a: "Web-saytlar, murakkab CRM tizimlar, Telegram botlar, Full-Stack web ilovalar, startap loyihalar yoki ta'limiy platformalarni noldan yaratish bo'yicha bevosita Elbek Qoriyev bilan bog'lanishingiz mumkin."
     }
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-12 pb-16 animate-in fade-in duration-300">
-      {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--sub-alt)]/50 to-[var(--card-bg)] border border-[var(--sub-alt)] p-6 sm:p-10 lg:p-14 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-[var(--main-color)]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--main-color)]/15 border border-[var(--main-color)]/30 text-[var(--main-color)] text-xs font-black uppercase tracking-wider mb-5">
-            <Sparkles className="w-4 h-4" />
+    <div className="w-full max-w-7xl mx-auto space-y-8 pb-12">
+      {/* 1. HERO SECTION - Clean, light & fast */}
+      <section className="relative rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 sm:p-8 lg:p-10 shadow-sm">
+        <div className="max-w-4xl space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)] text-xs font-black uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Platforma & Muallif Haqida</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[var(--text-color)] tracking-tight leading-tight mb-5">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-color)] tracking-tight leading-snug">
             Yolnoma Typing — O'zbekistondagi №1 Zamonaviy Tez Yozish Ekotizimi
           </h1>
 
-          <p className="text-sm sm:text-base lg:text-lg text-[var(--sub-color)] font-medium leading-relaxed mb-8">
-            Ushbu platforma klaviaturada <span className="text-[var(--text-color)] font-bold">10 barmoq bilan ko'r-ko'rona</span> tez va professional yozishni o'rganish, jonli musobaqalarda qatnashish hamda kompyuterda ishlash samaradorligini eng yuqori darajaga olib chiqish uchun noldan maxsus ishlab chiqilgan.
+          <p className="text-xs sm:text-sm lg:text-base text-[var(--sub-color)] font-medium leading-relaxed">
+            Ushbu platforma klaviaturada <span className="text-[var(--text-color)] font-bold">10 barmoq bilan ko'r-ko'rona</span> tez va professional yozishni o'rganish, jonli musobaqalarda qatnashish hamda kompyuterda ishlash unumdorligini oshirish uchun noldan maxsus ishlab chiqilgan.
           </p>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-2">
-            <div className="p-4 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] backdrop-blur-md">
-              <div className="text-2xl sm:text-3xl font-black text-[var(--main-color)] font-mono">100%</div>
+          {/* Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+              <div className="text-2xl font-black text-[var(--main-color)] font-mono">100%</div>
               <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Bepul & Ochiq</div>
             </div>
-            <div className="p-4 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] backdrop-blur-md">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">50+</div>
+            <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+              <div className="text-2xl font-black text-emerald-500 font-mono">50+</div>
               <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Dunyo Tillari</div>
             </div>
-            <div className="p-4 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] backdrop-blur-md">
-              <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">0.05s</div>
-              <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Realtime Javob</div>
+            <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+              <div className="text-2xl font-black text-amber-500 font-mono">0.05s</div>
+              <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Tezkor Javob</div>
             </div>
-            <div className="p-4 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] backdrop-blur-md">
-              <div className="text-2xl sm:text-3xl font-black text-purple-400 font-mono">24/7</div>
+            <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+              <div className="text-2xl font-black text-purple-500 font-mono">24/7</div>
               <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Jonli Battle Arena</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. CREATOR / OWNER CARD (Highlighted & Prominent) */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 border-2 border-[var(--main-color)]/50 p-6 sm:p-10 lg:p-12 shadow-2xl text-white">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[var(--main-color)]/20 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      {/* 2. CREATOR / OWNER CARD */}
+      <section className="rounded-3xl bg-[var(--card-bg)] border-2 border-[var(--main-color)]/40 p-6 sm:p-8 lg:p-10 shadow-md">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Avatar & Badges */}
           <div className="lg:col-span-4 flex flex-col items-center text-center">
-            <div className="relative group">
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[var(--main-color)] via-cyan-400 to-indigo-500 opacity-75 blur group-hover:opacity-100 transition duration-500" />
-              <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl bg-slate-900 border-2 border-[var(--main-color)] flex flex-col items-center justify-center p-4 overflow-hidden shadow-2xl">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-tr from-[var(--main-color)] to-cyan-400 text-slate-950 flex items-center justify-center font-black text-4xl shadow-inner">
-                  EQ
-                </div>
-                <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-[var(--main-color)]">
-                  Founder & Dev
-                </div>
-              </div>
+            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-[var(--main-color)] to-cyan-500 text-white flex flex-col items-center justify-center p-2 shadow-md">
+              <span className="font-black text-3xl sm:text-4xl tracking-tight">EQ</span>
+              <span className="text-[10px] font-black uppercase tracking-wider opacity-90 mt-0.5">
+                Founder & Dev
+              </span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-black mt-4 tracking-tight text-white flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-black mt-3.5 text-[var(--text-color)] flex items-center gap-1.5">
               {developerName}
-              <CheckCircle2 className="w-6 h-6 text-[var(--main-color)] fill-[var(--main-color)]/20" />
+              <CheckCircle2 className="w-5 h-5 text-[var(--main-color)]" />
             </h2>
-            <p className="text-xs sm:text-sm font-semibold text-cyan-300 mt-1">
+            <p className="text-xs font-bold text-[var(--main-color)] mt-0.5">
               {developerRole}
             </p>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold mt-3">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>Loyiha va Hamkorlikka Ochiq</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-bold mt-2.5 border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Hamkorlikka Ochiq</span>
             </div>
           </div>
 
           {/* Details & Direct Contact */}
-          <div className="lg:col-span-8 space-y-6">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[var(--main-color)]">
+          <div className="lg:col-span-8 space-y-5">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[var(--main-color)]">
                 <Code2 className="w-4 h-4" />
-                <span>Loyiha Muallifi Haqida</span>
+                <span>Loyiha Asoschisi & Dasturchi</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-white">
-                "Ushbu platforma yoshlarimizning kompyuter va dasturlash olamidagi tezligini yangi bosqichga olib chiqish uchun yaratildi."
+              <h3 className="text-lg sm:text-xl font-black text-[var(--text-color)]">
+                "Ushbu platforma yoshlarimizning kompyuter va klaviatura ko'nikmalarini oshirish uchun yaratildi."
               </h3>
-              <p className="text-sm text-slate-300 leading-relaxed font-normal">
-                Men <strong className="text-white font-bold">{developerName}</strong> — Full-Stack Web dasturchiman. Zamonaviy foydalanuvchi interfeyslari (UI/UX), real-vaqt ma'lumotlar almashinuvi, xavfsiz va yuqori tezlikda ishlovchi web ilovalarni yaratishga ixtisoslashganman. 
-                <br className="hidden sm:inline" />
-                <strong>Yolnoma Typing</strong> loyihasining g'oyasi, dizayni, arxitekturasi va dasturiy kodi to'liq men tomonimdan ishlab chiqilgan.
+              <p className="text-xs sm:text-sm text-[var(--sub-color)] leading-relaxed">
+                Men <strong className="text-[var(--text-color)] font-bold">{developerName}</strong> — Full-Stack Web dasturchiman. Zamonaviy foydalanuvchi interfeyslari (UI/UX), real-vaqt ma'lumotlar almashinuvi va yuqori tezlikda ishlovchi web ilovalarni yaratishga ixtisoslashganman. 
+                <br />
+                <strong>Yolnoma Typing</strong> loyihasining dizayni, arxitekturasi va dasturiy kodi to'liq men tomonimdan ishlab chiqilgan.
               </p>
             </div>
 
             {/* Direct Contact Phone Box */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-700/80 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-[var(--main-color)]/20 border border-[var(--main-color)]/40 text-[var(--main-color)] flex items-center justify-center shrink-0">
-                    <Phone className="w-6 h-6" />
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--main-color)]/15 text-[var(--main-color)] flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">To'g'ridan-to'g'ri Telefon</span>
+                    <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider block">To'g'ridan-to'g'ri Telefon</span>
                     <a
                       href={`tel:${phoneNumber}`}
-                      className="text-lg sm:text-xl font-mono font-black text-white hover:text-[var(--main-color)] transition-colors"
+                      className="text-base sm:text-lg font-mono font-black text-[var(--text-color)] hover:text-[var(--main-color)] transition-colors"
                     >
                       {formattedPhone}
                     </a>
@@ -255,21 +327,21 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopyPhone}
-                    className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                       copiedPhone
-                        ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30 font-black'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        ? 'bg-emerald-500 text-white font-black'
+                        : 'bg-[var(--card-bg)] hover:bg-[var(--card-bg)]/80 text-[var(--text-color)] border border-[var(--sub-color)]/20'
                     }`}
                     title="Raqamdan nusxa olish"
                   >
                     {copiedPhone ? (
                       <>
-                        <Check className="w-4 h-4" />
+                        <Check className="w-3.5 h-3.5" />
                         <span>Nusxa Olindi!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3.5 h-3.5" />
                         <span>Nusxa olish</span>
                       </>
                     )}
@@ -277,32 +349,32 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
 
                   <a
                     href={`tel:${phoneNumber}`}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[var(--main-color)] to-cyan-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-[var(--main-color)]/30 hover:opacity-95 transition-all"
+                    className="px-3.5 py-2 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
                   >
-                    <PhoneCall className="w-4 h-4" />
-                    <span>Qo'ng'iroq Qilish</span>
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>Qo'ng'iroq</span>
                   </a>
                 </div>
               </div>
 
-              {/* Quick Communication Channels */}
-              <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800 text-xs">
+              {/* Telegram link */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--sub-color)]/15 text-xs">
                 <a
                   href="https://t.me/qoriyev_elbek"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25 transition-colors font-bold"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 transition-colors font-bold"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                   <span>Telegram: @qoriyev_elbek</span>
-                  <ExternalLink className="w-3 h-3 ml-0.5 opacity-70" />
+                  <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
 
                 <a
                   href={`sms:${phoneNumber}`}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 hover:bg-purple-500/25 transition-colors font-bold"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors font-bold"
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-3.5 h-3.5" />
                   <span>SMS Yuborish</span>
                 </a>
               </div>
@@ -311,44 +383,171 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
       </section>
 
-      {/* 3. PLATFORM CORE FEATURES */}
-      <section className="space-y-6">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+      {/* 3. DIRECT TELEGRAM FEEDBACK FORM (Fast, Connected to Bot) */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between space-y-6">
+          <div className="space-y-2.5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[var(--main-color)] tracking-wider">
+              <MessageSquare className="w-4 h-4" />
+              <span>To'g'ridan-to'g'ri Aloqa</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
+              Dasturchiga Xabar Qoldirish
+            </h3>
+            <p className="text-xs text-[var(--sub-color)] leading-relaxed">
+              Xabaringiz <strong className="text-[var(--text-color)]">Telegram Bot</strong> orqali bevosita Elbek Qoriyevga soniyalar ichida yetib boradi. Fikr-mulohazalaringiz yoki hamkorlik takliflaringizni yozib qoldirishingiz mumkin.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 space-y-2.5">
+            <div className="text-xs font-bold text-[var(--text-color)] flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-[var(--main-color)]" />
+              <span>Sizning Ma'lumotlaringiz:</span>
+            </div>
+            <div className="text-xs text-[var(--sub-color)] space-y-1">
+              <div>
+                <strong className="text-[var(--text-color)]">Holat:</strong>{' '}
+                {user ? (
+                  <span className="text-emerald-500 font-bold">Akkauntga kirilgan ({user.email})</span>
+                ) : (
+                  <span className="text-amber-500 font-bold">Mehmon (Kiritilgan ma'lumotlar bilan yuboriladi)</span>
+                )}
+              </div>
+              {profile?.highestWpm ? (
+                <div>
+                  <strong className="text-[var(--text-color)]">Shaxsiy rekord:</strong> {profile.highestWpm} WPM
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
+          <form onSubmit={handleSendFeedback} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-base sm:text-lg font-black text-[var(--text-color)] flex items-center gap-2">
+                <Send className="w-4 h-4 text-[var(--main-color)]" />
+                <span>To'g'ridan-to'g'ri Xabar Qoldirish</span>
+              </h4>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-500 border border-sky-500/20">
+                Telegram Bot Ulangan
+              </span>
+            </div>
+
+            {sendSuccess && (
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <h5 className="font-bold text-emerald-500 text-sm">Xabaringiz Muvaffaqiyatli Yuborildi!</h5>
+                  <p className="text-[var(--sub-color)] mt-0.5">
+                    Xabar Telegram orqali dasturchiga yetkazildi. Tez orada siz bilan bog'laniladi.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {sendError && (
+              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <h5 className="font-bold text-rose-500 text-sm">Yuborishda xatolik</h5>
+                  <p className="text-[var(--sub-color)] mt-0.5">{sendError}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[var(--text-color)]">Ismingiz</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ismingizni kiriting..."
+                  value={feedbackName}
+                  onChange={(e) => setFeedbackName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Telegram</label>
+                <input
+                  type="text"
+                  placeholder="+998 90 ... yoki @username"
+                  value={feedbackPhone}
+                  onChange={(e) => setFeedbackPhone(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[var(--text-color)]">Xabaringiz / Fikringiz</label>
+              <textarea
+                rows={4}
+                required
+                placeholder="Platforma haqida fikringiz yoki hamkorlik taklifingizni yozing..."
+                value={feedbackMsg}
+                onChange={(e) => setFeedbackMsg(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)] resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSending}
+              className="w-full py-3 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Telegramga Yuborilmoqda...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Xabarni Yuborish</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* 4. PLATFORM CORE FEATURES */}
+      <section className="space-y-5">
+        <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)] text-xs font-black uppercase tracking-wider">
             <Layers className="w-3.5 h-3.5" />
             <span>Platforma Imkoniyatlari</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[var(--text-color)] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--text-color)] tracking-tight">
             Nega Aynan Yolnoma Typing?
           </h2>
-          <p className="text-xs sm:text-sm text-[var(--sub-color)]">
-            Foydalanuvchiga maksimal qulaylik, mukammal o'rganish tajribasi va adolatli raqobat muhitini taqdim etuvchi xususiyatlar.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {platformFeatures.map((feat, idx) => {
             const Icon = feat.icon;
             return (
               <div
                 key={idx}
-                className="group relative p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-[var(--main-color)]/50 transition-all duration-200 hover:-translate-y-1 shadow-sm hover:shadow-xl flex flex-col justify-between"
+                className="p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-[var(--main-color)]/40 transition-colors flex flex-col justify-between space-y-3"
               >
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-[var(--sub-alt)] group-hover:bg-[var(--main-color)]/15 text-[var(--main-color)] flex items-center justify-center transition-colors">
-                      <Icon className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-xl bg-[var(--sub-alt)] text-[var(--main-color)] flex items-center justify-center">
+                      <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-[var(--sub-alt)] text-[var(--sub-color)] font-mono">
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] font-mono">
                       {feat.badge}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-base font-black text-[var(--text-color)] group-hover:text-[var(--main-color)] transition-colors">
+                    <h3 className="text-sm font-black text-[var(--text-color)]">
                       {feat.title}
                     </h3>
-                    <p className="text-xs text-[var(--sub-color)] mt-2 leading-relaxed">
+                    <p className="text-xs text-[var(--sub-color)] mt-1 leading-relaxed">
                       {feat.desc}
                     </p>
                   </div>
@@ -359,152 +558,53 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         </div>
       </section>
 
-      {/* 4. TECH STACK & ARCHITECTURE */}
-      <section className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--sub-alt)] pb-5">
+      {/* 5. TECH STACK & ARCHITECTURE */}
+      <section className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[var(--main-color)] tracking-wider">
               <Cpu className="w-4 h-4" />
               <span>Arxitektura & Texnologiyalar</span>
             </div>
-            <h3 className="text-xl font-black text-[var(--text-color)] mt-1">
-              Zamonaviy Muhandislik Va Tezkorlik
+            <h3 className="text-lg font-black text-[var(--text-color)] mt-0.5">
+              Zamonaviy Muhandislik & Yuqori Tezlik
             </h3>
           </div>
           <p className="text-xs text-[var(--sub-color)] max-w-md">
-            Sayt har qanday sekinlashuvsiz, soniyaning yuzdan bir ulushida ishlovchi reaktiv texnologiyalar asosida qurilgan.
+            Sayt har qanday sekinlashuvsiz, yengil va tezkor reaktiv texnologiyalar asosida qurilgan.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {techStack.map((tech, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-2xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] space-y-1 hover:border-[var(--main-color)]/30 transition-all"
+              className="p-3.5 rounded-xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] space-y-1"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-black text-[var(--text-color)]">{tech.name}</span>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)]">
+                <span className="text-xs font-black text-[var(--text-color)]">{tech.name}</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--main-color)]/10 text-[var(--main-color)]">
                   {tech.level}
                 </span>
               </div>
-              <p className="text-[11px] text-[var(--sub-color)] truncate">{tech.category}</p>
+              <p className="text-[10px] text-[var(--sub-color)] truncate">{tech.category}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 5. FEEDBACK / CONTACT FORM */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] to-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex flex-col justify-between space-y-6">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[var(--main-color)] tracking-wider">
-              <MessageSquare className="w-4 h-4" />
-              <span>Hamkorlik & Aloqa</span>
-            </div>
-            <h3 className="text-2xl font-black text-[var(--text-color)]">
-              Taklif yoki Savolingiz Bormi?
-            </h3>
-            <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-              Platformani yanada rivojlantirish bo'yicha takliflaringiz, homiylik yoki web-dasturlash xizmatlari bo'yicha buyurtmalaringiz bo'lsa, to'g'ridan-to'g'ri murojaat qilishingiz mumkin.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-            <div className="text-xs font-bold text-[var(--text-color)] flex items-center gap-2">
-              <Phone className="w-4 h-4 text-[var(--main-color)]" />
-              <span>Bog'lanish Ma'lumotlari:</span>
-            </div>
-            <div className="text-xs text-[var(--sub-color)] space-y-1">
-              <div><strong className="text-[var(--text-color)]">Dasturchi:</strong> {developerName}</div>
-              <div><strong className="text-[var(--text-color)]">Telefon:</strong> {formattedPhone}</div>
-              <div><strong className="text-[var(--text-color)]">Telegram:</strong> @qoriyev_elbek</div>
-              <div><strong className="text-[var(--text-color)]">Hudud:</strong> O'zbekiston</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
-          <form onSubmit={handleSendFeedback} className="space-y-4">
-            <h4 className="text-lg font-black text-[var(--text-color)]">
-              To'g'ridan-to'g'ri Xabar Qoldirish
-            </h4>
-
-            {feedbackSent ? (
-              <div className="p-6 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-center space-y-2 animate-in zoom-in-95">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                <h5 className="text-base font-black text-emerald-300">Xabaringiz Qabul Qilindi!</h5>
-                <p className="text-xs text-slate-300">
-                  Murojaatingiz uchun tashakkur. Tez orada siz bilan bog'lanamiz.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[var(--text-color)]">Ismingiz</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ismingizni kiriting..."
-                      value={feedbackName}
-                      onChange={(e) => setFeedbackName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[var(--text-color)]">Telefon yoki Telegram</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="+998 90 ... yoki @username"
-                      value={feedbackPhone}
-                      onChange={(e) => setFeedbackPhone(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-color)]">Xabaringiz / Fikringiz</label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Platforma haqida fikringiz yoki hamkorlik taklifingizni yozing..."
-                    value={feedbackMsg}
-                    onChange={(e) => setFeedbackMsg(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)] resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[var(--main-color)]/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Xabarni Yuborish</span>
-                </button>
-              </>
-            )}
-          </form>
-        </div>
-      </section>
-
       {/* 6. FAQS */}
       <section className="space-y-4">
-        <div className="text-center max-w-xl mx-auto space-y-1">
-          <h3 className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
+        <div className="space-y-1">
+          <h3 className="text-lg sm:text-xl font-black text-[var(--text-color)]">
             Tez-tez So'raladigan Savollar
           </h3>
-          <p className="text-xs text-[var(--sub-color)]">
-            Foydalanuvchilar tomonidan eng ko'p beriladigan savollarga javoblar.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {faqs.map((faq, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-2">
-              <h4 className="font-bold text-sm text-[var(--text-color)] flex items-start gap-2">
+            <div key={i} className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-1.5">
+              <h4 className="font-bold text-xs text-[var(--text-color)] flex items-start gap-1.5">
                 <span className="text-[var(--main-color)] font-mono">Q.</span>
                 <span>{faq.q}</span>
               </h4>
@@ -517,13 +617,13 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
       </section>
 
       {/* 7. QUICK ACTION CTAS */}
-      <section className="p-8 rounded-3xl bg-gradient-to-r from-[var(--main-color)]/15 via-[var(--sub-alt)] to-[var(--main-color)]/10 border border-[var(--main-color)]/30 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+      <section className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--main-color)]/30 flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
         <div className="space-y-1">
-          <h3 className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
+          <h3 className="text-lg sm:text-xl font-black text-[var(--text-color)]">
             O'z Tezligingizni Sinashga Tayyormisiz?
           </h3>
-          <p className="text-xs sm:text-sm text-[var(--sub-color)]">
-            Hoziroq yozish testini boshlang yoki do'stlaringiz bilan Battle Arenada kuch sinashing!
+          <p className="text-xs text-[var(--sub-color)]">
+            Hoziroq yozish testini boshlang yoki Battle Arenada bellashing!
           </p>
         </div>
 
@@ -531,7 +631,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           {onStartTyping && (
             <button
               onClick={onStartTyping}
-              className="px-6 py-3 rounded-2xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[var(--main-color)]/25 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer"
             >
               <Keyboard className="w-4 h-4" />
               <span>Yozish Testini Boshlash</span>
@@ -541,7 +641,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           {onGoToBattle && (
             <button
               onClick={onGoToBattle}
-              className="px-5 py-3 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] hover:border-[var(--main-color)] font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Swords className="w-4 h-4 text-rose-500" />
               <span>Battle Arena</span>
@@ -551,7 +651,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           {onGoToLessons && (
             <button
               onClick={onGoToLessons}
-              className="px-5 py-3 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] hover:border-[var(--main-color)] font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
             >
               <GraduationCap className="w-4 h-4 text-emerald-400" />
               <span>Saboqlar</span>
