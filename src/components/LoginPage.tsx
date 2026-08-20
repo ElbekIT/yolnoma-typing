@@ -81,7 +81,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
           </h2>
 
           <p className="text-slate-300 text-base leading-relaxed max-w-xl">
-            Google orqali tizimga kiring va barcha natijalaringiz real vaqt rejimida har bir qurilmangizda avtomatsiz saqlansin. Global reytingda o'z o'rningizni egallang!
+            Google orqali tizimga kiring va barcha natijalaringiz real vaqt rejimida har bir qurilmangizda avtomatik va xavfsiz saqlansin. Global reytingda o'z o'rningizni egallang!
           </p>
 
           {/* Key Advantages Grid */}
@@ -101,7 +101,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                 <Trophy className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm text-white">Jonli Jonli Reyting</h4>
+                <h4 className="font-bold text-sm text-white">Jonli Milliy & Global Reyting</h4>
                 <p className="text-xs text-slate-400 mt-0.5">Telefon va kompyuterdan bir xil reytingda ko'rinishingiz.</p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
               </div>
               <div>
                 <h4 className="font-bold text-sm text-white">Chuqur WPM Analitika</h4>
-                <p className="text-xs text-slate-400 mt-0.5">Anqiylik va xatolar hisobi bilan professional tahlil.</p>
+                <p className="text-xs text-slate-400 mt-0.5">Aniqlik va xatolar hisobi bilan professional tahlil.</p>
               </div>
             </div>
 

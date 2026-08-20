@@ -43,6 +43,9 @@ export interface UserNotificationItem {
   timestamp: number;
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'achievement' | 'level_up';
+  sender?: string;
+  target?: 'all' | string;
+  targetName?: string;
 }
 
 export interface UserProfile {
@@ -165,4 +168,23 @@ export interface CharacterStat {
   totalTyped: number;
   errors: number;
   accuracy: number;
+}
+
+export interface AdminInboxMessage {
+  id: string;
+  name: string;
+  phone?: string;
+  message: string;
+  timestamp: number;
+  isRead: boolean;
+  status?: 'unread' | 'read' | 'replied';
+  userContext?: {
+    isAuth: boolean;
+    email?: string;
+    displayName?: string;
+    wpm?: number;
+    tests?: number;
+    level?: number;
+    uid?: string;
+  };
 }

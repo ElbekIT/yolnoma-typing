@@ -10,7 +10,6 @@ import {
   Clock,
   Check,
   Shield,
-  Download,
   Trash2,
   AlertTriangle,
   Lock,
@@ -20,7 +19,12 @@ import {
   CheckCircle2,
   RefreshCw,
   Search,
-  Ban
+  Ban,
+  Bell,
+  Mail,
+  MessageSquare,
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
@@ -36,13 +40,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     profile,
     loading,
     updateUserProfile,
-    exportPersonalData,
     deleteAccount,
     addNotification,
-    adminUpdateUser
+    adminUpdateUser,
+    notifications,
+    markNotificationRead,
+    clearNotifications
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'admin'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'admin'>('profile');
+  const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'global' | 'direct'>('all');
   const [isEditing, setIsEditing] = useState(false);
 
   // Form State
@@ -210,32 +217,223 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     await adminUpdateUser(targetUser.uid, { isBanned: !targetUser.isBanned });
   };
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const filteredNotifications = notifications.filter((n) => {
+    if (notifFilter === 'unread') return !n.read;
+    if (notifFilter === 'global') return n.target === 'all';
+    if (notifFilter === 'direct') return n.target !== 'all';
+    return true;
+  });
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-      {/* Role Navigation Bar (Admin / User Toggle) */}
-      {profile.role === 'admin' && (
-        <div className="flex items-center gap-2 p-1 bg-[var(--sub-alt)] rounded-2xl w-fit">
+      {/* Top Profile Tab Navigation */}
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-3 flex-wrap">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'profile'
-                ? 'bg-[var(--card-bg)] text-[var(--main-color)] shadow-sm'
-                : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                ? 'bg-[var(--main-color)] text-white shadow-md shadow-[var(--main-color)]/20'
+                : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
             }`}
           >
-            My Profile
+            <User className="w-4 h-4" />
+            <span>Mening Profilim</span>
           </button>
+
           <button
-            onClick={() => setActiveTab('admin')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'admin'
-                ? 'bg-[var(--main-color)] text-white shadow-sm'
-                : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+            onClick={() => setActiveTab('notifications')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer relative ${
+              activeTab === 'notifications'
+                ? 'bg-[var(--main-color)] text-white shadow-md shadow-[var(--main-color)]/20'
+                : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
             }`}
           >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Admin Control Panel</span>
+            <Bell className="w-4 h-4" />
+            <span>Habarnomalar</span>
+            {unreadCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-mono text-[10px] font-black animate-pulse">
+                {unreadCount}
+              </span>
+            )}
           </button>
+
+          {profile.role === 'admin' && (
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'admin'
+                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
+                  : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Admin Boshqaruv</span>
+            </button>
+          )}
+        </div>
+
+        {activeTab === 'notifications' && notifications.length > 0 && (
+          <button
+            onClick={clearNotifications}
+            className="text-xs text-[var(--sub-color)] hover:text-rose-500 font-bold transition-colors cursor-pointer"
+          >
+            Hammasini o'qildi qilish
+          </button>
+        )}
+      </div>
+
+      {activeTab === 'notifications' && (
+        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm space-y-5 animate-in fade-in">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[var(--sub-alt)] pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-[var(--main-color)]/15 text-[var(--main-color)]">
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-[var(--text-color)] tracking-tight">
+                  Sizga Yuborilgan Habarnomalar
+                </h2>
+                <p className="text-xs text-[var(--sub-color)]">
+                  Admin tomonidan yuborilgan eʼlonlar, maxsus xabarlar va tizim yangiliklari
+                </p>
+              </div>
+            </div>
+
+            {notifications.length > 0 && (
+              <button
+                onClick={clearNotifications}
+                className="px-3.5 py-1.5 rounded-xl bg-[var(--sub-alt)] hover:bg-rose-500/10 hover:text-rose-500 text-xs font-bold text-[var(--sub-color)] transition-all cursor-pointer"
+              >
+                Hammasini o'qildi qilish
+              </button>
+            )}
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <button
+              onClick={() => setNotifFilter('all')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                notifFilter === 'all'
+                  ? 'bg-[var(--main-color)] text-white shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              Barchasi ({notifications.length})
+            </button>
+            <button
+              onClick={() => setNotifFilter('unread')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                notifFilter === 'unread'
+                  ? 'bg-rose-500 text-white shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              O'qilmaganlar ({notifications.filter((n) => !n.read).length})
+            </button>
+            <button
+              onClick={() => setNotifFilter('global')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                notifFilter === 'global'
+                  ? 'bg-amber-500 text-black shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              🌐 Umumiy Eʼlonlar
+            </button>
+            <button
+              onClick={() => setNotifFilter('direct')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                notifFilter === 'direct'
+                  ? 'bg-sky-500 text-white shadow-sm'
+                  : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+              }`}
+            >
+              👤 Shaxsiy Xabarlar
+            </button>
+          </div>
+
+          {/* Notifications List */}
+          <div className="space-y-3">
+            {filteredNotifications.length === 0 ? (
+              <div className="py-12 text-center text-xs text-[var(--sub-color)] space-y-2">
+                <Bell className="w-8 h-8 mx-auto opacity-30" />
+                <p>Hozircha hech qanday habarnoma topilmadi</p>
+              </div>
+            ) : (
+              filteredNotifications.map((n) => {
+                const isUnread = !n.read;
+                let icon = <MessageSquare className="w-4 h-4 text-sky-400 shrink-0" />;
+
+                if (n.type === 'success') {
+                  icon = <Check className="w-4 h-4 text-emerald-400 shrink-0" />;
+                } else if (n.type === 'warning') {
+                  icon = <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />;
+                } else if (n.type === 'achievement' || n.type === 'level_up') {
+                  icon = <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />;
+                }
+
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => markNotificationRead(n.id)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                      isUnread
+                        ? 'bg-[var(--card-bg)] border-[var(--main-color)]/50 shadow-md ring-1 ring-[var(--main-color)]/20'
+                        : 'bg-[var(--sub-alt)]/40 border-[var(--sub-alt)] opacity-85 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {icon}
+                        <h4 className="font-extrabold text-sm text-[var(--text-color)] truncate">
+                          {n.title}
+                        </h4>
+                        {n.target === 'all' ? (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono">
+                            Eʼlon
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px] font-bold font-mono">
+                            Shaxsiy
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isUnread && (
+                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                        )}
+                        <span className="text-[10px] text-[var(--sub-color)] font-mono">
+                          {new Date(n.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-[var(--text-color)]/95 leading-relaxed whitespace-pre-wrap pl-6">
+                      {n.message}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[var(--sub-alt)] text-[11px] pl-6">
+                      <span className="font-semibold text-[var(--main-color)]">
+                        Yuboruvchi: {n.sender || 'Admin (Yolnoma)'}
+                      </span>
+                      {isUnread ? (
+                        <span className="text-emerald-500 font-bold hover:underline">
+                          O'qildi deb belgilash ✓
+                        </span>
+                      ) : (
+                        <span className="text-[var(--sub-color)] font-mono">O'qilgan</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
@@ -275,13 +473,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                     <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[var(--card-bg)]" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-2xl font-extrabold text-[var(--text-color)]">{profile.displayName}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-color)]">{profile.displayName}</h2>
                       {profile.isVerified && (
                         <CheckCircle2 className="w-5 h-5 text-sky-400 fill-sky-400/20" title="Verified User" />
                       )}
                       <span className="px-2.5 py-0.5 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)] text-[10px] font-extrabold uppercase">
                         {profile.rankTitle || 'Typing Novice'}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-black uppercase font-mono flex items-center gap-1">
+                        <Award className="w-3 h-3" /> LVL {profile.level || 1}
                       </span>
                     </div>
                     <p className="text-xs text-[var(--sub-color)] font-mono">@{profile.username}</p>
@@ -291,17 +492,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--sub-alt)] text-xs font-semibold hover:bg-[var(--main-color)] hover:text-white transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--sub-alt)] text-xs font-semibold hover:bg-[var(--main-color)] hover:text-white transition-all cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Edit Profile</span>
-                  </button>
-                  <button
-                    onClick={exportPersonalData}
-                    className="p-2 rounded-xl bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] transition-all"
-                    title="Export My Personal Data (JSON)"
-                  >
-                    <Download className="w-4 h-4" />
                   </button>
                 </div>
               </div>

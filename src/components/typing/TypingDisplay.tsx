@@ -439,18 +439,18 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
           </button>
         </div>
 
-        {/* Shortcut Footer Hints */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-80">
+        {/* Shortcut Footer Hints (Desktop only for keyboard hints) */}
+        <div className="hidden sm:flex flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-80">
           <div className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">tab</kbd>
             <span>+</span>
             <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">enter</kbd>
             <span className="ml-1">- yangi matn</span>
           </div>
-          <span className="hidden sm:inline text-[var(--sub-color)]/40">•</span>
+          <span className="text-[var(--sub-color)]/40">•</span>
           <div className="flex items-center gap-1 text-[10px]">
             <Sparkles className="w-3 h-3 text-[var(--main-color)]" />
-            <span>Sichqonchani surish orqali boshqarish</span>
+            <span>Sichqoncha bilan boshqarish</span>
           </div>
         </div>
       </div>
