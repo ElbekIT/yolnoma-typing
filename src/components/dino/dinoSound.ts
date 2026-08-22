@@ -1,10 +1,25 @@
-// Web Audio API Retro 8-bit Sound Synthesizer for Dino Runner Game
+// Web Audio API Retro 8-bit Sound Synthesizer for Dino Runner Game with zero-latency audio
 
 class DinoSoundManager {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
 
-  private initCtx() {
+  constructor() {
+    // Proactively initialize on first user interaction or module load
+    if (typeof window !== 'undefined') {
+      const initAudio = () => {
+        this.initCtx();
+        window.removeEventListener('keydown', initAudio);
+        window.removeEventListener('pointerdown', initAudio);
+        window.removeEventListener('touchstart', initAudio);
+      };
+      window.addEventListener('keydown', initAudio, { once: true, passive: true });
+      window.addEventListener('pointerdown', initAudio, { once: true, passive: true });
+      window.addEventListener('touchstart', initAudio, { once: true, passive: true });
+    }
+  }
+
+  public initCtx() {
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
@@ -29,7 +44,7 @@ class DinoSoundManager {
     this.isMuted = muted;
   }
 
-  // Jump sound: Classic 8-bit rising beep
+  // Jump sound: Instant 8-bit crisp rising beep
   public playJump() {
     if (this.isMuted) return;
     try {
@@ -42,19 +57,19 @@ class DinoSoundManager {
       osc.type = 'square';
       const now = this.ctx.currentTime;
 
-      osc.frequency.setValueAtTime(150, now);
-      osc.frequency.exponentialRampToValueAtTime(650, now + 0.12);
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
 
       gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(now);
-      osc.stop(now + 0.13);
+      osc.stop(now + 0.11);
     } catch {
-      // Audio fallback
+      // Fallback
     }
   }
 
@@ -67,32 +82,28 @@ class DinoSoundManager {
 
       const now = this.ctx.currentTime;
 
-      // Note 1
       const osc1 = this.ctx.createOscillator();
       const gain1 = this.ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(587.33, now); // D5
-      gain1.gain.setValueAtTime(0.15, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0.12, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
       osc1.connect(gain1);
       gain1.connect(this.ctx.destination);
       osc1.start(now);
-      osc1.stop(now + 0.1);
+      osc1.stop(now + 0.09);
 
-      // Note 2
       const osc2 = this.ctx.createOscillator();
       const gain2 = this.ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(880, now + 0.1); // A5
-      gain2.gain.setValueAtTime(0.18, now + 0.1);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(880, now + 0.08);
+      gain2.gain.setValueAtTime(0.14, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
       osc2.connect(gain2);
       gain2.connect(this.ctx.destination);
-      osc2.start(now + 0.1);
-      osc2.stop(now + 0.29);
-    } catch {
-      // Audio fallback
-    }
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.23);
+    } catch {}
   }
 
   // Duck / Swoosh sound
@@ -107,21 +118,21 @@ class DinoSoundManager {
       osc.type = 'triangle';
       const now = this.ctx.currentTime;
 
-      osc.frequency.setValueAtTime(320, now);
-      osc.frequency.exponentialRampToValueAtTime(160, now + 0.08);
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.06);
 
       gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(now);
-      osc.stop(now + 0.09);
+      osc.stop(now + 0.07);
     } catch {}
   }
 
-  // Crash / Game Over: Low crunch boom
+  // Crash / Game Over
   public playGameOver() {
     if (this.isMuted) return;
     try {
@@ -130,21 +141,20 @@ class DinoSoundManager {
 
       const now = this.ctx.currentTime;
 
-      // Low frequency drop
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(180, now);
-      osc.frequency.exponentialRampToValueAtTime(35, now + 0.35);
+      osc.frequency.setValueAtTime(190, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 0.28);
 
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(now);
-      osc.stop(now + 0.36);
+      osc.stop(now + 0.29);
     } catch {}
   }
 }

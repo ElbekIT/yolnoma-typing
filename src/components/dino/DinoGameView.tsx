@@ -10,14 +10,10 @@ import {
   ArrowUp,
   ArrowDown,
   Sparkles,
-  Zap,
-  Award,
-  Flame,
   ChevronRight,
-  Shield,
-  Clock,
   User,
-  Users
+  Flame,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dinoSound } from './dinoSound';
@@ -29,7 +25,6 @@ interface DinoGameViewProps {
   onGoToLeaderboard: () => void;
 }
 
-// Visual Themes
 type DinoTheme = 'classic' | 'theme' | 'neon';
 
 export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard }) => {
@@ -37,19 +32,22 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Game States
+  // HUD DOM element refs for 0-latency, 0-rerender direct updates
+  const scoreTextRef = useRef<HTMLSpanElement | null>(null);
+  const distTextRef = useRef<HTMLSpanElement | null>(null);
+  const dodgedTextRef = useRef<HTMLSpanElement | null>(null);
+  const recordTextRef = useRef<HTMLSpanElement | null>(null);
+
+  // High-level React States (only changed on major lifecycle events, NOT every frame)
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'paused' | 'gameover'>('idle');
-  const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(() => {
     return profile?.dinoHighScore || Number(localStorage.getItem('yolnoma_guest_dino_best') || 0);
   });
-  const [distance, setDistance] = useState<number>(0);
-  const [obstaclesDodged, setObstaclesDodged] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [selectedTheme, setSelectedTheme] = useState<DinoTheme>('theme');
   const [isNewRecord, setIsNewRecord] = useState<boolean>(false);
 
-  // Live top 10 Dino players
+  // Top 10 Dino players
   const [topDinoPlayers, setTopDinoPlayers] = useState<DinoLeaderboardEntry[]>([]);
   const [loadingTop, setLoadingTop] = useState<boolean>(true);
 
@@ -105,10 +103,12 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
     gravity: number;
     jumpVelocity: number;
     groundY: number;
-    nightCycle: number; // 0 = day, 1 = transition, 2 = night
+    nightCycle: number;
     nightOpacity: number;
     milestoneFlash: number;
     obstaclesDodged: number;
+    jumpBuffered: boolean;
+    jumpBufferTimer: number;
 
     // Dino state
     dino: {
@@ -160,18 +160,20 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
     distance: 0,
     speed: 7.2,
     baseSpeed: 7.2,
-    maxSpeed: 14.5,
-    gravity: 0.68,
-    jumpVelocity: -12.5,
-    groundY: 180,
+    maxSpeed: 15.0,
+    gravity: 0.70,
+    jumpVelocity: -12.4,
+    groundY: 184,
     nightCycle: 0,
     nightOpacity: 0,
     milestoneFlash: 0,
     obstaclesDodged: 0,
+    jumpBuffered: false,
+    jumpBufferTimer: 0,
 
     dino: {
       x: 50,
-      y: 136,
+      y: 140,
       width: 44,
       height: 44,
       standHeight: 44,
@@ -218,6 +220,10 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
     }
   });
 
+  // Reference to gameState for handlers
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
+
   // Start / Reset Game Engine
   const startGame = useCallback(() => {
     const g = gameRef.current;
@@ -225,11 +231,13 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
     g.distance = 0;
     g.speed = g.baseSpeed;
     g.obstacles = [];
-    g.nextObstacleDistance = 300;
+    g.nextObstacleDistance = 320;
     g.nightCycle = 0;
     g.nightOpacity = 0;
     g.milestoneFlash = 0;
     g.obstaclesDodged = 0;
+    g.jumpBuffered = false;
+    g.jumpBufferTimer = 0;
 
     g.dino.y = g.groundY - g.dino.standHeight;
     g.dino.height = g.dino.standHeight;
@@ -238,51 +246,67 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
     g.dino.isDucking = false;
     g.dino.legStep = 0;
 
-    setScore(0);
-    setDistance(0);
-    setObstaclesDodged(0);
+    // Instant HUD reset
+    if (scoreTextRef.current) scoreTextRef.current.textContent = '00000';
+    if (distTextRef.current) distTextRef.current.textContent = '0 m';
+    if (dodgedTextRef.current) dodgedTextRef.current.textContent = '0';
+
     setIsNewRecord(false);
     setGameState('playing');
 
-    // Trigger initial jump
+    // Instant jump sound & action on start
     dinoSound.playJump();
     g.dino.vy = g.jumpVelocity;
     g.dino.isJumping = true;
-
     g.lastTime = performance.now();
   }, []);
 
-  const jump = useCallback(() => {
+  // Instant Jump Action (Zero latency)
+  const jumpAction = useCallback(() => {
+    const currentStatus = gameStateRef.current;
     const g = gameRef.current;
-    if (gameState === 'idle' || gameState === 'gameover') {
+
+    if (currentStatus === 'idle' || currentStatus === 'gameover') {
       startGame();
       return;
     }
-    if (gameState !== 'playing') return;
+
+    if (currentStatus !== 'playing') return;
 
     if (!g.dino.isJumping) {
       dinoSound.playJump();
       g.dino.vy = g.jumpVelocity;
       g.dino.isJumping = true;
+      g.jumpBuffered = false;
       if (g.dino.isDucking) {
         g.dino.isDucking = false;
         g.dino.height = g.dino.standHeight;
       }
+    } else {
+      // Buffer jump if near ground (within 40px)
+      const distToGround = (g.groundY - g.dino.height) - g.dino.y;
+      if (distToGround < 45 && g.dino.vy > 0) {
+        g.jumpBuffered = true;
+        g.jumpBufferTimer = 12; // 12 frames window
+      }
     }
-  }, [gameState, startGame]);
+  }, [startGame]);
 
-  const setDuck = useCallback((isDucking: boolean) => {
+  // Instant Duck Action
+  const duckAction = useCallback((isDucking: boolean) => {
+    const currentStatus = gameStateRef.current;
     const g = gameRef.current;
-    if (gameState !== 'playing') return;
+
+    if (currentStatus !== 'playing') return;
 
     if (isDucking) {
       if (!g.dino.isDucking) {
         dinoSound.playDuck();
         g.dino.isDucking = true;
         g.dino.height = g.dino.duckHeight;
-        // Fast fall if airborne
+        // Fast drop when airborne
         if (g.dino.isJumping) {
-          g.dino.vy += 5;
+          g.dino.vy += 6.5;
         }
       }
     } else {
@@ -294,47 +318,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         }
       }
     }
-  }, [gameState]);
-
-  // Keyboard Event Handlers
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Avoid handling if user is in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
-        return;
-      }
-
-      if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        e.preventDefault();
-        jump();
-      } else if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        e.preventDefault();
-        setDuck(true);
-      } else if (e.code === 'KeyP' || e.code === 'Escape') {
-        if (gameState === 'playing') setGameState('paused');
-        else if (gameState === 'paused') setGameState('playing');
-      } else if (e.code === 'KeyR') {
-        startGame();
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
-        return;
-      }
-      if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        setDuck(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [gameState, jump, setDuck, startGame]);
+  }, []);
 
   // End Game & Score Save
   const handleGameOver = useCallback(
@@ -351,6 +335,9 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         if (isPersonalBest) {
           setIsNewRecord(true);
           setHighScore(bestScore);
+          if (recordTextRef.current) {
+            recordTextRef.current.textContent = String(bestScore).padStart(5, '0');
+          }
         }
       } catch (err) {
         console.warn('Error saving dino score:', err);
@@ -359,7 +346,58 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
     [saveDinoScore]
   );
 
-  // Main Canvas Render & Animation Loop
+  // Stable input actions ref to avoid re-binding listeners
+  const actionsRef = useRef({
+    jump: jumpAction,
+    duck: duckAction,
+    start: startGame
+  });
+  actionsRef.current = {
+    jump: jumpAction,
+    duck: duckAction,
+    start: startGame
+  };
+
+  // Keyboard Event Handlers attached ONCE with zero lag
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        actionsRef.current.jump();
+      } else if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        actionsRef.current.duck(true);
+      } else if (e.code === 'KeyP' || e.code === 'Escape') {
+        if (gameStateRef.current === 'playing') setGameState('paused');
+        else if (gameStateRef.current === 'paused') setGameState('playing');
+      } else if (e.code === 'KeyR') {
+        actionsRef.current.start();
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        actionsRef.current.duck(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
+    window.addEventListener('keyup', handleKeyUp, { passive: false });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Main Canvas Render & Animation Loop (Zero-render overhead)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -380,7 +418,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
       g.groundY = height - 28;
 
       // Update logic only when playing
-      if (gameState === 'playing') {
+      if (gameStateRef.current === 'playing') {
         // Increment Score and Distance
         g.distance += (g.speed * 0.08) * dt;
         const currentScore = Math.floor(g.distance * 1.5);
@@ -388,31 +426,45 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         // Milestone beep every 100 points
         if (Math.floor(currentScore / 100) > Math.floor(g.score / 100) && currentScore > 0) {
           dinoSound.playScoreMilestone();
-          g.milestoneFlash = 30; // flash score for ~30 frames
+          g.milestoneFlash = 30;
         }
 
         g.score = currentScore;
-        setScore(g.score);
-        setDistance(Math.floor(g.distance));
 
-        // Speed increases gradually
-        if (g.speed < g.maxSpeed) {
-          g.speed += 0.0015 * dt;
+        // Direct DOM update (ZERO React re-renders during gameplay!)
+        if (scoreTextRef.current) {
+          scoreTextRef.current.textContent = String(g.score).padStart(5, '0');
+        }
+        if (distTextRef.current) {
+          distTextRef.current.textContent = `${Math.floor(g.distance)} m`;
         }
 
-        // Day / Night Cycle Logic (Every 700 points, switches mode)
+        // Speed increases smoothly
+        if (g.speed < g.maxSpeed) {
+          g.speed += 0.0012 * dt;
+        }
+
+        // Day / Night Cycle Logic (Every 700 points)
         const cycle = Math.floor(g.score / 700) % 2;
         if (cycle === 1 && g.nightOpacity < 1) {
-          g.nightOpacity = Math.min(1, g.nightOpacity + 0.015 * dt);
+          g.nightOpacity = Math.min(1, g.nightOpacity + 0.02 * dt);
         } else if (cycle === 0 && g.nightOpacity > 0) {
-          g.nightOpacity = Math.max(0, g.nightOpacity - 0.015 * dt);
+          g.nightOpacity = Math.max(0, g.nightOpacity - 0.02 * dt);
         }
 
         if (g.milestoneFlash > 0) {
           g.milestoneFlash -= dt;
         }
 
-        // Dino Physics & Animation
+        // Jump buffer countdown
+        if (g.jumpBuffered) {
+          g.jumpBufferTimer -= dt;
+          if (g.jumpBufferTimer <= 0) {
+            g.jumpBuffered = false;
+          }
+        }
+
+        // Dino Physics
         if (g.dino.isJumping) {
           g.dino.y += g.dino.vy * dt;
           g.dino.vy += g.gravity * dt;
@@ -422,12 +474,20 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
             g.dino.y = targetGround;
             g.dino.vy = 0;
             g.dino.isJumping = false;
+
+            // Trigger buffered jump instantly
+            if (g.jumpBuffered) {
+              g.jumpBuffered = false;
+              dinoSound.playJump();
+              g.dino.vy = g.jumpVelocity;
+              g.dino.isJumping = true;
+            }
           }
         } else {
           g.dino.y = g.groundY - g.dino.height;
-          // Run leg step animation
+          // Leg running animation
           g.dino.legTimer += dt;
-          if (g.dino.legTimer > 4.5) {
+          if (g.dino.legTimer > 4.2) {
             g.dino.legStep = (g.dino.legStep + 1) % 2;
             g.dino.legTimer = 0;
           }
@@ -463,7 +523,6 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         // Obstacles Spawn Logic
         g.nextObstacleDistance -= g.speed * dt;
         if (g.nextObstacleDistance <= 0) {
-          // Select obstacle type based on score
           const rand = Math.random();
           let type: 'cactus_small' | 'cactus_large' | 'cactus_group' | 'bird' = 'cactus_small';
 
@@ -496,14 +555,13 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
           } else if (type === 'bird') {
             obsW = 40;
             obsH = 28;
-            // 3 flying heights: High (fly under), Mid (duck required), Low (jump required)
             const birdHeightVariant = Math.random();
             if (birdHeightVariant < 0.33) {
               obsY = g.groundY - 74; // High
             } else if (birdHeightVariant < 0.66) {
-              obsY = g.groundY - 50; // Mid: Must duck!
+              obsY = g.groundY - 50; // Mid
             } else {
-              obsY = g.groundY - 26; // Low: Must jump!
+              obsY = g.groundY - 26; // Low
             }
           }
 
@@ -519,18 +577,17 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
             dodged: false
           });
 
-          // Next obstacle interval (smooth randomness)
+          // Next obstacle interval
           const minGap = Math.max(160, 260 - (g.speed - g.baseSpeed) * 12);
           const maxGap = Math.max(300, 480 - (g.speed - g.baseSpeed) * 15);
           g.nextObstacleDistance = minGap + Math.random() * (maxGap - minGap);
         }
 
-        // Move Obstacles & Collision Check
+        // Move Obstacles & Check Collisions
         for (let i = g.obstacles.length - 1; i >= 0; i--) {
           const obs = g.obstacles[i];
           obs.x -= g.speed * dt;
 
-          // Bird wing flapping animation
           if (obs.type === 'bird') {
             obs.birdTimer = (obs.birdTimer || 0) + dt;
             if (obs.birdTimer > 7) {
@@ -543,11 +600,12 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
           if (!obs.dodged && obs.x + obs.width < g.dino.x) {
             obs.dodged = true;
             g.obstaclesDodged += 1;
-            setObstaclesDodged(g.obstaclesDodged);
+            if (dodgedTextRef.current) {
+              dodgedTextRef.current.textContent = String(g.obstaclesDodged);
+            }
           }
 
-          // Precise Pixel Bounding-Box Collision
-          // Generous hitboxes for forgiving gameplay feel (Monkeytype/Chrome style)
+          // Hitbox check
           const dinoBox = {
             x: g.dino.x + 6,
             y: g.dino.y + (g.dino.isDucking ? 4 : 4),
@@ -569,11 +627,10 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
             dinoBox.y + dinoBox.h > obsBox.y;
 
           if (isColliding) {
-            handleGameOver(g.score, g.distance, g.obstaclesDodged);
+            handleGameOver(g.score, Math.floor(g.distance), g.obstaclesDodged);
             break;
           }
 
-          // Remove offscreen obstacles
           if (obs.x < -80) {
             g.obstacles.splice(i, 1);
           }
@@ -583,7 +640,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
       // ================= DRAWING SECTION =================
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Background Theme Fill & Day/Night Transition
+      // 1. Background Fill & Day/Night Transition
       let dayBg = '#f7f7f7';
       let nightBg = '#1c1c1f';
       let dayColor = '#535353';
@@ -601,7 +658,6 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         nightColor = '#ec4899';
       }
 
-      // Base Canvas Background
       ctx.fillStyle = dayBg;
       ctx.fillRect(0, 0, width, height);
 
@@ -612,7 +668,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         ctx.globalAlpha = 1.0;
       }
 
-      // Draw Stars during Night
+      // Stars & Moon
       if (g.nightOpacity > 0.2) {
         ctx.save();
         ctx.globalAlpha = g.nightOpacity * 0.9;
@@ -622,7 +678,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
           ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
           ctx.fill();
         });
-        // Draw Moon
+        // Moon
         ctx.beginPath();
         ctx.arc(width - 90, 35, 12, 0, Math.PI * 2);
         ctx.fillStyle = '#fef08a';
@@ -634,150 +690,137 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         ctx.restore();
       }
 
-      // 2. Draw Clouds
+      // 2. Clouds
       ctx.fillStyle = g.nightOpacity > 0.5 ? 'rgba(255,255,255,0.18)' : 'rgba(120,120,120,0.3)';
       g.clouds.forEach((cloud) => {
-        // Pixel Cloud
-        ctx.fillRect(cloud.x, cloud.y + 4, cloud.width, 8);
-        ctx.fillRect(cloud.x + 8, cloud.y, cloud.width - 16, 12);
-        ctx.fillRect(cloud.x + 14, cloud.y - 4, cloud.width - 28, 16);
+        const cx = Math.floor(cloud.x);
+        const cy = Math.floor(cloud.y);
+        ctx.fillRect(cx, cy + 4, cloud.width, 8);
+        ctx.fillRect(cx + 8, cy, cloud.width - 16, 12);
+        ctx.fillRect(cx + 14, cy - 4, cloud.width - 28, 16);
       });
 
-      // Active Foreground Color
       const activeColor = g.nightOpacity > 0.5 ? nightColor : dayColor;
       ctx.fillStyle = activeColor;
       ctx.strokeStyle = activeColor;
 
-      // 3. Draw Ground Line & Texture
+      // 3. Ground Line
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, g.groundY);
       ctx.lineTo(width, g.groundY);
       ctx.stroke();
 
-      // Ground bumps & pebbles
+      // Ground Pebbles
       g.groundPebbles.forEach((pebble) => {
-        ctx.fillRect(pebble.x, g.groundY + 4, pebble.size * 2, 2);
-        ctx.fillRect(pebble.x + 6, g.groundY + 8, pebble.size, 2);
+        const px = Math.floor(pebble.x);
+        ctx.fillRect(px, g.groundY + 4, pebble.size * 2, 2);
+        ctx.fillRect(px + 6, g.groundY + 8, pebble.size, 2);
       });
 
-      // 4. Draw Obstacles
+      // 4. Obstacles
       g.obstacles.forEach((obs) => {
-        if (obs.type === 'cactus_small') {
-          // Single Small Cactus
-          ctx.fillRect(obs.x + 6, obs.y, 6, obs.height);
-          ctx.fillRect(obs.x, obs.y + 10, 6, 14);
-          ctx.fillRect(obs.x, obs.y + 10, 6, 4);
-          ctx.fillRect(obs.x + 12, obs.y + 6, 6, 14);
-          ctx.fillRect(obs.x + 12, obs.y + 6, 6, 4);
-        } else if (obs.type === 'cactus_large') {
-          // Tall Cactus
-          ctx.fillRect(obs.x + 8, obs.y, 8, obs.height);
-          ctx.fillRect(obs.x, obs.y + 12, 8, 18);
-          ctx.fillRect(obs.x + 16, obs.y + 8, 8, 18);
-        } else if (obs.type === 'cactus_group') {
-          // Double / Triple Cactus Cluster
-          ctx.fillRect(obs.x + 4, obs.y + 4, 6, obs.height - 4);
-          ctx.fillRect(obs.x + 18, obs.y, 7, obs.height);
-          ctx.fillRect(obs.x + 32, obs.y + 6, 6, obs.height - 6);
-          ctx.fillRect(obs.x + 12, obs.y + 12, 6, 10);
-          ctx.fillRect(obs.x + 25, obs.y + 14, 7, 10);
-        } else if (obs.type === 'bird') {
-          // Flying Pterodactyl (2 wing animation states)
-          ctx.fillRect(obs.x + 8, obs.y + 8, 22, 10); // body
-          ctx.fillRect(obs.x, obs.y + 4, 10, 8); // head / beak
-          ctx.fillRect(obs.x + 28, obs.y + 10, 8, 4); // tail
+        const ox = Math.floor(obs.x);
+        const oy = Math.floor(obs.y);
 
-          // Wings Up / Down
+        if (obs.type === 'cactus_small') {
+          ctx.fillRect(ox + 6, oy, 6, obs.height);
+          ctx.fillRect(ox, oy + 10, 6, 14);
+          ctx.fillRect(ox, oy + 10, 6, 4);
+          ctx.fillRect(ox + 12, oy + 6, 6, 14);
+          ctx.fillRect(ox + 12, oy + 6, 6, 4);
+        } else if (obs.type === 'cactus_large') {
+          ctx.fillRect(ox + 8, oy, 8, obs.height);
+          ctx.fillRect(ox, oy + 12, 8, 18);
+          ctx.fillRect(ox + 16, oy + 8, 8, 18);
+        } else if (obs.type === 'cactus_group') {
+          ctx.fillRect(ox + 4, oy + 4, 6, obs.height - 4);
+          ctx.fillRect(ox + 18, oy, 7, obs.height);
+          ctx.fillRect(ox + 32, oy + 6, 6, obs.height - 6);
+          ctx.fillRect(ox + 12, oy + 12, 6, 10);
+          ctx.fillRect(ox + 25, oy + 14, 7, 10);
+        } else if (obs.type === 'bird') {
+          ctx.fillRect(ox + 8, oy + 8, 22, 10);
+          ctx.fillRect(ox, oy + 4, 10, 8);
+          ctx.fillRect(ox + 28, oy + 10, 8, 4);
+
           if (obs.birdFrame === 0) {
-            // Wings Up
-            ctx.fillRect(obs.x + 14, obs.y, 8, 8);
-            ctx.fillRect(obs.x + 18, obs.y - 6, 6, 6);
+            ctx.fillRect(ox + 14, oy, 8, 8);
+            ctx.fillRect(ox + 18, oy - 6, 6, 6);
           } else {
-            // Wings Down
-            ctx.fillRect(obs.x + 14, obs.y + 16, 8, 8);
-            ctx.fillRect(obs.x + 18, obs.y + 22, 6, 6);
+            ctx.fillRect(ox + 14, oy + 16, 8, 8);
+            ctx.fillRect(ox + 18, oy + 22, 6, 6);
           }
         }
       });
 
-      // 5. Draw T-Rex Dino Sprite (Pixel Crisp)
+      // 5. Dino Sprite
       const d = g.dino;
+      const dx = Math.floor(d.x);
+      const dy = Math.floor(d.y);
       ctx.save();
 
       if (d.isDucking) {
-        // Ducking / Crouching Dino
-        ctx.fillRect(d.x, d.y + 10, 36, 14); // Body elongated
-        ctx.fillRect(d.x + 36, d.y + 6, 18, 12); // Head lower
-        ctx.fillRect(d.x + 44, d.y + 14, 10, 4); // Snout
-        ctx.fillRect(d.x - 4, d.y + 14, 6, 6); // Tail
+        ctx.fillRect(dx, dy + 10, 36, 14);
+        ctx.fillRect(dx + 36, dy + 6, 18, 12);
+        ctx.fillRect(dx + 44, dy + 14, 10, 4);
+        ctx.fillRect(dx - 4, dy + 14, 6, 6);
 
-        // Eye
-        if (gameState === 'gameover') {
+        if (gameStateRef.current === 'gameover') {
           ctx.fillStyle = g.nightOpacity > 0.5 ? '#111' : '#fff';
-          ctx.fillText('X', d.x + 42, d.y + 12);
+          ctx.fillText('X', dx + 42, dy + 12);
         } else if (d.eyeOpen) {
           ctx.fillStyle = g.nightOpacity > 0.5 ? '#111' : '#fff';
-          ctx.fillRect(d.x + 42, d.y + 8, 3, 3);
+          ctx.fillRect(dx + 42, dy + 8, 3, 3);
         }
 
-        // Ducking Legs running
         ctx.fillStyle = activeColor;
         if (d.legStep === 0) {
-          ctx.fillRect(d.x + 10, d.y + 24, 4, 4);
-          ctx.fillRect(d.x + 24, d.y + 24, 8, 4);
+          ctx.fillRect(dx + 10, dy + 24, 4, 4);
+          ctx.fillRect(dx + 24, dy + 24, 8, 4);
         } else {
-          ctx.fillRect(d.x + 10, d.y + 24, 8, 4);
-          ctx.fillRect(d.x + 24, d.y + 24, 4, 4);
+          ctx.fillRect(dx + 10, dy + 24, 8, 4);
+          ctx.fillRect(dx + 24, dy + 24, 4, 4);
         }
       } else {
-        // Standing / Running / Jumping Dino
-        // Main Body & Spine
-        ctx.fillRect(d.x + 12, d.y + 14, 18, 18);
-        ctx.fillRect(d.x + 6, d.y + 18, 8, 12);
-        ctx.fillRect(d.x, d.y + 22, 8, 8); // tail
+        ctx.fillRect(dx + 12, dy + 14, 18, 18);
+        ctx.fillRect(dx + 6, dy + 18, 8, 12);
+        ctx.fillRect(dx, dy + 22, 8, 8);
 
-        // Neck & Head
-        ctx.fillRect(d.x + 20, d.y + 6, 12, 14);
-        ctx.fillRect(d.x + 24, d.y, 18, 14);
-        ctx.fillRect(d.x + 34, d.y + 8, 8, 6); // mouth / snout
+        ctx.fillRect(dx + 20, dy + 6, 12, 14);
+        ctx.fillRect(dx + 24, dy, 18, 14);
+        ctx.fillRect(dx + 34, dy + 8, 8, 6);
 
-        // Small arms
-        ctx.fillRect(d.x + 30, d.y + 18, 6, 3);
-        ctx.fillRect(d.x + 34, d.y + 18, 2, 6);
+        ctx.fillRect(dx + 30, dy + 18, 6, 3);
+        ctx.fillRect(dx + 34, dy + 18, 2, 6);
 
-        // Eye
-        if (gameState === 'gameover') {
+        if (gameStateRef.current === 'gameover') {
           ctx.fillStyle = g.nightOpacity > 0.5 ? '#111' : '#fff';
-          ctx.fillRect(d.x + 30, d.y + 3, 4, 4);
+          ctx.fillRect(dx + 30, dy + 3, 4, 4);
           ctx.fillStyle = '#ef4444';
-          ctx.fillRect(d.x + 31, d.y + 4, 2, 2);
+          ctx.fillRect(dx + 31, dy + 4, 2, 2);
         } else if (d.eyeOpen) {
           ctx.fillStyle = g.nightOpacity > 0.5 ? '#111' : '#fff';
-          ctx.fillRect(d.x + 30, d.y + 3, 4, 4);
+          ctx.fillRect(dx + 30, dy + 3, 4, 4);
         }
 
-        // Legs
         ctx.fillStyle = activeColor;
         if (d.isJumping) {
-          // Legs tucked
-          ctx.fillRect(d.x + 14, d.y + 32, 4, 8);
-          ctx.fillRect(d.x + 22, d.y + 32, 4, 6);
+          ctx.fillRect(dx + 14, dy + 32, 4, 8);
+          ctx.fillRect(dx + 22, dy + 32, 4, 6);
         } else if (d.legStep === 0) {
-          // Left Leg Down, Right Leg Up
-          ctx.fillRect(d.x + 14, d.y + 32, 4, 12);
-          ctx.fillRect(d.x + 14, d.y + 42, 6, 2);
-          ctx.fillRect(d.x + 22, d.y + 32, 4, 6);
+          ctx.fillRect(dx + 14, dy + 32, 4, 12);
+          ctx.fillRect(dx + 14, dy + 42, 6, 2);
+          ctx.fillRect(dx + 22, dy + 32, 4, 6);
         } else {
-          // Right Leg Down, Left Leg Up
-          ctx.fillRect(d.x + 14, d.y + 32, 4, 6);
-          ctx.fillRect(d.x + 22, d.y + 32, 4, 12);
-          ctx.fillRect(d.x + 22, d.y + 42, 6, 2);
+          ctx.fillRect(dx + 14, dy + 32, 4, 6);
+          ctx.fillRect(dx + 22, dy + 32, 4, 12);
+          ctx.fillRect(dx + 22, dy + 42, 6, 2);
         }
       }
       ctx.restore();
 
-      // 6. Draw Retro Score in Canvas Header (Pixel Arcade Style)
+      // 6. Retro Score in Canvas Header
       ctx.save();
       ctx.font = 'bold 16px "Courier New", monospace';
       ctx.fillStyle = activeColor;
@@ -785,9 +828,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
       const formattedScore = String(g.score).padStart(5, '0');
       const formattedHigh = String(Math.max(g.score, highScore)).padStart(5, '0');
 
-      // Milestone blinking
       const showScore = g.milestoneFlash <= 0 || Math.floor(g.milestoneFlash / 4) % 2 === 0;
-
       if (showScore) {
         ctx.fillText(`HI ${formattedHigh}  ${formattedScore}`, width - 180, 28);
       } else {
@@ -796,7 +837,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
       ctx.restore();
 
       // 7. Idle / Start Overlay
-      if (gameState === 'idle') {
+      if (gameStateRef.current === 'idle') {
         ctx.save();
         ctx.fillStyle = activeColor;
         ctx.font = 'bold 14px "Courier New", monospace';
@@ -808,14 +849,13 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
       }
 
       // 8. Game Over Overlay
-      if (gameState === 'gameover') {
+      if (gameStateRef.current === 'gameover') {
         ctx.save();
         ctx.fillStyle = activeColor;
         ctx.font = 'bold 20px "Courier New", monospace';
         ctx.textAlign = 'center';
         ctx.fillText('G A M E   O V E R', width / 2, height / 2 - 16);
 
-        // Restart Icon
         ctx.beginPath();
         ctx.arc(width / 2, height / 2 + 18, 16, 0, Math.PI * 2);
         ctx.strokeStyle = activeColor;
@@ -827,7 +867,6 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         ctx.restore();
       }
 
-      // Loop
       g.animationFrameId = requestAnimationFrame(render);
     };
 
@@ -839,10 +878,10 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         cancelAnimationFrame(gameRef.current.animationFrameId);
       }
     };
-  }, [gameState, highScore, selectedTheme, handleGameOver]);
+  }, [highScore, selectedTheme, handleGameOver]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
+    <div className="w-full max-w-5xl mx-auto space-y-6">
       {/* Top Banner & Header */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1.5">
@@ -862,7 +901,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleToggleSound}
-            className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold ${
+            className={`p-2.5 rounded-2xl border cursor-pointer flex items-center gap-1.5 text-xs font-bold ${
               isMuted
                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
                 : 'bg-[var(--sub-alt)] border-[var(--sub-color)]/20 text-[var(--text-color)] hover:border-[var(--main-color)]'
@@ -875,7 +914,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
 
           <button
             onClick={onGoToLeaderboard}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-xs shadow-md cursor-pointer hover:opacity-95"
           >
             <Trophy className="w-4 h-4" />
             <span>Dino Reytingi</span>
@@ -887,12 +926,12 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left / Center: Interactive Game Canvas */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Game Stats HUD Bar */}
+          {/* Game Stats HUD Bar (Zero-lag DOM text updating) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center">
               <span className="text-[10px] uppercase font-bold text-[var(--sub-color)] block">Joriy Ball</span>
-              <span className="text-xl sm:text-2xl font-black text-[var(--text-color)] font-mono">
-                {String(score).padStart(5, '0')}
+              <span ref={scoreTextRef} className="text-xl sm:text-2xl font-black text-[var(--text-color)] font-mono">
+                00000
               </span>
             </div>
 
@@ -901,53 +940,65 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
                 <Trophy className="w-3 h-3 text-amber-500" />
                 <span>Shaxsiy Rekord</span>
               </span>
-              <span className="text-xl sm:text-2xl font-black text-amber-500 font-mono">
+              <span ref={recordTextRef} className="text-xl sm:text-2xl font-black text-amber-500 font-mono">
                 {String(highScore).padStart(5, '0')}
               </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center">
               <span className="text-[10px] uppercase font-bold text-[var(--sub-color)] block">Masofa</span>
-              <span className="text-xl sm:text-2xl font-black text-[var(--main-color)] font-mono">
-                {distance} m
+              <span ref={distTextRef} className="text-xl sm:text-2xl font-black text-[var(--main-color)] font-mono">
+                0 m
               </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center">
               <span className="text-[10px] uppercase font-bold text-[var(--sub-color)] block">O'tilgan To'siqlar</span>
-              <span className="text-xl sm:text-2xl font-black text-emerald-500 font-mono">
-                {obstaclesDodged}
+              <span ref={dodgedTextRef} className="text-xl sm:text-2xl font-black text-emerald-500 font-mono">
+                0
               </span>
             </div>
           </div>
 
           {/* Canvas Wrapper */}
-          <div className="relative rounded-3xl overflow-hidden border-2 border-[var(--sub-alt)] shadow-lg bg-[var(--card-bg)]">
+          <div className="relative rounded-3xl overflow-hidden border-2 border-[var(--sub-alt)] shadow-md bg-[var(--card-bg)]">
             <canvas
               ref={canvasRef}
               width={800}
               height={220}
-              onClick={jump}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                jumpAction();
+              }}
               className="w-full h-auto cursor-pointer block select-none touch-none"
             />
 
-            {/* In-Game Touch Controls on Mobile / Tablet */}
+            {/* Instant Touch Buttons (Zero 300ms latency on mobile/tablets) */}
             <div className="p-3 bg-[var(--card-bg)] border-t border-[var(--sub-alt)] flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <button
-                  onClick={jump}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--main-color)] text-white font-black text-sm uppercase tracking-wider shadow-md active:scale-95 hover:opacity-90 transition-all cursor-pointer"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    jumpAction();
+                  }}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--main-color)] text-white font-black text-sm uppercase tracking-wider shadow-md select-none touch-manipulation cursor-pointer hover:opacity-90 active:opacity-75"
                 >
                   <ArrowUp className="w-4 h-4" />
                   <span>SAKRASH (SPACE)</span>
                 </button>
 
                 <button
-                  onMouseDown={() => setDuck(true)}
-                  onMouseUp={() => setDuck(false)}
-                  onTouchStart={() => setDuck(true)}
-                  onTouchEnd={() => setDuck(false)}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] font-black text-sm uppercase tracking-wider border border-[var(--sub-color)]/20 active:scale-95 hover:border-[var(--main-color)] transition-all cursor-pointer select-none"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    duckAction(true);
+                  }}
+                  onPointerUp={(e) => {
+                    e.preventDefault();
+                    duckAction(false);
+                  }}
+                  onPointerLeave={() => duckAction(false)}
+                  onPointerCancel={() => duckAction(false)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] font-black text-sm uppercase tracking-wider border border-[var(--sub-color)]/20 select-none touch-manipulation cursor-pointer hover:border-[var(--main-color)]"
                 >
                   <ArrowDown className="w-4 h-4 text-[var(--main-color)]" />
                   <span>EGILISH (↓ DUCK)</span>
@@ -958,7 +1009,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
                 {gameState === 'playing' ? (
                   <button
                     onClick={() => setGameState('paused')}
-                    className="p-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] transition-all"
+                    className="p-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)]"
                     title="To'xtatish (Pause)"
                   >
                     <Pause className="w-4 h-4" />
@@ -966,7 +1017,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
                 ) : gameState === 'paused' ? (
                   <button
                     onClick={() => setGameState('playing')}
-                    className="p-3 rounded-2xl bg-[var(--main-color)] text-white transition-all"
+                    className="p-3 rounded-2xl bg-[var(--main-color)] text-white"
                     title="Davom ettirish"
                   >
                     <Play className="w-4 h-4" />
@@ -975,7 +1026,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
 
                 <button
                   onClick={startGame}
-                  className="p-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] transition-all"
+                  className="p-3 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)]"
                   title="Qayta boshlash"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -1009,7 +1060,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
               </div>
               <button
                 onClick={onGoToLeaderboard}
-                className="text-[11px] font-bold text-[var(--main-color)] hover:underline flex items-center gap-1"
+                className="text-[11px] font-bold text-[var(--main-color)] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <span>To'liq Reyting</span>
                 <ChevronRight className="w-3 h-3" />
@@ -1032,7 +1083,7 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
                   return (
                     <div
                       key={player.uid || idx}
-                      className={`flex items-center justify-between p-2.5 rounded-2xl border transition-all ${
+                      className={`flex items-center justify-between p-2.5 rounded-2xl border ${
                         isCurrent
                           ? 'bg-[var(--main-color)]/10 border-[var(--main-color)]/50'
                           : 'bg-[var(--sub-alt)] border-transparent'
