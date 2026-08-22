@@ -10,12 +10,16 @@ import {
   Flame,
   Zap,
   Trophy,
-  Clock
+  Clock,
+  Gamepad2,
+  Sparkles,
+  Award,
+  ArrowUpRight
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
-import { UserProfile } from '../../types';
+import { UserProfile, DinoLeaderboardEntry } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
 
 interface LeaderboardEntry extends UserProfile {
@@ -26,14 +30,18 @@ interface LeaderboardEntry extends UserProfile {
 }
 
 export const LeaderboardView: React.FC = () => {
-  const { profile: currentUser } = useAuth();
+  const { profile: currentUser, user } = useAuth();
 
-  // Mode selections (Monkeytype style)
+  // Top Level Mode: Typing vs Dino Game
+  const [boardType, setBoardType] = useState<'typing' | 'dino'>('typing');
+
+  // Typing Mode selections (Monkeytype style)
   const [selectedCategory, setSelectedCategory] = useState<'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily'>('all-time-uzbek');
   const [selectedTimeMode, setSelectedTimeMode] = useState<'all' | 15 | 30 | 60 | 120>('all');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [rankings, setRankings] = useState<LeaderboardEntry[]>([]);
+  const [dinoRankings, setDinoRankings] = useState<DinoLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Pagination
@@ -44,7 +52,10 @@ export const LeaderboardView: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // 1. Fetch Typing Leaderboard
   useEffect(() => {
+    if (boardType !== 'typing') return;
+
     let unsubscribeRtdb: (() => void) | null = null;
     setLoading(true);
 
@@ -108,12 +119,12 @@ export const LeaderboardView: React.FC = () => {
         console.warn('Guest profile load error:', e);
       }
 
-      const getWpmForSelectedMode = (user: UserProfile) => {
-        if (selectedTimeMode === 15) return user.time15Wpm || user.highestWpm || 0;
-        if (selectedTimeMode === 30) return user.time30Wpm || user.highestWpm || 0;
-        if (selectedTimeMode === 60) return user.time60Wpm || user.highestWpm || 0;
-        if (selectedTimeMode === 120) return user.time120Wpm || user.highestWpm || 0;
-        return user.highestWpm || 0;
+      const getWpmForSelectedMode = (u: UserProfile) => {
+        if (selectedTimeMode === 15) return u.time15Wpm || u.highestWpm || 0;
+        if (selectedTimeMode === 30) return u.time30Wpm || u.highestWpm || 0;
+        if (selectedTimeMode === 60) return u.time60Wpm || u.highestWpm || 0;
+        if (selectedTimeMode === 120) return u.time120Wpm || u.highestWpm || 0;
+        return u.highestWpm || 0;
       };
 
       const updateRankingsFromMap = () => {
@@ -127,12 +138,12 @@ export const LeaderboardView: React.FC = () => {
           source.sort((a, b) => getWpmForSelectedMode(b) - getWpmForSelectedMode(a));
         }
 
-        const formatted = source.map((user, idx) => {
-          const wpmVal = getWpmForSelectedMode(user);
+        const formatted = source.map((u, idx) => {
+          const wpmVal = getWpmForSelectedMode(u);
           const rawWpmVal = Math.round(wpmVal * 1.05);
-          const consistencyVal = Math.min(99.9, Math.max(82.0, (user.highestAccuracy || 98) - 2.5));
-          const dateStr = user.lastActive
-            ? new Date(user.lastActive).toLocaleDateString('en-GB', {
+          const consistencyVal = Math.min(99.9, Math.max(82.0, (u.highestAccuracy || 98) - 2.5));
+          const dateStr = u.lastActive
+            ? new Date(u.lastActive).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric'
@@ -140,8 +151,8 @@ export const LeaderboardView: React.FC = () => {
             : 'Bugun';
 
           return {
-            ...user,
-            highestWpm: wpmVal, // display the mode-specific WPM
+            ...u,
+            highestWpm: wpmVal,
             rank: idx + 1,
             rawWpm: rawWpmVal,
             consistency: Number(consistencyVal.toFixed(2)),
@@ -159,7 +170,6 @@ export const LeaderboardView: React.FC = () => {
       try {
         const bannedSet = new Set<string>();
 
-        // Listen to banned users list in real-time
         const bannedRef = ref(rtdb, 'bannedUsers');
         onValue(bannedRef, (bannedSnap) => {
           bannedSet.clear();
@@ -169,7 +179,6 @@ export const LeaderboardView: React.FC = () => {
               if (bannedObj[id]) bannedSet.add(id);
             });
           }
-          // Remove banned users from map
           bannedSet.forEach((bannedId) => {
             fetchedMap.delete(bannedId);
           });
@@ -180,7 +189,6 @@ export const LeaderboardView: React.FC = () => {
         unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
           if (snapshot.exists()) {
             const val = snapshot.val();
-            // Delete removed keys from fetchedMap
             const activeKeys = new Set(Object.keys(val));
             fetchedMap.forEach((_, mapKey) => {
               if (!activeKeys.has(mapKey) && mapKey !== currentUser?.uid && !mapKey.startsWith('guest_')) {
@@ -192,7 +200,6 @@ export const LeaderboardView: React.FC = () => {
               const item = val[key];
               if (!item) return;
 
-              // Skip if banned
               if (bannedSet.has(key) || item.isBanned || item.isBlocked) {
                 fetchedMap.delete(key);
                 return;
@@ -277,10 +284,111 @@ export const LeaderboardView: React.FC = () => {
     return () => {
       if (unsubscribeRtdb) unsubscribeRtdb();
     };
-  }, [selectedCategory, selectedTimeMode, currentUser]);
+  }, [boardType, selectedCategory, selectedTimeMode, currentUser]);
 
-  // Filter rankings
-  const filtered = rankings.filter((r) => {
+  // 2. Fetch Dino Runner Leaderboard
+  useEffect(() => {
+    if (boardType !== 'dino') return;
+
+    setLoading(true);
+    let unsubscribeDino: (() => void) | null = null;
+
+    try {
+      const dinoRef = ref(rtdb, 'dino_leaderboard');
+      unsubscribeDino = onValue(dinoRef, (snapshot) => {
+        const list: DinoLeaderboardEntry[] = [];
+        const seenUids = new Set<string>();
+
+        // Current User Local check
+        if (currentUser && (currentUser.dinoHighScore || 0) > 0) {
+          list.push({
+            uid: currentUser.uid,
+            displayName: currentUser.displayName || currentUser.username,
+            username: currentUser.username,
+            score: currentUser.dinoHighScore || 0,
+            distance: currentUser.dinoMaxDistance || 0,
+            obstaclesDodged: 0,
+            avatarUrl: currentUser.avatarUrl,
+            level: currentUser.level,
+            rankTitle: currentUser.rankTitle,
+            country: currentUser.country,
+            timestamp: currentUser.lastActive || Date.now()
+          });
+          seenUids.add(currentUser.uid);
+        }
+
+        // Guest user local check
+        try {
+          const guestId = localStorage.getItem('yolnoma_guest_id');
+          const guestDino = Number(localStorage.getItem('yolnoma_guest_dino_best') || 0);
+          if (guestId && guestDino > 0 && !currentUser) {
+            list.push({
+              uid: guestId,
+              displayName: `Mehmon (${guestId.replace('guest_', '')})`,
+              username: guestId,
+              score: guestDino,
+              distance: Math.round(guestDino * 0.7),
+              obstaclesDodged: 0,
+              avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
+              level: 1,
+              rankTitle: 'Mehmon Runner',
+              country: '🇺🇿 Uzbekistan',
+              timestamp: Date.now()
+            });
+            seenUids.add(guestId);
+          }
+        } catch {}
+
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          Object.keys(val).forEach((k) => {
+            const item = val[k];
+            if (!item || !item.score) return;
+
+            const existingIdx = list.findIndex((p) => p.uid === k);
+            const entry: DinoLeaderboardEntry = {
+              uid: k,
+              displayName: item.displayName || item.username || 'Dino Runner',
+              username: item.username || k,
+              score: item.score,
+              distance: item.distance || Math.round(item.score * 0.7),
+              obstaclesDodged: item.obstaclesDodged || 0,
+              avatarUrl: item.avatarUrl,
+              level: item.level || 1,
+              rankTitle: item.rankTitle || 'Runner',
+              country: item.country || '🇺🇿 Uzbekistan',
+              timestamp: item.timestamp || Date.now()
+            };
+
+            if (existingIdx >= 0) {
+              if (entry.score >= list[existingIdx].score) {
+                list[existingIdx] = entry;
+              }
+            } else {
+              list.push(entry);
+            }
+          });
+        }
+
+        // Sort descending by score
+        list.sort((a, b) => (b.score || 0) - (a.score || 0));
+        const ranked = list.map((item, idx) => ({ ...item, rank: idx + 1 }));
+
+        setDinoRankings(ranked);
+        setLoading(false);
+      });
+    } catch (e) {
+      console.warn('Dino Leaderboard fetch error:', e);
+      setLoading(false);
+    }
+
+    return () => {
+      if (unsubscribeDino) unsubscribeDino();
+    };
+  }, [boardType, currentUser]);
+
+  // Filter rankings for Typing
+  const filteredTyping = rankings.filter((r) => {
     const uname = r.username || '';
     const dname = r.displayName || '';
     return (
@@ -289,8 +397,19 @@ export const LeaderboardView: React.FC = () => {
     );
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pageRankings = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Filter rankings for Dino
+  const filteredDino = dinoRankings.filter((r) => {
+    const uname = r.username || '';
+    const dname = r.displayName || '';
+    return (
+      uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dname.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  const activeFilteredList = boardType === 'typing' ? filteredTyping : filteredDino;
+  const totalPages = Math.max(1, Math.ceil(activeFilteredList.length / pageSize));
+  const pageRankings = activeFilteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const openUserProfile = (u: UserProfile) => {
     setSelectedUser(u);
@@ -298,6 +417,9 @@ export const LeaderboardView: React.FC = () => {
   };
 
   const getHeaderTitle = () => {
+    if (boardType === 'dino') {
+      return 'T-Rex Dino Runner Barcha Rekordlar Reytingi 🦖';
+    }
     const timeLabel = selectedTimeMode === 'all' ? 'All Times' : `Time ${selectedTimeMode}`;
     if (selectedCategory === 'all-time-uzbek') return `All-time Uzbek ${timeLabel} Leaderboard`;
     if (selectedCategory === 'all-time-english') return `All-time English ${timeLabel} Leaderboard`;
@@ -306,102 +428,164 @@ export const LeaderboardView: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-4 px-2 sm:px-4 font-mono select-none">
-      {/* Monkeytype Layout: Grid with Left Sidebar & Main Table */}
+    <div className="w-full max-w-6xl mx-auto py-4 px-2 sm:px-4 font-mono select-none space-y-6 animate-in fade-in duration-200">
+      {/* Top Level Game Switcher Tabs */}
+      <div className="p-1.5 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm max-w-xl mx-auto grid grid-cols-2 gap-2">
+        <button
+          onClick={() => {
+            setBoardType('typing');
+            setCurrentPage(1);
+            setSearchQuery('');
+          }}
+          className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all cursor-pointer ${
+            boardType === 'typing'
+              ? 'bg-[var(--main-color)] text-white shadow-md'
+              : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+          }`}
+        >
+          <Zap className="w-4 h-4" />
+          <span>Tez Yozish Reytingi</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setBoardType('dino');
+            setCurrentPage(1);
+            setSearchQuery('');
+          }}
+          className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all cursor-pointer ${
+            boardType === 'dino'
+              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-md'
+              : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+          }`}
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span>Dino Runner Rekordlari 🦖</span>
+        </button>
+      </div>
+
+      {/* Grid with Left Sidebar & Main Table */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
         {/* Left Sidebar Category & Time Selectors */}
         <div className="md:col-span-1 space-y-4">
-          {/* Main Category Group */}
-          <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-            <button
-              onClick={() => {
-                setSelectedCategory('all-time-uzbek');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
-                selectedCategory === 'all-time-uzbek'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5" />
-                <span>all-time uzbek</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedCategory('all-time-english');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
-                selectedCategory === 'all-time-english'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5" />
-                <span>all-time english</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedCategory('weekly-xp');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
-                selectedCategory === 'weekly-xp'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>weekly xp</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedCategory('daily');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
-                selectedCategory === 'daily'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Flame className="w-3.5 h-3.5 text-rose-400" />
-                <span>daily</span>
-              </span>
-            </button>
-          </div>
-
-          {/* Time Mode Sub-Group */}
-          {selectedCategory !== 'weekly-xp' && (
-            <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-              {(['all', 15, 30, 60, 120] as const).map((tm) => (
+          {boardType === 'typing' ? (
+            <>
+              {/* Main Category Group */}
+              <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
                 <button
-                  key={tm}
                   onClick={() => {
-                    setSelectedTimeMode(tm);
+                    setSelectedCategory('all-time-uzbek');
                     setCurrentPage(1);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                    selectedTimeMode === tm
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    selectedCategory === 'all-time-uzbek'
                       ? 'bg-[var(--main-color)] text-white'
                       : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
                   }`}
                 >
-                  <Trophy className="w-3.5 h-3.5 opacity-70" />
-                  <span>{tm === 'all' ? 'all' : `time ${tm}`}</span>
+                  <span className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>all-time uzbek</span>
+                  </span>
                 </button>
-              ))}
+
+                <button
+                  onClick={() => {
+                    setSelectedCategory('all-time-english');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    selectedCategory === 'all-time-english'
+                      ? 'bg-[var(--main-color)] text-white'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>all-time english</span>
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedCategory('weekly-xp');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    selectedCategory === 'weekly-xp'
+                      ? 'bg-[var(--main-color)] text-white'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    <span>weekly xp</span>
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedCategory('daily');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    selectedCategory === 'daily'
+                      ? 'bg-[var(--main-color)] text-white'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Flame className="w-3.5 h-3.5 text-rose-400" />
+                    <span>daily</span>
+                  </span>
+                </button>
+              </div>
+
+              {/* Time Mode Sub-Group */}
+              {selectedCategory !== 'weekly-xp' && (
+                <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
+                  {(['all', 15, 30, 60, 120] as const).map((tm) => (
+                    <button
+                      key={tm}
+                      onClick={() => {
+                        setSelectedTimeMode(tm);
+                        setCurrentPage(1);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                        selectedTimeMode === tm
+                          ? 'bg-[var(--main-color)] text-white'
+                          : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                      }`}
+                    >
+                      <Trophy className="w-3.5 h-3.5 opacity-70" />
+                      <span>{tm === 'all' ? 'all' : `time ${tm}`}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            /* Dino Left Sidebar Info Card */
+            <div className="bg-[var(--card-bg)]/60 p-4 rounded-3xl border border-[var(--sub-alt)] space-y-3 text-xs">
+              <div className="flex items-center gap-2 text-amber-500 font-black">
+                <Gamepad2 className="w-4 h-4" />
+                <span>Dino Runner Haqida</span>
+              </div>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                Har safar Dino o'yinini o'ynaganingizda to'plagan eng yuqori balingiz ushbu umumiy peshqadamlar jadvaliga avtomatik kiritiladi.
+              </p>
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)] space-y-1.5 font-bold">
+                <div className="text-[var(--text-color)] flex items-center justify-between">
+                  <span>Sizning Rekordingiz:</span>
+                  <span className="text-amber-500 font-mono">
+                    {currentUser?.dinoHighScore || localStorage.getItem('yolnoma_guest_dino_best') || 0}
+                  </span>
+                </div>
+                <div className="text-[var(--sub-color)] flex items-center justify-between text-[11px]">
+                  <span>Jami Ishtirokchilar:</span>
+                  <span className="text-[var(--text-color)]">{dinoRankings.length} ta</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -415,7 +599,7 @@ export const LeaderboardView: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Foydalanuvchini izlash..."
+              placeholder="Ism yoki username izlash..."
               className="w-full pl-8 pr-3 py-2 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] outline-none focus:border-[var(--main-color)]"
             />
           </div>
@@ -430,7 +614,7 @@ export const LeaderboardView: React.FC = () => {
                 {getHeaderTitle()}
               </h1>
               <p className="text-xs text-[var(--sub-color)] mt-0.5">
-                Real-vaqt rejimida yangilanish • Jami {filtered.length} ta typer
+                Real-vaqt rejimida sinxronlanadi • Jami {activeFilteredList.length} ta ishtirokchi
               </p>
             </div>
 
@@ -439,7 +623,7 @@ export const LeaderboardView: React.FC = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30"
+                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -451,127 +635,218 @@ export const LeaderboardView: React.FC = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30"
+                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30 cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Table View (Ultra-Lightweight Monkeytype Style) */}
+          {/* Table View (Typing vs Dino) */}
           <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
-                  <th className="pb-2 px-2 w-10">#</th>
-                  <th className="pb-2 px-2">name</th>
-                  <th className="pb-2 px-2 text-center">mode</th>
-                  <th className="pb-2 px-2 text-right">wpm</th>
-                  <th className="pb-2 px-2 text-right">accuracy</th>
-                  <th className="pb-2 px-2 text-right hidden sm:table-cell">raw</th>
-                  <th className="pb-2 px-2 text-right hidden md:table-cell">consistency</th>
-                  <th className="pb-2 px-2 text-right">date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--sub-alt)]/40">
-                {pageRankings.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-[var(--sub-color)]">
-                      <p className="font-bold text-sm text-[var(--text-color)] mb-1">Foydalanuvchilar topilmadi</p>
-                      <p className="text-xs">Ushbu rejimda reyting natijalari hali kiritilmagan.</p>
-                    </td>
+            {boardType === 'typing' ? (
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
+                    <th className="pb-2 px-2 w-10">#</th>
+                    <th className="pb-2 px-2">name</th>
+                    <th className="pb-2 px-2 text-center">mode</th>
+                    <th className="pb-2 px-2 text-right">wpm</th>
+                    <th className="pb-2 px-2 text-right">accuracy</th>
+                    <th className="pb-2 px-2 text-right hidden sm:table-cell">raw</th>
+                    <th className="pb-2 px-2 text-right hidden md:table-cell">consistency</th>
+                    <th className="pb-2 px-2 text-right">date</th>
                   </tr>
-                ) : (
-                  pageRankings.map((item) => {
-                    const isSelf = currentUser?.uid === item.uid;
+                </thead>
+                <tbody className="divide-y divide-[var(--sub-alt)]/40">
+                  {pageRankings.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-12 text-center text-[var(--sub-color)]">
+                        <p className="font-bold text-sm text-[var(--text-color)] mb-1">Foydalanuvchilar topilmadi</p>
+                        <p className="text-xs">Ushbu rejimda reyting natijalari hali kiritilmagan.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    pageRankings.map((item: any) => {
+                      const isSelf = currentUser?.uid === item.uid;
 
-                    // Compute active mode for this row
-                    const activeTimeDisplay =
-                      selectedTimeMode === 'all'
-                        ? item.time15Wpm === item.highestWpm
-                          ? '15s'
-                          : item.time30Wpm === item.highestWpm
-                          ? '30s'
-                          : item.time120Wpm === item.highestWpm
-                          ? '120s'
-                          : '60s'
-                        : `${selectedTimeMode}s`;
+                      const activeTimeDisplay =
+                        selectedTimeMode === 'all'
+                          ? item.time15Wpm === item.highestWpm
+                            ? '15s'
+                            : item.time30Wpm === item.highestWpm
+                            ? '30s'
+                            : item.time120Wpm === item.highestWpm
+                            ? '120s'
+                            : '60s'
+                          : `${selectedTimeMode}s`;
 
-                    return (
-                      <tr
-                        key={item.uid}
-                        onClick={() => openUserProfile(item)}
-                        className={`cursor-pointer transition-all hover:bg-[var(--sub-alt)]/30 ${
-                          isSelf ? 'bg-[var(--main-color)]/10 font-bold' : ''
-                        }`}
-                      >
-                        {/* Rank */}
-                        <td className="py-2.5 px-2 font-bold text-[var(--sub-color)]">
-                          {item.rank === 1 ? (
-                            <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
-                          ) : (
-                            item.rank
-                          )}
-                        </td>
-
-                        {/* Name & Avatar */}
-                        <td className="py-2.5 px-2">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
-                              alt="avatar"
-                              className="w-5 h-5 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]"
-                            />
-                            <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
-                              {item.displayName}
-                            </span>
-                            {item.isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
-                            {isSelf && (
-                              <span className="px-1 py-0.2 rounded bg-[var(--main-color)] text-white text-[8px] font-black uppercase">
-                                siz
-                              </span>
+                      return (
+                        <tr
+                          key={item.uid}
+                          onClick={() => openUserProfile(item)}
+                          className={`cursor-pointer transition-all hover:bg-[var(--sub-alt)]/30 ${
+                            isSelf ? 'bg-[var(--main-color)]/10 font-bold' : ''
+                          }`}
+                        >
+                          <td className="py-2.5 px-2 font-bold text-[var(--sub-color)]">
+                            {item.rank === 1 ? (
+                              <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
+                            ) : item.rank === 2 ? (
+                              <span className="text-slate-300 font-bold">2</span>
+                            ) : item.rank === 3 ? (
+                              <span className="text-amber-700 font-bold">3</span>
+                            ) : (
+                              item.rank
                             )}
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Mode */}
-                        <td className="py-2.5 px-2 text-center">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--main-color)] font-mono text-[10px] font-black border border-[var(--sub-color)]/20 shadow-xs">
-                            <Clock className="w-3 h-3 text-[var(--main-color)] shrink-0" />
-                            <span>{activeTimeDisplay}</span>
-                          </span>
-                        </td>
+                          <td className="py-2.5 px-2">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
+                                alt="avatar"
+                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]"
+                              />
+                              <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
+                                {item.displayName}
+                              </span>
+                              {item.isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
+                              {isSelf && (
+                                <span className="px-1 py-0.2 rounded bg-[var(--main-color)] text-white text-[8px] font-black uppercase">
+                                  siz
+                                </span>
+                              )}
+                            </div>
+                          </td>
 
-                        {/* WPM */}
-                        <td className="py-2.5 px-2 text-right font-black text-sm text-[var(--main-color)]">
-                          {item.highestWpm}
-                        </td>
+                          <td className="py-2.5 px-2 text-center">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--main-color)] font-mono text-[10px] font-black border border-[var(--sub-color)]/20 shadow-xs">
+                              <Clock className="w-3 h-3 text-[var(--main-color)] shrink-0" />
+                              <span>{activeTimeDisplay}</span>
+                            </span>
+                          </td>
 
-                        {/* Accuracy */}
-                        <td className="py-2.5 px-2 text-right text-[var(--text-color)]">
-                          {(item.highestAccuracy || 98).toFixed(2)}%
-                        </td>
+                          <td className="py-2.5 px-2 text-right font-black text-sm text-[var(--main-color)]">
+                            {item.highestWpm}
+                          </td>
 
-                        {/* Raw WPM */}
-                        <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden sm:table-cell">
-                          {item.rawWpm || Math.round((item.highestWpm || 0) * 1.05)}
-                        </td>
+                          <td className="py-2.5 px-2 text-right text-[var(--text-color)]">
+                            {(item.highestAccuracy || 98).toFixed(2)}%
+                          </td>
 
-                        {/* Consistency */}
-                        <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden md:table-cell">
-                          {(item.consistency || 92.5).toFixed(2)}%
-                        </td>
+                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden sm:table-cell">
+                            {item.rawWpm || Math.round((item.highestWpm || 0) * 1.05)}
+                          </td>
 
-                        {/* Date */}
-                        <td className="py-2.5 px-2 text-right text-[var(--sub-color)] text-[10px]">
-                          {item.testDateFormatted || 'Bugun'}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden md:table-cell">
+                            {(item.consistency || 92.5).toFixed(2)}%
+                          </td>
+
+                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] text-[10px]">
+                            {item.testDateFormatted || 'Bugun'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              /* Dino Leaderboard Table */
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
+                    <th className="pb-2 px-2 w-12">#</th>
+                    <th className="pb-2 px-2">Ishtirokchi</th>
+                    <th className="pb-2 px-2 text-center">Unvon / Level</th>
+                    <th className="pb-2 px-2 text-right">Rekord Ball</th>
+                    <th className="pb-2 px-2 text-right hidden sm:table-cell">Masofa</th>
+                    <th className="pb-2 px-2 text-right">Sana</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--sub-alt)]/40">
+                  {pageRankings.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-[var(--sub-color)]">
+                        <Gamepad2 className="w-8 h-8 text-[var(--main-color)] mx-auto mb-2 opacity-60" />
+                        <p className="font-bold text-sm text-[var(--text-color)] mb-1">Dino rekordlari hali mavjud emas</p>
+                        <p className="text-xs">Dino Runner menyusiga o'tib birinchi rekordni o'rnating!</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    pageRankings.map((item: any) => {
+                      const isSelf = currentUser?.uid === item.uid;
+                      const dateStr = item.timestamp
+                        ? new Date(item.timestamp).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })
+                        : 'Bugun';
+
+                      return (
+                        <tr
+                          key={item.uid}
+                          className={`transition-all hover:bg-[var(--sub-alt)]/30 ${
+                            isSelf ? 'bg-amber-500/10 font-bold' : ''
+                          }`}
+                        >
+                          <td className="py-2.5 px-2 font-bold text-[var(--sub-color)]">
+                            {item.rank === 1 ? (
+                              <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
+                            ) : item.rank === 2 ? (
+                              <span className="w-5 h-5 rounded-full bg-slate-300 text-black flex items-center justify-center text-[10px] font-black">2</span>
+                            ) : item.rank === 3 ? (
+                              <span className="w-5 h-5 rounded-full bg-amber-700 text-white flex items-center justify-center text-[10px] font-black">3</span>
+                            ) : (
+                              <span className="px-1">{item.rank}</span>
+                            )}
+                          </td>
+
+                          <td className="py-2.5 px-2">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
+                                alt="avatar"
+                                className="w-6 h-6 rounded-full object-cover shrink-0 bg-[var(--sub-alt)] border border-[var(--sub-color)]/20"
+                              />
+                              <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
+                                {item.displayName}
+                              </span>
+                              {isSelf && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500 text-black text-[8px] font-black uppercase">
+                                  siz
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="py-2.5 px-2 text-center">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-[10px] font-bold border border-[var(--sub-color)]/20 shadow-xs">
+                              <Award className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span>LVL {item.level || 1}</span>
+                            </span>
+                          </td>
+
+                          <td className="py-2.5 px-2 text-right font-black text-sm text-amber-500 font-mono">
+                            {item.score}
+                          </td>
+
+                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden sm:table-cell">
+                            {item.distance || Math.round(item.score * 0.7)} m
+                          </td>
+
+                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] text-[10px]">
+                            {dateStr}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

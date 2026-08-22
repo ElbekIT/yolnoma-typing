@@ -26,7 +26,8 @@ import {
   Info,
   Check,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  Gamepad2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -55,6 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
+    { id: 'dino', label: 'Dino Runner (O\'yin)', enLabel: 'Dino Runner Game', icon: Gamepad2 },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
     { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy },
     { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },

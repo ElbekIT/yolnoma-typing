@@ -111,6 +111,28 @@ export interface UserProfile {
   rankChange?: 'up' | 'down' | 'same';
   rankChangeAmount?: number;
   profileVisitorsCount?: number;
+
+  // Dino Runner Stats
+  dinoHighScore?: number;
+  dinoGamesPlayed?: number;
+  dinoMaxDistance?: number;
+}
+
+export interface DinoLeaderboardEntry {
+  uid: string;
+  username: string;
+  displayName: string;
+  score: number;
+  distance?: number;
+  obstaclesDodged?: number;
+  avatarUrl?: string;
+  level?: number;
+  rankTitle?: string;
+  country?: string;
+  timestamp: number;
+  isBanned?: boolean;
+  isBlocked?: boolean;
+  rank?: number;
 }
 
 export interface TypingResult {

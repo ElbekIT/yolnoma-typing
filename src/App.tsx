@@ -25,6 +25,7 @@ import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
+import { DinoGameView } from './components/dino/DinoGameView';
 import { AdminView } from './components/admin/AdminView';
 import { OwnerAboutView } from './components/owner/OwnerAboutView';
 import { antiCheatManager } from './utils/antiCheat';
@@ -479,6 +480,9 @@ function MainAppContent() {
             initialRoomCode={pendingBattleRoomCode}
             onClearInitialRoomCode={() => setPendingBattleRoomCode(null)}
           />
+        )}
+        {activeTab === 'dino' && (
+          <DinoGameView onGoToLeaderboard={() => setActiveTab('leaderboard')} />
         )}
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'leaderboard' && <LeaderboardView />}
