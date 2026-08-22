@@ -17,13 +17,23 @@ import {
   Bot,
   Link as LinkIcon,
   Check,
-  AlertCircle
+  AlertCircle,
+  Skull
 } from 'lucide-react';
 import { RaceTrack, RacerProgress } from './RaceTrack';
+import { DinoBattleTrack } from './DinoBattleTrack';
+import { DinoBattleGame } from './DinoBattleGame';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { getLanguageInfo } from '../../config/languages';
-import { calculateWpm, calculateAccuracy, calculateNetWpm, getLockedMinLength, getNextWordStartIndexOnSpace } from '../../utils/typingEngine';
+import {
+  calculateWpm,
+  calculateAccuracy,
+  calculateNetWpm,
+  getLockedMinLength,
+  getNextWordStartIndexOnSpace
+} from '../../utils/typingEngine';
+import { BattleGameType, DinoBattlePlayerState } from '../../types';
 import { rtdb } from '../../config/firebase';
 import { ref, set, onValue, update, remove, get } from 'firebase/database';
 
@@ -37,11 +47,12 @@ interface RealPlayerItem {
   lastActive?: number;
   country?: string;
   level?: number;
+  dinoHighScore?: number;
 }
 
-// Generate clean 6-character uppercase room code (e.g. "K7N9XP") - 100% valid in Firebase RTDB paths
+// Generate clean 6-character uppercase room code (e.g. "K7N9XP")
 const generateCleanRoomCode = (): string => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confused I, O, 0, 1 & Firebase illegal characters
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let result = '';
   for (let i = 0; i < 6; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -61,6 +72,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const { user, profile } = useAuth();
   const { language } = useSettings();
 
+  // Active Mode: 'speedway' (Typing 1v1) or 'dino' (Dino Runner 1v1)
+  const [battleType, setBattleType] = useState<BattleGameType>('speedway');
+
   // Match States: 'lobby' | 'waiting' | 'countdown' | 'racing' | 'finished'
   const [gameState, setGameState] = useState<'lobby' | 'waiting' | 'countdown' | 'racing' | 'finished'>('lobby');
   const gameStateRef = useRef<string>('lobby');
@@ -79,11 +93,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const [countdown, setCountdown] = useState<number>(5);
   const isCountingDownRef = useRef<boolean>(false);
 
-  // Text & Typing Engine
+  // Speedway Typing State
   const [targetText, setTargetText] = useState<string>('');
   const [typedInput, setTypedInput] = useState<string>('');
 
-  // Real Players from Firebase RTDB
+  // Real Players from RTDB
   const [realPlayers, setRealPlayers] = useState<RealPlayerItem[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);
 
@@ -101,7 +115,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const currentName = profile?.displayName || user?.displayName || `Mehmon_${currentUid.slice(-4)}`;
   const currentAvatar = profile?.avatarUrl || user?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUid}`;
 
-  // Player Stats
+  // Speedway Player Stats
   const [myProgress, setMyProgress] = useState<RacerProgress>({
     id: currentUid,
     name: currentName,
@@ -120,6 +134,28 @@ export const BattleView: React.FC<BattleViewProps> = ({
     accuracy: 100,
     progressPercent: 0,
     carColor: 'red',
+    isBot: false
+  });
+
+  // Dino Battle Player Stats
+  const [myDinoState, setMyDinoState] = useState<DinoBattlePlayerState>({
+    id: currentUid,
+    name: currentName,
+    avatarUrl: currentAvatar,
+    score: 0,
+    distance: 0,
+    obstaclesDodged: 0,
+    isAlive: true
+  });
+
+  const [opponentDinoState, setOpponentDinoState] = useState<DinoBattlePlayerState>({
+    id: 'dino_opp',
+    name: 'Raqib (Kutilmoqda)',
+    avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=DinoOpp',
+    score: 0,
+    distance: 0,
+    obstaclesDodged: 0,
+    isAlive: true,
     isBot: false
   });
 
@@ -144,7 +180,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   }, []);
 
-  // Handle incoming initialRoomCode from props (e.g. invite modal)
+  // Handle incoming initialRoomCode from props
   useEffect(() => {
     if (initialRoomCode) {
       const cleanCode = initialRoomCode.trim().toUpperCase();
@@ -156,7 +192,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   }, [initialRoomCode]);
 
-  // 2. Join Room using Room Code
+  // Join Room using Room Code
   const handleJoinRoom = async (codeToJoin?: string) => {
     const rawCode = codeToJoin || inputRoomCode;
     const code = rawCode.trim().toUpperCase();
@@ -170,7 +206,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
     try {
       let snapshot = await get(ref(rtdb, `battles/rooms/${code}`));
       if (!snapshot.exists()) {
-        // Retry once after brief delay in case room creation was delayed
         await new Promise((res) => setTimeout(res, 400));
         snapshot = await get(ref(rtdb, `battles/rooms/${code}`));
       }
@@ -186,44 +221,68 @@ export const BattleView: React.FC<BattleViewProps> = ({
         return;
       }
 
+      const roomGameType: BattleGameType = roomVal.gameType || 'speedway';
+      setBattleType(roomGameType);
       setActiveRoomCode(code);
-      setTargetText(roomVal.targetText);
       setIsHost(false);
       setIsBotMatch(false);
-      setTypedInput('');
       setWinnerId(null);
+      setDisqualifiedReason(null);
 
-      const guestData: RacerProgress = {
-        id: currentUid,
-        name: currentName,
-        avatarUrl: currentAvatar,
-        wpm: 0,
-        accuracy: 100,
-        progressPercent: 0,
-        carColor: 'red'
-      };
+      if (roomGameType === 'speedway') {
+        setTargetText(roomVal.targetText || '');
+        setTypedInput('');
 
-      setMyProgress(guestData);
-      setOpponentProgress(roomVal.host);
+        const guestData: RacerProgress = {
+          id: currentUid,
+          name: currentName,
+          avatarUrl: currentAvatar,
+          wpm: 0,
+          accuracy: 100,
+          progressPercent: 0,
+          carColor: 'red'
+        };
 
-      // Join room in Firebase & set status to 'countdown'
-      await update(ref(rtdb, `battles/rooms/${code}`), {
-        guest: guestData,
-        status: 'countdown'
-      });
+        setMyProgress(guestData);
+        setOpponentProgress(roomVal.host);
 
-      // Immediately start 5s countdown for guest
-      start5SecCountdown(false, roomVal.targetText);
+        await update(ref(rtdb, `battles/rooms/${code}`), {
+          guest: guestData,
+          status: 'countdown'
+        });
 
-      // Listen to room updates
-      listenToRoom(code, false);
+        start5SecCountdown(false, roomVal.targetText);
+      } else {
+        // Dino Game Type
+        const guestDinoData: DinoBattlePlayerState = {
+          id: currentUid,
+          name: currentName,
+          avatarUrl: currentAvatar,
+          score: 0,
+          distance: 0,
+          obstaclesDodged: 0,
+          isAlive: true
+        };
+
+        setMyDinoState(guestDinoData);
+        setOpponentDinoState(roomVal.host);
+
+        await update(ref(rtdb, `battles/rooms/${code}`), {
+          guest: guestDinoData,
+          status: 'countdown'
+        });
+
+        start5SecCountdown(false);
+      }
+
+      listenToRoom(code, false, roomGameType);
     } catch (err) {
       console.error('Error joining RTDB room:', err);
       setJoinError("Xonaga ulanishda xatolik yuz berdi. Kodni to'g'ri kiritganingizni tekshiring.");
     }
   };
 
-  // Load Real Users from Firebase RTDB Leaderboard node
+  // Load Real Users from Firebase RTDB Leaderboard
   useEffect(() => {
     try {
       const leaderboardRef = ref(rtdb, 'leaderboard');
@@ -244,11 +303,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${key}`,
                 lastActive: p.lastActive || Date.now(),
                 country: p.country || '🇺🇿 Uzbekistan',
-                level: p.level || 1
+                level: p.level || 1,
+                dinoHighScore: p.dinoHighScore || 0
               });
             }
           });
-          items.sort((a, b) => b.highestWpm - a.highestWpm);
+          items.sort((a, b) => (battleType === 'dino' ? (b.dinoHighScore || 0) - (a.dinoHighScore || 0) : b.highestWpm - a.highestWpm));
           setRealPlayers(items);
         } else {
           setRealPlayers([]);
@@ -259,7 +319,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
       console.warn('Load RTDB real players error:', e);
       setLoadingPlayers(false);
     }
-  }, [currentUid]);
+  }, [currentUid, battleType]);
 
   // Generate random race text
   const generateBattleText = () => {
@@ -271,61 +331,100 @@ export const BattleView: React.FC<BattleViewProps> = ({
     return langInfo.words.slice(0, 22).join(' ');
   };
 
-  // 1. Create a Custom Room Code (e.g. "K7N9XP")
-  const handleCreateRoom = async () => {
+  // Create Custom Room
+  const handleCreateRoom = async (mode: BattleGameType = battleType) => {
     setJoinError(null);
     const code = generateCleanRoomCode();
-    const text = generateBattleText();
-
     setActiveRoomCode(code);
-    setTargetText(text);
     setIsHost(true);
     setIsBotMatch(false);
     setGameState('waiting');
+    setBattleType(mode);
 
-    const initialHostData: RacerProgress = {
-      id: currentUid,
-      name: currentName,
-      avatarUrl: currentAvatar,
-      wpm: 0,
-      accuracy: 100,
-      progressPercent: 0,
-      carColor: 'blue'
-    };
+    if (mode === 'speedway') {
+      const text = generateBattleText();
+      setTargetText(text);
 
-    setMyProgress(initialHostData);
-    setOpponentProgress({
-      id: 'waiting',
-      name: "Raqib kutilmoqda...",
-      avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=waiting',
-      wpm: 0,
-      accuracy: 100,
-      progressPercent: 0,
-      carColor: 'red'
-    });
+      const initialHostData: RacerProgress = {
+        id: currentUid,
+        name: currentName,
+        avatarUrl: currentAvatar,
+        wpm: 0,
+        accuracy: 100,
+        progressPercent: 0,
+        carColor: 'blue'
+      };
 
-    // Write room to Firebase Realtime Database
-    try {
-      await set(ref(rtdb, `battles/rooms/${code}`), {
-        code,
-        host: initialHostData,
-        guest: null,
-        targetText: text,
-        status: 'waiting',
-        winnerUid: null,
-        createdAt: Date.now()
+      setMyProgress(initialHostData);
+      setOpponentProgress({
+        id: 'waiting',
+        name: 'Raqib kutilmoqda...',
+        avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=waiting',
+        wpm: 0,
+        accuracy: 100,
+        progressPercent: 0,
+        carColor: 'red'
       });
 
-      // Listen to room updates
-      listenToRoom(code, true);
-    } catch (err) {
-      console.error('Failed to create RTDB room:', err);
-      setJoinError('Xona yaratishda xatolik yuz berdi. Internetingizni tekshirib qayta urinib ko\'ring.');
+      try {
+        await set(ref(rtdb, `battles/rooms/${code}`), {
+          code,
+          gameType: 'speedway',
+          host: initialHostData,
+          guest: null,
+          targetText: text,
+          status: 'waiting',
+          winnerUid: null,
+          createdAt: Date.now()
+        });
+        listenToRoom(code, true, 'speedway');
+      } catch (err) {
+        console.error('Failed to create RTDB room:', err);
+        setJoinError("Xona yaratishda xatolik yuz berdi. Internetingizni tekshirib qayta urinib ko'ring.");
+      }
+    } else {
+      // Dino Room Creation
+      const initialHostDino: DinoBattlePlayerState = {
+        id: currentUid,
+        name: currentName,
+        avatarUrl: currentAvatar,
+        score: 0,
+        distance: 0,
+        obstaclesDodged: 0,
+        isAlive: true
+      };
+
+      setMyDinoState(initialHostDino);
+      setOpponentDinoState({
+        id: 'waiting',
+        name: 'Raqib kutilmoqda...',
+        avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=waiting',
+        score: 0,
+        distance: 0,
+        obstaclesDodged: 0,
+        isAlive: true
+      });
+
+      try {
+        await set(ref(rtdb, `battles/rooms/${code}`), {
+          code,
+          gameType: 'dino',
+          host: initialHostDino,
+          guest: null,
+          status: 'waiting',
+          winnerUid: null,
+          createdAt: Date.now()
+        });
+        listenToRoom(code, true, 'dino');
+      } catch (err) {
+        console.error('Failed to create RTDB dino room:', err);
+        setJoinError("Xona yaratishda xatolik yuz berdi.");
+      }
     }
   };
 
   // Real-time listener for Room updates
-  const listenToRoom = (code: string, amIHost: boolean) => {
+  const listenToRoom = (code: string, amIHost: boolean, currentType: BattleGameType) => {
     if (roomUnsubRef.current) roomUnsubRef.current();
 
     const roomRef = ref(rtdb, `battles/rooms/${code}`);
@@ -335,7 +434,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
       const opponentRoleData = amIHost ? data.guest : data.host;
       if (opponentRoleData) {
-        setOpponentProgress(opponentRoleData);
+        if (currentType === 'speedway') {
+          setOpponentProgress(opponentRoleData);
+        } else {
+          setOpponentDinoState(opponentRoleData);
+        }
       }
 
       // Handle status transitions
@@ -346,7 +449,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
       if (data.status === 'racing' && gameStateRef.current === 'countdown') {
         setGameState('racing');
         startTimeRef.current = Date.now();
-        setTimeout(() => inputRef.current?.focus(), 100);
+        if (currentType === 'speedway') {
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }
       }
 
       if (data.status === 'finished') {
@@ -360,15 +465,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
     roomUnsubRef.current = unsub;
   };
 
-  // 3. Invite a Real Registered Player from the List
+  // Invite Player from List
   const handleInvitePlayer = async (player: RealPlayerItem) => {
     const code = generateCleanRoomCode();
-    setInviteSentStatus(`⚔️ @${player.username} ga taklifnoma yuborildi (Kodi: ${code}). Kutilmoqda...`);
+    setInviteSentStatus(`⚔️ @${player.username} ga ${battleType === 'dino' ? '🦖 Dino Dueli' : '🏎️ Speedway'} taklifi yuborildi (Kodi: ${code}). Kutilmoqda...`);
 
     // Create room
-    await handleCreateRoomWithCode(code);
+    await handleCreateRoom(battleType);
 
-    // Write invite into target user's Firebase RTDB inbox
+    // Write invite into target user's RTDB inbox
     try {
       await set(ref(rtdb, `battles/invites/${player.uid}`), {
         inviteId: 'inv_' + Date.now(),
@@ -377,6 +482,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         inviterName: currentName,
         inviterAvatar: currentAvatar,
         inviterWpm: profile?.highestWpm || 85,
+        gameType: battleType,
         timestamp: Date.now()
       });
     } catch (err) {
@@ -384,75 +490,67 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
-  const handleCreateRoomWithCode = async (code: string) => {
-    const text = generateBattleText();
-    setActiveRoomCode(code);
-    setTargetText(text);
-    setIsHost(true);
-    setIsBotMatch(false);
-    setGameState('waiting');
-
-    const initialHostData: RacerProgress = {
-      id: currentUid,
-      name: currentName,
-      avatarUrl: currentAvatar,
-      wpm: 0,
-      accuracy: 100,
-      progressPercent: 0,
-      carColor: 'blue'
-    };
-
-    setMyProgress(initialHostData);
-
-    try {
-      await set(ref(rtdb, `battles/rooms/${code}`), {
-        code,
-        host: initialHostData,
-        guest: null,
-        targetText: text,
-        status: 'waiting',
-        winnerUid: null,
-        createdAt: Date.now()
-      });
-      listenToRoom(code, true);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  // 4. Start Solo Practice match vs AI Bot
+  // Start Solo Practice vs AI Bot
   const startBotMatch = () => {
-    const text = generateBattleText();
-    setTargetText(text);
-    setTypedInput('');
     setWinnerId(null);
+    setDisqualifiedReason(null);
     setIsBotMatch(true);
 
     const generatedCode = generateCleanRoomCode();
     setActiveRoomCode(generatedCode);
 
-    setMyProgress({
-      id: currentUid,
-      name: currentName,
-      avatarUrl: currentAvatar,
-      wpm: 0,
-      accuracy: 100,
-      progressPercent: 0,
-      carColor: 'blue'
-    });
+    if (battleType === 'speedway') {
+      const text = generateBattleText();
+      setTargetText(text);
+      setTypedInput('');
 
-    setOpponentProgress({
-      id: 'bot_id',
-      name: 'Cyber_Racer_Bot',
-      avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberBot',
-      wpm: 0,
-      accuracy: 100,
-      progressPercent: 0,
-      carColor: 'red',
-      isBot: true
-    });
+      setMyProgress({
+        id: currentUid,
+        name: currentName,
+        avatarUrl: currentAvatar,
+        wpm: 0,
+        accuracy: 100,
+        progressPercent: 0,
+        carColor: 'blue'
+      });
 
-    start5SecCountdown(true, text);
+      setOpponentProgress({
+        id: 'bot_id',
+        name: 'Cyber_Racer_Bot',
+        avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberBot',
+        wpm: 0,
+        accuracy: 100,
+        progressPercent: 0,
+        carColor: 'red',
+        isBot: true
+      });
+
+      start5SecCountdown(true, text);
+    } else {
+      // Dino Bot Match
+      setMyDinoState({
+        id: currentUid,
+        name: currentName,
+        avatarUrl: currentAvatar,
+        score: 0,
+        distance: 0,
+        obstaclesDodged: 0,
+        isAlive: true
+      });
+
+      setOpponentDinoState({
+        id: 'bot_dino_id',
+        name: 'Cyber_Dino_Bot',
+        avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberDinoBot',
+        score: 0,
+        distance: 0,
+        obstaclesDodged: 0,
+        isAlive: true,
+        isBot: true
+      });
+
+      start5SecCountdown(true);
+    }
   };
 
   // 5-Second Countdown Logic
@@ -474,16 +572,17 @@ export const BattleView: React.FC<BattleViewProps> = ({
         setGameState('racing');
         startTimeRef.current = Date.now();
 
-        setTimeout(() => inputRef.current?.focus(), 100);
-
-        if (isBot || isBotMatch) {
-          startBotEngine(textToUse || targetText, 85);
+        if (battleType === 'speedway') {
+          setTimeout(() => inputRef.current?.focus(), 100);
+          if (isBot || isBotMatch) {
+            startBotEngine(textToUse || targetText, 85);
+          }
         }
       }
     }, 1000);
   };
 
-  // AI Bot engine
+  // Speedway AI Bot engine
   const startBotEngine = (text: string, botTargetWpm = 85) => {
     if (botTimerRef.current) clearInterval(botTimerRef.current);
 
@@ -521,11 +620,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }, intervalMs);
   };
 
-  // Handle My Typing KeyDown
+  // Speedway KeyDown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (gameState !== 'racing') return;
 
-    // Lock completed words: Cannot backspace into previous words once space is typed
     if (e.key === 'Backspace') {
       const minLen = getLockedMinLength(targetText, typedInput);
       if (typedInput.length <= minLen) {
@@ -534,7 +632,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }
     }
 
-    // Space Key: Pad input to jump directly to start of next word
     if (e.key === ' ') {
       const targetNextIdx = getNextWordStartIndexOnSpace(targetText, typedInput);
       if (targetNextIdx && typedInput.length < targetNextIdx) {
@@ -547,7 +644,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
-  // Process progress and check win condition
+  // Process Speedway progress
   const processTypedInputUpdate = (val: string) => {
     const elapsedSeconds = Math.max(1, (Date.now() - startTimeRef.current) / 1000);
 
@@ -561,7 +658,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }
     });
 
-    // Net WPM: mistake penalty lowers WPM instead of increasing it!
     const liveWpm = calculateNetWpm(correctCount, val.length, elapsedSeconds);
     const liveAcc = calculateAccuracy(correctCount, val.length);
     const progress = Math.min(100, (val.length / Math.max(1, targetText.length)) * 100);
@@ -575,7 +671,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     setMyProgress(updatedMyProgress);
 
-    // Sync to Realtime Database if in 1v1 Room
     if (activeRoomCode && !isBotMatch) {
       const roleKey = isHost ? 'host' : 'guest';
       update(ref(rtdb, `battles/rooms/${activeRoomCode}/${roleKey}`), {
@@ -585,7 +680,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }).catch(() => {});
     }
 
-    // Check if finished race
     if (val.length >= targetText.length) {
       if (botTimerRef.current) clearInterval(botTimerRef.current);
       setGameState('finished');
@@ -621,13 +715,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
-  // Handle My Typing Input & RTDB update
+  // Speedway Input Change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (gameState !== 'racing') return;
-
     const val = e.target.value;
 
-    // Word Boundary Lock: Prevent backspacing into completed words
     const minLen = getLockedMinLength(targetText, typedInput);
     if (val.length < minLen) {
       return;
@@ -635,6 +727,31 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     setTypedInput(val);
     processTypedInputUpdate(val);
+  };
+
+  // Dino Battle Finish Handler
+  const handleDinoFinish = (winningPlayerId: string, myFinalScore: number, oppFinalScore: number) => {
+    setWinnerId(winningPlayerId);
+    setGameState('finished');
+
+    setMyDinoState((prev) => ({
+      ...prev,
+      score: myFinalScore,
+      isWinner: winningPlayerId === currentUid
+    }));
+
+    setOpponentDinoState((prev) => ({
+      ...prev,
+      score: oppFinalScore,
+      isWinner: winningPlayerId !== currentUid
+    }));
+
+    if (activeRoomCode && !isBotMatch) {
+      update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {
+        status: 'finished',
+        winnerUid: winningPlayerId
+      }).catch(() => {});
+    }
   };
 
   const handleCopyCode = () => {
@@ -664,38 +781,73 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 animate-in fade-in duration-200">
-      {/* Sleek Header Title */}
+      {/* Sleek Header Title with Mode Switcher */}
       <div className="bg-gradient-to-r from-[#0c1322] via-[#11192e] to-[#0c1322] border border-cyan-500/30 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-white">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-md shadow-cyan-500/20 shrink-0">
-            <Swords className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 via-indigo-600 to-amber-500 flex items-center justify-center shadow-md shadow-cyan-500/20 shrink-0">
+            {battleType === 'dino' ? <span className="text-xl">🦖</span> : <Swords className="w-5 h-5 text-white" />}
           </div>
           <div>
             <h1 className="text-base font-black tracking-tight flex items-center gap-2">
-              BATTLE ARENA <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">1v1 REAL TIME</span>
+              BATTLE ARENA{' '}
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                1v1 REAL TIME
+              </span>
             </h1>
             <p className="text-[11px] text-slate-400">
-              Ishtirokchilar bilan real vaqt rejimida tezkor yozish dueliga kirishing!
+              {battleType === 'dino'
+                ? 'Do\'stlar yoki bot bilan T-Rex Dino Runner rekord va omon qolish dueliga kiring!'
+                : 'Ishtirokchilar bilan real vaqt rejimida tezkor yozish dueliga kirishing!'}
             </p>
           </div>
         </div>
 
-        {gameState !== 'lobby' && (
-          <button
-            onClick={() => {
-              if (botTimerRef.current) clearInterval(botTimerRef.current);
-              if (roomUnsubRef.current) roomUnsubRef.current();
-              setGameState('lobby');
-              setActiveRoomCode('');
-              setInviteSentStatus(null);
-              setJoinError(null);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Lobbiyga Qaytish</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Lobby Mode Toggle Tabs if in Lobby */}
+          {gameState === 'lobby' && (
+            <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+              <button
+                onClick={() => setBattleType('speedway')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 ${
+                  battleType === 'speedway'
+                    ? 'bg-cyan-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <span>🏎️</span>
+                <span>Speedway</span>
+              </button>
+              <button
+                onClick={() => setBattleType('dino')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 ${
+                  battleType === 'dino'
+                    ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <span>🦖</span>
+                <span>Dino Duel</span>
+              </button>
+            </div>
+          )}
+
+          {gameState !== 'lobby' && (
+            <button
+              onClick={() => {
+                if (botTimerRef.current) clearInterval(botTimerRef.current);
+                if (roomUnsubRef.current) roomUnsubRef.current();
+                setGameState('lobby');
+                setActiveRoomCode('');
+                setInviteSentStatus(null);
+                setJoinError(null);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Lobbiyga Qaytish</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Invite Notification Banner */}
@@ -712,18 +864,27 @@ export const BattleView: React.FC<BattleViewProps> = ({
           {/* Room Creation & Code Join Column */}
           <div className="md:col-span-5 space-y-3">
             <div className="bg-[#0e1626] border border-cyan-500/20 rounded-2xl p-4 space-y-3 shadow-md">
-              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase font-mono border-b border-slate-800 pb-2">
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>Xona Yaratish Va Kirish</span>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center gap-2 text-white font-bold text-xs uppercase font-mono">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>{battleType === 'dino' ? '🦖 Dino Duel Xonasi' : '🏎️ Speedway Xonasi'}</span>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-cyan-400">
+                  {battleType === 'dino' ? 'DINO BATTLE' : 'SPEEDWAY'}
+                </span>
               </div>
 
               {/* Create Custom Room Button */}
               <button
-                onClick={handleCreateRoom}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-black text-xs uppercase tracking-wider hover:opacity-95 transition-all shadow-md shadow-cyan-500/20 active:scale-95"
+                onClick={() => handleCreateRoom(battleType)}
+                className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider hover:opacity-95 transition-all shadow-md active:scale-95 ${
+                  battleType === 'dino'
+                    ? 'bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 shadow-amber-500/20'
+                    : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 shadow-cyan-500/20'
+                }`}
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>XONA YARATISH ✨</span>
+                <span>{battleType === 'dino' ? '🦖 DINO XONA YARATISH ✨' : 'XONA YARATISH ✨'}</span>
               </button>
 
               {/* Room Code Join Box */}
@@ -748,104 +909,135 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 </div>
                 {joinError && (
                   <p className="text-[11px] text-rose-400 font-medium flex items-center gap-1 mt-1 bg-rose-950/40 p-2 rounded-lg border border-rose-500/20">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {joinError}
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{joinError}</span>
                   </p>
                 )}
               </div>
 
-              {/* Bot Match Fallback */}
+              {/* Solo AI Bot Duel Button */}
               <div className="pt-2 border-t border-slate-800">
                 <button
                   onClick={startBotMatch}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 font-bold text-xs transition-all border border-slate-700"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-cyan-300 hover:text-cyan-200 font-bold text-xs border border-cyan-500/30 transition-all shadow-inner active:scale-95"
                 >
                   <Bot className="w-4 h-4 text-cyan-400" />
-                  <span>KIBER BOT BILAN MASHQ QILISH 🤖</span>
+                  <span>
+                    {battleType === 'dino'
+                      ? 'Cyber Dino Bot Bilan O\'ynash 🤖'
+                      : 'Cyber Bot Bilan Mashq 🤖'}
+                  </span>
                 </button>
               </div>
             </div>
+
+            {/* Quick Rules Card */}
+            <div className="bg-[#0b101d] border border-slate-800 rounded-2xl p-3 text-[11px] text-slate-400 space-y-1.5">
+              <h4 className="font-bold text-slate-300 uppercase font-mono text-[10px] flex items-center gap-1">
+                <Trophy className="w-3 h-3 text-amber-400" /> Arena Qoidalari
+              </h4>
+              {battleType === 'dino' ? (
+                <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+                  <li>Ikkala o'yinchi bir vaqtda to'siqlardan sakrab yuguradi!</li>
+                  <li>Space / W / ↑ - Sakrash, S / ↓ - Egilish.</li>
+                  <li>Kim ko'p masofa va ball to'plasa mutlaq g'olib bo'ladi!</li>
+                </ul>
+              ) : (
+                <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+                  <li>Xona yaratib kodni do'stingizga bering yoki taklif qiling.</li>
+                  <li>Poygada xatolarga jarima hisoblanadi (aniqlik kamida 80%).</li>
+                  <li>Marra chizig'iga birinchi yetib borgan haydovchi g'olib bo'ladi!</li>
+                </ul>
+              )}
+            </div>
           </div>
 
-          {/* Real Registered Players from Firebase Realtime Database */}
-          <div className="md:col-span-7 bg-[#0e1626] border border-cyan-500/20 rounded-2xl p-4 space-y-3 shadow-md">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-cyan-400" />
-                <h3 className="font-bold text-xs text-white uppercase font-mono">
-                  Ishtirokchilar Ro'yxati
-                </h3>
+          {/* Real Players List & Live Invite Column */}
+          <div className="md:col-span-7 space-y-3">
+            <div className="bg-[#0e1626] border border-cyan-500/20 rounded-2xl p-4 space-y-3 shadow-md">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center gap-2 text-white font-bold text-xs uppercase font-mono">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  <span>Onlayn Foydalanuvchilar & Duel Chaqiruvi</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400">
+                  {realPlayers.length} ta ishtirokchi
+                </span>
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> {realPlayers.length} Ishtirokchi
-              </span>
-            </div>
 
-            {/* List of Real Players */}
-            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
               {loadingPlayers ? (
-                <div className="py-8 text-center text-xs text-slate-400 font-mono">
-                  Ishtirokchilar ro'yxati yuklanmoqda...
+                <div className="py-8 text-center text-xs text-slate-400 font-mono animate-pulse">
+                  Foydalanuvchilar yuklanmoqda...
                 </div>
               ) : realPlayers.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  Hozircha boshqa ishtirokchilar topilmadi.
-                  <p className="text-[11px] text-cyan-400 mt-1">Xona yaratib do'stingizga kodni yuboring!</p>
+                <div className="py-8 text-center text-xs text-slate-400 font-mono space-y-2">
+                  <p>Hozircha boshqa onlayn ishtirokchilar topilmadi.</p>
+                  <p className="text-[11px] text-cyan-400">
+                    Do'stingizga yuqoridagi "XONA YARATISH" orqali kod ulashishingiz mumkin!
+                  </p>
                 </div>
               ) : (
-                realPlayers.map((p, idx) => {
-                  const isRecentActive = Boolean(p.lastActive && (Date.now() - p.lastActive) < 15 * 60 * 1000);
-
-                  return (
+                <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                  {realPlayers.map((p) => (
                     <div
                       key={p.uid}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 hover:border-cyan-500/40 transition-all"
+                      className="bg-slate-900/90 border border-slate-800 hover:border-cyan-500/40 rounded-xl p-2.5 flex items-center justify-between gap-2 transition-all shadow-sm"
                     >
-                      <div className="flex items-center gap-2.5 overflow-hidden">
-                        <span className="font-mono text-xs font-bold text-slate-500 w-4">#{idx + 1}</span>
-                        <div className="relative shrink-0">
-                          <img
-                            src={p.avatarUrl}
-                            alt={p.displayName}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-700"
-                          />
-                          <span
-                            className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${
-                              isRecentActive ? 'bg-emerald-500' : 'bg-slate-500'
-                            }`}
-                          />
-                        </div>
-                        <div className="overflow-hidden">
-                          <h4 className="font-bold text-xs text-white truncate flex items-center gap-1">
-                            <span>{p.displayName}</span>
-                          </h4>
-                          <p className="text-[10px] text-amber-400 font-mono">
-                            ⚡ {p.highestWpm} WPM Best
-                          </p>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src={p.avatarUrl}
+                          alt={p.displayName}
+                          className="w-8 h-8 rounded-full border border-slate-700 object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs text-white truncate max-w-[130px] sm:max-w-[180px]">
+                              {p.displayName}
+                            </span>
+                            <span className="text-[9px] font-mono text-cyan-400 font-bold">
+                              Lvl {p.level || 1}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+                            {battleType === 'dino' ? (
+                              <span className="text-amber-400 font-bold">
+                                🦖 Dino: {p.dinoHighScore || 0} pts
+                              </span>
+                            ) : (
+                              <>
+                                <span className="text-cyan-400 font-bold">{p.highestWpm} WPM</span>
+                                <span>{p.highestAccuracy}% Acc</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleInvitePlayer(p)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-black text-[10px] uppercase tracking-wider transition-all shrink-0 active:scale-95 shadow-sm"
+                        className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0 flex items-center gap-1"
                       >
-                        <Swords className="w-3 h-3" />
-                        <span>CHAQIRISH ⚔️</span>
+                        <Swords className="w-3.5 h-3.5" />
+                        <span>Duelga Chorlash</span>
                       </button>
                     </div>
-                  );
-                })
+                  ))}
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. WAITING FOR OPPONENT STATE (Room Code Share Screen) */}
+      {/* 2. WAITING FOR OPPONENT STATE */}
       {gameState === 'waiting' && (
-        <div className="bg-[#0e1626] border-2 border-cyan-500/50 rounded-2xl p-6 text-center text-white space-y-4 shadow-xl">
-          <div className="space-y-1">
-            <h2 className="text-lg font-black uppercase font-mono tracking-wider text-cyan-300 flex items-center justify-center gap-2">
-              <Users className="w-5 h-5 text-amber-400 animate-pulse" /> XONA YARATILDI — RAQIB KUTILMOQDA...
+        <div className="bg-[#0e1626] border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-8 text-center text-white space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="space-y-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 mb-1 animate-pulse">
+              {battleType === 'dino' ? <span className="text-2xl">🦖</span> : <Share2 className="w-6 h-6" />}
+            </div>
+            <h2 className="text-xl font-black uppercase font-mono tracking-wider text-amber-400">
+              {battleType === 'dino' ? '🦖 DINO BATTLE XONASI TAYYOR!' : 'BATTLE XONASI TAYYOR!'}
             </h2>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
               Quyidagi xona kodini do'stingizga berishingiz yoki to'g'ridan-to'g'ri ssilkani ulashishingiz mumkin! U kirgan zahoti duel avtomatik boshlanadi.
@@ -892,10 +1084,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
         <div className="bg-[#0d1322] border-2 border-cyan-500/50 rounded-2xl p-8 text-center text-white space-y-4 shadow-xl">
           <div className="space-y-1">
             <h2 className="text-lg font-black uppercase font-mono tracking-wider text-amber-400 flex items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5 animate-spin" /> BATTLE TAYYORGARLIGI!
+              <Sparkles className="w-5 h-5 animate-spin" />{' '}
+              {battleType === 'dino' ? '🦖 DINO BATTLE TAYYORGARLIGI!' : '🏎️ BATTLE TAYYORGARLIGI!'}
             </h2>
             <p className="text-xs text-slate-400">
-              Tayyor turing! Soniyalar tugagach, duel boshlanadi!
+              Tayyor turing! Soniyalar tugagach, duel start oladi!
             </p>
           </div>
 
@@ -907,18 +1100,30 @@ export const BattleView: React.FC<BattleViewProps> = ({
           {/* Player vs Opponent Preview Cards */}
           <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto pt-2 border-t border-slate-800">
             <div className="bg-slate-900/90 p-2.5 rounded-xl border border-cyan-500/30 flex items-center gap-2.5">
-              <img src={myProgress.avatarUrl} alt="my" className="w-8 h-8 rounded-full shrink-0" />
+              <img
+                src={battleType === 'dino' ? myDinoState.avatarUrl : myProgress.avatarUrl}
+                alt="my"
+                className="w-8 h-8 rounded-full shrink-0"
+              />
               <div className="text-left overflow-hidden">
                 <span className="text-[9px] text-cyan-400 uppercase font-mono block">Siz</span>
-                <span className="text-xs font-bold text-white truncate block">{myProgress.name}</span>
+                <span className="text-xs font-bold text-white truncate block">
+                  {battleType === 'dino' ? myDinoState.name : myProgress.name}
+                </span>
               </div>
             </div>
 
             <div className="bg-slate-900/90 p-2.5 rounded-xl border border-rose-500/30 flex items-center gap-2.5">
-              <img src={opponentProgress.avatarUrl} alt="opp" className="w-8 h-8 rounded-full shrink-0" />
+              <img
+                src={battleType === 'dino' ? opponentDinoState.avatarUrl : opponentProgress.avatarUrl}
+                alt="opp"
+                className="w-8 h-8 rounded-full shrink-0"
+              />
               <div className="text-left overflow-hidden">
                 <span className="text-[9px] text-rose-400 uppercase font-mono block">Raqib</span>
-                <span className="text-xs font-bold text-white truncate block">{opponentProgress.name}</span>
+                <span className="text-xs font-bold text-white truncate block">
+                  {battleType === 'dino' ? opponentDinoState.name : opponentProgress.name}
+                </span>
               </div>
             </div>
           </div>
@@ -928,125 +1133,259 @@ export const BattleView: React.FC<BattleViewProps> = ({
       {/* 4. RACING & 5. FINISHED STATE */}
       {(gameState === 'racing' || gameState === 'finished') && (
         <div className="space-y-4">
-          {/* Animated Compact Race Track */}
-          <RaceTrack racers={[myProgress, opponentProgress]} isRacing={gameState === 'racing'} />
+          {/* SPEEDWAY MODE */}
+          {battleType === 'speedway' ? (
+            <>
+              {/* Compact Race Track */}
+              <RaceTrack racers={[myProgress, opponentProgress]} isRacing={gameState === 'racing'} />
 
-          {/* Typing Engine Card */}
-          <div
-            onClick={() => inputRef.current?.focus()}
-            className="bg-[#0c1220] border-2 border-cyan-500/30 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl relative cursor-text"
-          >
-            {/* Hidden Input field for capturing key strokes */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={typedInput}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              disabled={gameState === 'finished'}
-              className="absolute opacity-0 pointer-events-none"
-              autoFocus
-            />
+              {/* Typing Engine Card */}
+              <div
+                onClick={() => inputRef.current?.focus()}
+                className="bg-[#0c1220] border-2 border-cyan-500/30 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl relative cursor-text"
+              >
+                {/* Hidden Input field */}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={typedInput}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  disabled={gameState === 'finished'}
+                  className="absolute opacity-0 pointer-events-none"
+                  autoFocus
+                />
 
-            {/* Target Text Display */}
-            <div className="text-base sm:text-lg font-mono leading-relaxed tracking-wide select-none p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 min-h-28 flex flex-wrap items-center">
-              {targetText.split('').map((char, index) => {
-                let colorClass = 'text-slate-500';
-                if (index < typedInput.length) {
-                  if (typedInput[index] === char) {
-                    colorClass = 'text-emerald-400 font-bold bg-emerald-950/40 rounded px-0.5';
-                  } else {
-                    colorClass = 'text-rose-400 font-bold bg-rose-950/60 rounded underline decoration-rose-500 px-0.5';
-                  }
-                } else if (index === typedInput.length) {
-                  colorClass = 'text-cyan-300 font-black bg-cyan-500/30 animate-pulse underline decoration-cyan-400 px-0.5';
-                }
+                {/* Target Text Display - CLEAN NATURAL SPACES (NO UGLY PROBEL SYMBOL) */}
+                <div className="text-base sm:text-lg font-mono leading-relaxed tracking-wide select-none p-4 sm:p-5 rounded-2xl bg-slate-950/90 border border-slate-800 min-h-28 flex flex-wrap items-center whitespace-pre-wrap">
+                  {targetText.split('').map((char, index) => {
+                    let colorClass = 'text-slate-500';
+                    const isSpace = char === ' ';
+                    const isTyped = index < typedInput.length;
+                    const isCurrent = index === typedInput.length;
 
-                return (
-                  <span key={index} className={colorClass}>
-                    {char === ' ' ? '␣' : char}
-                  </span>
-                );
-              })}
-            </div>
+                    if (isTyped) {
+                      if (typedInput[index] === char) {
+                        colorClass = 'text-emerald-400 font-bold';
+                      } else {
+                        colorClass = isSpace
+                          ? 'bg-rose-500/30 text-rose-300 rounded'
+                          : 'text-rose-400 font-bold bg-rose-950/60 rounded underline decoration-rose-500';
+                      }
+                    } else if (isCurrent) {
+                      colorClass = isSpace
+                        ? 'border-b-2 border-cyan-400 text-cyan-300 animate-pulse bg-cyan-500/20 rounded'
+                        : 'text-cyan-300 font-black bg-cyan-500/30 animate-pulse underline decoration-cyan-400';
+                    }
 
-            <p className="text-center text-[11px] text-slate-400 font-mono italic">
-              💡 Yozish uchun matn ustiga bosing va tugmalarni ketma-ket bosing!
-            </p>
-          </div>
+                    return (
+                      <span key={index} className={`inline-block ${colorClass}`}>
+                        {isSpace ? '\u00A0' : char}
+                      </span>
+                    );
+                  })}
+                </div>
 
-          {/* Victory / Result Modal Overlay if Finished */}
-          {gameState === 'finished' && (
-            <div className={`border-2 rounded-2xl p-6 text-center text-white space-y-4 shadow-2xl ${
-              disqualifiedReason
-                ? 'bg-gradient-to-br from-[#1a0c0c] to-[#2b1212] border-rose-500/80'
-                : winnerId === currentUid
-                  ? 'bg-gradient-to-br from-[#0c1322] to-[#131d33] border-amber-500/60'
-                  : 'bg-gradient-to-br from-[#131722] to-[#1c2233] border-slate-700'
-            }`}>
-              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl border mb-1 ${
-                disqualifiedReason
-                  ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
-                  : winnerId === currentUid
-                    ? 'bg-amber-500/20 border-amber-400 text-amber-400 animate-bounce'
-                    : 'bg-slate-800 border-slate-700 text-slate-400'
-              }`}>
-                {disqualifiedReason ? <AlertCircle className="w-8 h-8" /> : <Crown className="w-8 h-8" />}
-              </div>
-
-              <div className="space-y-1">
-                <h2 className={`text-xl font-black uppercase font-mono tracking-wider ${
-                  disqualifiedReason ? 'text-rose-400' : winnerId === currentUid ? 'text-amber-400' : 'text-slate-300'
-                }`}>
-                  {disqualifiedReason
-                    ? "Siz Yutqazdingiz! (Disvalifikatsiya) ❌"
-                    : winnerId === currentUid
-                      ? "Siz G'olib Bo'ldingiz! 🏆"
-                      : "Raqib G'olib Bo'ldi! 🏁"}
-                </h2>
-                <p className="text-xs text-slate-300">
-                  {disqualifiedReason
-                    ? "Poygada ko'p xatolar va past aniqlik sababli g'oliblik bekor qilindi."
-                    : "Ajoyib poyga natijasi! Shaxsiy tezligingiz va aniqligingiz qayd etildi."}
+                <p className="text-center text-[11px] text-slate-400 font-mono italic">
+                  💡 Yozish uchun matn ustiga bosing va tugmalarni ketma-ket bosing!
                 </p>
               </div>
 
-              {disqualifiedReason && (
-                <div className="bg-rose-950/80 border border-rose-500/50 rounded-xl p-3 text-rose-200 text-xs font-mono max-w-md mx-auto shadow-inner text-center">
-                  ⚠️ {disqualifiedReason}
+              {/* Speedway Victory / Result Overlay */}
+              {gameState === 'finished' && (
+                <div
+                  className={`border-2 rounded-2xl p-6 text-center text-white space-y-4 shadow-2xl ${
+                    disqualifiedReason
+                      ? 'bg-gradient-to-br from-[#1a0c0c] to-[#2b1212] border-rose-500/80'
+                      : winnerId === currentUid
+                        ? 'bg-gradient-to-br from-[#0c1322] to-[#131d33] border-amber-500/60'
+                        : 'bg-gradient-to-br from-[#131722] to-[#1c2233] border-slate-700'
+                  }`}
+                >
+                  <div
+                    className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl border mb-1 ${
+                      disqualifiedReason
+                        ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
+                        : winnerId === currentUid
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-400 animate-bounce'
+                          : 'bg-slate-800 border-slate-700 text-slate-400'
+                    }`}
+                  >
+                    {disqualifiedReason ? <AlertCircle className="w-8 h-8" /> : <Crown className="w-8 h-8" />}
+                  </div>
+
+                  <div className="space-y-1">
+                    <h2
+                      className={`text-xl font-black uppercase font-mono tracking-wider ${
+                        disqualifiedReason
+                          ? 'text-rose-400'
+                          : winnerId === currentUid
+                            ? 'text-amber-400'
+                            : 'text-slate-300'
+                      }`}
+                    >
+                      {disqualifiedReason
+                        ? 'Siz Yutqazdingiz! (Disvalifikatsiya) ❌'
+                        : winnerId === currentUid
+                          ? 'Siz G\'olib Bo\'ldingiz! 🏆'
+                          : 'Raqib G\'olib Bo\'ldi! 🏁'}
+                    </h2>
+                    <p className="text-xs text-slate-300">
+                      {disqualifiedReason
+                        ? 'Poygada ko\'p xatolar va past aniqlik sababli g\'oliblik bekor qilindi.'
+                        : 'Ajoyib poyga natijasi! Shaxsiy tezligingiz va aniqligingiz qayd etildi.'}
+                    </p>
+                  </div>
+
+                  {disqualifiedReason && (
+                    <div className="bg-rose-950/80 border border-rose-500/50 rounded-xl p-3 text-rose-200 text-xs font-mono max-w-md mx-auto shadow-inner text-center">
+                      ⚠️ {disqualifiedReason}
+                    </div>
+                  )}
+
+                  {/* Match Stats Comparison Grid */}
+                  <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                    <div className="space-y-0.5 text-left border-r border-slate-800 pr-2">
+                      <span className="text-[9px] text-cyan-400 font-mono block">Sizning Natijangiz</span>
+                      <p className="text-base font-black font-mono text-white">{myProgress.wpm} WPM</p>
+                      <p
+                        className={`text-[11px] font-mono ${
+                          myProgress.accuracy < 80 ? 'text-rose-400 font-bold' : 'text-emerald-400'
+                        }`}
+                      >
+                        {myProgress.accuracy}% Accuracy
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5 text-left pl-2">
+                      <span className="text-[9px] text-rose-400 font-mono block">Raqib Natijasi</span>
+                      <p className="text-base font-black font-mono text-white">{opponentProgress.wpm} WPM</p>
+                      <p className="text-[11px] font-mono text-emerald-400">{opponentProgress.accuracy}% Accuracy</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setGameState('lobby');
+                        setDisqualifiedReason(null);
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700"
+                    >
+                      <span>LOBBIYGA QAYTISH</span>
+                    </button>
+                  </div>
                 </div>
               )}
+            </>
+          ) : (
+            /* DINO RUNNER BATTLE MODE */
+            <>
+              {/* Dino Telemetry Track */}
+              <DinoBattleTrack
+                player1={myDinoState}
+                player2={opponentDinoState}
+                isRacing={gameState === 'racing'}
+              />
 
-              {/* Match Stats Comparison Grid */}
-              <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                <div className="space-y-0.5 text-left border-r border-slate-800 pr-2">
-                  <span className="text-[9px] text-cyan-400 font-mono block">Sizning Natijangiz</span>
-                  <p className="text-base font-black font-mono text-white">{myProgress.wpm} WPM</p>
-                  <p className={`text-[11px] font-mono ${myProgress.accuracy < 80 ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
-                    {myProgress.accuracy}% Accuracy
-                  </p>
-                </div>
+              {/* Dino Battle Live Canvas & Controls */}
+              {gameState === 'racing' && (
+                <DinoBattleGame
+                  roomId={activeRoomCode}
+                  isHost={isHost}
+                  isBotMatch={isBotMatch}
+                  myInfo={myDinoState}
+                  opponentInfo={opponentDinoState}
+                  onFinish={handleDinoFinish}
+                  onExit={() => setGameState('lobby')}
+                />
+              )}
 
-                <div className="space-y-0.5 text-left pl-2">
-                  <span className="text-[9px] text-rose-400 font-mono block">Raqib Natijasi</span>
-                  <p className="text-base font-black font-mono text-white">{opponentProgress.wpm} WPM</p>
-                  <p className="text-[11px] font-mono text-emerald-400">{opponentProgress.accuracy}% Accuracy</p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={() => {
-                    setGameState('lobby');
-                    setDisqualifiedReason(null);
-                  }}
-                  className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700"
+              {/* Dino Battle Finished Screen */}
+              {gameState === 'finished' && (
+                <div
+                  className={`border-2 rounded-3xl p-6 sm:p-8 text-center text-white space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 ${
+                    winnerId === currentUid
+                      ? 'bg-gradient-to-br from-[#0a1628] via-[#0f213d] to-[#1e1338] border-amber-500/80 shadow-amber-500/20'
+                      : 'bg-gradient-to-br from-[#141824] to-[#1e2438] border-slate-700'
+                  }`}
                 >
-                  <span>LOBBIYGA QAYTISH</span>
-                </button>
-              </div>
-            </div>
+                  <div
+                    className={`inline-flex items-center justify-center w-16 h-16 rounded-3xl border mb-1 ${
+                      winnerId === currentUid
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-400 animate-bounce'
+                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                    }`}
+                  >
+                    {winnerId === currentUid ? <Crown className="w-9 h-9" /> : <Skull className="w-8 h-8" />}
+                  </div>
+
+                  <div className="space-y-1">
+                    <h2
+                      className={`text-2xl font-black uppercase font-mono tracking-wider ${
+                        winnerId === currentUid ? 'text-amber-400' : 'text-slate-300'
+                      }`}
+                    >
+                      {winnerId === currentUid
+                        ? '🦖 SIZ DINO DUEL G\'OLIBI BO\'LDINGIZ! 🏆'
+                        : 'RAQIB G\'OLIB BO\'LDI! 💥'}
+                    </h2>
+                    <p className="text-xs text-slate-300">
+                      {winnerId === currentUid
+                        ? 'Dino to\'siqlarini ajoyib tarzda yengib o\'tdingiz va eng yuqori rekordni o\'rnatdingiz!'
+                        : 'Yaxshi urinish! Keyingi safar raqibdan uzoqroq yugurishingiz mumkin.'}
+                    </p>
+                  </div>
+
+                  {/* Dino Match Stats Comparison */}
+                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto bg-slate-900/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                    <div className="space-y-1 text-left border-r border-slate-800 pr-3">
+                      <span className="text-[10px] text-cyan-400 font-mono uppercase font-bold block">
+                        Sizning Natijangiz
+                      </span>
+                      <p className="text-xl font-black font-mono text-cyan-300">{myDinoState.score} ball</p>
+                      <p className="text-xs font-mono text-slate-300">
+                        Masofa: <span className="text-white font-bold">{Math.floor(myDinoState.distance)}m</span>
+                      </p>
+                      <p className="text-xs font-mono text-emerald-400">
+                        To'siqlar: <span className="font-bold">{myDinoState.obstaclesDodged}</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 text-left pl-3">
+                      <span className="text-[10px] text-amber-400 font-mono uppercase font-bold block">
+                        Raqib Natijasi
+                      </span>
+                      <p className="text-xl font-black font-mono text-amber-300">{opponentDinoState.score} ball</p>
+                      <p className="text-xs font-mono text-slate-300">
+                        Masofa: <span className="text-white font-bold">{Math.floor(opponentDinoState.distance)}m</span>
+                      </p>
+                      <p className="text-xs font-mono text-emerald-400">
+                        To'siqlar: <span className="font-bold">{opponentDinoState.obstaclesDodged}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <button
+                      onClick={startBotMatch}
+                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>QAYTA DUEL BOSHLASH</span>
+                    </button>
+
+                    <button
+                      onClick={() => setGameState('lobby')}
+                      className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700"
+                    >
+                      <span>LOBBIYGA QAYTISH</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

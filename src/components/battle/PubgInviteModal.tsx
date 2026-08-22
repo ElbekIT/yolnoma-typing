@@ -8,6 +8,7 @@ export interface BattleInviteData {
   inviterName: string;
   inviterAvatar?: string;
   inviterWpm?: number;
+  gameType?: 'speedway' | 'dino';
   timestamp: number;
 }
 
@@ -40,6 +41,8 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
 
   if (!invite) return null;
 
+  const isDino = invite.gameType === 'dino';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       {/* PUBG Mobile Style Card */}
@@ -51,13 +54,15 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-              <Swords className="w-5 h-5 text-white animate-bounce" />
+              {isDino ? <span className="text-lg">🦖</span> : <Swords className="w-5 h-5 text-white animate-bounce" />}
             </div>
             <div>
               <h2 className="text-base font-black tracking-wider text-amber-400 font-mono uppercase flex items-center gap-1.5">
                 BATTLE TAKLIFI <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40">1v1 DUEL</span>
               </h2>
-              <p className="text-[11px] text-slate-400">Yolnoma Arena Lobby Chaqirig'i</p>
+              <p className="text-[11px] text-slate-400">
+                {isDino ? 'T-Rex Dino Runner Dueli' : 'Speedway Tez Yozish Dueli'}
+              </p>
             </div>
           </div>
 
@@ -85,13 +90,17 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
             <div className="flex items-center justify-between">
               <h3 className="font-black text-base text-white truncate">{invite.inviterName}</h3>
               <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-bold border border-amber-500/30">
-                PRO ARENA
+                {isDino ? '🦖 DINO ARENA' : '🏎️ SPEEDWAY'}
               </span>
             </div>
             <p className="text-xs text-slate-300 flex items-center gap-1 font-semibold">
               <Zap className="w-3.5 h-3.5 text-cyan-400" /> Shaxsiy Rekord: <span className="text-amber-400 font-mono font-bold">{invite.inviterWpm || 85} WPM</span>
             </p>
-            <p className="text-[11px] text-slate-400 italic">"Siz bilan tezkora yozish duelini o'ynamoqchi!"</p>
+            <p className="text-[11px] text-slate-400 italic">
+              {isDino
+                ? '"Siz bilan T-Rex Dino Runner duelini o\'ynamoqchi!"'
+                : '"Siz bilan tezkor yozish duelini o\'ynamoqchi!"'}
+            </p>
           </div>
         </div>
 

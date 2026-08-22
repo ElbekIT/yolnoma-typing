@@ -192,6 +192,23 @@ export interface CharacterStat {
   accuracy: number;
 }
 
+export type BattleGameType = 'speedway' | 'dino';
+
+export interface DinoBattlePlayerState {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  score: number;
+  distance: number;
+  obstaclesDodged: number;
+  isAlive: boolean;
+  isWinner?: boolean;
+  isBot?: boolean;
+  dinoY?: number;
+  isJumping?: boolean;
+  isDucking?: boolean;
+}
+
 export interface AdminInboxMessage {
   id: string;
   name: string;

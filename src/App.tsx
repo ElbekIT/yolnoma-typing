@@ -482,7 +482,10 @@ function MainAppContent() {
           />
         )}
         {activeTab === 'dino' && (
-          <DinoGameView onGoToLeaderboard={() => setActiveTab('leaderboard')} />
+          <DinoGameView
+            onGoToLeaderboard={() => setActiveTab('leaderboard')}
+            onGoToBattle={() => setActiveTab('battle')}
+          />
         )}
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'leaderboard' && <LeaderboardView />}

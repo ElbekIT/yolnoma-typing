@@ -20,14 +20,16 @@ import { dinoSound } from './dinoSound';
 import { rtdb } from '../../config/firebase';
 import { ref, onValue } from 'firebase/database';
 import { DinoLeaderboardEntry } from '../../types';
+import { Swords } from 'lucide-react';
 
 interface DinoGameViewProps {
   onGoToLeaderboard: () => void;
+  onGoToBattle?: () => void;
 }
 
 type DinoTheme = 'classic' | 'theme' | 'neon';
 
-export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard }) => {
+export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard, onGoToBattle }) => {
   const { user, profile, saveDinoScore } = useAuth();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -911,6 +913,16 @@ export const DinoGameView: React.FC<DinoGameViewProps> = ({ onGoToLeaderboard })
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-[var(--main-color)]" />}
             <span className="hidden sm:inline">{isMuted ? 'Ovoz O\'chirilgan' : 'Ovoz Yoqiq'}</span>
           </button>
+
+          {onGoToBattle && (
+            <button
+              onClick={onGoToBattle}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-xs shadow-md cursor-pointer hover:opacity-95"
+            >
+              <Swords className="w-4 h-4" />
+              <span>1v1 Dino Dueli ⚔️</span>
+            </button>
+          )}
 
           <button
             onClick={onGoToLeaderboard}
