@@ -2,10 +2,13 @@
  * Advanced Anti-Cheat, Console Hardening & Integrity Protection System for Yolnoma Typing
  *
  * Security Features:
- * - Accurate DevTools Detector: Detects when DevTools/Console is opened in Google Chrome/Chromium without false-positives for normal users.
- * - Auto-recovery: Re-enables the site as soon as the user closes the DevTools console.
- * - 100% Function Key Lock (F1-F24): Blocks all F-keys individually and in combinations.
- * - Capture-Phase Interception: Blocks Ctrl+Shift+I/J/C/K, Cmd+Option+I/J/C, Ctrl+U, Ctrl+S, Ctrl+P.
+ * - Accurate DevTools & Device Toolbar Detector:
+ *   - Detects Google Chrome DevTools (Elements, Console, Network, Sources).
+ *   - Detects Device Toolbar / Mobile Simulation on PC (e.g. 400x642 emulation on desktop).
+ *   - Zero False Positives: Normal users with closed DevTools enter seamlessly without any issues.
+ *   - Auto-Recovery: As soon as the user closes DevTools or F12, the site instantly unlocks.
+ * - 100% Function Key Lock (F1-F24): Blocks all F-keys individually and in any combination.
+ * - Capture-Phase Keyboard Guard: Blocks Ctrl+Shift+I/J/C/K/M, Cmd+Option+I/J/C/M, Ctrl+U, Ctrl+S, Ctrl+P.
  * - Auto-Typer & Bot Detection: Millisecond keystroke dynamics and untrusted event filtering.
  * - Score Validation Engine: Validates WPM, keystroke delta, accuracy, and Dino Runner distance/scores.
  */
@@ -35,7 +38,6 @@ class AntiCheatSystem {
   constructor() {
     if (typeof window !== 'undefined') {
       this.attachGlobalSecurityListeners();
-      this.sanitizeConsole();
       this.startDevToolsProtection();
     }
   }
@@ -47,7 +49,6 @@ class AntiCheatSystem {
     if (!this.isListening) {
       this.isListening = true;
       this.attachGlobalSecurityListeners();
-      this.sanitizeConsole();
       this.startDevToolsProtection();
     }
   }
@@ -178,25 +179,8 @@ class AntiCheatSystem {
     }
   }
 
-  /**
-   * Sanitizes console output methods to protect memory and state inspection
-   */
-  public sanitizeConsole() {
-    try {
-      const emptyFunc = () => {};
-      if (typeof window !== 'undefined' && (window as any).console) {
-        const methods = ['debug', 'info', 'trace'];
-        methods.forEach((m) => {
-          try {
-            (window.console as any)[m] = emptyFunc;
-          } catch {}
-        });
-      }
-    } catch {}
-  }
-
   // ==========================================
-  // ACCURATE DEVTOOLS DETECTION SYSTEM
+  // DEVTOOLS & DEVICE EMULATION DETECTOR
   // ==========================================
 
   public isDevToolsOpen(): boolean {
@@ -223,56 +207,71 @@ class AntiCheatSystem {
   }
 
   /**
-   * Checks DevTools state accurately with zero false positives:
-   * 1. Chromium Console Element/RegExp getter probe
-   * 2. Top-level window dimensions differential (only when NOT in an iframe)
+   * Checks DevTools state across:
+   * 1. Docked DevTools (Side/Bottom) in top-level browser window.
+   * 2. Chrome Device Toolbar (Mobile simulation on desktop PC).
+   * 3. DOM & Console Active Inspection Getters.
    */
   public checkDevToolsNow(): boolean {
     if (typeof window === 'undefined') return false;
 
     let detected = false;
+
+    // Check if running inside top-level window vs embedded iframe
     const isTopLevel = window.self === window.top;
 
-    // Vector 1: Top-level Window Dimensions Check
-    // When DevTools is docked on the bottom or side in standard Chrome (not inside an iframe)
-    if (isTopLevel) {
-      try {
-        const widthDiff = window.outerWidth - window.innerWidth;
-        const heightDiff = window.outerHeight - window.innerHeight;
+    // Physical mobile device check
+    const isPhysicalMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) &&
+      (('ontouchstart' in window && window.screen.width <= 768) || typeof window.orientation !== 'undefined');
 
-        // DevTools docked side or bottom is typically at least 220px
-        if (widthDiff > 220 || heightDiff > 220) {
-          detected = true;
+    // Vector 1: Desktop Browser Window & Device Emulation Check (When running directly at yolnoma.uz in top-level browser)
+    if (isTopLevel && !isPhysicalMobile) {
+      try {
+        const outerW = window.outerWidth;
+        const outerH = window.outerHeight;
+        const innerW = window.innerWidth;
+        const innerH = window.innerHeight;
+
+        // In Google Chrome with DevTools closed: outerWidth - innerWidth is ~0-16px (window borders).
+        // When DevTools is docked on the Right (like screenshot): outerWidth - innerWidth is 300px - 800px!
+        // When DevTools is docked on the Bottom: outerHeight - innerHeight is 200px - 600px!
+        const widthDiff = outerW - innerW;
+        const heightDiff = outerH - innerH;
+
+        if (outerW > 500 && outerH > 400) {
+          // DevTools docked side or bottom
+          if (widthDiff > 160 || heightDiff > 160) {
+            detected = true;
+          }
         }
       } catch {}
     }
 
-    // Vector 2: Chromium / Chrome Console Getter Probe
-    // In Google Chrome, opening the Console or Elements tab triggers object inspection getters
+    // Vector 2: Console Inspection Object Getter (Works in Chrome, Edge, Brave when Console or Elements is rendering)
     if (!detected) {
       try {
-        let probeTriggered = false;
+        let probeHit = false;
         const element = document.createElement('div');
         Object.defineProperty(element, 'id', {
           get: () => {
-            probeTriggered = true;
-            return '';
+            probeHit = true;
+            return 'yolnoma_guard';
           },
         });
 
-        // Trigger console evaluation safely
-        if (typeof console !== 'undefined' && console.log) {
-          // Chrome executes getter only when console window is rendering
-          // We clear or suppress output to avoid clutter
+        // Trigger safe inspection probe
+        if (typeof console !== 'undefined' && console.debug) {
+          console.debug(element);
         }
 
-        if (probeTriggered) {
+        if (probeHit) {
           detected = true;
         }
       } catch {}
     }
 
-    // Smooth state transition with debounce/consecutive check to avoid false flickers
+    // Debounce state to prevent rapid flickering
     if (detected) {
       this.consecutiveDetections++;
       this.consecutiveClean = 0;
@@ -296,12 +295,12 @@ class AntiCheatSystem {
   private startDevToolsProtection() {
     if (this.devToolsCheckInterval) return;
 
-    // Check periodically every 500ms
+    // Fast polling interval (every 400ms) to instantly react when DevTools opens or closes
     this.devToolsCheckInterval = setInterval(() => {
       this.checkDevToolsNow();
-    }, 500);
+    }, 400);
 
-    // Also check on window resize
+    // Also check on window resize (Device toolbar toggle / window drag)
     window.addEventListener('resize', () => {
       this.checkDevToolsNow();
     });
@@ -334,16 +333,17 @@ class AntiCheatSystem {
       return true;
     }
 
-    // 2. DevTools Shortcuts (Ctrl+Shift+I, J, C, K, E, S, P)
+    // 2. DevTools Shortcuts (Ctrl+Shift+I, J, C, K, E, S, P, M)
+    // Ctrl+Shift+M is the exact Device Toolbar (Phone simulation) shortcut!
     if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
       if (['i', 'j', 'c', 'k', 'e', 's', 'p', 'm', 'd'].includes(lowerKey)) {
         return true;
       }
     }
 
-    // 3. Mac DevTools Shortcuts (Cmd+Option+I, J, C, K, U, S)
+    // 3. Mac DevTools Shortcuts (Cmd+Option+I, J, C, K, U, S, M)
     if (e.metaKey && e.altKey) {
-      if (['i', 'j', 'c', 'k', 'u', 's', 'p', 'e'].includes(lowerKey)) {
+      if (['i', 'j', 'c', 'k', 'u', 's', 'p', 'e', 'm'].includes(lowerKey)) {
         return true;
       }
     }
