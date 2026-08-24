@@ -252,7 +252,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
       onMouseMove={handleMouseMove}
-      className={`relative w-full max-w-5xl mx-auto my-2 sm:my-4 bg-transparent border-0 rounded-2xl p-3 sm:p-6 select-none gpu-accelerated transition-all duration-300 ${
+      className={`relative w-full max-w-5xl mx-auto my-2 sm:my-3 bg-transparent border-0 rounded-xl p-2 sm:p-5 select-none ${
         mouseHidden ? 'cursor-none' : 'cursor-text'
       }`}
       style={{
@@ -282,19 +282,19 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/85 backdrop-blur-[4px] rounded-2xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 bg-[var(--main-color)]/10 px-5 py-2.5 rounded-full border border-[var(--main-color)]/20 shadow-lg group hover:bg-[var(--main-color)]/20 transition-all">
-            <MousePointer className="w-4 h-4 text-[var(--main-color)] animate-bounce" />
-            <Smartphone className="w-4 h-4 sm:hidden animate-bounce" />
+        <div className="absolute inset-0 bg-[var(--bg-color)]/90 rounded-xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center">
+          <div className="flex items-center gap-2 bg-[var(--main-color)]/10 px-4 py-2 rounded-lg border border-[var(--main-color)]/25">
+            <MousePointer className="w-4 h-4 text-[var(--main-color)]" />
+            <Smartphone className="w-4 h-4 sm:hidden" />
             <span>Sichqoncha yoki ekranga bosing (yozish uchun)</span>
           </div>
         </div>
       )}
 
-      {/* 3-Line Scroll Viewport with smooth text fade on text key change */}
+      {/* 3-Line Scroll Viewport with clean text fade on text key change */}
       <div
         key={targetText.slice(0, 15)}
-        className="relative w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full overflow-hidden"
         style={{ height: `${containerHeight}px` }}
       >
         <div
@@ -418,7 +418,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       </div>
 
       {/* Quick Mouse & Keyboard Controls Bar */}
-      <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3">
+      <div className="mt-4 sm:mt-6 flex flex-col items-center justify-center gap-2.5">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -431,10 +431,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                 setIsFocused(true);
               }
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-all group opacity-85 hover:opacity-100 cursor-pointer shadow-sm active:scale-95 font-semibold text-xs"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors cursor-pointer font-semibold text-xs"
             title="Sichqoncha bilan yangilash yoki Tab + Enter"
           >
-            <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300 text-[var(--main-color)]" />
+            <RefreshCw className="w-3.5 h-3.5 text-[var(--main-color)]" />
             <span>Matnni yangilash</span>
           </button>
         </div>
@@ -442,9 +442,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         {/* Shortcut Footer Hints (Desktop only for keyboard hints) */}
         <div className="hidden sm:flex flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-80">
           <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">tab</kbd>
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">tab</kbd>
             <span>+</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--sub-color)] text-[10px]">enter</kbd>
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">enter</kbd>
             <span className="ml-1">- yangi matn</span>
           </div>
           <span className="text-[var(--sub-color)]/40">•</span>

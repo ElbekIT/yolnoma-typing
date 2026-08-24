@@ -84,32 +84,32 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/85 backdrop-blur-md border-b border-[var(--sub-alt)] px-4 py-3 transition-colors duration-200 shadow-sm">
+      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)] border-b border-[var(--sub-alt)] px-4 py-2.5 transition-colors duration-150">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Left Side: 3-lines Hamburger Menu & Brand Logo */}
           <div className="flex items-center gap-3">
             {/* 3-lines Hamburger Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="p-2.5 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] border border-[var(--sub-color)]/20 hover:border-[var(--main-color)] transition-all flex items-center gap-2 group hover:scale-105 active:scale-95"
+              className="p-2 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors flex items-center gap-2 cursor-pointer"
               title="Menyu bo'limini ochish"
             >
-              <Menu className="w-5 h-5 text-[var(--main-color)] group-hover:rotate-90 transition-transform duration-300" />
+              <Menu className="w-5 h-5 text-[var(--main-color)]" />
               <span className="text-xs font-bold hidden sm:inline text-[var(--text-color)]">Menyu</span>
             </button>
 
             {/* Brand Logo */}
-            <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setActiveTab('typing')}>
+            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('typing')}>
               <img
                 src="/yolnoma_icon.svg"
                 alt="Yolnoma Logo"
-                className="w-9 h-9 sm:w-10 sm:h-10 object-contain group-hover:scale-105 transition-transform drop-shadow-md"
+                className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
               />
               <div>
                 <h1 className="text-lg sm:text-xl font-black tracking-tight text-[var(--text-color)] flex items-center gap-1.5">
-                  Yolnoma <span className="text-[var(--main-color)] font-extrabold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-[var(--sub-alt)] border border-[var(--main-color)]/30 tracking-wider">TYPING</span>
+                  Yolnoma <span className="text-[var(--main-color)] font-extrabold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md bg-[var(--sub-alt)] border border-[var(--main-color)]/30 tracking-wider">TYPING</span>
                 </h1>
-                <p className="text-[10px] sm:text-[11px] text-[var(--sub-color)] font-semibold tracking-wide hidden lg:block">O'zbekistondagi №1 Tez Yozish Platformasi</p>
+                <p className="text-[10px] sm:text-[11px] text-[var(--sub-color)] font-medium tracking-wide hidden lg:block">O'zbekistondagi №1 Tez Yozish Platformasi</p>
               </div>
             </div>
           </div>
@@ -121,16 +121,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 {/* Circular Profile Avatar Button */}
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="relative group p-0.5 rounded-full border-2 border-[var(--main-color)]/60 hover:border-[var(--main-color)] bg-[var(--sub-alt)] transition-all hover:scale-105 active:scale-95 shadow-md"
+                  className="relative p-0.5 rounded-full border-2 border-[var(--main-color)]/60 hover:border-[var(--main-color)] bg-[var(--sub-alt)] transition-colors cursor-pointer"
                   title="Profil menyusi"
                 >
                   <img
                     src={profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
                     alt="avatar"
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-9 h-9 rounded-full object-cover"
                   />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] flex items-center justify-center animate-pulse border border-white">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-mono font-bold text-[9px] flex items-center justify-center border border-white">
                       {unreadCount}
                     </span>
                   )}
@@ -138,37 +138,37 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
                 {/* Profile Dropdown Menu */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-2xl z-50 p-4 text-xs space-y-3 divide-y divide-[var(--sub-alt)] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-xl z-50 p-4 text-xs space-y-3 divide-y divide-[var(--sub-alt)]">
                     {/* User Info Header */}
                     <div className="pb-3 flex items-center gap-3">
                       <img
                         src={profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
                         alt="avatar"
-                        className="w-12 h-12 rounded-full object-cover border-2 border-[var(--main-color)] p-0.5"
+                        className="w-11 h-11 rounded-full object-cover border-2 border-[var(--main-color)] p-0.5"
                       />
                       <div className="overflow-hidden">
-                        <h3 className="font-black text-sm text-[var(--text-color)] truncate">
+                        <h3 className="font-bold text-sm text-[var(--text-color)] truncate">
                           {profile?.displayName || 'Foydalanuvchi'}
                         </h3>
                         <p className="text-[11px] text-[var(--sub-color)] truncate font-mono">
                           {user.email ? maskEmail(user.email) : ''}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="px-2 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] font-bold text-[10px] flex items-center gap-1">
-                            <Zap className="w-3 h-3" /> {profile?.highestWpm || 0} WPM Best
+                          <span className="px-2 py-0.5 rounded-md bg-[var(--main-color)]/15 text-[var(--main-color)] font-bold text-[10px] flex items-center gap-1">
+                            <Zap className="w-3 h-3" /> {profile?.highestWpm || 0} WPM
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-black text-[10px] flex items-center gap-1 font-mono">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500 font-bold text-[10px] flex items-center gap-1 font-mono">
                             <Award className="w-3 h-3" /> LVL {profile?.level || 1}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Notifications (Habarnomalar) Section */}
+                    {/* Notifications Section */}
                     <div className="pt-3 space-y-2">
                       <button
                         onClick={() => setShowNotifSection(!showNotifSection)}
-                        className="w-full flex items-center justify-between p-2 rounded-2xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-all font-bold"
+                        className="w-full flex items-center justify-between p-2 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-colors font-bold cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <Bell className="w-4 h-4 text-[var(--main-color)]" />
@@ -176,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         </div>
                         <div className="flex items-center gap-1.5">
                           {unreadCount > 0 ? (
-                            <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-mono font-extrabold">
+                            <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white text-[10px] font-mono font-bold">
                               {unreadCount} yangi
                             </span>
                           ) : (
@@ -185,7 +185,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                             </span>
                           )}
                           <ChevronRight
-                            className={`w-4 h-4 text-[var(--sub-color)] transition-transform duration-200 ${
+                            className={`w-4 h-4 text-[var(--sub-color)] transition-transform duration-150 ${
                               showNotifSection ? 'rotate-90' : ''
                             }`}
                           />
@@ -193,18 +193,18 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       </button>
 
                       {showNotifSection && (
-                        <div className="max-h-72 overflow-y-auto space-y-2 p-1.5 bg-[var(--sub-alt)]/30 rounded-2xl border border-[var(--sub-alt)]">
+                        <div className="max-h-72 overflow-y-auto space-y-2 p-1.5 bg-[var(--sub-alt)]/30 rounded-xl border border-[var(--sub-alt)]">
                           <div className="flex items-center justify-between px-2 py-1">
-                            <span className="text-[10px] font-black text-[var(--sub-color)] uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider flex items-center gap-1.5">
                               <Bell className="w-3 h-3 text-[var(--main-color)]" />
                               <span>Bildirishnomalar</span>
                             </span>
                             {notifications.length > 0 && (
                               <button
                                 onClick={clearNotifications}
-                                className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-bold transition-colors"
+                                className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-bold transition-colors cursor-pointer"
                               >
-                                Hammasini o'qildi qilish
+                                Tozalash
                               </button>
                             )}
                           </div>
@@ -230,22 +230,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                                 <div
                                   key={n.id}
                                   onClick={() => markNotificationRead(n.id)}
-                                  className={`p-3 rounded-2xl border transition-all cursor-pointer relative group ${
+                                  className={`p-2.5 rounded-xl border transition-colors cursor-pointer relative ${
                                     isUnread
-                                      ? 'bg-[var(--card-bg)] border-[var(--main-color)]/50 shadow-md ring-1 ring-[var(--main-color)]/20'
+                                      ? 'bg-[var(--card-bg)] border-[var(--main-color)]/60'
                                       : 'bg-[var(--card-bg)]/80 border-[var(--sub-alt)] opacity-85 hover:opacity-100'
                                   }`}
                                 >
-                                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
                                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                       {icon}
-                                      <span className="font-black text-xs text-[var(--text-color)] truncate">
+                                      <span className="font-bold text-xs text-[var(--text-color)] truncate">
                                         {n.title}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0">
                                       {isUnread && (
-                                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                        <span className="w-2 h-2 rounded-full bg-rose-500" />
                                       )}
                                       <span className="text-[9px] text-[var(--sub-color)] font-mono">
                                         {new Date(n.timestamp).toLocaleTimeString([], {
@@ -259,25 +259,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                                   <p className="text-[11px] text-[var(--text-color)]/90 leading-relaxed whitespace-pre-wrap pl-5">
                                     {n.message}
                                   </p>
-
-                                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--sub-alt)]/60 text-[10px] pl-5">
-                                    <span className="font-semibold text-[var(--main-color)]">
-                                      {n.sender || 'Admin (Yolnoma)'}
-                                    </span>
-                                    {isUnread ? (
-                                      <span className="text-emerald-500 font-bold hover:underline">
-                                        O'qildi deb belgilash ✓
-                                      </span>
-                                    ) : (
-                                      <span className="text-[var(--sub-color)] font-mono">O'qilgan</span>
-                                    )}
-                                  </div>
                                 </div>
                               );
                             })
                           ) : (
                             <p className="text-center text-[var(--sub-color)] py-4 text-xs font-medium">
-                              Hozircha yangi bildirishnoma yo'q
+                              Hozircha bildirishnoma yo'q
                             </p>
                           )}
                         </div>
@@ -288,57 +275,57 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     <div className="pt-3 space-y-1">
                       <button
                         onClick={() => handleSelectTab('profile')}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
                           <UserIcon className="w-4 h-4 text-[var(--main-color)]" />
                           <span>Profilni Tahrirlash</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
 
                       <button
                         onClick={() => handleSelectTab('statistics')}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
                           <BarChart2 className="w-4 h-4 text-emerald-500" />
                           <span>Mening Statistikam</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
 
                       <button
                         onClick={() => handleSelectTab('achievements')}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
                           <Award className="w-4 h-4 text-amber-500" />
                           <span>Yutuqlarim</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
 
                       <button
                         onClick={() => handleSelectTab('settings')}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
                           <Settings className="w-4 h-4 text-indigo-400" />
                           <span>Sozlamalar</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
 
                       <button
                         onClick={() => handleSelectTab('owner')}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-all font-bold group bg-[var(--main-color)]/5 border border-[var(--main-color)]/20"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold bg-[var(--main-color)]/5 border border-[var(--main-color)]/20 cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
                           <Sparkles className="w-4 h-4 text-[var(--main-color)]" />
                           <span className="text-[var(--main-color)]">Sayt Haqida & Muallif</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-[var(--main-color)] opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-[var(--main-color)] opacity-70" />
                       </button>
                     </div>
 
@@ -349,7 +336,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           setShowProfileMenu(false);
                           logout();
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all font-extrabold text-xs shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors font-bold text-xs cursor-pointer"
                       >
                         <LogOut className="w-4 h-4" />
                         <span>Tizimdan Chiqish</span>
@@ -361,7 +348,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-[var(--main-color)] to-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-[var(--main-color)]/25 hover:opacity-95 transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Kirish</span>
@@ -376,36 +363,36 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop Overlay */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/50 transition-opacity"
             onClick={() => setIsDrawerOpen(false)}
           />
 
           {/* Drawer Container */}
-          <div className="relative w-80 sm:w-96 md:w-[380px] max-w-[90vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-6 flex flex-col justify-between shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-250">
+          <div className="relative w-80 sm:w-88 max-w-[90vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-5 flex flex-col justify-between shadow-xl overflow-y-auto">
             {/* Top Drawer Section */}
             <div>
               {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-5 mb-5 border-b border-[var(--sub-alt)]/60">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--sub-alt)]">
                 <div
-                  className="flex items-center gap-3 cursor-pointer group"
+                  className="flex items-center gap-2.5 cursor-pointer"
                   onClick={() => handleSelectTab('typing')}
                 >
                   <img
                     src="/yolnoma_icon.svg"
                     alt="Yolnoma Logo"
-                    className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
+                    className="w-8 h-8 object-contain"
                   />
                   <div>
-                    <h2 className="text-lg font-black tracking-tight text-[var(--text-color)]">
-                      Yolnoma <span className="text-[var(--main-color)] text-sm font-bold">Typing</span>
+                    <h2 className="text-base font-black tracking-tight text-[var(--text-color)]">
+                      Yolnoma <span className="text-[var(--main-color)] text-xs font-bold">Typing</span>
                     </h2>
-                    <p className="text-[11px] text-[var(--sub-color)] font-medium">O'zbekiston №1 Tez Yozish Platformasi</p>
+                    <p className="text-[10px] text-[var(--sub-color)] font-medium">O'zbekiston №1 Tez Yozish Platformasi</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsDrawerOpen(false)}
-                  className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-all"
+                  className="p-1.5 rounded-lg text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
                   title="Yopish"
                 >
                   <X className="w-5 h-5" />
@@ -413,8 +400,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </div>
 
               {/* Clean Navigation Menu Links */}
-              <div className="space-y-1.5">
-                <div className="px-2.5 py-1 text-[11px] font-black uppercase text-[var(--sub-color)] tracking-wider">
+              <div className="space-y-1">
+                <div className="px-2 py-1 text-[10px] font-bold uppercase text-[var(--sub-color)] tracking-wider">
                   Bo'limlar
                 </div>
 

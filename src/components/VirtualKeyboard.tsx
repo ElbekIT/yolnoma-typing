@@ -6,18 +6,18 @@ interface VirtualKeyboardProps {
 }
 
 const KeyCap = memo(({ keyLabel, isPressed, isActiveTarget }: { keyLabel: string; isPressed: boolean; isActiveTarget: boolean }) => {
-  let base = 'h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg flex items-center justify-center font-mono text-[10px] sm:text-xs font-semibold uppercase border transition-colors duration-75 shrink-0 ';
+  let base = 'h-7 sm:h-8 px-2 rounded flex items-center justify-center font-mono text-[10px] sm:text-xs font-semibold uppercase border transition-colors duration-75 shrink-0 ';
 
   if (isActiveTarget) {
-    base += 'bg-[var(--main-color)] text-white border-[var(--main-color)] ring-2 ring-[var(--main-color)]/30 ';
+    base += 'bg-[var(--main-color)] text-white border-[var(--main-color)] ';
   } else if (isPressed) {
     base += 'bg-[var(--sub-color)] text-[var(--bg-color)] border-transparent ';
   } else {
-    base += 'bg-[var(--sub-alt)]/60 text-[var(--text-color)] border-[var(--sub-alt)] ';
+    base += 'bg-[var(--sub-alt)]/50 text-[var(--text-color)] border-[var(--sub-alt)] ';
   }
 
   return (
-    <div className={`${base} ${keyLabel === 'space' ? 'w-48 sm:w-64' : 'min-w-[24px] sm:min-w-[32px]'}`}>
+    <div className={`${base} ${keyLabel === 'space' ? 'w-44 sm:w-60' : 'min-w-[22px] sm:min-w-[28px]'}`}>
       {keyLabel}
     </div>
   );
@@ -55,8 +55,8 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
   const normalizedActive = activeChar ? activeChar.toLowerCase() : '';
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-2 sm:p-3 bg-[var(--card-bg)]/40 border border-[var(--sub-alt)]/60 rounded-2xl my-4 opacity-80 hover:opacity-100 transition-opacity overflow-x-auto no-scrollbar">
-      <div className="flex flex-col items-center gap-1 sm:gap-1.5 min-w-[320px]">
+    <div className="w-full max-w-2xl mx-auto p-2 bg-[var(--card-bg)]/40 border border-[var(--sub-alt)] rounded-xl my-3 opacity-85 hover:opacity-100 transition-opacity overflow-x-auto no-scrollbar">
+      <div className="flex flex-col items-center gap-1 min-w-[320px]">
         <div className="flex gap-1 sm:gap-1.5">
           {row1.map((k) => (
             <KeyCap
