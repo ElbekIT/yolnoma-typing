@@ -171,7 +171,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       onInputChange(newValue);
     },
-    [isTestFinished, typedInput.length, onInputChange]
+    [isTestFinished, typedInput, targetText, onInputChange]
   );
 
   // Group text into whole words so words NEVER break mid-word across lines
