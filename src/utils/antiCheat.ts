@@ -2,8 +2,9 @@
  * Advanced Anti-Cheat, Console Hardening & Integrity Protection System for Yolnoma Typing
  *
  * Security Features:
+ * - Active DevTools Detector (Pre-entry & Runtime): Detects DevTools opened BEFORE navigating or DURING session.
  * - 100% Function Key Lock (F1-F24): Blocks all F-keys individually and in any combination (F5+F12, Ctrl+F5, Shift+F5, etc.)
- * - Capture-Phase Triple-Layer Interception: Binds to window, document, and documentElement in capture phase for keydown, keyup, keypress.
+ * - Capture-Phase Triple-Layer Interception: Binds to window, document, and documentElement in capture phase.
  * - DevTools & Source Protection: Blocks Ctrl+Shift+I/J/C/K/E/S, Cmd+Alt+I/J/C/K/U, Ctrl+U (view source), Ctrl+S (save), Ctrl+P (print).
  * - Console Sanitization: Neutralizes window console methods to prevent script injection and DOM inspection.
  * - Auto-Typer & Bot Detection: Millisecond keystroke dynamics and untrusted event filtering.
@@ -17,6 +18,8 @@ import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 // Regex matching any function key from F1 to F24
 const FUNCTION_KEY_REGEX = /^F([1-9]|1[0-9]|2[0-4])$/i;
 
+type DevToolsListener = (isOpen: boolean) => void;
+
 class AntiCheatSystem {
   private keyTimes: number[] = [];
   private onCheatCallback: ((reason: string) => void) | null = null;
@@ -24,9 +27,21 @@ class AntiCheatSystem {
   private currentUserId: string | null = null;
   private devToolsCheckInterval: any = null;
 
+  // DevTools detection state & listeners
+  private _isDevToolsOpen = false;
+  private devToolsListeners: Set<DevToolsListener> = new Set();
+  private originalConsole: any = {};
+
   constructor() {
-    // Auto-attach immediately on module load to guarantee instant protection
-    if (typeof window !== 'undefined') {
+    // Preserve internal reference to original console before sanitizing
+    if (typeof window !== 'undefined' && window.console) {
+      this.originalConsole = {
+        log: window.console.log,
+        clear: window.console.clear,
+        table: window.console.table,
+        dir: window.console.dir,
+      };
+
       this.attachGlobalSecurityListeners();
       this.sanitizeConsole();
       this.startDevToolsProtection();
@@ -81,7 +96,7 @@ class AntiCheatSystem {
         update(ref(rtdb, `users/${this.currentUserId}`), {
           isBanned: true,
           blockReason: reason,
-          bannedAt: Date.now()
+          bannedAt: Date.now(),
         }).catch(() => {});
       } catch (err) {
         console.warn('RTDB ban user error:', err);
@@ -142,14 +157,12 @@ class AntiCheatSystem {
    * Validates typing score before submission to prevent console tampering
    */
   public validateTypingResult(wpm: number, accuracy: number, durationSeconds: number, charCount: number): boolean {
-    // Impossible speeds (world record is ~250 WPM)
     if (wpm < 0 || wpm > 260) {
       return false;
     }
     if (accuracy < 0 || accuracy > 100) {
       return false;
     }
-    // Theoretical maximum chars typed in duration
     const maxPossibleChars = durationSeconds * 25; // 25 chars/sec = 300 WPM
     if (charCount > maxPossibleChars && durationSeconds > 5) {
       return false;
@@ -162,7 +175,6 @@ class AntiCheatSystem {
    */
   public validateDinoScore(score: number, distance: number, obstaclesDodged: number): boolean {
     if (score < 0 || distance < 0 || obstaclesDodged < 0) return false;
-    // Score should be proportionally related to distance and dodged obstacles
     if (score > 100000) return false;
     if (distance > 0 && score > distance * 5) return false;
     return true;
@@ -177,7 +189,7 @@ class AntiCheatSystem {
   /**
    * Sanitizes console output methods to protect memory and state inspection
    */
-  private sanitizeConsole() {
+  public sanitizeConsole() {
     try {
       const emptyFunc = () => {};
       if (typeof window !== 'undefined' && (window as any).console) {
@@ -191,22 +203,109 @@ class AntiCheatSystem {
     } catch {}
   }
 
+  // ==========================================
+  // ACTIVE DEVTOOLS DETECTION SYSTEM
+  // ==========================================
+
+  public isDevToolsOpen(): boolean {
+    return this._isDevToolsOpen;
+  }
+
+  public subscribeDevTools(listener: DevToolsListener): () => void {
+    this.devToolsListeners.add(listener);
+    // Send current state immediately
+    listener(this._isDevToolsOpen);
+    return () => {
+      this.devToolsListeners.delete(listener);
+    };
+  }
+
+  private setDevToolsState(isOpen: boolean) {
+    if (this._isDevToolsOpen !== isOpen) {
+      this._isDevToolsOpen = isOpen;
+      this.devToolsListeners.forEach((fn) => {
+        try {
+          fn(isOpen);
+        } catch {}
+      });
+    }
+  }
+
   /**
-   * Background monitor for DevTools opening
+   * Checks DevTools state using multiple complementary detection vectors
+   */
+  public checkDevToolsNow(): boolean {
+    if (typeof window === 'undefined') return false;
+
+    let detected = false;
+
+    // Vector 1: Window Dimensions Differential (Docked DevTools - Bottom/Right/Left)
+    try {
+      const widthThreshold = window.outerWidth - window.innerWidth > 160;
+      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+      if (widthThreshold || heightThreshold) {
+        detected = true;
+      }
+    } catch {}
+
+    // Vector 2: Object / Element Getter Trigger (Chromium & Firefox DevTools inspects objects)
+    if (!detected) {
+      try {
+        let getterTriggered = false;
+        const probe = /./;
+        probe.toString = function () {
+          getterTriggered = true;
+          return 'yolnoma_guard';
+        };
+
+        // If console table or dir formats the probe, getter executes
+        if (this.originalConsole && this.originalConsole.dir) {
+          try {
+            this.originalConsole.dir(probe);
+          } catch {}
+        }
+
+        if (getterTriggered) {
+          detected = true;
+        }
+      } catch {}
+    }
+
+    // Vector 3: Debugger Timing Vector (Detached / Undocked DevTools window)
+    if (!detected) {
+      try {
+        const start = performance.now();
+        // eslint-disable-next-line no-debugger
+        debugger;
+        const elapsed = performance.now() - start;
+        if (elapsed > 80) {
+          detected = true;
+        }
+      } catch {}
+    }
+
+    this.setDevToolsState(detected);
+    return detected;
+  }
+
+  /**
+   * Background monitor for DevTools opening and closing
    */
   private startDevToolsProtection() {
     if (this.devToolsCheckInterval) return;
 
-    this.devToolsCheckInterval = setInterval(() => {
-      try {
-        const widthThreshold = window.outerWidth - window.innerWidth > 160;
-        const heightThreshold = window.outerHeight - window.innerHeight > 160;
+    // Initial check immediately
+    this.checkDevToolsNow();
 
-        if (widthThreshold || heightThreshold) {
-          this.sanitizeConsole();
-        }
-      } catch {}
-    }, 1500);
+    // Fast polling interval (every 350ms) to immediately react when DevTools opens or closes
+    this.devToolsCheckInterval = setInterval(() => {
+      this.checkDevToolsNow();
+    }, 350);
+
+    // Also check on window resize
+    window.addEventListener('resize', () => {
+      this.checkDevToolsNow();
+    });
   }
 
   /**
@@ -219,7 +318,6 @@ class AntiCheatSystem {
     const lowerKey = key.toLowerCase();
 
     // 1. Check ALL Function keys (F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, ... F24)
-    // Matches by key name, code, or numeric keyCode (112 to 135)
     if (
       FUNCTION_KEY_REGEX.test(key) ||
       FUNCTION_KEY_REGEX.test(code) ||
@@ -290,21 +388,29 @@ class AntiCheatSystem {
     document.addEventListener('contextmenu', contextHandler, { capture: true, passive: false });
 
     // B. Disable Selection across body (Silently)
-    document.addEventListener('selectstart', (e) => {
-      const target = e.target as HTMLElement;
-      if (target && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-        this.blockEvent(e as any);
-      }
-    }, { capture: true, passive: false });
+    document.addEventListener(
+      'selectstart',
+      (e) => {
+        const target = e.target as HTMLElement;
+        if (target && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          this.blockEvent(e as any);
+        }
+      },
+      { capture: true, passive: false }
+    );
 
     // C. Disable Copy, Cut, Paste globally SILENTLY without banning
     ['copy', 'cut', 'paste'].forEach((evt) => {
-      window.addEventListener(evt, (e) => {
-        const target = e.target as HTMLElement;
-        if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA')) {
-          this.blockEvent(e as any);
-        }
-      }, { capture: true, passive: false });
+      window.addEventListener(
+        evt,
+        (e) => {
+          const target = e.target as HTMLElement;
+          if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA')) {
+            this.blockEvent(e as any);
+          }
+        },
+        { capture: true, passive: false }
+      );
     });
 
     // D. Universal Key Interceptor for Keydown, Keyup, and Keypress

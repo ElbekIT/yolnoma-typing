@@ -24,6 +24,7 @@ import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInvit
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
+import { DevToolsBlockedScreen } from './components/DevToolsBlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
 import { DinoGameView } from './components/dino/DinoGameView';
 import { AdminView } from './components/admin/AdminView';
@@ -56,6 +57,16 @@ function MainAppContent() {
     return 'typing';
   });
   const prevUserRef = useRef<string | null>(null);
+
+  // DevTools detection state
+  const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());
+
+  useEffect(() => {
+    const unsubscribe = antiCheatManager.subscribeDevTools((isOpen) => {
+      setIsDevToolsBlocked(isOpen);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -311,6 +322,11 @@ function MainAppContent() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isTestActive, timeMode, finishTest]);
+
+  // DevTools Security Gate (Runs before loading, login, and application screens)
+  if (isDevToolsBlocked) {
+    return <DevToolsBlockedScreen />;
+  }
 
   // Loading state gate (AFTER ALL HOOKS)
   if (loading) {
