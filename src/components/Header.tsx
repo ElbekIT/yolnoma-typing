@@ -34,6 +34,8 @@ import { useSettings } from '../context/SettingsContext';
 import { languagesList, t } from '../config/languages';
 import { themes } from '../config/themes';
 import { LanguageCode, ThemeMode } from '../types';
+import { maskEmail } from '../utils/maskEmail';
+import { isOwnerUser, isAdminSessionActive } from '../utils/ownerAuth';
 
 interface HeaderProps {
   activeTab: string;
@@ -50,7 +52,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const isOwnerAdmin = user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' || profile?.role === 'admin';
+  const isOwnerAdmin =
+    user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+    user?.email?.toLowerCase() === 'elbekqoriyev2008@gmail.com' ||
+    profile?.role === 'admin' ||
+    isOwnerUser() ||
+    isAdminSessionActive();
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
@@ -143,7 +150,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         <h3 className="font-black text-sm text-[var(--text-color)] truncate">
                           {profile?.displayName || 'Foydalanuvchi'}
                         </h3>
-                        <p className="text-[11px] text-[var(--sub-color)] truncate">{user.email}</p>
+                        <p className="text-[11px] text-[var(--sub-color)] truncate font-mono">
+                          {user.email ? maskEmail(user.email) : ''}
+                        </p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="px-2 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] font-bold text-[10px] flex items-center gap-1">
                             <Zap className="w-3 h-3" /> {profile?.highestWpm || 0} WPM Best

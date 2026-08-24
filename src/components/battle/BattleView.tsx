@@ -1169,18 +1169,18 @@ export const BattleView: React.FC<BattleViewProps> = ({
                         colorClass = 'text-emerald-400 font-bold';
                       } else {
                         colorClass = isSpace
-                          ? 'bg-rose-500/30 text-rose-300 rounded'
+                          ? 'bg-rose-500/20 text-rose-300'
                           : 'text-rose-400 font-bold bg-rose-950/60 rounded underline decoration-rose-500';
                       }
                     } else if (isCurrent) {
                       colorClass = isSpace
-                        ? 'border-b-2 border-cyan-400 text-cyan-300 animate-pulse bg-cyan-500/20 rounded'
-                        : 'text-cyan-300 font-black bg-cyan-500/30 animate-pulse underline decoration-cyan-400';
+                        ? 'border-b-2 border-cyan-400 text-slate-500'
+                        : 'text-white font-black bg-cyan-500/20 underline decoration-cyan-400 rounded-sm';
                     }
 
                     return (
                       <span key={index} className={`inline-block ${colorClass}`}>
-                        {isSpace ? '\u00A0' : char}
+                        {isSpace ? ' ' : char}
                       </span>
                     );
                   })}

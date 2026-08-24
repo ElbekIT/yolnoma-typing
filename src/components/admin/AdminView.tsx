@@ -25,7 +25,13 @@ import {
   Award,
   Bell,
   Send,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff,
+  LogOut,
+  Check
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
@@ -35,10 +41,30 @@ import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { AdminInboxTab } from './AdminInboxTab';
+import { maskEmail } from '../../utils/maskEmail';
+import {
+  verifyAdminUsername,
+  verifyAdminPassword,
+  verifyAdmin2FA,
+  setAdminSession,
+  isAdminSessionActive,
+  clearAdminSession,
+  isOwnerUser
+} from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {
   const { user, profile } = useAuth();
-  const isAuthorizedAdmin = user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' || user?.email?.toLowerCase() === 'elbekqoriyev2008@gmail.com' || profile?.role === 'admin';
+
+  // 3-Step Authentication Gate State (Username + Password + 2FA PIN)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());
+  const [inputUsername, setInputUsername] = useState('');
+  const [inputPassword, setInputPassword] = useState('');
+  const [input2FA, setInput2FA] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Email Privacy Setting (Default: Masked for Privacy)
+  const [showFullEmails, setShowFullEmails] = useState(false);
 
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,9 +94,44 @@ export const AdminView: React.FC = () => {
 
   const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
 
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    const isUserValid = verifyAdminUsername(inputUsername);
+    const isPassValid = verifyAdminPassword(inputPassword);
+    const is2FAValid = verifyAdmin2FA(input2FA);
+
+    if (!isUserValid) {
+      setAuthError("Noto'g'ri Admin Foydalanuvchi nomi (Username) kiritildi!");
+      return;
+    }
+
+    if (!isPassValid) {
+      setAuthError("Noto'g'ri Admin Paroli kiritildi! Iltimos, qayta tekshiring.");
+      return;
+    }
+
+    if (!is2FAValid) {
+      setAuthError("Noto'g'ri 2FA Xavfsizlik PIN kodi kiritildi!");
+      return;
+    }
+
+    setAdminSession();
+    setIsAdminAuthenticated(true);
+    setInputUsername('');
+    setInputPassword('');
+    setInput2FA('');
+  };
+
+  const handleAdminLock = () => {
+    clearAdminSession();
+    setIsAdminAuthenticated(false);
+  };
+
   // Fetch users & leaderboard from Firebase Realtime DB with exact LeaderboardView synchronization
   useEffect(() => {
-    if (!isAuthorizedAdmin) {
+    if (!isAdminAuthenticated) {
       setLoading(false);
       return;
     }
@@ -203,10 +264,10 @@ export const AdminView: React.FC = () => {
       };
 
       const unsubBanned = onValue(bannedRef, (snap) => {
-        bannedSet.clear();
+        bannedSet = new Set<string>();
         if (snap.exists()) {
           const val = snap.val();
-          Object.keys(val).forEach((id) => { if (val[id]) bannedSet.add(id); });
+          Object.keys(val).forEach((k) => bannedSet.add(k));
         }
         rebuildLists();
       });
@@ -221,12 +282,12 @@ export const AdminView: React.FC = () => {
         rebuildLists();
       });
 
-      // Listen for unread inbox messages count
-      const adminMessagesRef = ref(rtdb, 'admin_messages');
-      const unsubMessages = onValue(adminMessagesRef, (snap) => {
+      // Listen to inbox for unread count
+      const inboxRef = ref(rtdb, 'contactMessages');
+      const unsubInbox = onValue(inboxRef, (snap) => {
         if (snap.exists()) {
-          const val = snap.val();
-          const unread = Object.keys(val).filter((k) => !val[k]?.isRead).length;
+          const data = snap.val();
+          const unread = Object.values(data).filter((m: any) => !m.read).length;
           setUnreadInboxCount(unread);
         } else {
           setUnreadInboxCount(0);
@@ -237,13 +298,13 @@ export const AdminView: React.FC = () => {
         unsubBanned();
         unsubLeaderboard();
         unsubUsers();
-        unsubMessages();
+        unsubInbox();
       };
     } catch (e) {
-      console.warn('Realtime DB fetch error in Admin:', e);
+      console.error('Error fetching admin data:', e);
       setLoading(false);
     }
-  }, []);
+  }, [isAdminAuthenticated]);
 
   const openEditModal = (u: UserProfile) => {
     setEditingUser(u);
@@ -251,25 +312,24 @@ export const AdminView: React.FC = () => {
     setEditUsername(u.username);
     setEditWpm(u.highestWpm);
     setEditAccuracy(u.highestAccuracy);
-    setEditLevel(u.level);
-    setEditRankTitle(u.rankTitle);
-    setEditTotalTests(u.totalTests);
+    setEditLevel(u.level || 1);
+    setEditRankTitle(u.rankTitle || 'Typing Master');
+    setEditTotalTests(u.totalTests || 0);
   };
 
   const handleSaveUserEdit = async () => {
     if (!editingUser) return;
     setIsSaving(true);
     try {
-      const updates: Record<string, any> = {
+      const updates: any = {
         displayName: editDisplayName.trim(),
-        username: editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, ''),
+        username: editUsername.trim().toLowerCase(),
         highestWpm: Number(editWpm),
-        wpm: Number(editWpm),
         highestAccuracy: Number(editAccuracy),
-        accuracy: Number(editAccuracy),
         level: Number(editLevel),
         rankTitle: editRankTitle.trim(),
-        totalTests: Number(editTotalTests)
+        totalTests: Number(editTotalTests),
+        lastActive: Date.now()
       };
 
       // 1. Update in Realtime DB users node
@@ -278,104 +338,139 @@ export const AdminView: React.FC = () => {
       // 2. Sync / Update in Realtime DB leaderboard node if WPM > 0
       if (editWpm > 0 && !editingUser.isBanned) {
         await update(ref(rtdb, `leaderboard/${editingUser.uid}`), {
-          userId: editingUser.uid,
+          uid: editingUser.uid,
           displayName: editDisplayName.trim(),
           username: editUsername.trim().toLowerCase(),
-          wpm: Number(editWpm),
           highestWpm: Number(editWpm),
-          accuracy: Number(editAccuracy),
           highestAccuracy: Number(editAccuracy),
           level: Number(editLevel),
           rankTitle: editRankTitle.trim(),
           totalTests: Number(editTotalTests),
-          timestamp: Date.now()
+          email: editingUser.email,
+          lastActive: Date.now()
         });
       } else {
         // If WPM is set to 0, remove from leaderboard
         await remove(ref(rtdb, `leaderboard/${editingUser.uid}`));
       }
 
-      // 3. Try updating Firestore
+      // 3. Update in Firestore if available
       try {
-        await updateDoc(doc(db, 'users', editingUser.uid), updates);
-      } catch {}
+        const userDocRef = doc(db, 'users', editingUser.uid);
+        await updateDoc(userDocRef, updates);
+      } catch (err) {
+        // Fallback for non-firestore
+      }
 
       setEditingUser(null);
     } catch (e) {
-      alert('Natijani saqlashda xatolik yuz berdi: ' + e);
+      alert('Maʼlumotlarni yangilashda xatolik yuz berdi: ' + e);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleRemoveFromLeaderboard = async (user: UserProfile) => {
-    if (!window.confirm(`"${user.displayName}" foydalanuvchisini Reyting (Leaderboard) jadvalidan olib tashlashni tasdiqlaysizmi?`)) {
+  const handleRemoveFromLeaderboard = async (u: UserProfile) => {
+    if (!window.confirm(`Haqiqatdan ham "${u.displayName}" ni Peshqadamlar (Leaderboard) roʻyxatidan oʻchirmoqchimisiz?`)) {
       return;
     }
-
     try {
       // Remove from RTDB leaderboard node
-      await remove(ref(rtdb, `leaderboard/${user.uid}`));
+      await remove(ref(rtdb, `leaderboard/${u.uid}`));
 
-      // Reset highestWpm in RTDB users node
-      await update(ref(rtdb, `users/${user.uid}`), {
-        highestWpm: 0,
-        wpm: 0
+      // Reset highestWpm in user's profile
+      await update(ref(rtdb, `users/${u.uid}`), {
+        highestWpm: 0
       });
 
-      alert(`"${user.displayName}" reytingdan muvaffaqiyatli olib tashlandi!`);
+      // Update local state
+      setLeaderboardList((prev) => prev.filter((item) => item.uid !== u.uid));
+      setUsersList((prev) =>
+        prev.map((item) => (item.uid === u.uid ? { ...item, highestWpm: 0 } : item))
+      );
     } catch (e) {
-      alert('Reytingdan olib tashlashda xatolik: ' + e);
+      alert('Reytingdan oʻchirishda xatolik yuz berdi: ' + e);
     }
   };
 
   const handleBlockUser = async () => {
     if (!selectedUser) return;
     try {
-      // Update in RTDB users node
+      // Update in users node
       await update(ref(rtdb, `users/${selectedUser.uid}`), {
         isBanned: true,
-        blockReason: banReason,
+        blockReason: banReason.trim(),
         bannedAt: Date.now()
       });
 
-      // Set in bannedUsers node
-      await set(ref(rtdb, `bannedUsers/${selectedUser.uid}`), true);
+      // Add to bannedUsers node
+      await set(ref(rtdb, `bannedUsers/${selectedUser.uid}`), {
+        email: selectedUser.email,
+        reason: banReason.trim(),
+        bannedAt: Date.now()
+      });
 
       // Immediately REMOVE from leaderboard in RTDB
       await remove(ref(rtdb, `leaderboard/${selectedUser.uid}`));
 
-      // Update in Firestore
+      // Update Firestore if available
       try {
-        await updateDoc(doc(db, 'users', selectedUser.uid), {
+        const userDocRef = doc(db, 'users', selectedUser.uid);
+        await updateDoc(userDocRef, {
           isBanned: true,
-          blockReason: banReason
+          blockReason: banReason.trim()
         });
-      } catch {}
+      } catch (err) {
+        // Fallback
+      }
+
+      // Update local state
+      setUsersList((prev) =>
+        prev.map((u) =>
+          u.uid === selectedUser.uid
+            ? { ...u, isBanned: true, blockReason: banReason.trim() }
+            : u
+        )
+      );
+      setLeaderboardList((prev) => prev.filter((u) => u.uid !== selectedUser.uid));
 
       setSelectedUser(null);
+      setBanReason('Nomaʼlum qoida buzilishi / Avto-kliker dastur ishlatilgan.');
     } catch (e) {
-      alert('Foydalanuvchini bloklashda xatolik yuz berdi: ' + e);
+      alert('Foydalanuvchini bloklashda xatolik: ' + e);
     }
   };
 
-  const handleUnblockUser = async (user: UserProfile) => {
+  const handleUnblockUser = async (u: UserProfile) => {
+    if (!window.confirm(`Haqiqatdan ham "${u.displayName}" ni blokdan chiqarmoqchimisiz?`)) {
+      return;
+    }
     try {
-      await update(ref(rtdb, `users/${user.uid}`), {
+      // Remove from bannedUsers node
+      await remove(ref(rtdb, `bannedUsers/${u.uid}`));
+
+      // Update in users node
+      await update(ref(rtdb, `users/${u.uid}`), {
         isBanned: false,
-        blockReason: ''
+        blockReason: null
       });
 
-      await remove(ref(rtdb, `bannedUsers/${user.uid}`));
-
+      // Update Firestore if available
       try {
-        await updateDoc(doc(db, 'users', user.uid), {
+        const userDocRef = doc(db, 'users', u.uid);
+        await updateDoc(userDocRef, {
           isBanned: false,
-          blockReason: ''
+          blockReason: null
         });
-      } catch {}
+      } catch (err) {
+        // Fallback
+      }
 
-      alert(`"${user.displayName}" muvaffaqiyatli BAN'dan chiqarildi! Endi saytdan bemalol foydalanishi mumkin.`);
+      setUsersList((prev) =>
+        prev.map((item) =>
+          item.uid === u.uid ? { ...item, isBanned: false, blockReason: '' } : item
+        )
+      );
     } catch (e) {
       alert('Foydalanuvchini blokdan chiqarishda xatolik: ' + e);
     }
@@ -397,15 +492,104 @@ export const AdminView: React.FC = () => {
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!isAuthorizedAdmin) {
+  // 1. Two-Step Password & 2FA Gate Screen
+  if (!isAdminAuthenticated) {
     return (
-      <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-[var(--card-bg)] border border-rose-500/30 text-center space-y-4 shadow-xl animate-in fade-in">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
-          <ShieldAlert className="w-8 h-8" />
+      <div className="w-full max-w-md mx-auto my-12 p-8 rounded-3xl bg-[var(--card-bg)] border border-amber-500/30 text-center space-y-6 shadow-2xl animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
+          <ShieldAlert className="w-8 h-8 animate-pulse" />
         </div>
-        <h3 className="text-xl font-black text-[var(--text-color)]">Kirish Cheklangan (403 Forbidden)</h3>
-        <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-          Ushbu Admin Boshqaruv Paneli faqat bosh administrator uchun himoyalangan. Foydalanuvchilar maʼlumotlari toʻliq xavfsizlik ostida saqlanadi.
+
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Admin Xavfsizlik Qalbi</span>
+          </div>
+          <h2 className="text-xl font-black text-[var(--text-color)]">
+            Admin Panel Autentifikatsiyasi
+          </h2>
+          <p className="text-xs text-[var(--sub-color)] leading-relaxed">
+            Admin boshqaruv paneliga kirish uchun Foydalanuvchi nomi (User), Parol va 2FA xavfsizlik kodini kiriting.
+          </p>
+        </div>
+
+        {authError && (
+          <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold text-left flex items-start gap-2 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{authError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
+          {/* Step 1: Username */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-amber-400" />
+              <span>1-bosqich: Admin Login (Username)</span>
+            </label>
+            <input
+              type="text"
+              value={inputUsername}
+              onChange={(e) => setInputUsername(e.target.value)}
+              placeholder="Username kiriting (masalan: YOSHLARTYPING)..."
+              required
+              autoFocus
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-wide"
+            />
+          </div>
+
+          {/* Step 2: Password */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+              <span>2-bosqich: Admin Paroli (Password)</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={inputPassword}
+                onChange={(e) => setInputPassword(e.target.value)}
+                placeholder="Parolni kiriting..."
+                required
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sub-color)] hover:text-white"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Step 3: 2FA PIN */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              <span>3-bosqich: 2FA Xavfsizlik PIN Kodi</span>
+            </label>
+            <input
+              type="password"
+              value={input2FA}
+              onChange={(e) => setInput2FA(e.target.value)}
+              placeholder="2FA PIN kodini kiriting..."
+              required
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <Lock className="w-4 h-4" />
+            <span>Tasdiqlash & Kirish</span>
+          </button>
+        </form>
+
+        <p className="text-[11px] text-[var(--sub-color)] font-mono">
+          Yolnoma Typing • Barcha huquqlar himoyalangan
         </p>
       </div>
     );
@@ -422,9 +606,11 @@ export const AdminView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-black font-mono font-extrabold text-[10px] uppercase tracking-wider">
-                VERIFIED OWNER
+                VERIFIED OWNER • 2FA ACTIVE
               </span>
-              <span className="text-xs font-mono text-amber-300/80">yuldashivagavharoy@gmail.com</span>
+              <span className="text-xs font-mono text-amber-300/80">
+                {showFullEmails ? 'yuldashivagavharoy@gmail.com' : maskEmail('yuldashivagavharoy@gmail.com')}
+              </span>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight mt-1">
               Owner & Admin Boshqaruv Paneli
@@ -435,27 +621,35 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Privacy Email Toggle */}
+          <button
+            onClick={() => setShowFullEmails(!showFullEmails)}
+            className="px-3.5 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
+            title="Foydalanuvchilar email manzillarini to'liq ko'rsatish yoki yashirish"
+          >
+            {showFullEmails ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+            <span>{showFullEmails ? "Emaillarni Yashirish" : "Emaillarni Ko'rish"}</span>
+          </button>
+
           {/* Action Button to Open Content Modal */}
           <button
             onClick={() => setShowContentModal(true)}
-            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
           >
             <FileText className="w-4 h-4" />
-            <span>Matnlar & Tillar Kiratish</span>
+            <span>Matnlar & Tillar</span>
           </button>
 
-          <div className="flex items-center gap-4 bg-slate-950/60 p-3.5 rounded-2xl border border-amber-500/20">
-            <div className="text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Reytingdagilar</span>
-              <span className="text-lg font-mono font-black text-amber-400">{leaderboardList.length}</span>
-            </div>
-            <div className="h-6 w-px bg-slate-800" />
-            <div className="text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Jami A'zo</span>
-              <span className="text-lg font-mono font-black text-white">{usersList.length}</span>
-            </div>
-          </div>
+          {/* Lock / Logout Button */}
+          <button
+            onClick={handleAdminLock}
+            className="px-3.5 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/40 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+            title="Admin panelni qulflash va seansdan chiqish"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Qulflash</span>
+          </button>
         </div>
       </div>
 
@@ -690,7 +884,7 @@ export const AdminView: React.FC = () => {
                   <tr>
                     <th className="p-4">Foydalanuvchi</th>
                     <th className="p-4">Reyting & WPM</th>
-                    <th className="p-4">Email</th>
+                    <th className="p-4">Email Manzili</th>
                     <th className="p-4">Holat</th>
                     <th className="p-4 text-right">Amallar</th>
                   </tr>
@@ -729,7 +923,7 @@ export const AdminView: React.FC = () => {
                       </td>
 
                       <td className="p-4 font-mono text-[var(--sub-color)] truncate max-w-[180px]">
-                        {u.email}
+                        {showFullEmails ? u.email : maskEmail(u.email)}
                       </td>
 
                       <td className="p-4">
@@ -952,7 +1146,9 @@ export const AdminView: React.FC = () => {
 
             <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
               <p className="font-bold text-white">{selectedUser.displayName}</p>
-              <p className="text-slate-400 font-mono">{selectedUser.email}</p>
+              <p className="text-slate-400 font-mono">
+                {showFullEmails ? selectedUser.email : maskEmail(selectedUser.email)}
+              </p>
               <p className="text-amber-400 font-mono">UID: {selectedUser.uid}</p>
             </div>
 
@@ -986,7 +1182,7 @@ export const AdminView: React.FC = () => {
 
               <button
                 onClick={handleBlockUser}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 cursor-pointer"
               >
                 Tasdiqlash & Bloklash
               </button>
@@ -1004,4 +1200,3 @@ export const AdminView: React.FC = () => {
     </div>
   );
 };
-

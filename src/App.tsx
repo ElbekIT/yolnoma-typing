@@ -43,8 +43,18 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab
-  const [activeTab, setActiveTab] = useState<string>('typing');
+  // Active navigation tab with subdomain / URL parameter support
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      const hostname = window.location.hostname;
+      const pathname = window.location.pathname;
+      const searchParams = new URLSearchParams(window.location.search);
+      if (hostname.startsWith('admin.') || pathname === '/admin' || searchParams.get('tab') === 'admin') {
+        return 'admin';
+      }
+    } catch {}
+    return 'typing';
+  });
   const prevUserRef = useRef<string | null>(null);
 
   // Modals & Battle Invite
