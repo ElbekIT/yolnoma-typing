@@ -2,16 +2,20 @@
  * Advanced Anti-Cheat, Console Hardening & Integrity Protection System for Yolnoma Typing
  *
  * Security Features:
- * - Capture-Phase Keyboard Interception: F12, F5/F12 combo, Ctrl+Shift+I/J/C/K, Cmd+Option+I/J/C, Ctrl+U, Ctrl+S.
- * - Console Sanitization: Neutralizes window console in production to prevent script injection and DOM inspection leaks.
- * - DevTools Detector: Active timing checks and dimension delta detection to neutralize devtools usage.
- * - Score Validation Engine: Validates WPM, keystroke delta, accuracy, and Dino Runner distance/scores to reject tampered submissions.
- * - Persistent Device & Account Ban for Auto-Typer Bots and Cheats.
+ * - 100% Function Key Lock (F1-F24): Blocks all F-keys individually and in any combination (F5+F12, Ctrl+F5, Shift+F5, etc.)
+ * - Capture-Phase Triple-Layer Interception: Binds to window, document, and documentElement in capture phase for keydown, keyup, keypress.
+ * - DevTools & Source Protection: Blocks Ctrl+Shift+I/J/C/K/E/S, Cmd+Alt+I/J/C/K/U, Ctrl+U (view source), Ctrl+S (save), Ctrl+P (print).
+ * - Console Sanitization: Neutralizes window console methods to prevent script injection and DOM inspection.
+ * - Auto-Typer & Bot Detection: Millisecond keystroke dynamics and untrusted event filtering.
+ * - Score Validation Engine: Validates WPM, keystroke delta, accuracy, and Dino Runner distance/scores.
  */
 
 import { ref, update } from 'firebase/database';
 import { rtdb } from '../config/firebase';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
+
+// Regex matching any function key from F1 to F24
+const FUNCTION_KEY_REGEX = /^F([1-9]|1[0-9]|2[0-4])$/i;
 
 class AntiCheatSystem {
   private keyTimes: number[] = [];
@@ -20,16 +24,25 @@ class AntiCheatSystem {
   private currentUserId: string | null = null;
   private devToolsCheckInterval: any = null;
 
-  public init(onCheat: (reason: string) => void, userId?: string | null) {
-    this.onCheatCallback = onCheat;
+  constructor() {
+    // Auto-attach immediately on module load to guarantee instant protection
+    if (typeof window !== 'undefined') {
+      this.attachGlobalSecurityListeners();
+      this.sanitizeConsole();
+      this.startDevToolsProtection();
+    }
+  }
+
+  public init(onCheat?: (reason: string) => void, userId?: string | null) {
+    if (onCheat) this.onCheatCallback = onCheat;
     if (userId) this.currentUserId = userId;
 
-    if (this.isListening) return;
-    this.isListening = true;
-
-    this.attachGlobalSecurityListeners();
-    this.sanitizeConsole();
-    this.startDevToolsProtection();
+    if (!this.isListening) {
+      this.isListening = true;
+      this.attachGlobalSecurityListeners();
+      this.sanitizeConsole();
+      this.startDevToolsProtection();
+    }
   }
 
   public setUserId(userId: string | null) {
@@ -167,7 +180,6 @@ class AntiCheatSystem {
   private sanitizeConsole() {
     try {
       const emptyFunc = () => {};
-      // In production or live mode, disable console leak methods
       if (typeof window !== 'undefined' && (window as any).console) {
         const methods = ['log', 'debug', 'info', 'dir', 'dirxml', 'table', 'trace'];
         methods.forEach((m) => {
@@ -191,91 +203,135 @@ class AntiCheatSystem {
         const heightThreshold = window.outerHeight - window.innerHeight > 160;
 
         if (widthThreshold || heightThreshold) {
-          // DevTools dock detected, silently close or redirect console
           this.sanitizeConsole();
         }
       } catch {}
     }, 1500);
   }
 
-  private attachGlobalSecurityListeners() {
-    // Disable Right-Click Context Menu (Silently)
-    document.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      return false;
-    }, { capture: true });
+  /**
+   * Checks if an event corresponds to any Function key (F1-F24) or inspect/source shortcut
+   */
+  private isForbiddenKeyCombo(e: KeyboardEvent): boolean {
+    const key = e.key || '';
+    const code = e.code || '';
+    const keyCode = e.keyCode || e.which || 0;
+    const lowerKey = key.toLowerCase();
 
-    // Disable Selection across body (Silently)
+    // 1. Check ALL Function keys (F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, ... F24)
+    // Matches by key name, code, or numeric keyCode (112 to 135)
+    if (
+      FUNCTION_KEY_REGEX.test(key) ||
+      FUNCTION_KEY_REGEX.test(code) ||
+      (keyCode >= 112 && keyCode <= 135) ||
+      lowerKey.startsWith('f1') ||
+      lowerKey.startsWith('f2') ||
+      lowerKey.startsWith('f3') ||
+      lowerKey.startsWith('f4') ||
+      lowerKey.startsWith('f5') ||
+      lowerKey.startsWith('f6') ||
+      lowerKey.startsWith('f7') ||
+      lowerKey.startsWith('f8') ||
+      lowerKey.startsWith('f9')
+    ) {
+      return true;
+    }
+
+    // 2. DevTools Shortcuts (Ctrl+Shift+I, J, C, K, E, S, P)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+      if (['i', 'j', 'c', 'k', 'e', 's', 'p', 'm', 'd'].includes(lowerKey)) {
+        return true;
+      }
+    }
+
+    // 3. Mac DevTools Shortcuts (Cmd+Option+I, J, C, K, U, S)
+    if (e.metaKey && e.altKey) {
+      if (['i', 'j', 'c', 'k', 'u', 's', 'p', 'e'].includes(lowerKey)) {
+        return true;
+      }
+    }
+
+    // 4. View Source (Ctrl+U, Cmd+U) and Save Page (Ctrl+S, Cmd+S)
+    if ((e.ctrlKey || e.metaKey) && (lowerKey === 'u' || lowerKey === 's')) {
+      return true;
+    }
+
+    // 5. Print Page (Ctrl+P, Cmd+P)
+    if ((e.ctrlKey || e.metaKey) && lowerKey === 'p') {
+      return true;
+    }
+
+    // 6. Screenshot / PrintScreen
+    if (lowerKey === 'printscreen' || lowerKey === 'prtscr' || lowerKey === 'snapshot') {
+      return true;
+    }
+
+    return false;
+  }
+
+  private blockEvent(e: KeyboardEvent | MouseEvent) {
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      (e as any).returnValue = false;
+    } catch {}
+  }
+
+  private attachGlobalSecurityListeners() {
+    if (typeof window === 'undefined') return;
+
+    // A. Disable Right-Click Context Menu (Silently across capture phase)
+    const contextHandler = (e: MouseEvent) => {
+      this.blockEvent(e);
+      return false;
+    };
+    window.addEventListener('contextmenu', contextHandler, { capture: true, passive: false });
+    document.addEventListener('contextmenu', contextHandler, { capture: true, passive: false });
+
+    // B. Disable Selection across body (Silently)
     document.addEventListener('selectstart', (e) => {
       const target = e.target as HTMLElement;
       if (target && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-        e.preventDefault();
+        this.blockEvent(e as any);
       }
-    }, { capture: true });
+    }, { capture: true, passive: false });
 
-    // Disable Copy, Cut, Paste globally SILENTLY without banning
-    document.addEventListener('copy', (e) => {
-      e.preventDefault();
-    }, { capture: true });
-    document.addEventListener('cut', (e) => {
-      e.preventDefault();
-    }, { capture: true });
-    document.addEventListener('paste', (e) => {
-      e.preventDefault();
-    }, { capture: true });
-
-    // Global Keydown protections with CAPTURE phase (F12, F5 combos, DevTools, View Source, PrintScreen)
-    window.addEventListener('keydown', (e) => {
-      const key = (e.key || '').toLowerCase();
-      const code = e.code || '';
-
-      // Block F12 (DevTools)
-      if (e.key === 'F12' || code === 'F12') {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+K (DevTools)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (key === 'i' || key === 'j' || key === 'c' || key === 'k')) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Block Cmd+Option+I, Cmd+Option+J, Cmd+Option+C (Mac DevTools)
-      if (e.metaKey && e.altKey && (key === 'i' || key === 'j' || key === 'c' || key === 'k')) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Block Ctrl+U (View Source) and Ctrl+S (Save Page)
-      if ((e.ctrlKey || e.metaKey) && (key === 'u' || key === 's')) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Block PrintScreen (PrtScn)
-      if (e.key === 'PrintScreen' || key === 'prtscr' || key === 'snapshot') {
-        e.preventDefault();
-        e.stopPropagation();
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText('');
+    // C. Disable Copy, Cut, Paste globally SILENTLY without banning
+    ['copy', 'cut', 'paste'].forEach((evt) => {
+      window.addEventListener(evt, (e) => {
+        const target = e.target as HTMLElement;
+        if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA')) {
+          this.blockEvent(e as any);
         }
+      }, { capture: true, passive: false });
+    });
+
+    // D. Universal Key Interceptor for Keydown, Keyup, and Keypress
+    const keyInterceptor = (e: KeyboardEvent) => {
+      if (this.isForbiddenKeyCombo(e)) {
+        this.blockEvent(e);
+
+        // If PrintScreen is pressed, clear clipboard
+        const lowerKey = (e.key || '').toLowerCase();
+        if (lowerKey === 'printscreen' || lowerKey === 'prtscr' || lowerKey === 'snapshot') {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('');
+          }
+        }
+
         return false;
       }
-    }, { capture: true });
+    };
 
-    // Clear clipboard on PrintScreen release
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'PrintScreen') {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText('');
-        }
+    // Attach to window, document, and documentElement in capture phase to block early
+    ['keydown', 'keyup', 'keypress'].forEach((eventType) => {
+      window.addEventListener(eventType, keyInterceptor as any, { capture: true, passive: false });
+      document.addEventListener(eventType, keyInterceptor as any, { capture: true, passive: false });
+      if (document.documentElement) {
+        document.documentElement.addEventListener(eventType, keyInterceptor as any, { capture: true, passive: false });
       }
-    }, { capture: true });
+    });
   }
 }
 
