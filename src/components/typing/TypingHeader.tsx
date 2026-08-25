@@ -54,70 +54,45 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   return (
     <>
       <div
-        className={`w-full max-w-4xl mx-auto mb-2 sm:mb-4 px-1 transition-opacity duration-150 ${
+        className={`w-full max-w-3xl mx-auto mb-4 sm:mb-6 px-2 transition-opacity duration-150 ${
           isTestActive
             ? 'opacity-0 pointer-events-none h-0 overflow-hidden mb-0'
             : 'opacity-100'
         }`}
       >
-        {/* Yolnoma Control Bar - Responsive Mobile & Desktop Layout */}
-        <div className="w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl sm:rounded-2xl p-1.5 sm:p-2 flex flex-col md:flex-row md:items-center justify-between gap-1.5 text-xs font-semibold">
-          
-          {/* Top Row on Mobile: Language Selector & Mode Selector */}
-          <div className="flex items-center justify-between gap-1.5 sm:gap-2 w-full md:w-auto">
-            {/* Language Selector Button */}
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setLanguagesList(getAllLanguages());
-                setShowLangModal(true);
-              }}
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] hover:border-[var(--main-color)] border border-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 transition-colors font-bold shrink-0 cursor-pointer text-xs"
-              title="Matn tilini o'zgartirish"
-            >
-              <Globe className="w-3.5 h-3.5 text-[var(--main-color)] shrink-0" />
-              <span className="text-sm">{currentLang.flag}</span>
-              <span className="text-xs font-bold max-w-[70px] sm:max-w-none truncate">{currentLang.nativeName}</span>
-              <span className="text-[9px] sm:text-[10px] text-[var(--main-color)] font-mono uppercase bg-[var(--main-color)]/15 px-1 sm:px-1.5 py-0.5 rounded font-bold">
-                {currentLang.code}
-              </span>
-            </button>
-
-            <div className="h-4 w-[1px] bg-[var(--sub-alt)] hidden md:block" />
-
-            {/* Mode Selector (So'zlar, Jumlalar, Hikoyalar) */}
-            <div className="flex items-center gap-0.5 sm:gap-1 bg-[var(--sub-alt)]/40 p-0.5 rounded-lg overflow-x-auto no-scrollbar">
-              {modesList.map((m) => {
-                const Icon = m.icon;
-                const isActive = mode === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setMode(m.id);
-                      onReset();
-                    }}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer text-[11px] sm:text-xs ${
-                      isActive
-                        ? 'bg-[var(--main-color)] text-white font-bold'
-                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                    }`}
-                  >
-                    <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span>{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+        {/* Monkeytype Style Minimal Floating Pill Bar */}
+        <div className="w-full bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-xl py-1 px-2.5 sm:px-3 flex items-center justify-center gap-2 sm:gap-4 text-xs font-mono select-none overflow-x-auto no-scrollbar shadow-sm">
+          {/* Modes List */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {modesList.map((m) => {
+              const Icon = m.icon;
+              const isActive = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    setMode(m.id);
+                    onReset();
+                  }}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors whitespace-nowrap cursor-pointer text-xs ${
+                    isActive
+                      ? 'text-[var(--main-color)] font-bold'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{m.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="h-4 w-[1px] bg-[var(--sub-alt)] hidden md:block" />
+          <div className="h-3.5 w-[1px] bg-[var(--sub-alt)] shrink-0" />
 
-          {/* Sub-modes: Time or Word Count (Horizontal scrolling with no-scrollbar on mobile) */}
-          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pt-0.5 md:pt-0">
-            {/* Time Options */}
-            <div className="flex items-center gap-0.5 bg-[var(--sub-alt)]/60 p-0.5 rounded-lg border border-[var(--sub-alt)] shrink-0">
-              <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[var(--main-color)] ml-1 shrink-0" />
+          {/* Time Options */}
+          {mode === 'words' && timeMode > 0 && (
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <Clock className="w-3 h-3 text-[var(--sub-color)]" />
               {timeOptions.map((tVal) => (
                 <button
                   key={tVal}
@@ -126,21 +101,23 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setWordCountMode(0);
                     onReset();
                   }}
-                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded transition-colors font-mono font-bold text-[11px] sm:text-xs cursor-pointer ${
+                  className={`px-1.5 py-0.5 rounded transition-colors text-xs cursor-pointer ${
                     timeMode === tVal && wordCountMode === 0
-                      ? 'bg-[var(--main-color)] text-white'
+                      ? 'text-[var(--main-color)] font-bold'
                       : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
-                  {tVal}s
+                  {tVal}
                 </button>
               ))}
             </div>
+          )}
 
-            {/* Word Options */}
-            <div className="flex items-center gap-0.5 bg-[var(--sub-alt)]/60 p-0.5 rounded-lg border border-[var(--sub-alt)] shrink-0">
-              <Type className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[var(--main-color)] ml-1 shrink-0" />
-              {wordOptions.slice(0, 3).map((wVal) => (
+          {/* Word Count Options */}
+          {mode === 'words' && wordCountMode > 0 && (
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <Type className="w-3 h-3 text-[var(--sub-color)]" />
+              {wordOptions.slice(0, 4).map((wVal) => (
                 <button
                   key={wVal}
                   onClick={() => {
@@ -148,17 +125,56 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setTimeMode(0);
                     onReset();
                   }}
-                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded transition-colors font-mono font-bold text-[11px] sm:text-xs cursor-pointer ${
+                  className={`px-1.5 py-0.5 rounded transition-colors text-xs cursor-pointer ${
                     wordCountMode === wVal && timeMode === 0
-                      ? 'bg-[var(--main-color)] text-white'
+                      ? 'text-[var(--main-color)] font-bold'
                       : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
-                  {wVal}w
+                  {wVal}
                 </button>
               ))}
             </div>
-          </div>
+          )}
+
+          {/* Quick toggle between Time vs Word mode when on 'words' tab */}
+          {mode === 'words' && (
+            <>
+              <div className="h-3.5 w-[1px] bg-[var(--sub-alt)] shrink-0" />
+              <button
+                onClick={() => {
+                  if (timeMode > 0) {
+                    setTimeMode(0);
+                    setWordCountMode(100);
+                  } else {
+                    setTimeMode(30);
+                    setWordCountMode(0);
+                  }
+                  onReset();
+                }}
+                className="text-[10px] text-[var(--sub-color)] hover:text-[var(--main-color)] px-1 py-0.5 rounded transition-colors cursor-pointer"
+                title="Vaqt / So'z soni rejimini almashtirish"
+              >
+                {timeMode > 0 ? 'vaqt' : "so'z"}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Minimalist Centered Language Indicator (Monkeytype style) */}
+        <div className="flex items-center justify-center mt-3">
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setLanguagesList(getAllLanguages());
+              setShowLangModal(true);
+            }}
+            className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-80 hover:opacity-100 py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40"
+            title="Tilni tanlash"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>{currentLang.nativeName}</span>
+          </button>
         </div>
       </div>
 

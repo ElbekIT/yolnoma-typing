@@ -86,31 +86,84 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     <>
       <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)] border-b border-[var(--sub-alt)] px-4 py-2.5 transition-colors duration-150">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Left Side: 3-lines Hamburger Menu & Brand Logo */}
-          <div className="flex items-center gap-3">
+          {/* Left Side: Brand Logo & Navigation Icons */}
+          <div className="flex items-center gap-3 sm:gap-6">
             {/* 3-lines Hamburger Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="p-2 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors flex items-center gap-2 cursor-pointer"
-              title="Menyu bo'limini ochish"
+              className="p-2 rounded-xl bg-[var(--sub-alt)]/60 text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors flex items-center gap-2 cursor-pointer"
+              title="Menyu"
             >
-              <Menu className="w-5 h-5 text-[var(--main-color)]" />
+              <Menu className="w-4 h-4 text-[var(--main-color)]" />
               <span className="text-xs font-bold hidden sm:inline text-[var(--text-color)]">Menyu</span>
             </button>
 
             {/* Brand Logo */}
-            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('typing')}>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('typing')}>
               <img
                 src="/yolnoma_icon.svg"
                 alt="Yolnoma Logo"
-                className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
+                className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
               />
-              <div>
-                <h1 className="text-lg sm:text-xl font-black tracking-tight text-[var(--text-color)] flex items-center gap-1.5">
-                  Yolnoma <span className="text-[var(--main-color)] font-extrabold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md bg-[var(--sub-alt)] border border-[var(--main-color)]/30 tracking-wider">TYPING</span>
+              <div className="flex items-baseline gap-1.5">
+                <h1 className="text-base sm:text-lg font-black tracking-tight text-[var(--text-color)]">
+                  Yolnoma
                 </h1>
-                <p className="text-[10px] sm:text-[11px] text-[var(--sub-color)] font-medium tracking-wide hidden lg:block">O'zbekistondagi №1 Tez Yozish Platformasi</p>
+                <span className="text-[var(--main-color)] font-mono text-[10px] font-bold">typing</span>
               </div>
+            </div>
+
+            {/* Quick Icon Links (Monkeytype style) */}
+            <div className="hidden md:flex items-center gap-1 text-[var(--sub-color)]">
+              <button
+                onClick={() => setActiveTab('typing')}
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'typing' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                }`}
+                title="Yozish Testi"
+              >
+                <Keyboard className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('leaderboard')}
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'leaderboard' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                }`}
+                title="Peshqadamlar"
+              >
+                <Crown className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('lessons')}
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                }`}
+                title="Saboqlar"
+              >
+                <GraduationCap className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('battle')}
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'battle' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                }`}
+                title="Battle Arena"
+              >
+                <Swords className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'settings' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                }`}
+                title="Sozlamalar"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
             </div>
           </div>
 

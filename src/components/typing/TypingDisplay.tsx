@@ -243,8 +243,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [activeWordIdx, parsedWords.length]);
 
-  const calculatedFontSize = Math.max(18, fontSize);
-  const containerHeight = Math.round(calculatedFontSize * 1.65 * 3); // 3 lines height
+  const calculatedFontSize = Math.max(22, fontSize || 24);
+  const lineHeightMultiplier = 1.7;
+  const containerHeight = Math.round(calculatedFontSize * lineHeightMultiplier * 3); // 3 lines height
 
   return (
     <div
@@ -252,7 +253,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
       onMouseMove={handleMouseMove}
-      className={`relative w-full max-w-5xl mx-auto my-2 sm:my-3 bg-transparent border-0 rounded-xl p-2 sm:p-5 select-none ${
+      className={`relative w-full max-w-5xl mx-auto my-4 sm:my-6 bg-transparent border-0 select-none px-2 sm:px-4 ${
         mouseHidden ? 'cursor-none' : 'cursor-text'
       }`}
       style={{
@@ -282,11 +283,11 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/90 rounded-xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-bold text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center">
-          <div className="flex items-center gap-2 bg-[var(--main-color)]/10 px-4 py-2 rounded-lg border border-[var(--main-color)]/25">
+        <div className="absolute inset-0 bg-[var(--bg-color)]/90 rounded-xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-medium text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center">
+          <div className="flex items-center gap-2 bg-[var(--sub-alt)] px-4 py-2 rounded-xl border border-[var(--sub-alt)]">
             <MousePointer className="w-4 h-4 text-[var(--main-color)]" />
             <Smartphone className="w-4 h-4 sm:hidden" />
-            <span>Sichqoncha yoki ekranga bosing (yozish uchun)</span>
+            <span className="font-mono text-xs text-[var(--text-color)]">Yozish uchun bosing</span>
           </div>
         </div>
       )}
@@ -298,9 +299,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         style={{ height: `${containerHeight}px` }}
       >
         <div
-          className="flex flex-wrap leading-relaxed tracking-normal text-left relative transition-transform duration-200 ease-out"
+          className="flex flex-wrap text-left relative transition-transform duration-150 ease-out"
           style={{
             transform: `translateY(-${scrollOffset}px)`,
+            lineHeight: lineHeightMultiplier,
             direction: isRtl ? 'rtl' : 'ltr'
           }}
         >
@@ -312,7 +314,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                 ref={(el) => {
                   wordRefs.current[idx] = el;
                 }}
-                className="inline-block whitespace-nowrap my-1 mr-[0.45em]"
+                className="inline-block whitespace-nowrap my-0.5"
               >
                 {/* Word Characters */}
                 {wordObj.chars.map(({ char, globalIndex }) => {
@@ -321,14 +323,14 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   const isTyped = typedChar !== undefined;
                   const isCorrect = isTyped && typedChar === char;
 
-                  let charClass = 'relative inline-block transition-colors duration-75 ';
+                  let charClass = 'relative inline-block font-normal transition-colors duration-75 ';
 
                   if (!isTyped) {
-                    charClass += 'text-[var(--sub-color)] opacity-70 ';
+                    charClass += 'text-[var(--sub-color)] opacity-60 ';
                   } else if (isCorrect) {
-                    charClass += 'text-[var(--text-color)] font-bold ';
+                    charClass += 'text-[var(--text-color)] ';
                   } else {
-                    charClass += 'text-red-400 bg-red-500/20 rounded-[2px] font-bold ';
+                    charClass += 'text-[var(--error-color, #ef4444)] border-b-2 border-[var(--error-color, #ef4444)] ';
                   }
 
                   // Caret style
@@ -337,14 +339,14 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                     if (caretStyle === 'line' || !caretStyle) {
                       caretElement = (
                         <span
-                          className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                          className={`absolute -left-[1px] top-0 bottom-0 w-[2.5px] bg-[var(--main-color)] rounded-full ${
                             smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                           }`}
                         />
                       );
                     } else if (caretStyle === 'block') {
                       caretElement = (
-                        <span className="absolute inset-0 bg-[var(--main-color)]/40 rounded-[2px] animate-pulse" />
+                        <span className="absolute inset-0 bg-[var(--main-color)]/35 rounded-[2px] animate-pulse" />
                       );
                     } else if (caretStyle === 'underline') {
                       caretElement = (
@@ -373,20 +375,20 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   const isTypedSpace = typedSpace !== undefined;
                   const isCorrectSpace = isTypedSpace && typedSpace === ' ';
 
-                  let spaceClass = 'relative inline-block ';
+                  let spaceClass = 'relative inline-block font-normal ';
                   if (!isTypedSpace) {
-                    spaceClass += 'text-[var(--sub-color)] opacity-50 ';
+                    spaceClass += 'text-[var(--sub-color)] opacity-40 ';
                   } else if (isCorrectSpace) {
                     spaceClass += 'text-[var(--text-color)] ';
                   } else {
-                    spaceClass += 'text-red-400 bg-red-500/30 rounded-[2px] ';
+                    spaceClass += 'text-[var(--error-color, #ef4444)] bg-red-500/25 ';
                   }
 
                   let spaceCaret = null;
                   if (isCurrentSpace && isFocused && !isTestFinished) {
                     spaceCaret = (
                       <span
-                        className={`absolute -left-[1px] top-1 bottom-1 w-[2.5px] bg-[var(--main-color)] rounded-full ${
+                        className={`absolute -left-[1px] top-0 bottom-0 w-[2.5px] bg-[var(--main-color)] rounded-full ${
                           smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
                         }`}
                       />
@@ -409,7 +411,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
             typedChars.slice(targetText.length).map((extraChar, extraIdx) => (
               <span
                 key={`extra-${extraIdx}`}
-                className="text-red-400 bg-red-500/20 font-bold px-0.5 rounded-[2px]"
+                className="text-[var(--error-color, #ef4444)] border-b-2 border-red-500 font-normal opacity-90"
               >
                 {extraChar === ' ' ? '\u00A0' : extraChar}
               </span>
@@ -418,40 +420,30 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       </div>
 
       {/* Quick Mouse & Keyboard Controls Bar */}
-      <div className="mt-4 sm:mt-6 flex flex-col items-center justify-center gap-2.5">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={(e) => {
-              e.stopPropagation();
-              onRestart();
-              if (inputRef.current) {
-                inputRef.current.focus();
-                setIsFocused(true);
-              }
-            }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors cursor-pointer font-semibold text-xs"
-            title="Sichqoncha bilan yangilash yoki Tab + Enter"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-[var(--main-color)]" />
-            <span>Matnni yangilash</span>
-          </button>
-        </div>
+      <div className="mt-6 flex flex-col items-center justify-center gap-2.5">
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRestart();
+            if (inputRef.current) {
+              inputRef.current.focus();
+              setIsFocused(true);
+            }
+          }}
+          className="p-2.5 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
+          title="Qayta boshlash (Tab + Enter)"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
 
         {/* Shortcut Footer Hints (Desktop only for keyboard hints) */}
-        <div className="hidden sm:flex flex-row items-center gap-2 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-80">
-          <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">tab</kbd>
-            <span>+</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">enter</kbd>
-            <span className="ml-1">- yangi matn</span>
-          </div>
-          <span className="text-[var(--sub-color)]/40">•</span>
-          <div className="flex items-center gap-1 text-[10px]">
-            <Sparkles className="w-3 h-3 text-[var(--main-color)]" />
-            <span>Sichqoncha bilan boshqarish</span>
-          </div>
+        <div className="hidden sm:flex items-center gap-1.5 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-60">
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">tab</kbd>
+          <span>+</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">enter</kbd>
+          <span className="ml-1">- qayta boshlash</span>
         </div>
       </div>
     </div>
