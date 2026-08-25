@@ -331,14 +331,14 @@ function MainAppContent() {
   // Loading state gate (AFTER ALL HOOKS)
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-3">
         <img
           src="/yolnoma_icon.svg"
           alt="Yolnoma"
-          className="w-16 h-16 animate-bounce drop-shadow-lg"
+          className="w-12 h-12"
         />
-        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase animate-pulse">
-          Yolnoma Typing Platform Yuklanmoqda...
+        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+          Yuklanmoqda...
         </p>
       </div>
     );

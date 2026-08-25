@@ -15,7 +15,6 @@ import {
 import { ref, set, update, push, get, child, onValue, remove } from 'firebase/database';
 import { auth, rtdb, googleProvider, githubProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
-import confetti from 'canvas-confetti';
 
 interface AuthContextType {
   user: User | null;
@@ -699,15 +698,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!profile) {
         localStorage.setItem('yolnoma_guest_best_wpm', String(rawResult.wpm));
       }
-      try {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } catch {
-        // Confetti safeguard
-      }
     }
 
     const fullResult: TypingResult = {
@@ -833,16 +823,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const isPersonalBest = score > currentBest;
     const bestScore = Math.max(score, currentBest);
-
-    if (isPersonalBest) {
-      try {
-        confetti({
-          particleCount: 90,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
-      } catch {}
-    }
 
     if (user && profile) {
       const newGamesPlayed = (profile.dinoGamesPlayed || 0) + 1;

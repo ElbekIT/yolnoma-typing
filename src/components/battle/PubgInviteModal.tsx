@@ -44,17 +44,17 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
   const isDino = invite.gameType === 'dino';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75">
       {/* PUBG Mobile Style Card */}
-      <div className="relative max-w-md w-full bg-[#0c1220] border-2 border-cyan-500/80 rounded-3xl p-6 shadow-[0_0_50px_rgba(6,182,212,0.3)] overflow-hidden text-white space-y-5">
-        {/* Glowing Top Cyber Accent Line */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-cyan-400 to-rose-500 animate-pulse" />
+      <div className="relative max-w-md w-full bg-[#0c1220] border border-cyan-500/50 rounded-3xl p-6 shadow-2xl overflow-hidden text-white space-y-5">
+        {/* Top Cyber Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-cyan-400 to-rose-500" />
 
         {/* PUBG Lobby Badge Title Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-              {isDino ? <span className="text-lg">🦖</span> : <Swords className="w-5 h-5 text-white animate-bounce" />}
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-md">
+              {isDino ? <span className="text-lg">🦖</span> : <Swords className="w-5 h-5 text-white" />}
             </div>
             <div>
               <h2 className="text-base font-black tracking-wider text-amber-400 font-mono uppercase flex items-center gap-1.5">
