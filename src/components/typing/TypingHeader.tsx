@@ -178,51 +178,48 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         </div>
       </div>
 
-      {/* Centered Modal for Language Selection */}
+      {/* Monkeytype Style Language Command Palette Modal */}
       {showLangModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-          {/* Backdrop Overlay */}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setShowLangModal(false)}
+        >
+          {/* Modal Box */}
           <div
-            className="fixed inset-0 bg-black/50 transition-opacity"
-            onClick={() => setShowLangModal(false)}
-          />
-
-          {/* Modal Container */}
-          <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-xl p-4 sm:p-5 z-50 text-xs space-y-3 max-h-[90vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--sub-alt)] shrink-0">
-              <div className="flex items-center gap-2.5 text-[var(--text-color)]">
-                <div className="p-2 rounded-xl bg-[var(--main-color)]/15 text-[var(--main-color)]">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-sm tracking-tight">Matn Tilini Tanlang</h3>
-                  <p className="text-[11px] text-[var(--sub-color)] font-medium">Testingiz uchun tilni tanlang</p>
-                </div>
-              </div>
+            className="relative w-full max-w-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Search Input Bar */}
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[var(--sub-alt)] bg-[var(--card-bg)] shrink-0">
+              <Search className="w-4 h-4 text-[var(--sub-color)] opacity-70" />
+              <input
+                type="text"
+                placeholder="Tilni qidirish / search language..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowLangModal(false);
+                  } else if (e.key === 'Enter' && filteredLanguages.length > 0) {
+                    setLanguage(filteredLanguages[0].code as LanguageCode);
+                    setShowLangModal(false);
+                    onReset();
+                  }
+                }}
+                className="w-full bg-transparent text-[var(--text-color)] placeholder-[var(--sub-color)]/50 focus:outline-none font-mono text-xs sm:text-sm"
+                autoFocus
+              />
               <button
                 onClick={() => setShowLangModal(false)}
-                className="p-2 rounded-xl bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-all cursor-pointer"
+                className="p-1 rounded-md text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
+                title="Yopish (Esc)"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative shrink-0">
-              <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Tilni izlash..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)] font-bold text-xs transition-all"
-                autoFocus
-              />
-            </div>
-
             {/* Language List */}
-            <div className="overflow-y-auto space-y-1.5 pr-1 flex-1">
+            <div className="overflow-y-auto p-1.5 space-y-0.5 flex-1 select-none">
               {filteredLanguages.length > 0 ? (
                 filteredLanguages.map((l) => {
                   const isSelected = language === l.code;
@@ -234,31 +231,39 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                         setShowLangModal(false);
                         onReset();
                       }}
-                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all font-bold cursor-pointer ${
+                      className={`w-full flex items-center px-3.5 py-2 rounded-lg text-left font-mono text-xs transition-colors cursor-pointer ${
                         isSelected
-                          ? 'bg-[var(--main-color)] text-white shadow-md shadow-[var(--main-color)]/30 scale-[1.01]'
-                          : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80'
+                          ? 'bg-[var(--text-color)] text-[var(--bg-color)] font-bold'
+                          : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/60'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{l.flag}</span>
-                        <div className="text-left">
-                          <div className="text-xs font-black">{l.nativeName}</div>
-                          <div className={`text-[10px] ${isSelected ? 'text-white/80' : 'text-[var(--sub-color)]'}`}>
-                            {l.name} ({l.script})
-                          </div>
-                        </div>
-                      </div>
-
-                      {isSelected && <Check className="w-4 h-4 text-white font-bold" />}
+                      <span className="w-5 shrink-0 text-xs font-mono font-bold">
+                        {isSelected ? '✓' : ''}
+                      </span>
+                      <span className="truncate flex-1">
+                        {l.nativeName.toLowerCase()}
+                      </span>
+                      <span
+                        className={`text-[10px] font-mono ml-2 ${
+                          isSelected ? 'text-[var(--bg-color)]/80' : 'text-[var(--sub-color)]/60'
+                        }`}
+                      >
+                        {l.code}
+                      </span>
                     </button>
                   );
                 })
               ) : (
-                <p className="text-center text-[var(--sub-color)] py-6 text-xs">
+                <div className="text-center text-[var(--sub-color)] py-8 font-mono text-xs opacity-60">
                   Bunday til topilmadi
-                </p>
+                </div>
               )}
+            </div>
+
+            {/* Footer Prompt */}
+            <div className="px-4 py-2 border-t border-[var(--sub-alt)]/60 bg-[var(--card-bg)]/80 flex items-center justify-between text-[10px] font-mono text-[var(--sub-color)] opacity-60 shrink-0">
+              <span>{filteredLanguages.length} ta til mavjud</span>
+              <span>esc - yopish</span>
             </div>
           </div>
         </div>

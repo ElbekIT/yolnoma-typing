@@ -45,10 +45,22 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
-  const { language, setLanguage, theme, setTheme } = useSettings();
+  const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const iconDimensions = {
+    small: 'w-4 h-4',
+    medium: 'w-5 h-5',
+    large: 'w-6 h-6',
+  }[headerIconSize || 'medium'];
+
+  const iconBtnPadding = {
+    small: 'p-1.5',
+    medium: 'p-2',
+    large: 'p-2.5',
+  }[headerIconSize || 'medium'];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -114,55 +126,65 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </div>
 
             {/* Quick Icon Links (Monkeytype style) */}
-            <div className="hidden md:flex items-center gap-1 text-[var(--sub-color)]">
+            <div className="hidden md:flex items-center gap-1.5 text-[var(--sub-color)]">
               <button
                 onClick={() => setActiveTab('typing')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'typing' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'typing' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title="Yozish Testi"
               >
-                <Keyboard className="w-4 h-4" />
+                <Keyboard className={iconDimensions} />
               </button>
 
               <button
                 onClick={() => setActiveTab('leaderboard')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'leaderboard' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'leaderboard' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title="Peshqadamlar"
               >
-                <Crown className="w-4 h-4" />
+                <Crown className={iconDimensions} />
               </button>
 
               <button
                 onClick={() => setActiveTab('lessons')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title="Saboqlar"
               >
-                <GraduationCap className="w-4 h-4" />
+                <GraduationCap className={iconDimensions} />
               </button>
 
               <button
                 onClick={() => setActiveTab('battle')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'battle' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'battle' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title="Battle Arena"
               >
-                <Swords className="w-4 h-4" />
+                <Swords className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('dino')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'dino' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Dino Runner O'yini"
+              >
+                <Gamepad2 className={iconDimensions} />
               </button>
 
               <button
                 onClick={() => setActiveTab('settings')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'settings' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/50' : 'hover:text-[var(--text-color)]'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'settings' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title="Sozlamalar"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className={iconDimensions} />
               </button>
             </div>
           </div>

@@ -3,6 +3,8 @@ import { ThemeMode, CaretStyle, SoundProfile, LanguageCode } from '../types';
 import { themes, ThemeConfig } from '../config/themes';
 import { soundSynth } from '../utils/audio';
 
+export type HeaderIconSize = 'small' | 'medium' | 'large';
+
 interface SettingsContextType {
   theme: ThemeMode;
   themeConfig: ThemeConfig;
@@ -19,6 +21,8 @@ interface SettingsContextType {
   setFontFamily: (font: string) => void;
   fontSize: number;
   setFontSize: (size: number) => void;
+  headerIconSize: HeaderIconSize;
+  setHeaderIconSize: (size: HeaderIconSize) => void;
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
   showKeyboard: boolean;
@@ -52,6 +56,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [fontSize, setFontSizeState] = useState<number>(() => {
     const saved = localStorage.getItem('yolnoma_fontsize');
     return saved ? parseInt(saved, 10) : 20;
+  });
+  const [headerIconSize, setHeaderIconSizeState] = useState<HeaderIconSize>(() => {
+    return (localStorage.getItem('yolnoma_header_icon_size') as HeaderIconSize) || 'medium';
   });
   const [language, setLanguageState] = useState<LanguageCode>(() => {
     return (localStorage.getItem('yolnoma_lang') as LanguageCode) || 'en';
@@ -97,6 +104,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setFontSize = (fs: number) => {
     setFontSizeState(fs);
     localStorage.setItem('yolnoma_fontsize', String(fs));
+  };
+
+  const setHeaderIconSize = (size: HeaderIconSize) => {
+    setHeaderIconSizeState(size);
+    localStorage.setItem('yolnoma_header_icon_size', size);
   };
 
   const setLanguage = (l: LanguageCode) => {
@@ -154,6 +166,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setFontFamily,
         fontSize,
         setFontSize,
+        headerIconSize,
+        setHeaderIconSize,
         language,
         setLanguage,
         showKeyboard,

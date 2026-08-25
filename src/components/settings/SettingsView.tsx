@@ -32,6 +32,8 @@ export const SettingsView: React.FC = () => {
     setFontFamily,
     fontSize,
     setFontSize,
+    headerIconSize,
+    setHeaderIconSize,
     language,
     setLanguage,
     showKeyboard,
@@ -204,6 +206,49 @@ export const SettingsView: React.FC = () => {
                 className="w-4 h-4 accent-[var(--main-color)]"
               />
             </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Header & Navigation Customization */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+        <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
+          <Sliders className="w-4 h-4 text-[var(--main-color)]" />
+          <span>Yuqori Menyu Ikonkalari O'lchami (Header Icons Size)</span>
+        </h3>
+
+        <div className="space-y-4">
+          <p className="text-xs text-[var(--sub-color)]">
+            Yuqori qatordagi menyu (yozish, peshqadamlar, saboqlar, arena, sozlamalar) tugmalari va ikonkalari o'lchamini o'zingizga qulay qilib sozlang.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { id: 'small' as const, label: "Kichik (16px)", desc: 'Minimalist & ixcham', iconClass: 'w-4 h-4' },
+              { id: 'medium' as const, label: "O'rtacha (20px)", desc: 'Standart qulay o\'lcham', iconClass: 'w-5 h-5' },
+              { id: 'large' as const, label: "Katta (24px)", desc: 'Ko\'rinarli & yirik', iconClass: 'w-6 h-6' }
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setHeaderIconSize(opt.id)}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-2 ${
+                  headerIconSize === opt.id
+                    ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/20'
+                    : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-color)]/20 hover:border-[var(--main-color)]/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Keyboard className={opt.iconClass} />
+                    <span className="font-bold text-xs">{opt.label}</span>
+                  </div>
+                  {headerIconSize === opt.id && <Check className="w-4 h-4" />}
+                </div>
+                <span className={`text-[11px] ${headerIconSize === opt.id ? 'text-white/80' : 'text-[var(--sub-color)]'}`}>
+                  {opt.desc}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </div>

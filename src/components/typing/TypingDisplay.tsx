@@ -107,8 +107,20 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       }
     }
 
-    // Space Key: Pad input to jump directly to start of next word
+    // Space Key: Pad input to jump directly to start of next word (Prevent auto-skip on hold)
     if (e.key === ' ') {
+      // 1. Prevent repeat events when holding down space key
+      if (e.repeat) {
+        e.preventDefault();
+        return;
+      }
+
+      // 2. Prevent skipping words if nothing in the current word has been typed yet
+      if (typedInput.length === 0 || typedInput.endsWith(' ')) {
+        e.preventDefault();
+        return;
+      }
+
       const targetNextIdx = getNextWordStartIndexOnSpace(targetText, typedInput);
       if (targetNextIdx && typedInput.length < targetNextIdx) {
         e.preventDefault();
