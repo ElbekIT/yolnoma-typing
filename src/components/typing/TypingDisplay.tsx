@@ -342,7 +342,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   } else if (isCorrect) {
                     charClass += 'text-[var(--text-color)] ';
                   } else {
-                    charClass += 'text-[var(--error-color, #ef4444)] border-b-2 border-[var(--error-color, #ef4444)] ';
+                    charClass += 'text-[var(--error-color,#ef4444)] font-semibold bg-[var(--error-color,#ef4444)]/15 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
                   }
 
                   // Caret style
@@ -393,7 +393,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   } else if (isCorrectSpace) {
                     spaceClass += 'text-[var(--text-color)] ';
                   } else {
-                    spaceClass += 'text-[var(--error-color, #ef4444)] bg-red-500/25 ';
+                    spaceClass += 'text-[var(--error-color,#ef4444)] bg-red-500/25 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
                   }
 
                   let spaceCaret = null;

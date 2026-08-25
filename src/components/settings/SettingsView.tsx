@@ -34,6 +34,10 @@ export const SettingsView: React.FC = () => {
     setFontSize,
     headerIconSize,
     setHeaderIconSize,
+    modeBarWidth,
+    setModeBarWidth,
+    modeBarScale,
+    setModeBarScale,
     language,
     setLanguage,
     showKeyboard,
@@ -249,6 +253,81 @@ export const SettingsView: React.FC = () => {
                 </span>
               </button>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Mode Navigation Bar Customization (So'zlar, Jumlalar, Hikoyalar menyusi) */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+        <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
+          <Type className="w-4 h-4 text-[var(--main-color)]" />
+          <span>Yozish Rejimlari Paneli (So'zlar, Jumlalar, Vaqt Paneli)</span>
+        </h3>
+
+        <div className="space-y-6">
+          {/* Width Selection */}
+          <div>
+            <label className="block text-xs font-semibold mb-2 text-[var(--sub-color)]">
+              Panel Kengligi (Uzunligi)
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {[
+                { id: 'compact' as const, label: 'Ixcham (Compact)', desc: 'Toraytirilgan' },
+                { id: 'standard' as const, label: 'Standart', desc: "O'rtacha qulay" },
+                { id: 'wide' as const, label: 'Keng (Wide)', desc: 'Kengaytirilgan' },
+                { id: 'full' as const, label: "To'liq (Full)", desc: 'Maksimal keng' }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setModeBarWidth(item.id)}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
+                    modeBarWidth === item.id
+                      ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/20'
+                      : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-color)]/20 hover:border-[var(--main-color)]/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs">{item.label}</span>
+                    {modeBarWidth === item.id && <Check className="w-3.5 h-3.5" />}
+                  </div>
+                  <span className={`text-[10px] ${modeBarWidth === item.id ? 'text-white/80' : 'text-[var(--sub-color)]'}`}>
+                    {item.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Scale Selection */}
+          <div>
+            <label className="block text-xs font-semibold mb-2 text-[var(--sub-color)]">
+              Tugmalar va Matn O'lchami
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {[
+                { id: 'small' as const, label: "Kichik (Small)", desc: 'Ixcham 11px font' },
+                { id: 'medium' as const, label: "O'rtacha (Medium)", desc: 'Standart 12px font' },
+                { id: 'large' as const, label: "Katta (Large)", desc: 'Yirik 14px font' }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setModeBarScale(item.id)}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
+                    modeBarScale === item.id
+                      ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/20'
+                      : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-color)]/20 hover:border-[var(--main-color)]/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs">{item.label}</span>
+                    {modeBarScale === item.id && <Check className="w-3.5 h-3.5" />}
+                  </div>
+                  <span className={`text-[10px] ${modeBarScale === item.id ? 'text-white/80' : 'text-[var(--sub-color)]'}`}>
+                    {item.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

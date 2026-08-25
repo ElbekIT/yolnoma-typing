@@ -4,6 +4,8 @@ import { themes, ThemeConfig } from '../config/themes';
 import { soundSynth } from '../utils/audio';
 
 export type HeaderIconSize = 'small' | 'medium' | 'large';
+export type ModeBarWidth = 'compact' | 'standard' | 'wide' | 'full';
+export type ModeBarScale = 'small' | 'medium' | 'large';
 
 interface SettingsContextType {
   theme: ThemeMode;
@@ -23,6 +25,10 @@ interface SettingsContextType {
   setFontSize: (size: number) => void;
   headerIconSize: HeaderIconSize;
   setHeaderIconSize: (size: HeaderIconSize) => void;
+  modeBarWidth: ModeBarWidth;
+  setModeBarWidth: (width: ModeBarWidth) => void;
+  modeBarScale: ModeBarScale;
+  setModeBarScale: (scale: ModeBarScale) => void;
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
   showKeyboard: boolean;
@@ -59,6 +65,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [headerIconSize, setHeaderIconSizeState] = useState<HeaderIconSize>(() => {
     return (localStorage.getItem('yolnoma_header_icon_size') as HeaderIconSize) || 'medium';
+  });
+  const [modeBarWidth, setModeBarWidthState] = useState<ModeBarWidth>(() => {
+    return (localStorage.getItem('yolnoma_mode_bar_width') as ModeBarWidth) || 'standard';
+  });
+  const [modeBarScale, setModeBarScaleState] = useState<ModeBarScale>(() => {
+    return (localStorage.getItem('yolnoma_mode_bar_scale') as ModeBarScale) || 'medium';
   });
   const [language, setLanguageState] = useState<LanguageCode>(() => {
     return (localStorage.getItem('yolnoma_lang') as LanguageCode) || 'en';
@@ -109,6 +121,16 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setHeaderIconSize = (size: HeaderIconSize) => {
     setHeaderIconSizeState(size);
     localStorage.setItem('yolnoma_header_icon_size', size);
+  };
+
+  const setModeBarWidth = (width: ModeBarWidth) => {
+    setModeBarWidthState(width);
+    localStorage.setItem('yolnoma_mode_bar_width', width);
+  };
+
+  const setModeBarScale = (scale: ModeBarScale) => {
+    setModeBarScaleState(scale);
+    localStorage.setItem('yolnoma_mode_bar_scale', scale);
   };
 
   const setLanguage = (l: LanguageCode) => {
@@ -168,6 +190,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setFontSize,
         headerIconSize,
         setHeaderIconSize,
+        modeBarWidth,
+        setModeBarWidth,
+        modeBarScale,
+        setModeBarScale,
         language,
         setLanguage,
         showKeyboard,
