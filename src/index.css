@@ -39,10 +39,84 @@
   }
 
   body {
-    font-family: 'Roboto Mono', 'JetBrains Mono', monospace;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 }
+
+/* Typing Character Pop / Jump Animations */
+@keyframes char-jump {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-7px); }
+  75% { transform: translateY(1.5px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes char-bounce {
+  0% { transform: scale(0.9); }
+  45% { transform: scale(1.4); }
+  80% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes char-glow {
+  0% { text-shadow: 0 0 0px var(--main-color, #e2b714); filter: brightness(1); }
+  50% { text-shadow: 0 0 12px var(--main-color, #e2b714), 0 0 22px var(--main-color, #e2b714); filter: brightness(1.5); }
+  100% { text-shadow: 0 0 0px var(--main-color, #e2b714); filter: brightness(1); }
+}
+
+@keyframes char-wave {
+  0% { transform: rotate(0deg) translateY(0); }
+  35% { transform: rotate(-7deg) translateY(-5px); }
+  70% { transform: rotate(4deg) translateY(1px); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+@keyframes char-slide {
+  0% { transform: translateY(6px); opacity: 0.5; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes char-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25) translateY(-3px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+.anim-char-jump {
+  animation: char-jump 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+  will-change: transform;
+}
+
+.anim-char-bounce {
+  animation: char-bounce 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+  will-change: transform;
+}
+
+.anim-char-glow {
+  animation: char-glow 0.32s ease-out;
+  display: inline-block;
+}
+
+.anim-char-wave {
+  animation: char-wave 0.25s ease-out;
+  display: inline-block;
+  will-change: transform;
+}
+
+.anim-char-slide {
+  animation: char-slide 0.18s ease-out;
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.anim-char-pulse {
+  animation: char-pulse 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: inline-block;
+  will-change: transform;
+}
+
 

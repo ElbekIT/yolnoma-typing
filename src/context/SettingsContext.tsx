@@ -6,6 +6,7 @@ import { soundSynth } from '../utils/audio';
 export type HeaderIconSize = 'small' | 'medium' | 'large';
 export type ModeBarWidth = 'compact' | 'standard' | 'wide' | 'full';
 export type ModeBarScale = 'small' | 'medium' | 'large';
+export type TypingAnimation = 'none' | 'jump' | 'bounce' | 'glow' | 'wave' | 'slide' | 'pulse';
 
 interface SettingsContextType {
   theme: ThemeMode;
@@ -15,6 +16,8 @@ interface SettingsContextType {
   setCaretStyle: (style: CaretStyle) => void;
   smoothCaret: boolean;
   setSmoothCaret: (smooth: boolean) => void;
+  typingAnimation: TypingAnimation;
+  setTypingAnimation: (anim: TypingAnimation) => void;
   soundProfile: SoundProfile;
   setSoundProfile: (profile: SoundProfile) => void;
   volume: number;
@@ -48,6 +51,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [smoothCaret, setSmoothCaretState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_smooth_caret') !== 'false';
+  });
+  const [typingAnimation, setTypingAnimationState] = useState<TypingAnimation>(() => {
+    return (localStorage.getItem('yolnoma_typing_animation') as TypingAnimation) || 'jump';
   });
   const [soundProfile, setSoundProfileState] = useState<SoundProfile>(() => {
     return (localStorage.getItem('yolnoma_sound') as SoundProfile) || 'thock';
@@ -95,6 +101,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setSmoothCaret = (sc: boolean) => {
     setSmoothCaretState(sc);
     localStorage.setItem('yolnoma_smooth_caret', String(sc));
+  };
+
+  const setTypingAnimation = (anim: TypingAnimation) => {
+    setTypingAnimationState(anim);
+    localStorage.setItem('yolnoma_typing_animation', anim);
   };
 
   const setSoundProfile = (sp: SoundProfile) => {
@@ -180,6 +191,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setCaretStyle,
         smoothCaret,
         setSmoothCaret,
+        typingAnimation,
+        setTypingAnimation,
         soundProfile,
         setSoundProfile,
         volume,

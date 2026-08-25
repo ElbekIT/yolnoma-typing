@@ -22,7 +22,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   onRestart,
   isTestFinished
 }) => {
-  const { language, caretStyle, smoothCaret, soundProfile, fontFamily, fontSize } = useSettings();
+  const { language, caretStyle, smoothCaret, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -345,6 +345,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                     charClass += 'text-[var(--error-color,#ef4444)] font-semibold bg-[var(--error-color,#ef4444)]/15 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
                   }
 
+                  if (isTyped && typingAnimation && typingAnimation !== 'none') {
+                    charClass += `anim-char-${typingAnimation} `;
+                  }
+
                   // Caret style
                   let caretElement = null;
                   if (isCurrent && isFocused && !isTestFinished) {
@@ -372,7 +376,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   }
 
                   return (
-                    <span key={globalIndex} className={charClass}>
+                    <span key={`${globalIndex}-${isTyped ? 't' : 'u'}`} className={charClass}>
                       {caretElement}
                       {char}
                     </span>
@@ -396,6 +400,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                     spaceClass += 'text-[var(--error-color,#ef4444)] bg-red-500/25 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
                   }
 
+                  if (isTypedSpace && typingAnimation && typingAnimation !== 'none') {
+                    spaceClass += `anim-char-${typingAnimation} `;
+                  }
+
                   let spaceCaret = null;
                   if (isCurrentSpace && isFocused && !isTestFinished) {
                     spaceCaret = (
@@ -408,7 +416,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   }
 
                   return (
-                    <span key={`space-${spaceIdx}`} className={spaceClass}>
+                    <span key={`space-${spaceIdx}-${isTypedSpace ? 't' : 'u'}`} className={spaceClass}>
                       {spaceCaret}
                       {'\u00A0'}
                     </span>

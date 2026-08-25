@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Palette,
   Volume2,
@@ -8,9 +8,11 @@ import {
   Globe,
   Eye,
   Sliders,
-  Check
+  Check,
+  Sparkles,
+  Zap
 } from 'lucide-react';
-import { useSettings } from '../../context/SettingsContext';
+import { useSettings, TypingAnimation } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { themes } from '../../config/themes';
 import { languagesList } from '../../config/languages';
@@ -24,6 +26,8 @@ export const SettingsView: React.FC = () => {
     setCaretStyle,
     smoothCaret,
     setSmoothCaret,
+    typingAnimation,
+    setTypingAnimation,
     soundProfile,
     setSoundProfile,
     volume,
@@ -45,6 +49,24 @@ export const SettingsView: React.FC = () => {
     showLiveWpm,
     setShowLiveWpm
   } = useSettings();
+
+  const [previewInput, setPreviewInput] = useState('Tezkor yozish');
+  const [animTrigger, setAnimTrigger] = useState(0);
+
+  const typingAnimationOptions: {
+    id: TypingAnimation;
+    label: string;
+    desc: string;
+    icon: string;
+  }[] = [
+    { id: 'jump', label: 'Sakrash (Jump)', desc: 'Harf bosilganda tepaga sakrab tushadi', icon: '🚀' },
+    { id: 'bounce', label: 'Koptokcha (Bounce)', desc: 'Harf kattalashib elastik tarzda joylashadi', icon: '⚡' },
+    { id: 'glow', label: 'Neon Nur (Glow)', desc: 'Harf bosilganda yorqin neon nur taratadi', icon: '✨' },
+    { id: 'wave', label: "To'lqin (Wave)", desc: "Harf bosilganda qiya to'lqinlanadi", icon: '🌊' },
+    { id: 'slide', label: 'Pastdan Chiqish (Slide)', desc: 'Harf pastdan silliq ko‘tariladi', icon: '⬆️' },
+    { id: 'pulse', label: 'Pulsatsiya (Pulse)', desc: 'Harf yengil puls berib mustahkamlanadi', icon: '💓' },
+    { id: 'none', label: 'Oddiy (Off)', desc: 'Statik yozilish, animatsiyasiz', icon: '⚪' }
+  ];
 
   const caretOptions: CaretStyle[] = ['line', 'block', 'underline', 'outline'];
   const soundProfiles: { id: SoundProfile; label: string }[] = [
@@ -210,6 +232,98 @@ export const SettingsView: React.FC = () => {
                 className="w-4 h-4 accent-[var(--main-color)]"
               />
             </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Harflar Yozilish Animatsiyalari (Typing Letter Animation Effects) */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[var(--main-color)]" />
+            <span>Harflar Yozilish Animatsiyalari (Typing Letter Effects)</span>
+          </h3>
+          <span className="text-[11px] font-mono text-[var(--sub-color)] bg-[var(--sub-alt)] px-2.5 py-0.5 rounded-full w-fit">
+            Hozirgi effekt: <strong className="text-[var(--main-color)] uppercase">{typingAnimation}</strong>
+          </span>
+        </div>
+
+        <p className="text-xs text-[var(--sub-color)] mb-4">
+          Klaviatura tugmasi bosilganda harfning sakrab o'z o'rniga tushishi, kattalashib elastik bo'lishi, neon nur taratishi yoki to'lqinlanishi effektini tanlang.
+        </p>
+
+        {/* Options Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-6">
+          {typingAnimationOptions.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => {
+                setTypingAnimation(opt.id);
+                setAnimTrigger((prev) => prev + 1);
+              }}
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-1.5 ${
+                typingAnimation === opt.id
+                  ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/20'
+                  : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-color)]/20 hover:border-[var(--main-color)]/50'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{opt.icon}</span>
+                  <span className="font-bold text-xs">{opt.label}</span>
+                </div>
+                {typingAnimation === opt.id && <Check className="w-4 h-4" />}
+              </div>
+              <span className={`text-[11px] leading-tight ${typingAnimation === opt.id ? 'text-white/85' : 'text-[var(--sub-color)]'}`}>
+                {opt.desc}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Interactive Live Testing Sandbox */}
+        <div className="bg-[var(--bg-color)]/70 border border-[var(--sub-alt)] p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-[var(--sub-color)] flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-[var(--main-color)]" />
+              <span>Jonli Sinov (Live Preview):</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setAnimTrigger((prev) => prev + 1)}
+              className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white transition-colors cursor-pointer text-[var(--text-color)]"
+            >
+              Qayta ko'rish 🔄
+            </button>
+          </div>
+
+          {/* Animated Text Sample Display */}
+          <div className="py-3 px-4 bg-[var(--card-bg)] rounded-xl border border-[var(--sub-alt)] font-mono text-xl sm:text-2xl text-[var(--text-color)] flex items-center justify-center gap-1 select-none overflow-x-auto min-h-[56px]">
+            {previewInput.split('').map((ch, i) => (
+              <span
+                key={`${i}-${ch}-${animTrigger}`}
+                className={`inline-block font-semibold transition-all ${
+                  typingAnimation !== 'none' ? `anim-char-${typingAnimation}` : ''
+                } ${ch === ' ' ? 'w-3' : 'text-[var(--main-color)]'}`}
+                style={{ animationDelay: `${i * 35}ms` }}
+              >
+                {ch === ' ' ? '\u00A0' : ch}
+              </span>
+            ))}
+          </div>
+
+          {/* User Input Test Field */}
+          <div className="mt-3">
+            <input
+              type="text"
+              value={previewInput}
+              onChange={(e) => {
+                setPreviewInput(e.target.value);
+                setAnimTrigger((prev) => prev + 1);
+              }}
+              placeholder="Harflarni yozib ko'ring..."
+              className="w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl px-3.5 py-2 text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+            />
           </div>
         </div>
       </div>
