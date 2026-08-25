@@ -85,36 +85,36 @@
 }
 
 .anim-char-jump {
-  animation: char-jump 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: char-jump var(--typing-anim-duration, 260ms) cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-bounce {
-  animation: char-bounce 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: char-bounce var(--typing-anim-duration, 260ms) cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-glow {
-  animation: char-glow 0.32s ease-out;
+  animation: char-glow calc(var(--typing-anim-duration, 260ms) * 1.25) ease-out;
   display: inline-block;
 }
 
 .anim-char-wave {
-  animation: char-wave 0.25s ease-out;
+  animation: char-wave var(--typing-anim-duration, 260ms) ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-slide {
-  animation: char-slide 0.18s ease-out;
+  animation: char-slide var(--typing-anim-duration, 260ms) ease-out;
   display: inline-block;
   will-change: transform, opacity;
 }
 
 .anim-char-pulse {
-  animation: char-pulse 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: char-pulse var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.2, 1);
   display: inline-block;
   will-change: transform;
 }

@@ -431,7 +431,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
             typedChars.slice(targetText.length).map((extraChar, extraIdx) => (
               <span
                 key={`extra-${extraIdx}`}
-                className="text-[var(--error-color, #ef4444)] border-b-2 border-red-500 font-normal opacity-90"
+                className={`text-[var(--error-color,#ef4444)] border-b-2 border-red-500 font-semibold opacity-90 ${
+                  typingAnimation && typingAnimation !== 'none' ? `anim-char-${typingAnimation}` : ''
+                }`}
               >
                 {extraChar === ' ' ? '\u00A0' : extraChar}
               </span>

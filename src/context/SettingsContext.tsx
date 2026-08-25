@@ -7,6 +7,7 @@ export type HeaderIconSize = 'small' | 'medium' | 'large';
 export type ModeBarWidth = 'compact' | 'standard' | 'wide' | 'full';
 export type ModeBarScale = 'small' | 'medium' | 'large';
 export type TypingAnimation = 'none' | 'jump' | 'bounce' | 'glow' | 'wave' | 'slide' | 'pulse';
+export type TypingAnimationSpeed = 'ultra_fast' | 'fast' | 'normal' | 'slow' | 'very_slow' | 'super_slow';
 
 interface SettingsContextType {
   theme: ThemeMode;
@@ -18,6 +19,10 @@ interface SettingsContextType {
   setSmoothCaret: (smooth: boolean) => void;
   typingAnimation: TypingAnimation;
   setTypingAnimation: (anim: TypingAnimation) => void;
+  typingAnimationSpeed: TypingAnimationSpeed;
+  setTypingAnimationSpeed: (speed: TypingAnimationSpeed) => void;
+  typingAnimDurationMs: number;
+  setTypingAnimDurationMs: (ms: number) => void;
   soundProfile: SoundProfile;
   setSoundProfile: (profile: SoundProfile) => void;
   volume: number;
@@ -54,6 +59,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [typingAnimation, setTypingAnimationState] = useState<TypingAnimation>(() => {
     return (localStorage.getItem('yolnoma_typing_animation') as TypingAnimation) || 'jump';
+  });
+  const [typingAnimationSpeed, setTypingAnimationSpeedState] = useState<TypingAnimationSpeed>(() => {
+    return (localStorage.getItem('yolnoma_typing_anim_speed') as TypingAnimationSpeed) || 'normal';
+  });
+  const [typingAnimDurationMs, setTypingAnimDurationMsState] = useState<number>(() => {
+    const saved = localStorage.getItem('yolnoma_typing_anim_duration');
+    return saved ? parseInt(saved, 10) : 260;
   });
   const [soundProfile, setSoundProfileState] = useState<SoundProfile>(() => {
     return (localStorage.getItem('yolnoma_sound') as SoundProfile) || 'thock';
@@ -106,6 +118,28 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setTypingAnimation = (anim: TypingAnimation) => {
     setTypingAnimationState(anim);
     localStorage.setItem('yolnoma_typing_animation', anim);
+  };
+
+  const speedToMsMap: Record<TypingAnimationSpeed, number> = {
+    ultra_fast: 120,
+    fast: 180,
+    normal: 260,
+    slow: 500,
+    very_slow: 800,
+    super_slow: 1200
+  };
+
+  const setTypingAnimationSpeed = (speed: TypingAnimationSpeed) => {
+    setTypingAnimationSpeedState(speed);
+    localStorage.setItem('yolnoma_typing_anim_speed', speed);
+    const ms = speedToMsMap[speed] || 260;
+    setTypingAnimDurationMsState(ms);
+    localStorage.setItem('yolnoma_typing_anim_duration', String(ms));
+  };
+
+  const setTypingAnimDurationMs = (ms: number) => {
+    setTypingAnimDurationMsState(ms);
+    localStorage.setItem('yolnoma_typing_anim_duration', String(ms));
   };
 
   const setSoundProfile = (sp: SoundProfile) => {
@@ -163,7 +197,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     soundSynth.setVolume(volume);
   }, [volume]);
 
-  // Apply theme styling to root element
+  // Apply theme styling and animation duration to root element
   useEffect(() => {
     const curTheme = themes[theme] || themes.dark;
     const root = document.documentElement;
@@ -179,6 +213,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     root.style.setProperty('--caret-color', curTheme.caretColor);
   }, [theme]);
 
+  // Sync animation duration CSS variable
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--typing-anim-duration', `${typingAnimDurationMs}ms`);
+  }, [typingAnimDurationMs]);
+
   const activeThemeConfig = themes[theme] || themes.dark;
 
   return (
@@ -193,6 +233,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSmoothCaret,
         typingAnimation,
         setTypingAnimation,
+        typingAnimationSpeed,
+        setTypingAnimationSpeed,
+        typingAnimDurationMs,
+        setTypingAnimDurationMs,
         soundProfile,
         setSoundProfile,
         volume,

@@ -10,9 +10,11 @@ import {
   Sliders,
   Check,
   Sparkles,
-  Zap
+  Zap,
+  Gauge,
+  Timer
 } from 'lucide-react';
-import { useSettings, TypingAnimation } from '../../context/SettingsContext';
+import { useSettings, TypingAnimation, TypingAnimationSpeed } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { themes } from '../../config/themes';
 import { languagesList } from '../../config/languages';
@@ -28,6 +30,10 @@ export const SettingsView: React.FC = () => {
     setSmoothCaret,
     typingAnimation,
     setTypingAnimation,
+    typingAnimationSpeed,
+    setTypingAnimationSpeed,
+    typingAnimDurationMs,
+    setTypingAnimDurationMs,
     soundProfile,
     setSoundProfile,
     volume,
@@ -66,6 +72,21 @@ export const SettingsView: React.FC = () => {
     { id: 'slide', label: 'Pastdan Chiqish (Slide)', desc: 'Harf pastdan silliq ko‘tariladi', icon: '⬆️' },
     { id: 'pulse', label: 'Pulsatsiya (Pulse)', desc: 'Harf yengil puls berib mustahkamlanadi', icon: '💓' },
     { id: 'none', label: 'Oddiy (Off)', desc: 'Statik yozilish, animatsiyasiz', icon: '⚪' }
+  ];
+
+  const animationSpeedOptions: {
+    id: TypingAnimationSpeed;
+    label: string;
+    duration: string;
+    desc: string;
+    tag: string;
+  }[] = [
+    { id: 'ultra_fast', label: "O'ta Tez", duration: '120ms', desc: 'Chaqqon & dinamik', tag: '0.12s' },
+    { id: 'fast', label: 'Tez', duration: '180ms', desc: 'Yengil & tezkor', tag: '0.18s' },
+    { id: 'normal', label: "O'rtacha", duration: '260ms', desc: 'Standart mezon', tag: '0.26s' },
+    { id: 'slow', label: 'Sekin', duration: '500ms', desc: 'Sokin va yaqqol sezilarli', tag: '0.50s' },
+    { id: 'very_slow', label: 'Juda Sekin', duration: '800ms', desc: 'Mayin va cho‘ziq harakat', tag: '0.80s' },
+    { id: 'super_slow', label: 'Super Sekin', duration: '1200ms', desc: 'Kinematik sekin animatsiya', tag: '1.20s' },
   ];
 
   const caretOptions: CaretStyle[] = ['line', 'block', 'underline', 'outline'];
@@ -281,6 +302,79 @@ export const SettingsView: React.FC = () => {
           ))}
         </div>
 
+        {/* Animation Speed & Duration Control (Tezlik / Sekinlikni sozlash) */}
+        {typingAnimation !== 'none' && (
+          <div className="pt-4 border-t border-[var(--sub-alt)] mb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs font-bold text-[var(--text-color)] flex items-center gap-2">
+                <Gauge className="w-4 h-4 text-[var(--main-color)]" />
+                <span>Animatsiya Tezligi (Davomiyligi / Sekinligi)</span>
+              </label>
+              <div className="flex items-center gap-2 text-xs font-mono text-[var(--sub-color)]">
+                <Timer className="w-3.5 h-3.5 text-[var(--main-color)]" />
+                <span>Tanlangan vaqt: <strong className="text-[var(--main-color)] font-bold">{typingAnimDurationMs} ms</strong> ({ (typingAnimDurationMs / 1000).toFixed(2) } s)</span>
+              </div>
+            </div>
+
+            {/* Speed Presets */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {animationSpeedOptions.map((sp) => {
+                const isSelected = typingAnimationSpeed === sp.id;
+                return (
+                  <button
+                    key={sp.id}
+                    onClick={() => {
+                      setTypingAnimationSpeed(sp.id);
+                      setAnimTrigger((prev) => prev + 1);
+                    }}
+                    className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                      isSelected
+                        ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/20'
+                        : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-color)]/20 hover:border-[var(--main-color)]/50'
+                    }`}
+                  >
+                    <span className="font-bold text-xs">{sp.label}</span>
+                    <span className={`text-[10px] font-mono ${isSelected ? 'text-white/90' : 'text-[var(--main-color)] font-semibold'}`}>
+                      {sp.duration}
+                    </span>
+                    <span className={`text-[9px] leading-tight ${isSelected ? 'text-white/75' : 'text-[var(--sub-color)]'}`}>
+                      {sp.desc}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Fine-Tuning Slider */}
+            <div className="bg-[var(--sub-alt)]/60 p-3.5 rounded-2xl border border-[var(--sub-alt)]">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-[var(--sub-color)] font-semibold">Aniq millisekundlarda sozlash (Sekinroq & Tezroq):</span>
+                <span className="font-mono text-[var(--main-color)] font-bold">{typingAnimDurationMs} ms</span>
+              </div>
+              <input
+                type="range"
+                min="80"
+                max="1500"
+                step="10"
+                value={typingAnimDurationMs}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setTypingAnimDurationMs(val);
+                  setAnimTrigger((prev) => prev + 1);
+                }}
+                className="w-full h-2 bg-[var(--card-bg)] rounded-lg appearance-none cursor-pointer accent-[var(--main-color)]"
+              />
+              <div className="flex justify-between text-[10px] font-mono text-[var(--sub-color)] mt-1.5">
+                <span>80ms (O'ta Tez)</span>
+                <span>260ms (Mezon)</span>
+                <span>600ms (Sekin)</span>
+                <span>1000ms (Juda Sekin)</span>
+                <span>1500ms (Super Sekin)</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Interactive Live Testing Sandbox */}
         <div className="bg-[var(--bg-color)]/70 border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="flex items-center justify-between mb-2">
@@ -291,21 +385,22 @@ export const SettingsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setAnimTrigger((prev) => prev + 1)}
-              className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white transition-colors cursor-pointer text-[var(--text-color)]"
+              className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white transition-colors cursor-pointer text-[var(--text-color)] flex items-center gap-1"
             >
-              Qayta ko'rish 🔄
+              <span>Qayta ko'rish</span>
+              <span>🔄</span>
             </button>
           </div>
 
           {/* Animated Text Sample Display */}
-          <div className="py-3 px-4 bg-[var(--card-bg)] rounded-xl border border-[var(--sub-alt)] font-mono text-xl sm:text-2xl text-[var(--text-color)] flex items-center justify-center gap-1 select-none overflow-x-auto min-h-[56px]">
+          <div className="py-4 px-4 bg-[var(--card-bg)] rounded-xl border border-[var(--sub-alt)] font-mono text-xl sm:text-2xl text-[var(--text-color)] flex items-center justify-center gap-1.5 select-none overflow-x-auto min-h-[64px]">
             {previewInput.split('').map((ch, i) => (
               <span
                 key={`${i}-${ch}-${animTrigger}`}
                 className={`inline-block font-semibold transition-all ${
                   typingAnimation !== 'none' ? `anim-char-${typingAnimation}` : ''
                 } ${ch === ' ' ? 'w-3' : 'text-[var(--main-color)]'}`}
-                style={{ animationDelay: `${i * 35}ms` }}
+                style={{ animationDelay: `${i * Math.min(60, Math.max(20, typingAnimDurationMs * 0.15))}ms` }}
               >
                 {ch === ' ' ? '\u00A0' : ch}
               </span>
@@ -321,8 +416,8 @@ export const SettingsView: React.FC = () => {
                 setPreviewInput(e.target.value);
                 setAnimTrigger((prev) => prev + 1);
               }}
-              placeholder="Harflarni yozib ko'ring..."
-              className="w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl px-3.5 py-2 text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+              placeholder="Harflarni yozib ko'ring (tezligi va sekinligini sinang)..."
+              className="w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
             />
           </div>
         </div>
