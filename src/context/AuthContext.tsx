@@ -13,7 +13,7 @@ import {
   deleteUser
 } from 'firebase/auth';
 import { ref, set, update, push, get, child, onValue, remove } from 'firebase/database';
-import { auth, rtdb, googleProvider } from '../config/firebase';
+import { auth, rtdb, googleProvider, githubProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -28,6 +28,7 @@ interface AuthContextType {
   sendAdminNotification: (target: 'all' | string, title: string, message: string, type?: UserNotificationItem['type'], targetName?: string) => Promise<void>;
   deleteAdminNotification: (id: string, target?: 'all' | string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithGithub: () => Promise<void>;
   registerWithEmail: (email: string, pass: string, username: string) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -490,6 +491,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGithub = async () => {
+    try {
+      const res = await signInWithPopup(auth, githubProvider);
+      if (res.user) {
+        const p = await fetchOrCreateProfile(res.user);
+        setProfile(p);
+        addNotification('GitHub orqali kirdingiz', `Xush kelibsiz, ${p.displayName}! 🚀`);
+      }
+    } catch (err: any) {
+      console.warn('GitHub Popup error, fallback to redirect:', err);
+      if (
+        err?.code === 'auth/popup-blocked' ||
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.code === 'auth/cancelled-popup-request' ||
+        err?.code === 'auth/unauthorized-domain'
+      ) {
+        await signInWithRedirect(auth, githubProvider);
+      } else if (err?.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('Bu email bilan boshqa usul orqali (masalan, Google) hisob ochilgan. Iltimos, o\'sha usul bilan kiring.');
+      } else {
+        throw err;
+      }
+    }
+  };
+
   const registerWithEmail = async (email: string, pass: string, username: string) => {
     const res = await createUserWithEmailAndPassword(auth, email, pass);
     if (res.user) {
@@ -898,6 +924,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendAdminNotification,
         deleteAdminNotification,
         signInWithGoogle,
+        signInWithGithub,
         registerWithEmail,
         loginWithEmail,
         resetPassword,

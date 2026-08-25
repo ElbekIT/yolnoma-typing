@@ -18,7 +18,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = () => {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signInWithGithub } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +33,23 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
         setError(err.message || 'Google orqali kirishda xatolik yuz berdi');
       } else {
         setError('Google orqali kirishda xatolik yuz berdi');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await signInWithGithub();
+      localStorage.setItem('yolnoma_auth_completed', 'true');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'GitHub orqali kirishda xatolik yuz berdi');
+      } else {
+        setError('GitHub orqali kirishda xatolik yuz berdi');
       }
     } finally {
       setLoading(false);
@@ -81,7 +98,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
           </h2>
 
           <p className="text-slate-300 text-base leading-relaxed max-w-xl">
-            Google orqali tizimga kiring va barcha natijalaringiz real vaqt rejimida har bir qurilmangizda avtomatik va xavfsiz saqlansin. Global reytingda o'z o'rningizni egallang!
+            Google yoki GitHub orqali tizimga kiring va barcha natijalaringiz real vaqt rejimida har bir qurilmangizda avtomatik va xavfsiz saqlansin. Global reytingda o'z o'rningizni egallang!
           </p>
 
           {/* Key Advantages Grid */}
@@ -91,7 +108,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm text-white">Xavfsiz Google Sync</h4>
+                <h4 className="font-bold text-sm text-white">Xavfsiz Cloud Sync</h4>
                 <p className="text-xs text-slate-400 mt-0.5">Barcha statistikalar profil bo'yicha doimiy saqlanadi.</p>
               </div>
             </div>
@@ -128,28 +145,29 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
           </div>
         </div>
 
-        {/* Right Side: Primary Single Auth Card */}
+        {/* Right Side: Primary Auth Card */}
         <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl relative space-y-6">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto mb-3">
               <Lock className="w-6 h-6" />
             </div>
             <h3 className="text-2xl font-black text-white">Tizimga Kirish</h3>
-            <p className="text-xs text-slate-400 font-medium">Saytdan foydalanish uchun Google orqali kiring</p>
+            <p className="text-xs text-slate-400 font-medium">Google yoki GitHub orqali kiring</p>
           </div>
 
           {error && (
-            <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-500/30 text-rose-300 text-xs font-semibold text-center animate-shake">
+            <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-500/30 text-rose-300 text-xs font-semibold text-center">
               {error}
             </div>
           )}
 
-          {/* Primary Action Button: Google Sign-In */}
+          {/* Action Buttons: Google & GitHub Sign-In */}
           <div className="space-y-3 pt-2">
+            {/* Google Sign-In */}
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm transition-all shadow-xl shadow-cyan-500/10 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -171,12 +189,24 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
               </svg>
               <span>Google Orqali Kirish</span>
             </button>
+
+            {/* GitHub Sign-In */}
+            <button
+              onClick={handleGithubSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-sm border border-slate-700 transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+            >
+              <svg className="w-5 h-5 fill-current text-white" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>GitHub Orqali Kirish</span>
+            </button>
           </div>
 
           <div className="pt-2 text-center text-[11px] text-slate-500 space-y-1">
             <p className="flex items-center justify-center gap-1.5 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              1-Klik orqali profil yaratiladi va reytingda ko'rinadi
+              1-bosqichda profil yaratiladi va reytingda ko'rinadi
             </p>
           </div>
         </div>
