@@ -211,11 +211,21 @@ function MainAppContent() {
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Shortcut for Admin Panel (Ctrl + Shift + A or Alt + A)
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'a' || e.key === 'A'))) {
+        e.preventDefault();
+        setActiveTab('admin');
+      }
+    };
+    window.addEventListener('keydown', handleGlobalShortcuts);
+
     return () => {
       window.removeEventListener('custom-content-updated', handleContentUpdate);
       window.removeEventListener('storage', handleContentUpdate);
       window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('keydown', handleGlobalShortcuts);
     };
   }, [initTestText]);
 
@@ -540,6 +550,7 @@ function MainAppContent() {
       <Footer
         onOpenAbout={() => setIsAboutOpen(true)}
         onOpenOwner={() => setActiveTab('owner')}
+        onOpenAdmin={() => setActiveTab('admin')}
       />
 
       <PubgInviteModal

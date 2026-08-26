@@ -24,10 +24,13 @@ import {
   Mail,
   MessageSquare,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  EyeOff,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
+import { maskEmail, maskUid } from '../../utils/maskEmail';
 
 interface ProfileViewProps {
   onOpenAuth?: () => void;
@@ -577,6 +580,50 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
               <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 text-center">
                 <span className="text-[9px] uppercase font-bold text-[var(--sub-color)] block">O'yinlar Soni</span>
                 <span className="text-lg font-black text-emerald-500 font-mono">{profile.dinoGamesPlayed || 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy & Data Confidentiality Card */}
+          <div className="bg-[var(--card-bg)] border border-emerald-500/20 p-5 rounded-3xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[var(--text-color)] flex items-center gap-1.5">
+                    <span>Shaxsiy Ma'lumotlar Maxfiyligi & Himoyasi</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono text-[9px] font-black uppercase">
+                      100% Yopiq
+                    </span>
+                  </h4>
+                  <p className="text-[10px] text-[var(--sub-color)]">
+                    Emailingiz va hisob identifikatoringiz (ID) boshqa hech qaysi foydalanuvchiga yoki tashqi tizimlarga ko'rinmaydi.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-[var(--sub-color)] font-bold block">Bog'langan Email</span>
+                  <span className="font-mono font-bold text-[var(--text-color)]">{maskEmail(profile.email || user.email)}</span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 font-mono text-[9px] font-bold">
+                  <Lock className="w-2.5 h-2.5" /> Maxfiy
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-[var(--sub-color)] font-bold block">Xavfsiz Foydalanuvchi ID</span>
+                  <span className="font-mono font-bold text-[var(--text-color)]">{maskUid(profile.uid || user.uid)}</span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 font-mono text-[9px] font-bold">
+                  <EyeOff className="w-2.5 h-2.5" /> Yashirilgan
+                </span>
               </div>
             </div>
           </div>

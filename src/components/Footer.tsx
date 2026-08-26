@@ -1,12 +1,13 @@
 import React from 'react';
-import { Keyboard, ShieldCheck, Info, Sparkles } from 'lucide-react';
+import { Keyboard, ShieldCheck, Info, Sparkles, ShieldAlert } from 'lucide-react';
 
 interface FooterProps {
   onOpenAbout: () => void;
   onOpenOwner?: () => void;
+  onOpenAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenOwner }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenOwner, onOpenAdmin }) => {
   return (
     <footer className="w-full py-4 px-4 mt-auto select-none">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-[var(--sub-color)] opacity-70 hover:opacity-100 transition-opacity">

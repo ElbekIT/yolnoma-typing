@@ -391,6 +391,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
 
+                      {isOwnerAdmin && (
+                        <button
+                          onClick={() => handleSelectTab('admin')}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-rose-400 hover:text-rose-300 transition-colors font-bold bg-rose-500/5 border border-rose-500/20 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <ShieldAlert className="w-4 h-4 text-rose-400" />
+                            <span>Admin Panel</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-rose-400 opacity-70" />
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleSelectTab('owner')}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold bg-[var(--main-color)]/5 border border-[var(--main-color)]/20 cursor-pointer"
