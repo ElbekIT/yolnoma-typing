@@ -44,10 +44,13 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
     { id: 'story', label: 'Hikoyalar', icon: Sparkles },
   ];
 
-  const languagesList = useMemo(() => getAllLanguages(), [showLangModal]);
+  // Fast memoized languages list
+  const languagesList = useMemo(() => {
+    return getAllLanguages();
+  }, [showLangModal]);
 
   const currentLang = useMemo(
-    () => languagesList.find((l) => l.code === language) || languagesList[0],
+    () => languagesList.find((l) => l.code.toLowerCase() === language.toLowerCase()) || languagesList[0],
     [languagesList, language]
   );
 
@@ -62,22 +65,22 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
     );
   }, [languagesList, searchQuery]);
 
-  // When modal opens, set highlighted index to current language
+  // When modal opens, set highlighted index and focus search input instantly
   useEffect(() => {
     if (showLangModal) {
-      const idx = filteredLanguages.findIndex((l) => l.code === language);
+      const idx = filteredLanguages.findIndex((l) => l.code.toLowerCase() === language.toLowerCase());
       setHighlightedIndex(idx >= 0 ? idx : 0);
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (searchInputRef.current) {
           searchInputRef.current.focus();
         }
-      }, 10);
+      });
     } else {
       setSearchQuery('');
     }
   }, [showLangModal]);
 
-  // Ensure highlighted index is within bounds when filtering
+  // Reset highlighted index on query change
   useEffect(() => {
     setHighlightedIndex(0);
   }, [searchQuery]);
@@ -86,6 +89,14 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
     setLanguage(code as LanguageCode);
     setShowLangModal(false);
     onReset();
+  };
+
+  const scrollIndexIntoView = (index: number) => {
+    if (!listContainerRef.current) return;
+    const items = listContainerRef.current.querySelectorAll('[data-lang-item]');
+    if (items[index]) {
+      (items[index] as HTMLElement).scrollIntoView({ block: 'nearest' });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -111,14 +122,6 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
       if (filteredLanguages[highlightedIndex]) {
         handleSelectLanguage(filteredLanguages[highlightedIndex].code);
       }
-    }
-  };
-
-  const scrollIndexIntoView = (index: number) => {
-    if (!listContainerRef.current) return;
-    const items = listContainerRef.current.querySelectorAll('[data-lang-item]');
-    if (items[index]) {
-      (items[index] as HTMLElement).scrollIntoView({ block: 'nearest' });
     }
   };
 
@@ -271,7 +274,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             title="Tilni tanlash"
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>{currentLang.nativeName}</span>
+            <span>{currentLang.flag} {currentLang.nativeName}</span>
           </button>
 
           <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
@@ -295,10 +298,10 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         </div>
       </div>
 
-      {/* Monkeytype Style Instant Language Command Palette Modal */}
+      {/* Monkeytype Style Super-Fast Instant Language Command Palette Modal */}
       {showLangModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-[2px]"
           onClick={() => setShowLangModal(false)}
         >
           {/* Modal Box */}
@@ -330,17 +333,16 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             {/* Language List */}
             <div
               ref={listContainerRef}
-              className="overflow-y-auto p-1.5 space-y-0.5 flex-1 select-none"
+              className="overflow-y-auto p-1.5 space-y-0.5 flex-1 select-none custom-scrollbar"
             >
               {filteredLanguages.length > 0 ? (
                 filteredLanguages.map((l, idx) => {
-                  const isSelected = language === l.code;
+                  const isSelected = language.toLowerCase() === l.code.toLowerCase();
                   const isHighlighted = highlightedIndex === idx;
                   return (
                     <button
                       key={l.code}
                       data-lang-item
-                      onMouseEnter={() => setHighlightedIndex(idx)}
                       onClick={() => handleSelectLanguage(l.code)}
                       className={`w-full flex items-center px-3.5 py-2 rounded-lg text-left font-mono text-xs transition-colors cursor-pointer ${
                         isHighlighted
@@ -350,19 +352,23 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                           : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/60'
                       }`}
                     >
+                      <span className="w-6 shrink-0 text-sm">
+                        {l.flag || '🌐'}
+                      </span>
                       <span className="w-5 shrink-0 text-xs font-mono font-bold">
                         {isSelected ? '✓' : ''}
                       </span>
-                      <span className="truncate flex-1">
-                        {l.nativeName.toLowerCase()}
+                      <span className="truncate flex-1 font-medium">
+                        {l.nativeName}
+                        {l.name && l.name !== l.nativeName ? (
+                          <span className="ml-1.5 opacity-60 text-[11px] font-normal">({l.name})</span>
+                        ) : null}
                       </span>
                       <span
-                        className={`text-[10px] font-mono ml-2 ${
+                        className={`text-[10px] font-mono ml-2 uppercase px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 ${
                           isHighlighted
-                            ? 'text-[var(--bg-color)]/80'
-                            : isSelected
-                            ? 'text-[var(--text-color)]/70'
-                            : 'text-[var(--sub-color)]/60'
+                            ? 'text-[var(--bg-color)]/90'
+                            : 'text-[var(--sub-color)]'
                         }`}
                       >
                         {l.code}
@@ -379,7 +385,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
 
             {/* Footer Prompt */}
             <div className="px-4 py-2 border-t border-[var(--sub-alt)]/60 bg-[var(--card-bg)]/80 flex items-center justify-between text-[10px] font-mono text-[var(--sub-color)] opacity-60 shrink-0">
-              <span>{filteredLanguages.length} ta til</span>
+              <span>{filteredLanguages.length} ta dunyo tili mavjud</span>
               <div className="flex items-center gap-2">
                 <span>↑↓ - harakatlanish</span>
                 <span>enter - tanlash</span>

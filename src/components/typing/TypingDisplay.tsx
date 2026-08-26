@@ -361,24 +361,25 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         autoCorrect="off"
         spellCheck="false"
         disabled={isTestFinished}
-        className="absolute opacity-0 w-full h-full inset-0 z-10 cursor-default focus:outline-none"
+        className="absolute top-0 left-0 w-full h-[70%] opacity-0 z-0 cursor-text focus:outline-none"
       />
 
       {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (
         <div
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             if (inputRef.current) {
               inputRef.current.focus();
               setIsFocused(true);
             }
           }}
-          className="absolute inset-0 bg-[var(--bg-color)]/85 backdrop-blur-[1px] rounded-xl z-20 flex flex-col items-center justify-center text-sm font-medium text-[var(--main-color)] gap-3 border border-[var(--sub-alt)] cursor-pointer p-4 text-center transition-opacity duration-150"
+          className="absolute inset-x-0 top-0 h-[80%] bg-[var(--bg-color)]/85 backdrop-blur-[1px] rounded-xl z-20 flex flex-col items-center justify-center text-sm font-medium text-[var(--main-color)] gap-3 border border-[var(--sub-alt)] cursor-pointer p-4 text-center transition-opacity duration-150"
         >
           <div className="flex items-center gap-2.5 bg-[var(--sub-alt)] px-5 py-2.5 rounded-xl border border-[var(--sub-color)]/20 shadow-sm hover:scale-105 transition-transform">
             <MousePointer className="w-4 h-4 text-[var(--main-color)]" />
             <Smartphone className="w-4 h-4 sm:hidden text-[var(--main-color)]" />
-            <span className="font-mono text-xs sm:text-sm text-[var(--text-color)] font-medium">Yozish uchun bosing yoki tugmani bosing</span>
+            <span className="font-mono text-xs sm:text-sm text-[var(--text-color)] font-medium">Yozish uchun bosing yoki klaviaturani bosing</span>
           </div>
         </div>
       )}
@@ -553,7 +554,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       </div>
 
       {/* Quick Mouse & Keyboard Controls Bar */}
-      <div className="mt-6 flex flex-col items-center justify-center gap-2.5">
+      <div className="mt-6 relative z-30 pointer-events-auto flex flex-col items-center justify-center gap-2.5">
         <button
           id="restart-test-button"
           type="button"
@@ -566,7 +567,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="group p-2.5 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/60 transition-all cursor-pointer border border-transparent hover:border-[var(--sub-color)]/20 active:scale-95"
+          className="group flex items-center justify-center p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-all cursor-pointer border border-transparent hover:border-[var(--sub-color)]/25 active:scale-95 shadow-sm"
           title="Qayta boshlash (Tab yoki Tab + Enter)"
           aria-label="Restart Test"
         >
