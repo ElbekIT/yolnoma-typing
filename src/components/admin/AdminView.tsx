@@ -74,7 +74,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications' | 'server'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'dino' | 'inbox' | 'notifications' | 'server'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
@@ -747,6 +747,18 @@ export const AdminView: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('dino')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'dino'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span>🎮 Dino O'yin Reytingi</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('inbox')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer relative ${
             activeTab === 'inbox'
@@ -792,7 +804,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'dino' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1085,12 +1097,17 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: KELGAN MUROJAATLAR / INBOX */}
+      {/* TAB 3: DINO O'YINI REYTINGI */}
+      {activeTab === 'dino' && (
+        <AdminDinoTab />
+      )}
+
+      {/* TAB 4: KELGAN MUROJAATLAR / INBOX */}
       {activeTab === 'inbox' && (
         <AdminInboxTab />
       )}
 
-      {/* TAB 4: HABAR YUBORISH / XABARNOMALAR */}
+      {/* TAB 5: HABAR YUBORISH / XABARNOMALAR */}
       {activeTab === 'notifications' && (
         <AdminNotificationsTab
           usersList={usersList}
@@ -1099,7 +1116,7 @@ export const AdminView: React.FC = () => {
         />
       )}
 
-      {/* TAB 5: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
+      {/* TAB 6: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
       {activeTab === 'server' && (
         <AdminServerTab />
       )}
