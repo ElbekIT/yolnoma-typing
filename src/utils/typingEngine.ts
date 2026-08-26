@@ -23,6 +23,7 @@ export function generateTestText(
   wordCount: number = 25,
   customText?: string
 ): GeneratedText {
+  // If explicitly in custom mode with customText provided
   if (mode === 'custom' && customText && customText.trim().length > 0) {
     const raw = customText.trim();
     return {
@@ -31,19 +32,21 @@ export function generateTestText(
     };
   }
 
-  // Check if owner has added custom text for this language
-  const customTexts = getCustomTextsForLanguage(language);
-  if (customTexts && customTexts.length > 0) {
-    // Pick one of the owner's custom texts randomly, or combine if short
-    const chosen = customTexts[Math.floor(Math.random() * customTexts.length)];
-    const raw = chosen.content.trim();
-    return {
-      rawText: raw,
-      wordsList: raw.split(/\s+/)
-    };
-  }
-
   const langInfo = getLanguageInfo(language);
+
+  // Custom texts added by owner
+  const customTexts = getCustomTextsForLanguage(language);
+
+  if (mode === 'custom') {
+    if (customTexts && customTexts.length > 0) {
+      const chosen = customTexts[Math.floor(Math.random() * customTexts.length)];
+      const raw = chosen.content.trim();
+      return {
+        rawText: raw,
+        wordsList: raw.split(/\s+/)
+      };
+    }
+  }
 
   if (mode === 'code') {
     const snippets = codeSnippets.javascript.concat(codeSnippets.python, codeSnippets.html);
@@ -65,17 +68,20 @@ export function generateTestText(
     };
   }
 
-  if (mode === 'sentences' || mode === 'story') {
-    if (mode === 'story' && langInfo.stories && langInfo.stories.length > 0) {
-      const story = langInfo.stories[Math.floor(Math.random() * langInfo.stories.length)];
+  if (mode === 'story') {
+    const storiesList = langInfo.stories && langInfo.stories.length > 0 ? langInfo.stories : getLanguageInfo('uz-latn').stories;
+    if (storiesList && storiesList.length > 0) {
+      const story = storiesList[Math.floor(Math.random() * storiesList.length)];
       return {
         rawText: story,
         wordsList: story.split(' ')
       };
     }
+  }
 
+  if (mode === 'sentences') {
     const sentencesList = langInfo.sentences && langInfo.sentences.length > 0 ? langInfo.sentences : getLanguageInfo('uz-latn').sentences;
-    // Pick 2-3 random sentences
+    // Pick 2-3 random sentences freshly shuffled
     const shuffled = shuffleArray(sentencesList);
     const selectedSentences = shuffled.slice(0, Math.min(3, shuffled.length)).join(' ');
     return {
@@ -84,8 +90,21 @@ export function generateTestText(
     };
   }
 
-  // Base words pool
+  // Base words pool - merge default language words with any owner custom words
   let wordsPool = [...langInfo.words];
+
+  if (customTexts && customTexts.length > 0) {
+    customTexts.forEach((ct) => {
+      if (ct.words && ct.words.length > 0) {
+        ct.words.forEach((w) => {
+          const clean = w.trim().toLowerCase();
+          if (clean.length > 1 && !wordsPool.includes(clean)) {
+            wordsPool.push(clean);
+          }
+        });
+      }
+    });
+  }
 
   if (mode === 'words') {
     // In Monkeytype-style words mode: ensure all words are lowercase and clean

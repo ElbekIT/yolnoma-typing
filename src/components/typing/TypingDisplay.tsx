@@ -47,9 +47,36 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }, user?.uid);
   }, [user]);
 
+  // Global shortcut to restart test (Tab key or Tab + Enter)
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      // Don't trigger if user is inside a modal or typing in an input/textarea outside TypingDisplay
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === 'TEXTAREA' ||
+          (activeEl.tagName === 'INPUT' && activeEl !== inputRef.current))
+      ) {
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        onRestart();
+        if (inputRef.current) {
+          inputRef.current.focus();
+          setIsFocused(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [onRestart]);
+
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
+      setIsFocused(true);
     }
   }, [targetText]);
 
@@ -270,36 +297,27 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     if (!vpEl) return;
 
     const vpWidth = vpEl.clientWidth;
+    const anchorX = vpWidth * 0.35; // Position active focus around 35% across screen (Monkeytype style)
 
     if (tapeMode === 'letter') {
-      // Letter Tape Mode: keep active character centered in viewport
+      // Letter Tape Mode: keep active character anchored in clear viewport zone
       const activeCharEl = charRefs.current[currentTypedLen];
       if (activeCharEl) {
         const charCenter = activeCharEl.offsetLeft + (activeCharEl.offsetWidth / 2);
-        const targetOffset = charCenter - (vpWidth / 2);
+        const targetOffset = charCenter - anchorX;
         setTapeOffset(Math.max(0, targetOffset));
       } else if (currentTypedLen === 0) {
-        const firstCharEl = charRefs.current[0];
-        if (firstCharEl) {
-          const charCenter = firstCharEl.offsetLeft + (firstCharEl.offsetWidth / 2);
-          const targetOffset = charCenter - (vpWidth / 2);
-          setTapeOffset(Math.max(0, targetOffset));
-        }
+        setTapeOffset(0);
       }
     } else if (tapeMode === 'word') {
-      // Word Tape Mode: keep active word centered in viewport
+      // Word Tape Mode: keep active word anchored in clear viewport zone
       const activeWordEl = wordRefs.current[activeWordIdx];
       if (activeWordEl) {
         const wordCenter = activeWordEl.offsetLeft + (activeWordEl.offsetWidth / 2);
-        const targetOffset = wordCenter - (vpWidth / 2);
+        const targetOffset = wordCenter - anchorX;
         setTapeOffset(Math.max(0, targetOffset));
       } else if (activeWordIdx === 0) {
-        const firstWordEl = wordRefs.current[0];
-        if (firstWordEl) {
-          const wordCenter = firstWordEl.offsetLeft + (firstWordEl.offsetWidth / 2);
-          const targetOffset = wordCenter - (vpWidth / 2);
-          setTapeOffset(Math.max(0, targetOffset));
-        }
+        setTapeOffset(0);
       }
     }
   }, [tapeMode, currentTypedLen, activeWordIdx, targetText]);
@@ -348,11 +366,19 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (
-        <div className="absolute inset-0 bg-[var(--bg-color)]/90 rounded-xl z-20 flex flex-col items-center justify-center text-xs sm:text-sm font-medium text-[var(--main-color)] gap-2 border border-[var(--sub-alt)] cursor-pointer p-4 text-center">
-          <div className="flex items-center gap-2 bg-[var(--sub-alt)] px-4 py-2 rounded-xl border border-[var(--sub-alt)]">
+        <div
+          onClick={() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+              setIsFocused(true);
+            }
+          }}
+          className="absolute inset-0 bg-[var(--bg-color)]/85 backdrop-blur-[1px] rounded-xl z-20 flex flex-col items-center justify-center text-sm font-medium text-[var(--main-color)] gap-3 border border-[var(--sub-alt)] cursor-pointer p-4 text-center transition-opacity duration-150"
+        >
+          <div className="flex items-center gap-2.5 bg-[var(--sub-alt)] px-5 py-2.5 rounded-xl border border-[var(--sub-color)]/20 shadow-sm hover:scale-105 transition-transform">
             <MousePointer className="w-4 h-4 text-[var(--main-color)]" />
-            <Smartphone className="w-4 h-4 sm:hidden" />
-            <span className="font-mono text-xs text-[var(--text-color)]">Yozish uchun bosing</span>
+            <Smartphone className="w-4 h-4 sm:hidden text-[var(--main-color)]" />
+            <span className="font-mono text-xs sm:text-sm text-[var(--text-color)] font-medium">Yozish uchun bosing yoki tugmani bosing</span>
           </div>
         </div>
       )}
@@ -366,8 +392,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
           height: `${containerHeight}px`,
           ...(isTape
             ? {
-                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
-                maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)'
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+                maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)'
               }
             : {})
         }}
@@ -375,7 +401,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         <div
           className={`relative text-left ${
             isTape
-              ? 'flex flex-nowrap whitespace-nowrap items-center'
+              ? 'flex flex-nowrap whitespace-nowrap items-center pl-[28%] sm:pl-[35%]'
               : 'flex flex-wrap'
           }`}
           style={{
@@ -411,9 +437,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   let charClass = 'relative inline-block font-normal transition-colors duration-75 ';
 
                   if (!isTyped) {
-                    charClass += 'text-[var(--sub-color)] opacity-60 ';
+                    charClass += 'text-[var(--sub-color)] opacity-85 ';
                   } else if (isCorrect) {
-                    charClass += 'text-[var(--text-color)] ';
+                    charClass += 'text-[var(--text-color)] font-medium ';
                   } else {
                     charClass += 'text-[var(--error-color,#ef4444)] font-semibold bg-[var(--error-color,#ef4444)]/15 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
                   }
@@ -472,7 +498,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
                   let spaceClass = 'relative inline-block font-normal ';
                   if (!isTypedSpace) {
-                    spaceClass += 'text-[var(--sub-color)] opacity-40 ';
+                    spaceClass += 'text-[var(--sub-color)] opacity-70 ';
                   } else if (isCorrectSpace) {
                     spaceClass += 'text-[var(--text-color)] ';
                   } else {
@@ -529,6 +555,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       {/* Quick Mouse & Keyboard Controls Bar */}
       <div className="mt-6 flex flex-col items-center justify-center gap-2.5">
         <button
+          id="restart-test-button"
           type="button"
           tabIndex={-1}
           onClick={(e) => {
@@ -539,17 +566,18 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="p-2.5 rounded-xl text-[var(--sub-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
-          title="Qayta boshlash (Tab + Enter)"
+          className="group p-2.5 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/60 transition-all cursor-pointer border border-transparent hover:border-[var(--sub-color)]/20 active:scale-95"
+          title="Qayta boshlash (Tab yoki Tab + Enter)"
+          aria-label="Restart Test"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180 group-active:rotate-360 text-[var(--sub-color)] group-hover:text-[var(--main-color)]" />
         </button>
 
         {/* Shortcut Footer Hints (Desktop only for keyboard hints) */}
-        <div className="hidden sm:flex items-center gap-1.5 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-60">
-          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">tab</kbd>
-          <span>+</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]">enter</kbd>
+        <div className="hidden sm:flex items-center gap-1.5 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-70">
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px] border border-[var(--sub-color)]/20">tab</kbd>
+          <span className="opacity-60">+</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px] border border-[var(--sub-color)]/20">enter</kbd>
           <span className="ml-1">- qayta boshlash</span>
         </div>
       </div>
