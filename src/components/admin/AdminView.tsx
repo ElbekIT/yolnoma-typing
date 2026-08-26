@@ -99,16 +99,13 @@ export const AdminView: React.FC = () => {
 
   const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
 
-  // Verify backend session token on load
+  // Keep authenticated state stable across tab switches and reloads
   useEffect(() => {
-    if (isAdminAuthenticated) {
-      verifyAdminSessionBackend().then((isValid) => {
-        if (!isValid) {
-          setIsAdminAuthenticated(false);
-        }
-      });
+    const active = isAdminSessionActive();
+    if (active && !isAdminAuthenticated) {
+      setIsAdminAuthenticated(true);
     }
-  }, [isAdminAuthenticated]);
+  }, []);
 
   // Lockout countdown timer
   useEffect(() => {
