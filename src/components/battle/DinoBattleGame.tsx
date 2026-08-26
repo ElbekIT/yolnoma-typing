@@ -461,6 +461,7 @@ export const DinoBattleGame: React.FC<DinoBattleGameProps> = ({
             dinoSound.playGameOver();
             g.dino.isAlive = false;
             myLiveRef.current.isAlive = false;
+            setMyLiveState({ ...myLiveRef.current });
 
             // Sync to RTDB
             if (roomId && !isBotMatch) {
@@ -473,14 +474,38 @@ export const DinoBattleGame: React.FC<DinoBattleGameProps> = ({
               }).catch(() => {});
             }
 
-            // If opponent is already dead, end match immediately!
-            if (!oppLiveRef.current.isAlive && !isFinishedRef.current) {
+            // If in bot match, resolve match promptly
+            if (isBotMatch && !isFinishedRef.current) {
+              setTimeout(() => {
+                if (!isFinishedRef.current) {
+                  isFinishedRef.current = true;
+                  const winner =
+                    oppLiveRef.current.isAlive || oppLiveRef.current.score > myLiveRef.current.score
+                      ? oppLiveRef.current.id
+                      : myLiveRef.current.id;
+                  onFinish(winner, myLiveRef.current.score, oppLiveRef.current.score);
+                }
+              }, 700);
+            } else if (!oppLiveRef.current.isAlive && !isFinishedRef.current) {
+              // If opponent is already dead, end match immediately!
               isFinishedRef.current = true;
               const winner =
                 myLiveRef.current.score >= oppLiveRef.current.score
                   ? myLiveRef.current.id
                   : oppLiveRef.current.id;
               onFinish(winner, myLiveRef.current.score, oppLiveRef.current.score);
+            } else if (!isFinishedRef.current) {
+              // Live match: if opponent is alive, set failsafe timeout so it never hangs
+              setTimeout(() => {
+                if (!isFinishedRef.current) {
+                  isFinishedRef.current = true;
+                  const winner =
+                    oppLiveRef.current.score >= myLiveRef.current.score
+                      ? oppLiveRef.current.id
+                      : myLiveRef.current.id;
+                  onFinish(winner, myLiveRef.current.score, oppLiveRef.current.score);
+                }
+              }, 2500);
             }
             break;
           }
@@ -511,10 +536,11 @@ export const DinoBattleGame: React.FC<DinoBattleGameProps> = ({
           g.oppDino.isDucking = false;
         }
 
-        // Random bot crash risk after 600 score
-        if (oppLiveRef.current.score > 400 && Math.random() < 0.00035 * dt) {
+        // Random bot crash risk after 350 score
+        if (oppLiveRef.current.score > 350 && Math.random() < 0.0009 * dt) {
           oppLiveRef.current.isAlive = false;
           g.oppDino.isAlive = false;
+          setOppLiveState({ ...oppLiveRef.current });
 
           if (!g.dino.isAlive && !isFinishedRef.current) {
             isFinishedRef.current = true;
@@ -523,6 +549,14 @@ export const DinoBattleGame: React.FC<DinoBattleGameProps> = ({
                 ? myLiveRef.current.id
                 : oppLiveRef.current.id;
             onFinish(winner, myLiveRef.current.score, oppLiveRef.current.score);
+          } else if (g.dino.isAlive && !isFinishedRef.current) {
+            // Player is alive and bot crashed! Player automatically wins after a short victory celebration
+            setTimeout(() => {
+              if (!isFinishedRef.current) {
+                isFinishedRef.current = true;
+                onFinish(myLiveRef.current.id, myLiveRef.current.score, oppLiveRef.current.score);
+              }
+            }, 1800);
           }
         }
       }

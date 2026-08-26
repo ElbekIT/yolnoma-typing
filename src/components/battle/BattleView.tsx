@@ -18,11 +18,16 @@ import {
   Link as LinkIcon,
   Check,
   AlertCircle,
-  Skull
+  Skull,
+  Award,
+  ArrowRight,
+  ShieldAlert,
+  Gamepad2
 } from 'lucide-react';
 import { RaceTrack, RacerProgress } from './RaceTrack';
 import { DinoBattleTrack } from './DinoBattleTrack';
 import { DinoBattleGame } from './DinoBattleGame';
+import { dinoSound } from '../dino/dinoSound';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { getLanguageInfo } from '../../config/languages';
@@ -754,6 +759,79 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
+  // Sound triggers for countdown and finished states
+  useEffect(() => {
+    if (gameState === 'countdown') {
+      dinoSound.playCountdownBeep(countdown <= 1);
+    }
+  }, [countdown, gameState]);
+
+  useEffect(() => {
+    if (gameState === 'finished') {
+      if (winnerId === currentUid && !disqualifiedReason) {
+        dinoSound.playVictory();
+      } else {
+        dinoSound.playDefeat();
+      }
+    }
+  }, [gameState, winnerId, currentUid, disqualifiedReason]);
+
+  // Rematch action
+  const handleRematch = async () => {
+    setWinnerId(null);
+    setDisqualifiedReason(null);
+
+    if (isBotMatch || !activeRoomCode) {
+      startBotMatch();
+      return;
+    }
+
+    if (battleType === 'speedway') {
+      const text = generateBattleText();
+      setTargetText(text);
+      setTypedInput('');
+
+      try {
+        await update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {
+          status: 'countdown',
+          winnerUid: null,
+          targetText: text,
+          'host/wpm': 0,
+          'host/accuracy': 100,
+          'host/progressPercent': 0,
+          'host/isWinner': false,
+          'guest/wpm': 0,
+          'guest/accuracy': 100,
+          'guest/progressPercent': 0,
+          'guest/isWinner': false
+        });
+        start5SecCountdown(false, text);
+      } catch {
+        startBotMatch();
+      }
+    } else {
+      try {
+        await update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {
+          status: 'countdown',
+          winnerUid: null,
+          'host/score': 0,
+          'host/distance': 0,
+          'host/obstaclesDodged': 0,
+          'host/isAlive': true,
+          'host/isWinner': false,
+          'guest/score': 0,
+          'guest/distance': 0,
+          'guest/obstaclesDodged': 0,
+          'guest/isAlive': true,
+          'guest/isWinner': false
+        });
+        start5SecCountdown(false);
+      } catch {
+        startBotMatch();
+      }
+    }
+  };
+
   const handleCopyCode = () => {
     if (activeRoomCode) {
       navigator.clipboard.writeText(activeRoomCode);
@@ -1192,91 +1270,128 @@ export const BattleView: React.FC<BattleViewProps> = ({
               </div>
 
               {/* Speedway Victory / Result Overlay */}
-              {gameState === 'finished' && (
-                <div
-                  className={`border-2 rounded-2xl p-6 text-center text-white space-y-4 shadow-2xl ${
-                    disqualifiedReason
-                      ? 'bg-gradient-to-br from-[#1a0c0c] to-[#2b1212] border-rose-500/80'
-                      : winnerId === currentUid
-                        ? 'bg-gradient-to-br from-[#0c1322] to-[#131d33] border-amber-500/60'
-                        : 'bg-gradient-to-br from-[#131722] to-[#1c2233] border-slate-700'
-                  }`}
-                >
+              {gameState === 'finished' && (() => {
+                const isWin = winnerId === currentUid && !disqualifiedReason;
+                return (
                   <div
-                    className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl border mb-1 ${
+                    className={`border-2 rounded-3xl p-6 sm:p-8 text-center text-white space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 ${
                       disqualifiedReason
-                        ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
-                        : winnerId === currentUid
-                          ? 'bg-amber-500/20 border-amber-400 text-amber-400 animate-bounce'
-                          : 'bg-slate-800 border-slate-700 text-slate-400'
+                        ? 'bg-gradient-to-br from-[#1a0808] via-[#2d0f0f] to-[#1a0808] border-rose-500 shadow-rose-500/20'
+                        : isWin
+                          ? 'bg-gradient-to-br from-[#07191d] via-[#0b292e] to-[#12233b] border-emerald-400/90 shadow-emerald-500/20'
+                          : 'bg-gradient-to-br from-[#1c0e15] via-[#29131d] to-[#161224] border-rose-500/80 shadow-rose-500/20'
                     }`}
                   >
-                    {disqualifiedReason ? <AlertCircle className="w-8 h-8" /> : <Crown className="w-8 h-8" />}
-                  </div>
-
-                  <div className="space-y-1">
-                    <h2
-                      className={`text-xl font-black uppercase font-mono tracking-wider ${
+                    {/* Visual Icon */}
+                    <div
+                      className={`inline-flex items-center justify-center w-16 h-16 rounded-3xl border-2 mb-1 shadow-lg ${
                         disqualifiedReason
-                          ? 'text-rose-400'
-                          : winnerId === currentUid
-                            ? 'text-amber-400'
-                            : 'text-slate-300'
+                          ? 'bg-rose-500/20 border-rose-400 text-rose-400 animate-pulse'
+                          : isWin
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 animate-bounce'
+                            : 'bg-rose-500/20 border-rose-400 text-rose-400'
                       }`}
                     >
-                      {disqualifiedReason
-                        ? 'Siz Yutqazdingiz! (Disvalifikatsiya) ❌'
-                        : winnerId === currentUid
-                          ? 'Siz G\'olib Bo\'ldingiz! 🏆'
-                          : 'Raqib G\'olib Bo\'ldi! 🏁'}
-                    </h2>
-                    <p className="text-xs text-slate-300">
-                      {disqualifiedReason
-                        ? 'Poygada ko\'p xatolar va past aniqlik sababli g\'oliblik bekor qilindi.'
-                        : 'Ajoyib poyga natijasi! Shaxsiy tezligingiz va aniqligingiz qayd etildi.'}
-                    </p>
-                  </div>
-
-                  {disqualifiedReason && (
-                    <div className="bg-rose-950/80 border border-rose-500/50 rounded-xl p-3 text-rose-200 text-xs font-mono max-w-md mx-auto shadow-inner text-center">
-                      ⚠️ {disqualifiedReason}
+                      {disqualifiedReason ? (
+                        <ShieldAlert className="w-9 h-9" />
+                      ) : isWin ? (
+                        <Crown className="w-9 h-9" />
+                      ) : (
+                        <Skull className="w-8 h-8" />
+                      )}
                     </div>
-                  )}
 
-                  {/* Match Stats Comparison Grid */}
-                  <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                    <div className="space-y-0.5 text-left border-r border-slate-800 pr-2">
-                      <span className="text-[9px] text-cyan-400 font-mono block">Sizning Natijangiz</span>
-                      <p className="text-base font-black font-mono text-white">{myProgress.wpm} WPM</p>
-                      <p
-                        className={`text-[11px] font-mono ${
-                          myProgress.accuracy < 80 ? 'text-rose-400 font-bold' : 'text-emerald-400'
+                    {/* Headline and Message */}
+                    <div className="space-y-1.5">
+                      <h2
+                        className={`text-2xl sm:text-3xl font-black uppercase font-mono tracking-wider ${
+                          disqualifiedReason
+                            ? 'text-rose-400'
+                            : isWin
+                              ? 'text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]'
+                              : 'text-rose-400 drop-shadow-[0_0_20px_rgba(244,63,94,0.4)]'
                         }`}
                       >
-                        {myProgress.accuracy}% Accuracy
+                        {disqualifiedReason
+                          ? '❌ SIZ YUTQAZDINGIZ! (DISKVALIFIKATSIYA)'
+                          : isWin
+                            ? '🏆 SIZ YUTDINGIZ! G\'ALABA!'
+                            : '💥 SIZ YUTQAZDINGIZ!'}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
+                        {disqualifiedReason
+                          ? 'Poygada juda ko\'p xatolar va past aniqlik sababli diskvalifikatsiya qilindingiz.'
+                          : isWin
+                            ? 'Ajoyib tezlik va aniqlik! Raqibingizni mahorat bilan mag\'lub etdingiz.'
+                            : 'Raqibingiz marraga birinchi yetib keldi. Keyingi raundda qasos oling!'}
                       </p>
                     </div>
 
-                    <div className="space-y-0.5 text-left pl-2">
-                      <span className="text-[9px] text-rose-400 font-mono block">Raqib Natijasi</span>
-                      <p className="text-base font-black font-mono text-white">{opponentProgress.wpm} WPM</p>
-                      <p className="text-[11px] font-mono text-emerald-400">{opponentProgress.accuracy}% Accuracy</p>
+                    {/* XP Bonus Tag */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700 text-xs font-mono font-bold">
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      <span className={isWin ? 'text-emerald-400' : 'text-amber-400'}>
+                        {isWin ? '+150 XP G\'alaba Mukofoti' : '+50 XP Tajriba'}
+                      </span>
+                    </div>
+
+                    {disqualifiedReason && (
+                      <div className="bg-rose-950/80 border border-rose-500/50 rounded-xl p-3 text-rose-200 text-xs font-mono max-w-md mx-auto shadow-inner text-center">
+                        ⚠️ {disqualifiedReason}
+                      </div>
+                    )}
+
+                    {/* Match Stats Comparison Grid */}
+                    <div className="grid grid-cols-2 gap-3 max-w-md mx-auto bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                      <div className={`space-y-1 text-left border-r border-slate-800 pr-3 ${isWin ? 'bg-emerald-950/20 p-2 rounded-xl' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-cyan-400 font-mono font-bold uppercase">Sizning Natijangiz</span>
+                          {isWin && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                        </div>
+                        <p className="text-xl font-black font-mono text-white">{myProgress.wpm} WPM</p>
+                        <p
+                          className={`text-xs font-mono ${
+                            myProgress.accuracy < 80 ? 'text-rose-400 font-bold' : 'text-emerald-400'
+                          }`}
+                        >
+                          {myProgress.accuracy}% Aniqlik
+                        </p>
+                      </div>
+
+                      <div className={`space-y-1 text-left pl-3 ${!isWin && !disqualifiedReason ? 'bg-rose-950/20 p-2 rounded-xl' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-rose-400 font-mono font-bold uppercase">Raqib Natijasi</span>
+                          {!isWin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                        </div>
+                        <p className="text-xl font-black font-mono text-white">{opponentProgress.wpm} WPM</p>
+                        <p className="text-xs font-mono text-emerald-400">{opponentProgress.accuracy}% Aniqlik</p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={handleRematch}
+                        className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/20 active:scale-95 flex items-center gap-2"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>{isWin ? '⚡ QAYTA O\'YNASH (REMATCH)' : '🔥 QASOS DUELI (REMATCH)'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setGameState('lobby');
+                          setDisqualifiedReason(null);
+                          setActiveRoomCode('');
+                        }}
+                        className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700 active:scale-95"
+                      >
+                        <span>LOBBIYGA QAYTISH</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-center gap-3 pt-2">
-                    <button
-                      onClick={() => {
-                        setGameState('lobby');
-                        setDisqualifiedReason(null);
-                      }}
-                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700"
-                    >
-                      <span>LOBBIYGA QAYTISH</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </>
           ) : (
             /* DINO RUNNER BATTLE MODE */
@@ -1302,89 +1417,111 @@ export const BattleView: React.FC<BattleViewProps> = ({
               )}
 
               {/* Dino Battle Finished Screen */}
-              {gameState === 'finished' && (
-                <div
-                  className={`border-2 rounded-3xl p-6 sm:p-8 text-center text-white space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 ${
-                    winnerId === currentUid
-                      ? 'bg-gradient-to-br from-[#0a1628] via-[#0f213d] to-[#1e1338] border-amber-500/80 shadow-amber-500/20'
-                      : 'bg-gradient-to-br from-[#141824] to-[#1e2438] border-slate-700'
-                  }`}
-                >
+              {gameState === 'finished' && (() => {
+                const isWin = winnerId === currentUid;
+                return (
                   <div
-                    className={`inline-flex items-center justify-center w-16 h-16 rounded-3xl border mb-1 ${
-                      winnerId === currentUid
-                        ? 'bg-amber-500/20 border-amber-400 text-amber-400 animate-bounce'
-                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                    className={`border-2 rounded-3xl p-6 sm:p-8 text-center text-white space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 ${
+                      isWin
+                        ? 'bg-gradient-to-br from-[#0a1628] via-[#0f213d] to-[#1e1338] border-emerald-400/90 shadow-emerald-500/20'
+                        : 'bg-gradient-to-br from-[#1c0e15] via-[#29131d] to-[#161224] border-rose-500/80 shadow-rose-500/20'
                     }`}
                   >
-                    {winnerId === currentUid ? <Crown className="w-9 h-9" /> : <Skull className="w-8 h-8" />}
-                  </div>
-
-                  <div className="space-y-1">
-                    <h2
-                      className={`text-2xl font-black uppercase font-mono tracking-wider ${
-                        winnerId === currentUid ? 'text-amber-400' : 'text-slate-300'
+                    <div
+                      className={`inline-flex items-center justify-center w-16 h-16 rounded-3xl border mb-1 shadow-lg ${
+                        isWin
+                          ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 animate-bounce'
+                          : 'bg-rose-500/20 border-rose-400 text-rose-400'
                       }`}
                     >
-                      {winnerId === currentUid
-                        ? '🦖 SIZ DINO DUEL G\'OLIBI BO\'LDINGIZ! 🏆'
-                        : 'RAQIB G\'OLIB BO\'LDI! 💥'}
-                    </h2>
-                    <p className="text-xs text-slate-300">
-                      {winnerId === currentUid
-                        ? 'Dino to\'siqlarini ajoyib tarzda yengib o\'tdingiz va eng yuqori rekordni o\'rnatdingiz!'
-                        : 'Yaxshi urinish! Keyingi safar raqibdan uzoqroq yugurishingiz mumkin.'}
-                    </p>
-                  </div>
+                      {isWin ? <Crown className="w-9 h-9" /> : <Skull className="w-8 h-8" />}
+                    </div>
 
-                  {/* Dino Match Stats Comparison */}
-                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto bg-slate-900/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
-                    <div className="space-y-1 text-left border-r border-slate-800 pr-3">
-                      <span className="text-[10px] text-cyan-400 font-mono uppercase font-bold block">
-                        Sizning Natijangiz
-                      </span>
-                      <p className="text-xl font-black font-mono text-cyan-300">{myDinoState.score} ball</p>
-                      <p className="text-xs font-mono text-slate-300">
-                        Masofa: <span className="text-white font-bold">{Math.floor(myDinoState.distance)}m</span>
-                      </p>
-                      <p className="text-xs font-mono text-emerald-400">
-                        To'siqlar: <span className="font-bold">{myDinoState.obstaclesDodged}</span>
+                    <div className="space-y-1.5">
+                      <h2
+                        className={`text-2xl sm:text-3xl font-black uppercase font-mono tracking-wider ${
+                          isWin
+                            ? 'text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]'
+                            : 'text-rose-400 drop-shadow-[0_0_20px_rgba(244,63,94,0.4)]'
+                        }`}
+                      >
+                        {isWin
+                          ? '🦖 SIZ YUTDINGIZ! G\'ALABA! 🏆'
+                          : '💥 SIZ YUTQAZDINGIZ!'}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
+                        {isWin
+                          ? 'Dino to\'siqlarini ajoyib tarzda yengib o\'tdingiz va g\'olib bo\'ldingiz!'
+                          : 'To\'siqqa urildingiz! Raqib bu safar ustun keldi. Qayta urinib ko\'ring!'}
                       </p>
                     </div>
 
-                    <div className="space-y-1 text-left pl-3">
-                      <span className="text-[10px] text-amber-400 font-mono uppercase font-bold block">
-                        Raqib Natijasi
+                    {/* XP Tag */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700 text-xs font-mono font-bold">
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      <span className={isWin ? 'text-emerald-400' : 'text-amber-400'}>
+                        {isWin ? '+150 XP G\'alaba Mukofoti' : '+50 XP Tajriba'}
                       </span>
-                      <p className="text-xl font-black font-mono text-amber-300">{opponentDinoState.score} ball</p>
-                      <p className="text-xs font-mono text-slate-300">
-                        Masofa: <span className="text-white font-bold">{Math.floor(opponentDinoState.distance)}m</span>
-                      </p>
-                      <p className="text-xs font-mono text-emerald-400">
-                        To'siqlar: <span className="font-bold">{opponentDinoState.obstaclesDodged}</span>
-                      </p>
+                    </div>
+
+                    {/* Dino Match Stats Comparison */}
+                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                      <div className={`space-y-1 text-left border-r border-slate-800 pr-3 ${isWin ? 'bg-emerald-950/20 p-2 rounded-xl' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-cyan-400 font-mono uppercase font-bold">
+                            Sizning Natijangiz
+                          </span>
+                          {isWin && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                        </div>
+                        <p className="text-xl font-black font-mono text-cyan-300">{myDinoState.score} ball</p>
+                        <p className="text-xs font-mono text-slate-300">
+                          Masofa: <span className="text-white font-bold">{Math.floor(myDinoState.distance)}m</span>
+                        </p>
+                        <p className="text-xs font-mono text-emerald-400">
+                          To'siqlar: <span className="font-bold">{myDinoState.obstaclesDodged}</span>
+                        </p>
+                      </div>
+
+                      <div className={`space-y-1 text-left pl-3 ${!isWin ? 'bg-rose-950/20 p-2 rounded-xl' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-amber-400 font-mono uppercase font-bold">
+                            Raqib Natijasi
+                          </span>
+                          {!isWin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                        </div>
+                        <p className="text-xl font-black font-mono text-amber-300">{opponentDinoState.score} ball</p>
+                        <p className="text-xs font-mono text-slate-300">
+                          Masofa: <span className="text-white font-bold">{Math.floor(opponentDinoState.distance)}m</span>
+                        </p>
+                        <p className="text-xs font-mono text-emerald-400">
+                          To'siqlar: <span className="font-bold">{opponentDinoState.obstaclesDodged}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={handleRematch}
+                        className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center gap-2"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>{isWin ? '⚡ QAYTA DUEL BOSHLASH' : '🔥 QASOS DUELI (REMATCH)'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setGameState('lobby');
+                          setActiveRoomCode('');
+                        }}
+                        className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700 active:scale-95"
+                      >
+                        <span>LOBBIYGA QAYTISH</span>
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-center gap-3 pt-2">
-                    <button
-                      onClick={startBotMatch}
-                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center gap-2"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>QAYTA DUEL BOSHLASH</span>
-                    </button>
-
-                    <button
-                      onClick={() => setGameState('lobby')}
-                      className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700"
-                    >
-                      <span>LOBBIYGA QAYTISH</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </>
           )}
         </div>
