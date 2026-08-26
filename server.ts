@@ -43,10 +43,10 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_a
 
 // Server-side hashed admin credentials with SHA-512 + HMAC
 // Defaults configured securely; can be overridden via environment variables
-const ADMIN_USERNAME_EXPECTED = (process.env.ADMIN_USERNAME || 'YOSHLARTYPING').trim();
+const ADMIN_USERNAME_EXPECTED = (process.env.ADMIN_USERNAME || 'hS&sb*#S&^%').trim();
 // Precomputed default SHA-512 hashes or direct server secrets (NEVER exposed to client)
-const ADMIN_PASSWORD_EXPECTED = (process.env.ADMIN_PASSWORD || '79178195327gG').trim();
-const ADMIN_2FA_EXPECTED = (process.env.ADMIN_2FA_PIN || '178195327').trim();
+const ADMIN_PASSWORD_EXPECTED = (process.env.ADMIN_PASSWORD || '&hH3#*@^hwW@#$').trim();
+const ADMIN_2FA_EXPECTED = (process.env.ADMIN_2FA_PIN || 'O93#%$#@hH').trim();
 
 // -------------------------------------------------------------
 // ADVANCED ANTI-BRUTE FORCE & ADMIN SECURITY SYSTEM
