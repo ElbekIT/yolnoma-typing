@@ -30,7 +30,18 @@ export async function loginAdminBackend(
       })
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: any = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      return {
+        success: false,
+        error: res.status === 429
+          ? "Ko'p marotaba urinish tufayli kirish vaqtincha bloklandi."
+          : `Server bilan bog'lanishda xatolik yuz berdi (${res.status}). Iltimos qaytadan urinib ko'ring.`
+      };
+    }
 
     if (!res.ok || !data.success) {
       return {
@@ -107,7 +118,14 @@ export async function verifyAdminSessionBackend(): Promise<boolean> {
       return false;
     }
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: any = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      clearAdminSession();
+      return false;
+    }
     if (data.valid) {
       return true;
     } else {

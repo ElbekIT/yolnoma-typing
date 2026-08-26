@@ -63,6 +63,7 @@ export const AdminView: React.FC = () => {
   const [inputPassword, setInputPassword] = useState('');
   const [input2FA, setInput2FA] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [show2FA, setShow2FA] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [lockoutRemainingSec, setLockoutRemainingSec] = useState<number | null>(null);
@@ -621,15 +622,24 @@ export const AdminView: React.FC = () => {
               <Shield className="w-3.5 h-3.5 text-amber-400" />
               <span>3-bosqich: 2FA Xavfsizlik PIN Kodi</span>
             </label>
-            <input
-              type="password"
-              value={input2FA}
-              onChange={(e) => setInput2FA(e.target.value)}
-              placeholder="2FA PIN kodini kiriting..."
-              disabled={isAuthenticating || isLockedOut}
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest disabled:opacity-50"
-            />
+            <div className="relative">
+              <input
+                type={show2FA ? 'text' : 'password'}
+                value={input2FA}
+                onChange={(e) => setInput2FA(e.target.value)}
+                placeholder="2FA PIN kodini kiriting..."
+                disabled={isAuthenticating || isLockedOut}
+                required
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => setShow2FA(!show2FA)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sub-color)] hover:text-white"
+              >
+                {show2FA ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <button

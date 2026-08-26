@@ -64,14 +64,18 @@ const invalidatedTokens = new Set<string>();
 // Helper: Constant-time string comparison to mitigate timing attacks
 function safeCompare(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (!a || !b) return a === b;
   const bufA = Buffer.from(a, 'utf8');
   const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length === 0 || bufB.length === 0) return a === b;
   if (bufA.length !== bufB.length) {
-    // Compare against itself to maintain constant time
-    crypto.timingSafeEqual(bufA, bufA);
     return false;
   }
-  return crypto.timingSafeEqual(bufA, bufB);
+  try {
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return a === b;
+  }
 }
 
 // Helper: Generate signed admin token
@@ -600,80 +604,88 @@ app.get('/api/leaderboard', (req, res) => {
 
 // 1. Admin Login Endpoint (Strict 3-Step Verification + Anti-Brute Force)
 app.post('/api/admin/login', (req, res) => {
-  const clientIp = getClientIp(req);
-  const now = Date.now();
+  try {
+    const clientIp = getClientIp(req);
+    const now = Date.now();
 
-  // Rate Limiting & Lockout Check
-  const attemptRecord = adminLoginAttempts.get(clientIp) || {
-    failedAttempts: 0,
-    lockoutUntil: 0,
-    lastAttempt: 0
-  };
+    // Rate Limiting & Lockout Check
+    const attemptRecord = adminLoginAttempts.get(clientIp) || {
+      failedAttempts: 0,
+      lockoutUntil: 0,
+      lastAttempt: 0
+    };
 
-  if (now < attemptRecord.lockoutUntil) {
-    const remainingSec = Math.ceil((attemptRecord.lockoutUntil - now) / 1000);
-    return res.status(429).json({
-      success: false,
-      error: `Xavfsizlik tizimi: Ko'p marotaba noto'g'ri urinish tufayli kirish vaqtincha bloklandi. ${remainingSec} soniyadan keyin qayta urinib ko'ring.`,
-      lockoutRemainingSec: remainingSec
-    });
-  }
-
-  // Honeypot check
-  if (req.body._admin_trap || req.body.website) {
-    return res.status(403).json({ success: false, error: 'Access denied' });
-  }
-
-  const { username, password, pin } = req.body;
-
-  if (!username || !password || !pin) {
-    return res.status(400).json({
-      success: false,
-      error: 'Barcha maydonlarni (Username, Parol, 2FA PIN) kiritish shart.'
-    });
-  }
-
-  // Timing-safe comparisons against server-only expected secrets
-  const isUsernameValid = safeCompare(username.trim(), ADMIN_USERNAME_EXPECTED);
-  const isPasswordValid = safeCompare(password.trim(), ADMIN_PASSWORD_EXPECTED);
-  const isPinValid = safeCompare(pin.trim(), ADMIN_2FA_EXPECTED);
-
-  if (!isUsernameValid || !isPasswordValid || !isPinValid) {
-    attemptRecord.failedAttempts += 1;
-    attemptRecord.lastAttempt = now;
-
-    // Trigger lockout after 4 failed attempts within 15 minutes
-    if (attemptRecord.failedAttempts >= 4) {
-      attemptRecord.lockoutUntil = now + 15 * 60 * 1000; // 15 min lockout
-      adminLoginAttempts.set(clientIp, attemptRecord);
+    if (now < attemptRecord.lockoutUntil) {
+      const remainingSec = Math.ceil((attemptRecord.lockoutUntil - now) / 1000);
       return res.status(429).json({
         success: false,
-        error: "Xavfsizlik tizimi: 4 marta xato ma'lumot kiritildi. Tizim 15 daqiqaga qulflanadi!",
-        lockoutRemainingSec: 900
+        error: `Xavfsizlik tizimi: Ko'p marotaba noto'g'ri urinish tufayli kirish vaqtincha bloklandi. ${remainingSec} soniyadan keyin qayta urinib ko'ring.`,
+        lockoutRemainingSec: remainingSec
       });
     }
 
-    adminLoginAttempts.set(clientIp, attemptRecord);
-    const remainingAttempts = 4 - attemptRecord.failedAttempts;
+    // Honeypot check
+    if (req.body._admin_trap || req.body.website) {
+      return res.status(403).json({ success: false, error: 'Access denied' });
+    }
 
-    return res.status(401).json({
+    const { username, password, pin } = req.body;
+
+    if (!username || !password || !pin) {
+      return res.status(400).json({
+        success: false,
+        error: 'Barcha maydonlarni (Username, Parol, 2FA PIN) kiritish shart.'
+      });
+    }
+
+    // Timing-safe comparisons against server-only expected secrets
+    const isUsernameValid = safeCompare(username.trim(), ADMIN_USERNAME_EXPECTED);
+    const isPasswordValid = safeCompare(password.trim(), ADMIN_PASSWORD_EXPECTED);
+    const isPinValid = safeCompare(pin.trim(), ADMIN_2FA_EXPECTED);
+
+    if (!isUsernameValid || !isPasswordValid || !isPinValid) {
+      attemptRecord.failedAttempts += 1;
+      attemptRecord.lastAttempt = now;
+
+      // Trigger lockout after 4 failed attempts within 15 minutes
+      if (attemptRecord.failedAttempts >= 4) {
+        attemptRecord.lockoutUntil = now + 15 * 60 * 1000; // 15 min lockout
+        adminLoginAttempts.set(clientIp, attemptRecord);
+        return res.status(429).json({
+          success: false,
+          error: "Xavfsizlik tizimi: 4 marta xato ma'lumot kiritildi. Tizim 15 daqiqaga qulflanadi!",
+          lockoutRemainingSec: 900
+        });
+      }
+
+      adminLoginAttempts.set(clientIp, attemptRecord);
+      const remainingAttempts = 4 - attemptRecord.failedAttempts;
+
+      return res.status(401).json({
+        success: false,
+        error: "Noto'g'ri ma'lumotlar kiritildi! Login, parol yoki 2FA PIN noto'g'ri.",
+        remainingAttempts
+      });
+    }
+
+    // Successful Login: Reset attempts and generate cryptographically signed session token
+    adminLoginAttempts.delete(clientIp);
+    const tokenData = generateAdminToken(username.trim());
+
+    return res.json({
+      success: true,
+      message: 'Admin autentifikatsiyasi muvaffaqiyatli yakunlandi.',
+      token: tokenData.token,
+      expiresAt: tokenData.expiresAt,
+      role: 'owner_admin'
+    });
+  } catch (err: any) {
+    console.error('Error during admin login:', err);
+    return res.status(500).json({
       success: false,
-      error: "Noto'g'ri ma'lumotlar kiritildi! Login, parol yoki 2FA PIN noto'g'ri.",
-      remainingAttempts
+      error: "Serverda autentifikatsiya xatoligi yuz berdi. Iltimos qayta urinib ko'ring."
     });
   }
-
-  // Successful Login: Reset attempts and generate cryptographically signed session token
-  adminLoginAttempts.delete(clientIp);
-  const tokenData = generateAdminToken(username.trim());
-
-  return res.json({
-    success: true,
-    message: 'Admin autentifikatsiyasi muvaffaqiyatli yakunlandi.',
-    token: tokenData.token,
-    expiresAt: tokenData.expiresAt,
-    role: 'owner_admin'
-  });
 });
 
 // 2. Admin Token Verification Endpoint
