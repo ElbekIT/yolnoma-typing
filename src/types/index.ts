@@ -12,6 +12,7 @@ export type WordCountMode = 100 | 200 | 300 | 400 | 500 | 10 | 25 | 50 | 0; // 0
 export type DifficultyMode = 'easy' | 'medium' | 'hard' | 'expert';
 
 export type CaretStyle = 'line' | 'block' | 'underline' | 'outline';
+export type TapeMode = 'off' | 'letter' | 'word';
 export type SoundProfile = 'off' | 'cherry-blue' | 'cherry-red' | 'thock' | 'typewriter' | 'soft-bubble';
 export type ThemeMode = 'dark' | 'light' | 'cyberpunk' | 'serene' | 'dracula' | 'nord' | 'matrix' | 'sunset';
 

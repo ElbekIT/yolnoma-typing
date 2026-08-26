@@ -22,12 +22,15 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   onRestart,
   isTestFinished
 }) => {
-  const { language, caretStyle, smoothCaret, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
+  const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const tapeViewportRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [tapeOffset, setTapeOffset] = useState(0);
   const [isFocused, setIsFocused] = useState(true);
   const [mouseHidden, setMouseHidden] = useState(false);
   const mouseTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -229,22 +232,27 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
 
-  // Windowed word rendering for ultra-fast performance and full width support
+  // Windowed word rendering for ultra-fast performance in 3-line mode, or full words in tape mode
   const visibleWords = useMemo(() => {
+    if (tapeMode !== 'off') {
+      return parsedWords;
+    }
     const start = Math.max(0, activeWordIdx - 30);
     const end = Math.min(parsedWords.length, activeWordIdx + 140);
     return parsedWords.slice(start, end);
-  }, [parsedWords, activeWordIdx]);
+  }, [parsedWords, activeWordIdx, tapeMode]);
 
   // Reset scroll on test restart or text change
   useEffect(() => {
     if (currentTypedLen === 0) {
       setScrollOffset(0);
+      setTapeOffset(0);
     }
   }, [currentTypedLen, targetText]);
 
-  // Handle smooth 3-line scrolling
+  // Handle smooth 3-line vertical scrolling (Standard mode)
   useLayoutEffect(() => {
+    if (tapeMode !== 'off') return;
     const activeEl = wordRefs.current[activeWordIdx];
     const firstEl = wordRefs.current[0];
     if (activeEl && firstEl) {
@@ -253,11 +261,56 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         setScrollOffset(lineDifference);
       }
     }
-  }, [activeWordIdx, parsedWords.length]);
+  }, [activeWordIdx, parsedWords.length, tapeMode]);
+
+  // Handle smooth horizontal scrolling for Tape mode (letter / word)
+  useLayoutEffect(() => {
+    if (tapeMode === 'off') return;
+    const vpEl = tapeViewportRef.current;
+    if (!vpEl) return;
+
+    const vpWidth = vpEl.clientWidth;
+
+    if (tapeMode === 'letter') {
+      // Letter Tape Mode: keep active character centered in viewport
+      const activeCharEl = charRefs.current[currentTypedLen];
+      if (activeCharEl) {
+        const charCenter = activeCharEl.offsetLeft + (activeCharEl.offsetWidth / 2);
+        const targetOffset = charCenter - (vpWidth / 2);
+        setTapeOffset(Math.max(0, targetOffset));
+      } else if (currentTypedLen === 0) {
+        const firstCharEl = charRefs.current[0];
+        if (firstCharEl) {
+          const charCenter = firstCharEl.offsetLeft + (firstCharEl.offsetWidth / 2);
+          const targetOffset = charCenter - (vpWidth / 2);
+          setTapeOffset(Math.max(0, targetOffset));
+        }
+      }
+    } else if (tapeMode === 'word') {
+      // Word Tape Mode: keep active word centered in viewport
+      const activeWordEl = wordRefs.current[activeWordIdx];
+      if (activeWordEl) {
+        const wordCenter = activeWordEl.offsetLeft + (activeWordEl.offsetWidth / 2);
+        const targetOffset = wordCenter - (vpWidth / 2);
+        setTapeOffset(Math.max(0, targetOffset));
+      } else if (activeWordIdx === 0) {
+        const firstWordEl = wordRefs.current[0];
+        if (firstWordEl) {
+          const wordCenter = firstWordEl.offsetLeft + (firstWordEl.offsetWidth / 2);
+          const targetOffset = wordCenter - (vpWidth / 2);
+          setTapeOffset(Math.max(0, targetOffset));
+        }
+      }
+    }
+  }, [tapeMode, currentTypedLen, activeWordIdx, targetText]);
 
   const calculatedFontSize = Math.max(22, fontSize || 28);
   const lineHeightMultiplier = 1.55;
-  const containerHeight = Math.round(calculatedFontSize * lineHeightMultiplier * 3); // 3 lines height
+  // In Tape Mode: height is 1 single line; in standard mode: 3 lines
+  const isTape = tapeMode !== 'off';
+  const containerHeight = isTape
+    ? Math.round(calculatedFontSize * lineHeightMultiplier * 1.35)
+    : Math.round(calculatedFontSize * lineHeightMultiplier * 3);
 
   return (
     <div
@@ -304,16 +357,36 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         </div>
       )}
 
-      {/* 3-Line Scroll Viewport with clean text fade on text key change */}
+      {/* Scroll Viewport: 3-Line Scroll or Single-Line Tape Conveyor */}
       <div
-        key={targetText.slice(0, 15)}
-        className="relative w-full overflow-hidden"
-        style={{ height: `${containerHeight}px` }}
+        ref={tapeViewportRef}
+        key={`${targetText.slice(0, 15)}-${tapeMode}`}
+        className={`relative w-full overflow-hidden ${isTape ? 'flex items-center' : ''}`}
+        style={{
+          height: `${containerHeight}px`,
+          ...(isTape
+            ? {
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
+                maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)'
+              }
+            : {})
+        }}
       >
         <div
-          className="flex flex-wrap text-left relative transition-transform duration-150 ease-out"
+          className={`relative text-left ${
+            isTape
+              ? 'flex flex-nowrap whitespace-nowrap items-center'
+              : 'flex flex-wrap'
+          }`}
           style={{
-            transform: `translateY(-${scrollOffset}px)`,
+            transform: isTape
+              ? `translateX(-${tapeOffset}px)`
+              : `translateY(-${scrollOffset}px)`,
+            transition: smoothCaret
+              ? isTape
+                ? 'transform 85ms cubic-bezier(0.2, 0, 0, 1)'
+                : 'transform 150ms ease-out'
+              : 'none',
             lineHeight: lineHeightMultiplier,
             direction: isRtl ? 'rtl' : 'ltr'
           }}
@@ -326,7 +399,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                 ref={(el) => {
                   wordRefs.current[idx] = el;
                 }}
-                className="inline-block whitespace-nowrap my-0.5"
+                className={`inline-block whitespace-nowrap ${isTape ? 'mr-0' : 'my-0.5'}`}
               >
                 {/* Word Characters */}
                 {wordObj.chars.map(({ char, globalIndex }) => {
@@ -376,7 +449,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   }
 
                   return (
-                    <span key={`${globalIndex}-${isTyped ? 't' : 'u'}`} className={charClass}>
+                    <span
+                      key={`${globalIndex}-${isTyped ? 't' : 'u'}`}
+                      ref={(el) => {
+                        charRefs.current[globalIndex] = el;
+                      }}
+                      className={charClass}
+                    >
                       {caretElement}
                       {char}
                     </span>
@@ -416,7 +495,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   }
 
                   return (
-                    <span key={`space-${spaceIdx}-${isTypedSpace ? 't' : 'u'}`} className={spaceClass}>
+                    <span
+                      key={`space-${spaceIdx}-${isTypedSpace ? 't' : 'u'}`}
+                      ref={(el) => {
+                        charRefs.current[spaceIdx] = el;
+                      }}
+                      className={spaceClass}
+                    >
                       {spaceCaret}
                       {'\u00A0'}
                     </span>

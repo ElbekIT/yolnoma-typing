@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ThemeMode, CaretStyle, SoundProfile, LanguageCode } from '../types';
+import { ThemeMode, CaretStyle, TapeMode, SoundProfile, LanguageCode } from '../types';
 import { themes, ThemeConfig } from '../config/themes';
 import { soundSynth } from '../utils/audio';
 
@@ -17,6 +17,8 @@ interface SettingsContextType {
   setCaretStyle: (style: CaretStyle) => void;
   smoothCaret: boolean;
   setSmoothCaret: (smooth: boolean) => void;
+  tapeMode: TapeMode;
+  setTapeMode: (mode: TapeMode) => void;
   typingAnimation: TypingAnimation;
   setTypingAnimation: (anim: TypingAnimation) => void;
   typingAnimationSpeed: TypingAnimationSpeed;
@@ -56,6 +58,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [smoothCaret, setSmoothCaretState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_smooth_caret') !== 'false';
+  });
+  const [tapeMode, setTapeModeState] = useState<TapeMode>(() => {
+    return (localStorage.getItem('yolnoma_tape_mode') as TapeMode) || 'off';
   });
   const [typingAnimation, setTypingAnimationState] = useState<TypingAnimation>(() => {
     return (localStorage.getItem('yolnoma_typing_animation') as TypingAnimation) || 'jump';
@@ -113,6 +118,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setSmoothCaret = (sc: boolean) => {
     setSmoothCaretState(sc);
     localStorage.setItem('yolnoma_smooth_caret', String(sc));
+  };
+
+  const setTapeMode = (tm: TapeMode) => {
+    setTapeModeState(tm);
+    localStorage.setItem('yolnoma_tape_mode', tm);
   };
 
   const setTypingAnimation = (anim: TypingAnimation) => {
@@ -231,6 +241,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setCaretStyle,
         smoothCaret,
         setSmoothCaret,
+        tapeMode,
+        setTapeMode,
         typingAnimation,
         setTypingAnimation,
         typingAnimationSpeed,

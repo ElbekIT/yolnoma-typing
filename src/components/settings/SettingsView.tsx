@@ -12,13 +12,14 @@ import {
   Sparkles,
   Zap,
   Gauge,
-  Timer
+  Timer,
+  Film
 } from 'lucide-react';
 import { useSettings, TypingAnimation, TypingAnimationSpeed } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { themes } from '../../config/themes';
 import { languagesList } from '../../config/languages';
-import { ThemeMode, CaretStyle, SoundProfile, LanguageCode } from '../../types';
+import { ThemeMode, CaretStyle, TapeMode, SoundProfile, LanguageCode } from '../../types';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -28,6 +29,8 @@ export const SettingsView: React.FC = () => {
     setCaretStyle,
     smoothCaret,
     setSmoothCaret,
+    tapeMode,
+    setTapeMode,
     typingAnimation,
     setTypingAnimation,
     typingAnimationSpeed,
@@ -254,6 +257,47 @@ export const SettingsView: React.FC = () => {
               />
             </label>
           </div>
+        </div>
+      </div>
+
+      {/* Tape Mode (Monkeytype style horizontal conveyor) */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2 font-mono">
+            <Film className="w-4 h-4 text-[var(--main-color)]" />
+            <span>tape mode</span>
+          </h3>
+          <div className="flex items-center bg-[var(--sub-alt)] p-1 rounded-xl border border-[var(--sub-color)]/20">
+            {(['off', 'letter', 'word'] as TapeMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setTapeMode(mode)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                  tapeMode === mode
+                    ? 'bg-[var(--main-color)] text-white shadow-sm'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-[var(--sub-color)] font-mono leading-relaxed mt-2">
+          Only shows one line which scrolls horizontally. Setting this to <strong>'word'</strong> will make it scroll after every word and <strong>'letter'</strong> will scroll after every keypress. Works best with smooth line scroll enabled and a monospace font.
+        </p>
+
+        <div className="mt-4 pt-3 border-t border-[var(--sub-alt)] flex items-center justify-between text-xs text-[var(--sub-color)]">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[var(--main-color)] animate-pulse" />
+            <span>Holat: <strong className="text-[var(--text-color)] font-mono uppercase">{tapeMode}</strong></span>
+          </span>
+          <span className="font-mono text-[11px] opacity-75">
+            {tapeMode === 'off' && '3 qatorli klassik vertikal rejim'}
+            {tapeMode === 'letter' && 'Harfma-harf gorizontal oqim (Letter stream)'}
+            {tapeMode === 'word' && 'Soʻzma-soʻz gorizontal lenta (Word scroll)'}
+          </span>
         </div>
       </div>
 

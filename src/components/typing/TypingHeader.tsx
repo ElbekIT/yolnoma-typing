@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Clock, Type, Layers, Globe, Sparkles, Search, X } from 'lucide-react';
+import { Clock, Type, Layers, Globe, Sparkles, Search, X, Film } from 'lucide-react';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode, LanguageCode } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
 import { getAllLanguages } from '../../utils/customContentStore';
@@ -29,7 +29,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   onReset,
   isTestActive = false
 }) => {
-  const { language, setLanguage, modeBarWidth, modeBarScale } = useSettings();
+  const { language, setLanguage, modeBarWidth, modeBarScale, tapeMode, setTapeMode } = useSettings();
   const [showLangModal, setShowLangModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
@@ -260,8 +260,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
           )}
         </div>
 
-        {/* Minimalist Centered Language Indicator (Monkeytype style) */}
-        <div className="flex items-center justify-center mt-3">
+        {/* Minimalist Centered Language & Tape Mode Indicators (Monkeytype style) */}
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3">
           <button
             onClick={() => {
               setSearchQuery('');
@@ -272,6 +272,25 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
           >
             <Globe className="w-3.5 h-3.5" />
             <span>{currentLang.nativeName}</span>
+          </button>
+
+          <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
+
+          <button
+            onClick={() => {
+              const nextMode = tapeMode === 'off' ? 'letter' : tapeMode === 'letter' ? 'word' : 'off';
+              setTapeMode(nextMode);
+              onReset();
+            }}
+            className={`flex items-center gap-1.5 text-xs transition-all cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+              tapeMode !== 'off'
+                ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
+                : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
+            }`}
+            title="Lenta rejimini almashtirish (Tape mode: off -> letter -> word)"
+          >
+            <Film className="w-3.5 h-3.5" />
+            <span>tape: {tapeMode}</span>
           </button>
         </div>
       </div>
