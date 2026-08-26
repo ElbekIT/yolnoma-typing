@@ -65,9 +65,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const isOwnerAdmin =
-    user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
-    user?.email?.toLowerCase() === 'elbekqoriyev2008@gmail.com' ||
     profile?.role === 'admin' ||
+    profile?.role === 'owner' ||
     isOwnerUser() ||
     isAdminSessionActive();
 

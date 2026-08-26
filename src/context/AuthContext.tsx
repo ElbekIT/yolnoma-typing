@@ -770,8 +770,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (err) {
         console.warn('RTDB save result error:', err);
       }
+
+      // Backend Anti-Cheat & Cryptographic Verification Submission
+      try {
+        fetch('/api/typing/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            username,
+            displayName: profile.displayName || username,
+            avatarUrl: profile.avatarUrl,
+            country: profile.country,
+            wpm: fullResult.wpm,
+            rawWpm: fullResult.rawWpm,
+            accuracy: fullResult.accuracy,
+            consistency: fullResult.consistency || 100,
+            testTimeSeconds: fullResult.testTimeSeconds,
+            timeMode: fullResult.timeMode,
+            mode: fullResult.mode,
+            language: fullResult.language,
+            correctChars: fullResult.correctChars,
+            errorCount: fullResult.errors || 0
+          })
+        }).catch(() => {});
+      } catch {}
     } else {
       // Guest User - Push live score to RTDB Leaderboard
+      try {
+        // Backend Anti-Cheat & Cryptographic Verification Submission for Guest
+        fetch('/api/typing/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: guestId,
+            username: `guest_${guestId.replace('guest_', '')}`,
+            displayName: `Mehmon (${guestId.replace('guest_', '')})`,
+            wpm: rawResult.wpm,
+            rawWpm: rawResult.rawWpm,
+            accuracy: rawResult.accuracy,
+            consistency: rawResult.consistency || 100,
+            testTimeSeconds: rawResult.testTimeSeconds,
+            timeMode: rawResult.timeMode,
+            mode: rawResult.mode,
+            language: rawResult.language,
+            correctChars: rawResult.correctChars,
+            errorCount: rawResult.errors || 0
+          })
+        }).catch(() => {});
+      } catch {}
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));
         const guest15 = rawResult.timeMode === 15 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0);

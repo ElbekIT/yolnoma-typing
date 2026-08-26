@@ -27,6 +27,7 @@ import { rtdb } from '../../config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { AdminInboxMessage, UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { getAdminToken } from '../../utils/ownerAuth';
 
 interface AdminInboxTabProps {
   onReplyToUser?: (user: UserProfile) => void;
@@ -46,26 +47,67 @@ export const AdminInboxTab: React.FC<AdminInboxTabProps> = () => {
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [replySuccess, setReplySuccess] = useState(false);
 
-  // Realtime Firebase RTDB listener for admin messages
+  // Realtime Firebase RTDB listener + Backend API fetch for admin messages
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchBackendMessages = async () => {
+      const token = getAdminToken();
+      if (!token) return [];
+      try {
+        const res = await fetch('/api/admin/inbox', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.messages)) {
+            return data.messages.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              email: m.email || '',
+              phone: m.phone || '',
+              message: m.message,
+              timestamp: m.timestamp,
+              isRead: m.isRead,
+              status: m.status || 'unread',
+              replyNotes: m.replyText
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn('Backend inbox fetch error:', err);
+      }
+      return [];
+    };
+
     const messagesRef = ref(rtdb, 'admin_messages');
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
+    const unsubscribe = onValue(messagesRef, async (snapshot) => {
+      let rtdbLoaded: AdminInboxMessage[] = [];
       if (snapshot.exists()) {
         const data = snapshot.val();
-        const loaded: AdminInboxMessage[] = Object.keys(data).map((key) => ({
+        rtdbLoaded = Object.keys(data).map((key) => ({
           id: key,
           ...data[key]
         }));
-        // Sort newest first
-        loaded.sort((a, b) => b.timestamp - a.timestamp);
-        setMessages(loaded);
-      } else {
-        setMessages([]);
       }
+
+      const backendLoaded = await fetchBackendMessages();
+      if (!isMounted) return;
+
+      // Merge avoiding duplicate IDs
+      const map = new Map<string, AdminInboxMessage>();
+      backendLoaded.forEach((m: AdminInboxMessage) => map.set(m.id, m));
+      rtdbLoaded.forEach((m: AdminInboxMessage) => map.set(m.id, m));
+
+      const combined = Array.from(map.values()).sort((a, b) => b.timestamp - a.timestamp);
+      setMessages(combined);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const handleDeleteMessage = async (id: string, name: string) => {

@@ -158,6 +158,7 @@ export interface TypingResult {
   timestamp: number;
   wpmHistory: { time: number; wpm: number; rawWpm: number; errors: number }[];
   isPersonalBest?: boolean;
+  consistency?: number;
 }
 
 export interface Achievement {

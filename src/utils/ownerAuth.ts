@@ -1,121 +1,171 @@
-export const OWNER_EMAIL = 'yuldashivagavharoy@gmail.com';
-export const ADMIN_USERNAME = 'YOSHLARTYPING';
-export const ADMIN_PASSWORD = '79178195327gG';
-export const ADMIN_2FA_PIN = '178195327';
+const ADMIN_TOKEN_KEY = 'yolnoma_admin_secure_token_v3';
+const ADMIN_EXPIRES_KEY = 'yolnoma_admin_token_exp_v3';
 
-const ADMIN_SESSION_KEY = 'yolnoma_admin_session_auth_v2';
-
-/**
- * Validates the admin username / login
- */
-export function verifyAdminUsername(username: string): boolean {
-  return username.trim() === ADMIN_USERNAME;
+export interface AdminLoginResponse {
+  success: boolean;
+  error?: string;
+  lockoutRemainingSec?: number;
+  remainingAttempts?: number;
 }
 
 /**
- * Validates the admin master password
+ * Executes a secure, server-side authentication request.
+ * Passwords and 2FA credentials are NEVER stored or validated on the client.
  */
-export function verifyAdminPassword(password: string): boolean {
-  return password.trim() === ADMIN_PASSWORD;
-}
-
-/**
- * Validates the secondary 2FA PIN
- */
-export function verifyAdmin2FA(pin: string): boolean {
-  return pin.trim() === ADMIN_2FA_PIN;
-}
-
-/**
- * Marks the active browser session as authenticated for Admin Panel operations
- */
-export function setAdminSession(): void {
+export async function loginAdminBackend(
+  username: string,
+  password: string,
+  pin: string
+): Promise<AdminLoginResponse> {
   try {
-    const payload = JSON.stringify({
-      auth: true,
-      timestamp: Date.now(),
-      token: btoa(`yolnoma_admin_${Date.now()}`)
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username.trim(),
+        password: password.trim(),
+        pin: pin.trim()
+      })
     });
-    sessionStorage.setItem(ADMIN_SESSION_KEY, payload);
-    localStorage.setItem('yolnoma_admin_last_login', String(Date.now()));
-  } catch (e) {
-    console.warn('Set admin session error:', e);
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || "Autentifikatsiyada xatolik yuz berdi",
+        lockoutRemainingSec: data.lockoutRemainingSec,
+        remainingAttempts: data.remainingAttempts
+      };
+    }
+
+    if (data.token) {
+      sessionStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+      if (data.expiresAt) {
+        sessionStorage.setItem(ADMIN_EXPIRES_KEY, String(data.expiresAt));
+      }
+      return { success: true };
+    }
+
+    return { success: false, error: "Serverdan yaroqsiz javob olindi" };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Server bilan bog\'lanishda xatolik';
+    return { success: false, error: msg };
   }
 }
 
 /**
- * Checks if the current session is verified with Password + 2FA
+ * Returns the active admin bearer token from session storage if valid.
+ */
+export function getAdminToken(): string | null {
+  try {
+    const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+    const expStr = sessionStorage.getItem(ADMIN_EXPIRES_KEY);
+    if (!token) return null;
+
+    if (expStr) {
+      const exp = Number(expStr);
+      if (Date.now() > exp) {
+        clearAdminSession();
+        return null;
+      }
+    }
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Checks if the current local browser session has an unexpired admin token
  */
 export function isAdminSessionActive(): boolean {
-  try {
-    const raw = sessionStorage.getItem(ADMIN_SESSION_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    if (data && data.auth === true && data.token) {
-      return true;
-    }
-  } catch (e) {
-    return false;
-  }
-  return false;
+  return !!getAdminToken();
 }
 
 /**
- * Terminates and locks the admin session
+ * Verifies the admin token cryptographically against the backend server.
+ */
+export async function verifyAdminSessionBackend(): Promise<boolean> {
+  const token = getAdminToken();
+  if (!token) return false;
+
+  try {
+    const res = await fetch('/api/admin/verify-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ token })
+    });
+
+    if (!res.ok) {
+      clearAdminSession();
+      return false;
+    }
+
+    const data = await res.json();
+    if (data.valid) {
+      return true;
+    } else {
+      clearAdminSession();
+      return false;
+    }
+  } catch {
+    // If offline or network issue, maintain local check if not expired
+    return isAdminSessionActive();
+  }
+}
+
+/**
+ * Terminates the admin session and informs the backend to revoke the token
+ */
+export async function logoutAdminBackend(): Promise<void> {
+  const token = getAdminToken();
+  clearAdminSession();
+
+  if (token) {
+    try {
+      await fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ token })
+      });
+    } catch {}
+  }
+}
+
+/**
+ * Local helper to clear admin session storage
  */
 export function clearAdminSession(): void {
   try {
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_EXPIRES_KEY);
   } catch {}
 }
 
 /**
- * Checks if the current user has owner/admin privileges
+ * Checks if the current user profile has owner badge privileges
  */
 export function isOwnerUser(): boolean {
   try {
     const rawUser = localStorage.getItem('yolnoma_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-      if (
-        parsed?.email &&
-        (parsed.email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase() ||
-         parsed.email.trim().toLowerCase() === 'elbekqoriyev2008@gmail.com')
-      ) {
+      if (parsed?.role === 'owner' || parsed?.role === 'admin' || parsed?.isOwner === true) {
         return true;
       }
-    }
-
-    const activeEmail = localStorage.getItem('yolnoma_active_email');
-    if (
-      activeEmail &&
-      (activeEmail.trim().toLowerCase() === OWNER_EMAIL.toLowerCase() ||
-       activeEmail.trim().toLowerCase() === 'elbekqoriyev2008@gmail.com')
-    ) {
-      return true;
     }
   } catch (e) {
     console.error('Error checking owner status:', e);
   }
 
-  return false;
-}
-
-export function setOwnerSession(email: string) {
-  if (email && email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-    localStorage.setItem('yolnoma_active_email', OWNER_EMAIL);
-    const existingUser = localStorage.getItem('yolnoma_user');
-    if (!existingUser) {
-      localStorage.setItem(
-        'yolnoma_user',
-        JSON.stringify({
-          name: 'Gavharoy (Owner)',
-          email: OWNER_EMAIL,
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          role: 'owner'
-        })
-      );
-    }
-    window.dispatchEvent(new Event('storage'));
-  }
+  return isAdminSessionActive();
 }

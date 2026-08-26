@@ -31,7 +31,8 @@ import {
   Eye,
   EyeOff,
   LogOut,
-  Check
+  Check,
+  Gamepad2
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
@@ -41,12 +42,13 @@ import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { AdminInboxTab } from './AdminInboxTab';
+import { AdminServerTab } from './AdminServerTab';
+import { AdminDinoTab } from './AdminDinoTab';
 import { maskEmail } from '../../utils/maskEmail';
 import {
-  verifyAdminUsername,
-  verifyAdminPassword,
-  verifyAdmin2FA,
-  setAdminSession,
+  loginAdminBackend,
+  verifyAdminSessionBackend,
+  logoutAdminBackend,
   isAdminSessionActive,
   clearAdminSession,
   isOwnerUser
@@ -55,13 +57,15 @@ import {
 export const AdminView: React.FC = () => {
   const { user, profile } = useAuth();
 
-  // 3-Step Authentication Gate State (Username + Password + 2FA PIN)
+  // 3-Step Backend Authentication Gate State (Username + Password + 2FA PIN)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());
   const [inputUsername, setInputUsername] = useState('');
   const [inputPassword, setInputPassword] = useState('');
   const [input2FA, setInput2FA] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [lockoutRemainingSec, setLockoutRemainingSec] = useState<number | null>(null);
 
   // Email Privacy Setting (Default: Masked for Privacy)
   const [showFullEmails, setShowFullEmails] = useState(false);
@@ -70,7 +74,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications' | 'server'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
@@ -94,38 +98,67 @@ export const AdminView: React.FC = () => {
 
   const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  // Verify backend session token on load
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      verifyAdminSessionBackend().then((isValid) => {
+        if (!isValid) {
+          setIsAdminAuthenticated(false);
+        }
+      });
+    }
+  }, [isAdminAuthenticated]);
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockoutRemainingSec && lockoutRemainingSec > 0) {
+      const timer = setInterval(() => {
+        setLockoutRemainingSec((prev) => {
+          if (!prev || prev <= 1) {
+            clearInterval(timer);
+            setAuthError(null);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [lockoutRemainingSec]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAuthenticating || (lockoutRemainingSec && lockoutRemainingSec > 0)) return;
+
     setAuthError(null);
+    setIsAuthenticating(true);
 
-    const isUserValid = verifyAdminUsername(inputUsername);
-    const isPassValid = verifyAdminPassword(inputPassword);
-    const is2FAValid = verifyAdmin2FA(input2FA);
+    try {
+      const res = await loginAdminBackend(inputUsername, inputPassword, input2FA);
 
-    if (!isUserValid) {
-      setAuthError("Noto'g'ri Admin Foydalanuvchi nomi (Username) kiritildi!");
-      return;
+      if (res.success) {
+        setIsAdminAuthenticated(true);
+        setInputUsername('');
+        setInputPassword('');
+        setInput2FA('');
+        setAuthError(null);
+        setLockoutRemainingSec(null);
+      } else {
+        setAuthError(res.error || "Noto'g'ri login, parol yoki 2FA PIN kiritildi!");
+        if (res.lockoutRemainingSec) {
+          setLockoutRemainingSec(res.lockoutRemainingSec);
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Server bilan ulanishda xatolik yuz berdi';
+      setAuthError(msg);
+    } finally {
+      setIsAuthenticating(false);
     }
-
-    if (!isPassValid) {
-      setAuthError("Noto'g'ri Admin Paroli kiritildi! Iltimos, qayta tekshiring.");
-      return;
-    }
-
-    if (!is2FAValid) {
-      setAuthError("Noto'g'ri 2FA Xavfsizlik PIN kodi kiritildi!");
-      return;
-    }
-
-    setAdminSession();
-    setIsAdminAuthenticated(true);
-    setInputUsername('');
-    setInputPassword('');
-    setInput2FA('');
   };
 
-  const handleAdminLock = () => {
-    clearAdminSession();
+  const handleAdminLock = async () => {
+    await logoutAdminBackend();
     setIsAdminAuthenticated(false);
   };
 
@@ -494,6 +527,8 @@ export const AdminView: React.FC = () => {
 
   // 1. Two-Step Password & 2FA Gate Screen
   if (!isAdminAuthenticated) {
+    const isLockedOut = !!lockoutRemainingSec && lockoutRemainingSec > 0;
+
     return (
       <div className="w-full max-w-md mx-auto my-12 p-8 rounded-3xl bg-[var(--card-bg)] border border-amber-500/30 text-center space-y-6 shadow-2xl animate-in fade-in">
         <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
@@ -503,18 +538,33 @@ export const AdminView: React.FC = () => {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
             <Lock className="w-3.5 h-3.5" />
-            <span>Admin Xavfsizlik Qalbi</span>
+            <span>Backend Xavfsizlik Qalbi • HMAC-SHA256</span>
           </div>
           <h2 className="text-xl font-black text-[var(--text-color)]">
             Admin Panel Autentifikatsiyasi
           </h2>
           <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-            Admin boshqaruv paneliga kirish uchun Foydalanuvchi nomi (User), Parol va 2FA xavfsizlik kodini kiriting.
+            Parollar va 2FA kodlari brauzerda ochiq saqlanmaydi. Autentifikatsiya to'g'ridan-to'g'ri backend serverda xavfsiz va kriptografik tarzda tekshiriladi.
           </p>
         </div>
 
-        {authError && (
-          <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold text-left flex items-start gap-2 animate-in fade-in">
+        {isLockedOut && (
+          <div className="p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-bold text-left space-y-1 animate-in fade-in">
+            <div className="flex items-center gap-2 text-rose-400 font-black">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Xavfsizlik Qulfi Faollashdi</span>
+            </div>
+            <p className="text-[11px] font-normal leading-relaxed">
+              Ko'p marotaba noto'g'ri urinish tufayli kirish vaqtincha to'xtatildi. Qayta urinish uchun kuting:
+            </p>
+            <div className="text-center py-1 font-mono text-sm font-black text-rose-400">
+              ⏱ {Math.floor(lockoutRemainingSec / 60)} daqiqa {lockoutRemainingSec % 60} soniya
+            </div>
+          </div>
+        )}
+
+        {!isLockedOut && authError && (
+          <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold text-left flex items-start gap-2 animate-in fade-in">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{authError}</span>
           </div>
@@ -531,10 +581,11 @@ export const AdminView: React.FC = () => {
               type="text"
               value={inputUsername}
               onChange={(e) => setInputUsername(e.target.value)}
-              placeholder="Username kiriting (masalan: YOSHLARTYPING)..."
+              placeholder="Username kiriting..."
+              disabled={isAuthenticating || isLockedOut}
               required
               autoFocus
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-wide"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-wide disabled:opacity-50"
             />
           </div>
 
@@ -550,8 +601,9 @@ export const AdminView: React.FC = () => {
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
                 placeholder="Parolni kiriting..."
+                disabled={isAuthenticating || isLockedOut}
                 required
-                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono"
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono disabled:opacity-50"
               />
               <button
                 type="button"
@@ -574,23 +626,38 @@ export const AdminView: React.FC = () => {
               value={input2FA}
               onChange={(e) => setInput2FA(e.target.value)}
               placeholder="2FA PIN kodini kiriting..."
+              disabled={isAuthenticating || isLockedOut}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest disabled:opacity-50"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+            disabled={isAuthenticating || isLockedOut}
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:opacity-95 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            <Lock className="w-4 h-4" />
-            <span>Tasdiqlash & Kirish</span>
+            {isAuthenticating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span>Backend Tekshirilmoqda...</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4" />
+                <span>Tasdiqlash & Kirish</span>
+              </>
+            )}
           </button>
         </form>
 
-        <p className="text-[11px] text-[var(--sub-color)] font-mono">
-          Yolnoma Typing • Barcha huquqlar himoyalangan
-        </p>
+        <div className="pt-2 border-t border-[var(--sub-alt)] text-[10px] text-[var(--sub-color)] font-mono space-y-1">
+          <p className="text-emerald-400 font-bold flex items-center justify-center gap-1">
+            <Check className="w-3.5 h-3.5" />
+            Zero Client-Side Plaintext Secret Exposure
+          </p>
+          <p>Yolnoma Typing Server v3.0 • End-to-End Cryptographic Protection</p>
+        </div>
       </div>
     );
   }
@@ -710,10 +777,22 @@ export const AdminView: React.FC = () => {
           <Bell className="w-4 h-4" />
           <span>📢 Habar Yuborish / Xabarnomalar</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('server')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'server'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+          <span>⚡ Backend & Diagnostika</span>
+        </button>
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1018,6 +1097,11 @@ export const AdminView: React.FC = () => {
           preselectedUser={targetUserForMessage}
           onClearPreselectedUser={() => setTargetUserForMessage(null)}
         />
+      )}
+
+      {/* TAB 5: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
+      {activeTab === 'server' && (
+        <AdminServerTab />
       )}
 
       {/* EDIT LEADERBOARD / USER MODAL */}
