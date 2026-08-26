@@ -86,12 +86,16 @@ export function generateTestText(
 
   // Base words pool
   let wordsPool = [...langInfo.words];
-  if (langInfo.sentences && langInfo.sentences.length > 0) {
-    // Mix in clean words from sentences for rich variety
+
+  if (mode === 'words') {
+    // In Monkeytype-style words mode: ensure all words are lowercase and clean
+    wordsPool = wordsPool.map((w) => w.trim().toLowerCase()).filter((w) => w.length > 0);
+  } else if (langInfo.sentences && langInfo.sentences.length > 0) {
+    // Mix in clean words from sentences for other modes
     langInfo.sentences.forEach((s) => {
       s.split(/\s+/).forEach((w) => {
-        const clean = w.replace(/[^a-zA-Zʻʼo'g'O'G'а-яА-ЯўЎқҚғҒҳҲ]/g, '');
-        if (clean.length > 2 && !wordsPool.includes(clean)) {
+        const clean = w.replace(/[^a-zA-Zʻʼo'g'O'G'а-яА-ЯўЎқҚғҒҳҲ]/g, '').toLowerCase();
+        if (clean.length > 2 && clean.length <= 10 && !wordsPool.includes(clean)) {
           wordsPool.push(clean);
         }
       });
@@ -108,6 +112,12 @@ export function generateTestText(
   // Difficulty adjustment
   if (difficulty === 'hard' || difficulty === 'expert') {
     wordsPool = wordsPool.filter((w) => w.length >= 5);
+  } else if (difficulty === 'easy') {
+    // In easy mode, prefer smooth natural typing words (length 2-8)
+    const easyWords = wordsPool.filter((w) => w.length <= 8);
+    if (easyWords.length >= 30) {
+      wordsPool = easyWords;
+    }
   }
 
   const count = wordCount > 0 ? wordCount : 250;

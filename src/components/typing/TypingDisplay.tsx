@@ -229,10 +229,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
 
-  // Windowed word rendering for ultra-fast performance
+  // Windowed word rendering for ultra-fast performance and full width support
   const visibleWords = useMemo(() => {
-    const start = Math.max(0, activeWordIdx - 20);
-    const end = Math.min(parsedWords.length, activeWordIdx + 50);
+    const start = Math.max(0, activeWordIdx - 30);
+    const end = Math.min(parsedWords.length, activeWordIdx + 140);
     return parsedWords.slice(start, end);
   }, [parsedWords, activeWordIdx]);
 
@@ -255,8 +255,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [activeWordIdx, parsedWords.length]);
 
-  const calculatedFontSize = Math.max(22, fontSize || 24);
-  const lineHeightMultiplier = 1.7;
+  const calculatedFontSize = Math.max(22, fontSize || 28);
+  const lineHeightMultiplier = 1.55;
   const containerHeight = Math.round(calculatedFontSize * lineHeightMultiplier * 3); // 3 lines height
 
   return (
@@ -265,11 +265,11 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
       onMouseMove={handleMouseMove}
-      className={`relative w-full max-w-5xl mx-auto my-4 sm:my-6 bg-transparent border-0 select-none px-2 sm:px-4 ${
+      className={`relative w-full max-w-[1220px] xl:max-w-[1300px] mx-auto my-3 sm:my-5 bg-transparent border-0 select-none px-2 sm:px-4 md:px-6 ${
         mouseHidden ? 'cursor-none' : 'cursor-text'
       }`}
       style={{
-        fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', monospace`,
+        fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', 'Fira Code', monospace`,
         fontSize: `${calculatedFontSize}px`,
         direction: isRtl ? 'rtl' : 'ltr'
       }}
