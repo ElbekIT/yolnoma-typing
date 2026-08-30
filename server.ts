@@ -9,6 +9,110 @@ const PORT = 3000;
 // Remove fingerprinting headers
 app.disable('x-powered-by');
 
+// -------------------------------------------------------------
+// SECURE IN-MEMORY STATE & ANTI-DDOS / ANTI-PROBING ENGINE
+// -------------------------------------------------------------
+
+interface BucketRecord {
+  count: number;
+  resetTime: number;
+  lastRequestTime: number;
+}
+
+// 1. IP & Subnet Limiter
+const ipLimitMap = new Map<string, BucketRecord>();
+const subnetLimitMap = new Map<string, BucketRecord>();
+
+// 2. Device / Browser Fingerprint Limiter
+const deviceLimitMap = new Map<string, BucketRecord>();
+
+// 3. Duplicate Message Hash Cache
+const messageHashCache = new Map<string, number>();
+
+// 4. Global Burst Limiter
+let globalCount = 0;
+let globalResetTime = Date.now() + 60000;
+
+const bannedIps = new Set<string>();
+
+const serverStats = {
+  serverStartTime: Date.now(),
+  totalTestsValidated: 0,
+  suspiciousTestsBlocked: 0,
+  totalKeystrokesProcessed: 0,
+  totalContactMessages: 1,
+  securityEventsBlocked: 0
+};
+
+// Automated memory cleanup every 3 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of ipLimitMap.entries()) {
+    if (now > val.resetTime + 60000) ipLimitMap.delete(key);
+  }
+  for (const [key, val] of subnetLimitMap.entries()) {
+    if (now > val.resetTime + 60000) subnetLimitMap.delete(key);
+  }
+  for (const [key, val] of deviceLimitMap.entries()) {
+    if (now > val.resetTime + 180000) deviceLimitMap.delete(key);
+  }
+  for (const [hash, time] of messageHashCache.entries()) {
+    if (now - time > 600000) messageHashCache.delete(hash);
+  }
+}, 180000);
+
+const getClientIp = (req: express.Request): string => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || '127.0.0.1';
+};
+
+const getSubnet = (ip: string): string => {
+  if (ip.includes('.')) {
+    const parts = ip.split('.');
+    return parts.slice(0, 3).join('.') + '.0/24';
+  }
+  if (ip.includes(':')) {
+    const parts = ip.split(':');
+    return parts.slice(0, 4).join(':') + '::/64';
+  }
+  return ip;
+};
+
+function checkRateLimit(
+  map: Map<string, BucketRecord>,
+  key: string,
+  maxRequests: number,
+  windowMs: number,
+  cooldownMs: number
+): { allowed: boolean; waitSec: number } {
+  const now = Date.now();
+  const record = map.get(key);
+
+  if (record) {
+    if (now < record.lastRequestTime + cooldownMs) {
+      return { allowed: false, waitSec: Math.ceil((record.lastRequestTime + cooldownMs - now) / 1000) };
+    }
+
+    if (now < record.resetTime) {
+      if (record.count >= maxRequests) {
+        return { allowed: false, waitSec: Math.ceil((record.resetTime - now) / 1000) };
+      }
+      record.count += 1;
+      record.lastRequestTime = now;
+      return { allowed: true, waitSec: 0 };
+    } else {
+      map.set(key, { count: 1, resetTime: now + windowMs, lastRequestTime: now });
+      return { allowed: true, waitSec: 0 };
+    }
+  } else {
+    map.set(key, { count: 1, resetTime: now + windowMs, lastRequestTime: now });
+    return { allowed: true, waitSec: 0 };
+  }
+}
+
 // Strict Security Headers (Anti-Sniff, Anti-Clickjacking, Anti-XSS, Anti-Reverse Engineering)
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -26,9 +130,35 @@ app.use((req, res, next) => {
     lowerUrl.includes('.git') ||
     lowerUrl.includes('package.json') ||
     lowerUrl.includes('tsconfig.json') ||
-    lowerUrl.includes('server.ts')
+    lowerUrl.includes('server.ts') ||
+    lowerUrl.includes('/firebase') ||
+    lowerUrl.includes('/wp-') ||
+    lowerUrl.includes('/phpmyadmin')
   ) {
-    return res.status(404).json({ error: 'Not found' });
+    const clientIp = getClientIp(req);
+    bannedIps.add(clientIp);
+    return res.status(403).json({ error: 'Access denied: Security violation detected' });
+  }
+
+  next();
+});
+
+// Global Anti-DoS & IP Blacklist Middleware
+app.use((req, res, next) => {
+  const clientIp = getClientIp(req);
+  if (bannedIps.has(clientIp)) {
+    return res.status(403).json({ error: 'Access forbidden: IP blocked by security firewall' });
+  }
+
+  // API rate limiting
+  if (req.url.startsWith('/api/')) {
+    const limitCheck = checkRateLimit(ipLimitMap, clientIp, 80, 60000, 500);
+    if (!limitCheck.allowed) {
+      serverStats.securityEventsBlocked += 1;
+      return res.status(429).json({
+        error: 'Too Many Requests: Rate limit exceeded to prevent DoS. Please slow down.'
+      });
+    }
   }
 
   next();
@@ -172,101 +302,6 @@ function verifyAdminToken(token: string): { valid: boolean; payload?: any; reaso
 }
 
 // -------------------------------------------------------------
-// ADVANCED ANTI-DDOS, ANTI-PROXY & BOT MITIGATION SYSTEM
-// -------------------------------------------------------------
-
-interface BucketRecord {
-  count: number;
-  resetTime: number;
-  lastRequestTime: number;
-}
-
-// 1. IP & Subnet Limiter
-const ipLimitMap = new Map<string, BucketRecord>();
-const subnetLimitMap = new Map<string, BucketRecord>();
-
-// 2. Device / Browser Fingerprint Limiter (Bypasses Proxy-Hopping)
-const deviceLimitMap = new Map<string, BucketRecord>();
-
-// 3. Duplicate Message Hash Cache (Prevents Spam Flooding via rotating proxies)
-const messageHashCache = new Map<string, number>();
-
-// 4. Global Burst Limiter
-let globalCount = 0;
-let globalResetTime = Date.now() + 60000;
-
-// Automated memory cleanup every 3 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of ipLimitMap.entries()) {
-    if (now > val.resetTime + 60000) ipLimitMap.delete(key);
-  }
-  for (const [key, val] of subnetLimitMap.entries()) {
-    if (now > val.resetTime + 60000) subnetLimitMap.delete(key);
-  }
-  for (const [key, val] of deviceLimitMap.entries()) {
-    if (now > val.resetTime + 180000) deviceLimitMap.delete(key);
-  }
-  for (const [hash, time] of messageHashCache.entries()) {
-    if (now - time > 600000) messageHashCache.delete(hash); // 10 minutes cache
-  }
-}, 180000);
-
-const getClientIp = (req: express.Request): string => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.socket.remoteAddress || '127.0.0.1';
-};
-
-// Extracts subnet to mitigate proxy farm subnet rotations (/24 IPv4 or /64 IPv6)
-const getSubnet = (ip: string): string => {
-  if (ip.includes('.')) {
-    const parts = ip.split('.');
-    return parts.slice(0, 3).join('.') + '.0/24';
-  }
-  if (ip.includes(':')) {
-    const parts = ip.split(':');
-    return parts.slice(0, 4).join(':') + '::/64';
-  }
-  return ip;
-};
-
-// Helper: Generic Bucket Check
-function checkRateLimit(
-  map: Map<string, BucketRecord>,
-  key: string,
-  maxRequests: number,
-  windowMs: number,
-  cooldownMs: number
-): { allowed: boolean; waitSec: number } {
-  const now = Date.now();
-  const record = map.get(key);
-
-  if (record) {
-    if (now < record.lastRequestTime + cooldownMs) {
-      return { allowed: false, waitSec: Math.ceil((record.lastRequestTime + cooldownMs - now) / 1000) };
-    }
-
-    if (now < record.resetTime) {
-      if (record.count >= maxRequests) {
-        return { allowed: false, waitSec: Math.ceil((record.resetTime - now) / 1000) };
-      }
-      record.count += 1;
-      record.lastRequestTime = now;
-      return { allowed: true, waitSec: 0 };
-    } else {
-      map.set(key, { count: 1, resetTime: now + windowMs, lastRequestTime: now });
-      return { allowed: true, waitSec: 0 };
-    }
-  } else {
-    map.set(key, { count: 1, resetTime: now + windowMs, lastRequestTime: now });
-    return { allowed: true, waitSec: 0 };
-  }
-}
-
-// -------------------------------------------------------------
 // SECURE IN-MEMORY DATABASE & SERVER STATE
 // -------------------------------------------------------------
 
@@ -340,16 +375,6 @@ const serverAnnouncements: StoredAnnouncement[] = [
 ];
 
 const serverVerifiedLeaderboard: VerifiedTypingRecord[] = [];
-const bannedIps = new Set<string>();
-
-const serverStats = {
-  serverStartTime: Date.now(),
-  totalTestsValidated: 0,
-  suspiciousTestsBlocked: 0,
-  totalKeystrokesProcessed: 0,
-  totalContactMessages: 1,
-  securityEventsBlocked: 0
-};
 
 // -------------------------------------------------------------
 // ADMIN AUTHENTICATION MIDDLEWARE

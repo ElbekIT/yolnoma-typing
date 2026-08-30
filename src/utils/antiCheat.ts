@@ -1,5 +1,5 @@
 /**
- * High-Performance Anti-Cheat & Console Guard for Yolnoma Typing
+ * High-Performance Anti-Cheat, Console Guard & Anti-Snoop System for Yolnoma Typing
  *
  * Optimizations:
  * - Ultra-lightweight (Zero CPU/Memory overhead - smooth 120 FPS on all PCs/laptops).
@@ -7,6 +7,7 @@
  * - Auto-recovery: Re-opens instantly when DevTools is closed.
  * - Zero Input Lag / Drop: Keystroke pipeline is 100% unimpeded for all languages, symbols, and fast typers.
  * - Function Key Lock (F1-F24) & Inspect Shortcuts blocked cleanly at keydown.
+ * - Honeypot Traps & Anti-Scraping / Anti-Snooping protections against reverse-engineering and bot attacks.
  */
 
 import { ref, update } from 'firebase/database';
@@ -32,6 +33,8 @@ class AntiCheatSystem {
     if (typeof window !== 'undefined') {
       this.attachGlobalSecurityListeners();
       this.startDevToolsProtection();
+      this.deployHoneypotTraps();
+      this.detectHeadlessBots();
     }
   }
 
@@ -43,6 +46,7 @@ class AntiCheatSystem {
       this.isListening = true;
       this.attachGlobalSecurityListeners();
       this.startDevToolsProtection();
+      this.deployHoneypotTraps();
     }
   }
 
@@ -171,6 +175,42 @@ class AntiCheatSystem {
     if (this.onCheatCallback) {
       this.onCheatCallback(reason);
     }
+  }
+
+  // ==========================================
+  // HONEYPOT TRAPS & BOT DETECTOR
+  // ==========================================
+
+  private deployHoneypotTraps() {
+    if (typeof window === 'undefined') return;
+
+    // Trap properties designed to snare malicious scrapers looking for API keys
+    const trapNames = ['__firebase_keys__', 'firebase_secret_key', '__FIREBASE_CONFIG__', 'admin_override_key'];
+    trapNames.forEach((trap) => {
+      try {
+        Object.defineProperty(window, trap, {
+          get: () => {
+            this.banDeviceAndUser('Taqiqlangan tizim xavfsizlik skanerlash urinishi aniqlandi.');
+            return null;
+          },
+          set: () => {
+            this.banDeviceAndUser('Taqiqlangan tizim parametrlarini o\'zgartirish urinishi.');
+          },
+          configurable: false
+        });
+      } catch {}
+    });
+  }
+
+  private detectHeadlessBots() {
+    if (typeof window === 'undefined') return;
+
+    try {
+      // Check for automation frameworks (Puppeteer, Selenium, Webdriver)
+      if ((navigator as any).webdriver || (window as any)._phantom || (window as any).__nightmare) {
+        this.banDeviceAndUser('Avtomatlashtirilgan bot dasturi (Headless Browser) aniqlandi!');
+      }
+    } catch {}
   }
 
   // ==========================================
