@@ -10,30 +10,29 @@ const PORT = 3000;
 app.disable('x-powered-by');
 
 // -------------------------------------------------------------
-// SECURE IN-MEMORY STATE & ANTI-DDOS / ANTI-PROBING ENGINE
+// SECURE IN-MEMORY STATE & ANTI-DDOS / KRAKEN MITIGATION ENGINE
 // -------------------------------------------------------------
 
 interface BucketRecord {
   count: number;
   resetTime: number;
   lastRequestTime: number;
+  burstCount: number;
+  burstWindow: number;
 }
 
 // 1. IP & Subnet Limiter
 const ipLimitMap = new Map<string, BucketRecord>();
 const subnetLimitMap = new Map<string, BucketRecord>();
 
-// 2. Device / Browser Fingerprint Limiter
-const deviceLimitMap = new Map<string, BucketRecord>();
+// 2. Active Concurrent Sockets per IP (Anti-Thread Flood)
+const activeSocketsPerIp = new Map<string, number>();
 
 // 3. Duplicate Message Hash Cache
 const messageHashCache = new Map<string, number>();
 
-// 4. Global Burst Limiter
-let globalCount = 0;
-let globalResetTime = Date.now() + 60000;
-
-const bannedIps = new Set<string>();
+// 4. Temporary / Permanent Blacklist with auto-expiry
+const bannedIps = new Map<string, number>(); // ip -> unbanTimestamp
 
 const serverStats = {
   serverStartTime: Date.now(),
@@ -41,10 +40,35 @@ const serverStats = {
   suspiciousTestsBlocked: 0,
   totalKeystrokesProcessed: 0,
   totalContactMessages: 1,
-  securityEventsBlocked: 0
+  securityEventsBlocked: 0,
+  krakenAttacksBlocked: 0
 };
 
-// Automated memory cleanup every 3 minutes
+// Known L7 Attack Signatures (Kraken, Python Flooders, Scanners, Botnets)
+const MALICIOUS_UA_PATTERNS = [
+  /python-requests/i,
+  /aiohttp/i,
+  /httpx/i,
+  /urllib/i,
+  /kraken/i,
+  /serverkillers/i,
+  /go-http-client/i,
+  /node-fetch/i,
+  /axios\//i,
+  /curl\//i,
+  /wget\//i,
+  /nikto/i,
+  /sqlmap/i,
+  /masscan/i,
+  /zgrab/i,
+  /gobuster/i,
+  /dirbuster/i,
+  /nmap/i,
+  /phantomjs/i,
+  /headless/i
+];
+
+// Automated memory cleanup every 2 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [key, val] of ipLimitMap.entries()) {
@@ -53,13 +77,13 @@ setInterval(() => {
   for (const [key, val] of subnetLimitMap.entries()) {
     if (now > val.resetTime + 60000) subnetLimitMap.delete(key);
   }
-  for (const [key, val] of deviceLimitMap.entries()) {
-    if (now > val.resetTime + 180000) deviceLimitMap.delete(key);
-  }
   for (const [hash, time] of messageHashCache.entries()) {
     if (now - time > 600000) messageHashCache.delete(hash);
   }
-}, 180000);
+  for (const [ip, unbanAt] of bannedIps.entries()) {
+    if (now > unbanAt) bannedIps.delete(ip);
+  }
+}, 120000);
 
 const getClientIp = (req: express.Request): string => {
   const forwarded = req.headers['x-forwarded-for'];
@@ -81,49 +105,45 @@ const getSubnet = (ip: string): string => {
   return ip;
 };
 
-function checkRateLimit(
-  map: Map<string, BucketRecord>,
-  key: string,
-  maxRequests: number,
-  windowMs: number,
-  cooldownMs: number
-): { allowed: boolean; waitSec: number } {
-  const now = Date.now();
-  const record = map.get(key);
-
-  if (record) {
-    if (now < record.lastRequestTime + cooldownMs) {
-      return { allowed: false, waitSec: Math.ceil((record.lastRequestTime + cooldownMs - now) / 1000) };
-    }
-
-    if (now < record.resetTime) {
-      if (record.count >= maxRequests) {
-        return { allowed: false, waitSec: Math.ceil((record.resetTime - now) / 1000) };
-      }
-      record.count += 1;
-      record.lastRequestTime = now;
-      return { allowed: true, waitSec: 0 };
-    } else {
-      map.set(key, { count: 1, resetTime: now + windowMs, lastRequestTime: now });
-      return { allowed: true, waitSec: 0 };
-    }
-  } else {
-    map.set(key, { count: 1, resetTime: now + windowMs, lastRequestTime: now });
-    return { allowed: true, waitSec: 0 };
-  }
+// Auto-ban an offending IP with stealth socket termination
+function triggerSecurityBan(ip: string, reason: string, durationMs: number = 3600000) {
+  bannedIps.set(ip, Date.now() + durationMs);
+  serverStats.securityEventsBlocked += 1;
+  serverStats.krakenAttacksBlocked += 1;
 }
 
-// Strict Security Headers (Anti-Sniff, Anti-Clickjacking, Anti-XSS, Anti-Reverse Engineering)
+// -------------------------------------------------------------
+// GLOBAL STEALTH ANTI-DDOS & KRAKEN DEFENSE SHIELD
+// -------------------------------------------------------------
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  const clientIp = getClientIp(req);
+  const now = Date.now();
 
-  // Block unauthorized exploration of source maps, config files, env files, and git folders
-  const lowerUrl = req.url.toLowerCase();
+  // 1. Instant check if IP is blacklisted (drop immediately without spending CPU/Memory)
+  const unbanTime = bannedIps.get(clientIp);
+  if (unbanTime && now < unbanTime) {
+    res.setHeader('Connection', 'close');
+    return res.status(200).end(); // Stealth 200 empty response or socket termination to mislead attack tools
+  }
+
+  const userAgent = req.headers['user-agent'] || '';
+  const lowerUrl = (req.url || '').toLowerCase();
+
+  // 2. Kraken & Scripted Attack Tool Signature Detection
+  // Browsers ALWAYS send a User-Agent and Accept header. Python scripts/Kraken often have distinct UA or empty headers.
+  if (!userAgent || userAgent.length < 8) {
+    triggerSecurityBan(clientIp, 'Missing/Empty User-Agent bot attack', 1800000);
+    return res.status(200).end();
+  }
+
+  for (const pattern of MALICIOUS_UA_PATTERNS) {
+    if (pattern.test(userAgent)) {
+      triggerSecurityBan(clientIp, `Malicious script/tool detected: ${userAgent}`, 7200000);
+      return res.status(200).end();
+    }
+  }
+
+  // 3. Probing / Scanner / Exploit Path Blocker
   if (
     lowerUrl.includes('.map') ||
     lowerUrl.includes('.env') ||
@@ -133,34 +153,97 @@ app.use((req, res, next) => {
     lowerUrl.includes('server.ts') ||
     lowerUrl.includes('/firebase') ||
     lowerUrl.includes('/wp-') ||
-    lowerUrl.includes('/phpmyadmin')
+    lowerUrl.includes('/xmlrpc') ||
+    lowerUrl.includes('/phpmyadmin') ||
+    lowerUrl.includes('/cgi-bin') ||
+    lowerUrl.includes('/actuator') ||
+    lowerUrl.includes('/solr') ||
+    lowerUrl.includes('/admin.php') ||
+    lowerUrl.includes('/shell')
   ) {
-    const clientIp = getClientIp(req);
-    bannedIps.add(clientIp);
-    return res.status(403).json({ error: 'Access denied: Security violation detected' });
+    triggerSecurityBan(clientIp, `Probing restricted path: ${lowerUrl}`, 86400000);
+    return res.status(200).end();
   }
+
+  // 4. Ultra-Fast Sliding Window Burst Rate Limiter (Anti-Flood / Anti-Thread 100)
+  const ipRecord = ipLimitMap.get(clientIp);
+  if (ipRecord) {
+    // 1-second burst window check
+    if (now - ipRecord.burstWindow < 1000) {
+      ipRecord.burstCount += 1;
+      // If an IP fires > 25 requests in 1 single second -> unmistakable HTTP flood attack
+      if (ipRecord.burstCount > 25) {
+        triggerSecurityBan(clientIp, 'High frequency thread flood attack (>25 req/sec)', 3600000);
+        return res.status(200).end();
+      }
+    } else {
+      ipRecord.burstWindow = now;
+      ipRecord.burstCount = 1;
+    }
+
+    // 60-second window check
+    if (now < ipRecord.resetTime) {
+      ipRecord.count += 1;
+      // Allow max 180 requests per minute for normal browsing (including CSS/JS/images)
+      if (ipRecord.count > 180) {
+        serverStats.securityEventsBlocked += 1;
+        res.setHeader('Retry-After', '15');
+        return res.status(429).json({ status: 'rate_limited', message: 'Traffic smoothed' });
+      }
+    } else {
+      ipRecord.count = 1;
+      ipRecord.resetTime = now + 60000;
+    }
+    ipRecord.lastRequestTime = now;
+  } else {
+    ipLimitMap.set(clientIp, {
+      count: 1,
+      resetTime: now + 60000,
+      lastRequestTime: now,
+      burstCount: 1,
+      burstWindow: now
+    });
+  }
+
+  // 5. Track concurrent socket load
+  const currentSockets = (activeSocketsPerIp.get(clientIp) || 0) + 1;
+  activeSocketsPerIp.set(clientIp, currentSockets);
+
+  // If a single IP opens > 35 concurrent connections (like Kraken thread 100)
+  if (currentSockets > 35) {
+    activeSocketsPerIp.set(clientIp, currentSockets - 1);
+    return res.status(200).end();
+  }
+
+  res.on('finish', () => {
+    const s = activeSocketsPerIp.get(clientIp) || 1;
+    if (s <= 1) {
+      activeSocketsPerIp.delete(clientIp);
+    } else {
+      activeSocketsPerIp.set(clientIp, s - 1);
+    }
+  });
+
+  res.on('close', () => {
+    const s = activeSocketsPerIp.get(clientIp) || 1;
+    if (s <= 1) {
+      activeSocketsPerIp.delete(clientIp);
+    } else {
+      activeSocketsPerIp.set(clientIp, s - 1);
+    }
+  });
 
   next();
 });
 
-// Global Anti-DoS & IP Blacklist Middleware
+// Strict Security Headers (Anti-Sniff, Anti-Clickjacking, Anti-XSS, Anti-Reverse Engineering)
 app.use((req, res, next) => {
-  const clientIp = getClientIp(req);
-  if (bannedIps.has(clientIp)) {
-    return res.status(403).json({ error: 'Access forbidden: IP blocked by security firewall' });
-  }
-
-  // API rate limiting
-  if (req.url.startsWith('/api/')) {
-    const limitCheck = checkRateLimit(ipLimitMap, clientIp, 80, 60000, 500);
-    if (!limitCheck.allowed) {
-      serverStats.securityEventsBlocked += 1;
-      return res.status(429).json({
-        error: 'Too Many Requests: Rate limit exceeded to prevent DoS. Please slow down.'
-      });
-    }
-  }
-
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
 
@@ -434,11 +517,10 @@ app.get('/api/announcements', (req, res) => {
 // Endpoint: Contact Message Submission (with Anti-Spam & In-Memory Store)
 app.post('/api/contact', async (req, res) => {
   const clientIp = getClientIp(req);
-  const subnet = getSubnet(clientIp);
   const now = Date.now();
 
   if (bannedIps.has(clientIp)) {
-    return res.status(403).json({ success: false, error: 'Sizning IP manzilingiz bloklangan' });
+    return res.status(200).json({ success: true, message: 'Xabar qabul qilindi' });
   }
 
   // Honeypot check
@@ -446,28 +528,30 @@ app.post('/api/contact', async (req, res) => {
     return res.json({ success: true, message: 'Xabar qabul qilindi' });
   }
 
-  // Global Burst Limiter
-  if (now > globalResetTime) {
-    globalCount = 1;
-    globalResetTime = now + 60000;
-  } else {
-    globalCount += 1;
-    if (globalCount > 35) {
-      serverStats.securityEventsBlocked += 1;
-      return res.status(429).json({
-        success: false,
-        error: 'Tizimda yuklama yuqori. Iltimos birozdan so\'ng qayta urinib ko\'ring.'
-      });
+  // Contact IP Rate Limiter (Max 4 messages per 2 minutes)
+  const contactLimitKey = `contact_${clientIp}`;
+  const ipRecord = ipLimitMap.get(contactLimitKey);
+  if (ipRecord) {
+    if (now < ipRecord.resetTime) {
+      if (ipRecord.count >= 4) {
+        serverStats.securityEventsBlocked += 1;
+        return res.status(429).json({
+          success: false,
+          error: 'Iltimos biroz kuting. Juda ko\'p xabar yuborildi.'
+        });
+      }
+      ipRecord.count += 1;
+    } else {
+      ipRecord.count = 1;
+      ipRecord.resetTime = now + 120000;
     }
-  }
-
-  // IP Rate Limiter
-  const ipCheck = checkRateLimit(ipLimitMap, clientIp, 5, 120000, 3000);
-  if (!ipCheck.allowed) {
-    serverStats.securityEventsBlocked += 1;
-    return res.status(429).json({
-      success: false,
-      error: `Iltimos juda tez so'rov yubormang. ${ipCheck.waitSec} soniyadan so'ng qayta urinib ko'ring.`
+  } else {
+    ipLimitMap.set(contactLimitKey, {
+      count: 1,
+      resetTime: now + 120000,
+      lastRequestTime: now,
+      burstCount: 1,
+      burstWindow: now
     });
   }
 
@@ -919,19 +1003,33 @@ app.post('/api/admin/ban-ip', requireAdminAuth, (req, res) => {
   const { ip } = req.body;
   if (!ip) return res.status(400).json({ success: false, error: 'IP talab qilinadi' });
 
-  bannedIps.add(String(ip).trim());
-  res.json({ success: true, message: `${ip} manzili bloklandi`, bannedIps: Array.from(bannedIps) });
+  const targetIp = String(ip).trim();
+  bannedIps.set(targetIp, Date.now() + 30 * 24 * 3600000); // 30 days ban
+  res.json({ success: true, message: `${targetIp} manzili bloklandi`, bannedIps: Array.from(bannedIps.keys()) });
 });
 
 app.post('/api/admin/unban-ip', requireAdminAuth, (req, res) => {
   const { ip } = req.body;
   if (!ip) return res.status(400).json({ success: false, error: 'IP talab qilinadi' });
 
-  bannedIps.delete(String(ip).trim());
-  res.json({ success: true, message: `${ip} blokdan chiqarildi`, bannedIps: Array.from(bannedIps) });
+  const targetIp = String(ip).trim();
+  bannedIps.delete(targetIp);
+  res.json({ success: true, message: `${targetIp} blokdan chiqarildi`, bannedIps: Array.from(bannedIps.keys()) });
 });
 
-// Start Server with Vite Middleware
+// Global Error Masking Middleware (Prevent 500/503/403 leakage & stack traces)
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  serverStats.securityEventsBlocked += 1;
+  // If headers already sent, delegate to default express handler
+  if (res.headersSent) {
+    return next(err);
+  }
+  // Sanitize all internal errors to generic stealth response
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.status(200).json({ status: 'ok' });
+});
+
+// Start Server with Vite Middleware and Hardened Sockets
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -947,9 +1045,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running securely on port ${PORT}`);
   });
+
+  // Slowloris & Connection Exhaustion Defense (Strict Timeouts)
+  server.keepAliveTimeout = 5000;
+  server.headersTimeout = 6000;
+  server.requestTimeout = 10000;
+  server.maxHeadersCount = 100;
 }
 
 startServer();
