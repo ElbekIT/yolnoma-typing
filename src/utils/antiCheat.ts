@@ -242,7 +242,8 @@ class AntiCheatSystem {
 
   /**
    * Checks DevTools & Device Toolbar (Mobile Emulation on PC)
-   * 100% lightweight calculation (0% CPU cost).
+   * 100% lightweight calculation with full Browser Zoom (Ctrl + / Ctrl -) compensation.
+   * Prevents false positives when user scales/zooms the page.
    */
   public checkDevToolsNow(): boolean {
     if (typeof window === 'undefined') return false;
@@ -250,26 +251,29 @@ class AntiCheatSystem {
     let detected = false;
     const isTopLevel = window.self === window.top;
 
-    // Distinguish real physical mobile phones from PC browsers
+    // Distinguish real physical mobile phones/tablets from PC browsers
     const isPhysicalMobile =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) &&
       (('ontouchstart' in window && window.screen.width <= 768) || typeof window.orientation !== 'undefined');
 
     if (isTopLevel && !isPhysicalMobile) {
       try {
+        const dpr = window.devicePixelRatio || 1;
         const outerW = window.outerWidth;
         const outerH = window.outerHeight;
-        const innerW = window.innerWidth;
-        const innerH = window.innerHeight;
-
-        // When DevTools is docked on the Right/Bottom/Left in Chrome:
-        // outerWidth - innerWidth is > 160px
-        // outerHeight - innerHeight is > 160px
-        const widthDiff = outerW - innerW;
-        const heightDiff = outerH - innerH;
+        
+        // Compensate for browser zoom (devicePixelRatio):
+        // innerWidth/innerHeight are in CSS pixels, multiplying by dpr gives physical window pixels.
+        const physicalInnerW = window.innerWidth * dpr;
+        const physicalInnerH = window.innerHeight * dpr;
 
         if (outerW > 450 && outerH > 350) {
-          if (widthDiff > 160 || heightDiff > 160) {
+          // DevTools docked on Right or Left takes at least 250 physical pixels
+          const widthDiff = outerW - physicalInnerW;
+          // DevTools docked on Bottom takes at least 220px + ~100px browser chrome = >320px
+          const heightDiff = outerH - physicalInnerH;
+
+          if (widthDiff > 250 || heightDiff > 320) {
             detected = true;
           }
         }
@@ -279,12 +283,14 @@ class AntiCheatSystem {
     if (detected) {
       this.consecutiveDetections++;
       this.consecutiveClean = 0;
-      if (this.consecutiveDetections >= 1) {
+      // Require 2 consecutive confirmations to prevent transient resize flicker
+      if (this.consecutiveDetections >= 2) {
         this.setDevToolsState(true);
       }
     } else {
       this.consecutiveClean++;
       this.consecutiveDetections = 0;
+      // Instant recovery when DevTools is closed or zoom adjusted
       if (this.consecutiveClean >= 1) {
         this.setDevToolsState(false);
       }
