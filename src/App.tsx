@@ -154,6 +154,7 @@ function MainAppContent() {
   const startTimeRef = useRef<number>(0);
   const typedInputRef = useRef<string>('');
   const targetTextRef = useRef<string>('');
+  const totalMistakesCountRef = useRef<number>(0);
 
   typedInputRef.current = typedInput;
   targetTextRef.current = targetText;
@@ -179,6 +180,7 @@ function MainAppContent() {
     setElapsedSeconds(0);
     startTimeRef.current = 0;
     totalKeystrokesRef.current = 0;
+    totalMistakesCountRef.current = 0;
     keyTimestampsRef.current = [];
 
     const initialTime = timeMode > 0 ? timeMode : 60;
@@ -256,19 +258,21 @@ function MainAppContent() {
       }
     });
 
+    const totalAttempts = Math.max(typedChars.length, correctCount + totalMistakesCountRef.current);
     const wpm = calculateWpm(correctCount, totalSeconds, typedChars.length);
     const cpm = calculateCpm(typedChars.length, totalSeconds);
     const rawWpm = calculateWpm(typedChars.length, totalSeconds);
-    const accuracy = calculateAccuracy(correctCount, typedChars.length);
+    const accuracy = totalAttempts > 0 ? calculateAccuracy(correctCount, totalAttempts) : 0;
+    const finalErrors = Math.max(wrongCount, totalMistakesCountRef.current);
 
     const resultObj: Omit<TypingResult, 'userId' | 'username'> = {
       wpm,
       cpm,
       rawWpm,
       accuracy,
-      errors: wrongCount,
+      errors: finalErrors,
       correctChars: correctCount,
-      wrongChars: wrongCount,
+      wrongChars: finalErrors,
       extraChars: Math.max(0, typedChars.length - targetChars.length),
       missedChars: Math.max(0, targetChars.length - typedChars.length),
       backspaceCount: 0,
@@ -412,7 +416,18 @@ function MainAppContent() {
     }
 
     if (newInput.length > typedInput.length) {
-      totalKeystrokesRef.current += (newInput.length - typedInput.length);
+      const addedCount = newInput.length - typedInput.length;
+      totalKeystrokesRef.current += addedCount;
+
+      // Track errors on newly typed characters
+      const startIndex = typedInput.length;
+      for (let i = startIndex; i < newInput.length; i++) {
+        const charTyped = newInput[i];
+        const targetChar = targetText[i];
+        if (targetChar === undefined || charTyped !== targetChar) {
+          totalMistakesCountRef.current += 1;
+        }
+      }
     }
 
     setTypedInput(newInput);
@@ -434,7 +449,7 @@ function MainAppContent() {
     }
   };
 
-  // Live stats calculation (Exact International Standard - Starts at 0 WPM and 0% ACC)
+  // Live stats calculation (Exact International Standard - Accuracy accounts for fixed & unfixed errors)
   const hasStartedTyping = typedInput.length > 0 && isTestActive && startTimeRef.current > 0;
   const liveElapsed = hasStartedTyping
     ? Math.max(0.5, (Date.now() - startTimeRef.current) / 1000)
@@ -447,16 +462,16 @@ function MainAppContent() {
     if (idx < targetChars.length && ch === targetChars[idx]) liveCorrect++;
   });
 
-  const totalAttempted = typedInput.length;
-  const liveWpm = hasStartedTyping && totalAttempted > 0
-    ? calculateWpm(liveCorrect, liveElapsed, totalAttempted)
+  const totalAttemptedKeystrokes = Math.max(typedInput.length, liveCorrect + totalMistakesCountRef.current);
+  const liveWpm = hasStartedTyping && typedInput.length > 0
+    ? calculateWpm(liveCorrect, liveElapsed, typedInput.length)
     : 0;
-  const liveCpm = hasStartedTyping && totalAttempted > 0
+  const liveCpm = hasStartedTyping && typedInput.length > 0
     ? calculateCpm(typedInput.length, liveElapsed)
     : 0;
-  const liveAcc = totalAttempted > 0
-    ? calculateAccuracy(liveCorrect, totalAttempted)
-    : 0;
+  const liveAcc = totalAttemptedKeystrokes > 0 && liveCorrect > 0
+    ? calculateAccuracy(liveCorrect, totalAttemptedKeystrokes)
+    : (totalAttemptedKeystrokes > 0 && totalMistakesCountRef.current > 0 ? 0 : 0);
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';

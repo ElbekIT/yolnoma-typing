@@ -171,6 +171,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   // Time & Refs
   const startTimeRef = useRef<number>(0);
+  const battleMistakesRef = useRef<number>(0);
+  const prevTypedLenRef = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const botTimerRef = useRef<NodeJS.Timeout | null>(null);
   const roomUnsubRef = useRef<(() => void) | null>(null);
@@ -237,6 +239,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       if (roomGameType === 'speedway') {
         setTargetText(roomVal.targetText || '');
         setTypedInput('');
+        battleMistakesRef.current = 0;
+        prevTypedLenRef.current = 0;
 
         const guestData: RacerProgress = {
           id: currentUid,
@@ -508,6 +512,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       const text = generateBattleText();
       setTargetText(text);
       setTypedInput('');
+      battleMistakesRef.current = 0;
+      prevTypedLenRef.current = 0;
 
       setMyProgress({
         id: currentUid,
@@ -657,14 +663,24 @@ export const BattleView: React.FC<BattleViewProps> = ({
     const targetArr = targetText.split('');
     const typedArr = val.split('');
 
+    if (val.length > prevTypedLenRef.current) {
+      for (let i = prevTypedLenRef.current; i < val.length; i++) {
+        if (targetArr[i] === undefined || val[i] !== targetArr[i]) {
+          battleMistakesRef.current += 1;
+        }
+      }
+    }
+    prevTypedLenRef.current = val.length;
+
     typedArr.forEach((ch, i) => {
       if (i < targetArr.length && ch === targetArr[i]) {
         correctCount++;
       }
     });
 
+    const totalAttempts = Math.max(val.length, correctCount + battleMistakesRef.current);
     const liveWpm = calculateNetWpm(correctCount, val.length, elapsedSeconds);
-    const liveAcc = calculateAccuracy(correctCount, val.length);
+    const liveAcc = totalAttempts > 0 ? calculateAccuracy(correctCount, totalAttempts) : 0;
     const progress = Math.min(100, (val.length / Math.max(1, targetText.length)) * 100);
 
     const updatedMyProgress: RacerProgress = {
@@ -790,6 +806,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       const text = generateBattleText();
       setTargetText(text);
       setTypedInput('');
+      battleMistakesRef.current = 0;
+      prevTypedLenRef.current = 0;
 
       try {
         await update(ref(rtdb, `battles/rooms/${activeRoomCode}`), {

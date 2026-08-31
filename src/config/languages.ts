@@ -509,6 +509,440 @@ export const languagesList: LanguageInfo[] = [
     quotes: [
       { text: 'Övning ger färdighet.', author: 'Ordspråk' }
     ]
+  },
+  {
+    code: 'tk',
+    name: 'Turkmen',
+    nativeName: 'Türkmençe',
+    flag: '🇹🇲',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'we', 'bir', 'bu', 'üçin', 'hem', 'bilen', 'ýa-da', 'bolup', 'şu', 'öz', 'diýip', 'geldi', 'ýaly', 'her', 'biz', 'sen', 'ol', 'siz', 'olar', 'döwlet', 'ýaş', 'uly', 'täze', 'zaman', 'iş', 'ylmy', 'tehnika', 'klawiatura', 'tizlik', 'tekst', 'türgenleşik', 'netije', 'üstünlik', 'dünýä', 'durmuş', 'wagt', 'gün', 'ýyl', 'şäher', 'adam', 'dost', 'maşgala', 'kitap', 'söz', 'mekdep', 'taryh', 'geljek', 'maksat', 'ýol', 'bagt', 'bilim'
+    ],
+    sentences: [
+      'Türkmenistan — parahatçylygyň we ylalaşygyň mekany, beýik geljegi bolan ýurt.',
+      'Ylym öwrenmek iň uly baýlyk we mertebedir.',
+      'Klawiaturada çalt we ýalňyşsyz ýazmak işiňizi has-da aňsatlaşdyrar.'
+    ],
+    quotes: [
+      { text: 'Ylym — akylyň çyrasydyr.', author: 'Magtymguly Pyragy' }
+    ]
+  },
+  {
+    code: 'be',
+    name: 'Belarusian',
+    nativeName: 'Беларуская',
+    flag: '🇧🇾',
+    dir: 'ltr',
+    script: 'Cyrillic',
+    words: [
+      'і', 'ў', 'на', 'з', 'да', 'ён', 'яна', 'як', 'што', 'мы', 'вы', 'яны', 'гэта', 'быць', 'мець', 'час', 'жыццё', 'дзень', 'людзі', 'праца', 'слова', 'мова', 'кніга', 'клавіятура', 'хуткасць', 'дакладнасць', 'поспех', 'веды', 'навука', 'свет', 'будучыня'
+    ],
+    sentences: [
+      'Родная мова — гэта найвялікшы скарб і душа кожнага народа.',
+      'Хуткі набор тэксту на клавіятуры значна эканоміць ваш каштоўны час.'
+    ],
+    quotes: [
+      { text: 'Не пакідайце ж мовы нашай беларускай, каб не ўмёрлі!', author: 'Францішак Багушэвіч' }
+    ]
+  },
+  {
+    code: 'cs',
+    name: 'Czech',
+    nativeName: 'Čeština',
+    flag: '🇨🇿',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'a', 'v', 'se', 'na', 'ze', 'to', 'ze', 'je', 'o', 'do', 'si', 'pro', 'k', 'po', 'jako', 'ale', 'tak', 've', 'od', 'za', 'uz', 'pri', 'nebo', 'ktery', 'jak', 'jsou', 'byl', 'rok', 'clovek', 'cas', 'zivot', 'den', 'prace', 'klavesnice', 'rychlost', 'presnost', 'uspech', 'vzdelani'
+    ],
+    sentences: [
+      'Pravidelný trénink psaní všemi deseti prsty zvyšuje rychlost i přesnost na klávesnici.',
+      'Vzdělání je nejlepší investice do úspěšné budoucnosti.'
+    ],
+    quotes: [
+      { text: 'Kolik řečí znáš, tolikrát jsi člověkem.', author: 'České přísloví' }
+    ]
+  },
+  {
+    code: 'sk',
+    name: 'Slovak',
+    nativeName: 'Slovenčina',
+    flag: '🇸🇰',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'a', 'v', 'sa', 'na', 'ze', 'to', 'je', 'o', 'do', 'si', 'pre', 'k', 'po', 'ako', 'ale', 'tak', 'od', 'za', 'uz', 'pri', 'alebo', 'ktory', 'su', 'bol', 'rok', 'clovek', 'cas', 'zivot', 'den', 'praca', 'klavesnica', 'rychlost', 'presnost', 'uspech'
+    ],
+    sentences: [
+      'Rýchle písanie na klávesnici vám pomôže pracovať oveľa efektívnejšie a bez chýb.',
+      'Učenie a nové vedomosti otvárajú dvere k nekonečným možnostiam.'
+    ],
+    quotes: [
+      { text: 'Bez práce nie sú koláče.', author: 'Slovenské príslovie' }
+    ]
+  },
+  {
+    code: 'ro',
+    name: 'Romanian',
+    nativeName: 'Română',
+    flag: '🇷🇴',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'si', 'de', 'in', 'la', 'cu', 'pe', 'care', 'o', 'un', 'nu', 'mai', 'din', 'ce', 'sa', 'se', 'pentru', 'ca', 'este', 'fi', 'sunt', 'timp', 'viata', 'om', 'zi', 'munca', 'cuvant', 'tastatura', 'viteza', 'precizie', 'succes', 'viitor'
+    ],
+    sentences: [
+      'Tastarea rapidă și precisă este o abilitate esențială în lumea digitală modernă.',
+      'Cunoașterea este lumina care ne ghidează pașii spre reușită.'
+    ],
+    quotes: [
+      { text: 'Cine are carte, are parte.', author: 'Proverb românesc' }
+    ]
+  },
+  {
+    code: 'hu',
+    name: 'Hungarian',
+    nativeName: 'Magyar',
+    flag: '🇭🇺',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'es', 'a', 'az', 'hogy', 'nem', 'egy', 'is', 'meg', 'volt', 'mint', 'csak', 'el', 'ki', 'mar', 'ha', 'mert', 'kell', 'utan', 'jo', 'ido', 'elet', 'ember', 'nap', 'munka', 'szo', 'billentyuzet', 'sebesseg', 'pontossag', 'siker', 'tudas'
+    ],
+    sentences: [
+      'A gépelés folyamatos gyakorlása növeli a koncentrációt és az ujjmozdulatok sebességét.',
+      'A tudás hatalom, amelyet senki sem vehet el tőled.'
+    ],
+    quotes: [
+      { text: 'A tudás a legbiztosabb kincs.', author: 'Magyar közmondás' }
+    ]
+  },
+  {
+    code: 'fi',
+    name: 'Finnish',
+    nativeName: 'Suomi',
+    flag: '🇫🇮',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'ja', 'se', 'on', 'ei', 'han', 'oli', 'että', 'mutta', 'kuin', 'joka', 'niin', 'kun', 'jos', 'olla', 'myos', 'vain', 'mika', 'aika', 'elama', 'paiva', 'ihminen', 'tyo', 'sana', 'nappaimisto', 'nopeus', 'tarkkuus', 'menestys', 'oppiminen'
+    ],
+    sentences: [
+      'Nopea ja tarkka kymmensormijärjestelmän hallinta tekee työskentelystä sujuvaa.',
+      'Oppiminen on elinikäinen matka täynnä oivalluksia.'
+    ],
+    quotes: [
+      { text: 'Harjoitus tekee mestarin.', author: 'Suomalainen sananlasku' }
+    ]
+  },
+  {
+    code: 'no',
+    name: 'Norwegian',
+    nativeName: 'Norsk',
+    flag: '🇳🇴',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'og', 'i', 'det', 'pa', 'som', 'en', 'for', 'er', 'av', 'til', 'med', 'han', 'ikke', 'at', 'var', 'de', 'om', 'men', 'seg', 'et', 'tid', 'liv', 'dag', 'menneske', 'arbeid', 'tastatur', 'fart', 'noyaktighet', 'suksess'
+    ],
+    sentences: [
+      'Rask og feilfri tastaturskriving forbedrer arbeidsflyten betraktelig.',
+      'Kunnskap gir innsikt og åpner veien for nye oppdagelser.'
+    ],
+    quotes: [
+      { text: 'Øvelse gjør mester.', author: 'Norsk ordtak' }
+    ]
+  },
+  {
+    code: 'da',
+    name: 'Danish',
+    nativeName: 'Dansk',
+    flag: '🇩🇰',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'og', 'i', 'det', 'at', 'en', 'til', 'er', 'pa', 'for', 'med', 'som', 'af', 'han', 'ikke', 'der', 'var', 'om', 'men', 'et', 'tid', 'liv', 'dag', 'menneske', 'arbejde', 'tastatur', 'hastighed', 'praecision', 'succes'
+    ],
+    sentences: [
+      'Hurtig skrivning på tastaturet sparer værdifuld tid i hverdagen.',
+      'Viden er den største drivkraft til personlig udvikling.'
+    ],
+    quotes: [
+      { text: 'Øvelse gør mester.', author: 'Dansk ordsprog' }
+    ]
+  },
+  {
+    code: 'el',
+    name: 'Greek',
+    nativeName: 'Ελληνικά',
+    flag: '🇬🇷',
+    dir: 'ltr',
+    script: 'Greek',
+    words: [
+      'και', 'το', 'να', 'του', 'που', 'σε', 'τη', 'είναι', 'για', 'από', 'με', 'την', 'τα', 'δεν', 'στο', 'θα', 'πως', 'ότι', 'χρόνος', 'ζωή', 'άνθρωπος', 'ημέρα', 'δουλειά', 'λέξη', 'πληκτρολόγιο', 'ταχύτητα', 'ακρίβεια', 'επιτυχία', 'γνώση'
+    ],
+    sentences: [
+      'Η συνεχής εξάσκηση στην πληκτρολόγηση βελτιώνει την ταχύτητα και την ευχέρεια.',
+      'Η γνώση είναι η μόνη δύναμη που κανείς δεν μπορεί να σου στερήσει.'
+    ],
+    quotes: [
+      { text: 'Γνῶθι σεαυτόν.', author: 'Σωκράτης' }
+    ]
+  },
+  {
+    code: 'he',
+    name: 'Hebrew',
+    nativeName: 'עברית',
+    flag: '🇮🇱',
+    dir: 'rtl',
+    script: 'Hebrew',
+    words: [
+      'של', 'את', 'על', 'לא', 'זה', 'כי', 'הוא', 'עם', 'גם', 'היה', 'כל', 'אבל', 'או', 'אם', 'אני', 'עד', 'יותר', 'זמן', 'חיים', 'יום', 'אדם', 'עבודה', 'מילה', 'מקלדת', 'מהירות', 'דיוק', 'הצלחה', 'ידע'
+    ],
+    sentences: [
+      'אימון יומיומי בהקלדה עיוורת מעלה את מהירות הכתיבה והריכוז.',
+      'ידע הוא המפתח האמיתי להצלחה והתפתחות אישית.'
+    ],
+    quotes: [
+      { text: 'איזהו חכם? הלומד מכל אדם.', author: 'פרקי אבות' }
+    ]
+  },
+  {
+    code: 'ur',
+    name: 'Urdu',
+    nativeName: 'اردو',
+    flag: '🇵🇰',
+    dir: 'rtl',
+    script: 'Arabic',
+    words: [
+      'اور', 'ہے', 'کے', 'کی', 'میں', 'کا', 'سے', 'پر', 'کو', 'ایک', 'ہیں', 'یہ', 'تھا', 'بھی', 'نہیں', 'تو', 'کہ', 'وہ', 'وقت', 'زندگی', 'کام', 'انسان', 'دن', 'کتاب', 'کی بورڈ', 'ٹائپنگ', 'رفتار', 'درستگی', 'کامیابی', 'علم'
+    ],
+    sentences: [
+      'روزانہ ٹائپنگ کی مشق کرنے سے رفتار اور درستگی میں نمایاں اضافہ ہوتا ہے۔',
+      'علم روشنی ہے جو انسان کے ذہن اور زندگی کو منور کرتی ہے۔'
+    ],
+    quotes: [
+      { text: 'محنت کامیابی کی کنجی ہے۔', author: 'اقوالِ زریں' }
+    ]
+  },
+  {
+    code: 'bn',
+    name: 'Bengali',
+    nativeName: 'বাংলা',
+    flag: '🇧🇩',
+    dir: 'ltr',
+    script: 'Bengali',
+    words: [
+      'এবং', 'এই', 'একটি', 'করা', 'হবে', 'না', 'থেকে', 'তার', 'জন্য', 'আছে', 'করে', 'হয়ে', 'সময়', 'জীবন', 'মানুষ', 'দিন', 'কাজ', 'শব্দ', 'কীবোর্ড', 'গতি', 'সঠিকতা', 'সাফল্য', 'শিক্ষা', 'জ্ঞান'
+    ],
+    sentences: [
+      'নিয়মিত কীবোর্ড টাইপিং অনুশীলন আপনার কাজের গতি ও নির্ভুলতা বহুগুণ বৃদ্ধি করে।',
+      'জ্ঞান অর্জনের কোনো বিকল্প নেই, এটি জীবনের সর্বোত্তম সম্পদ।'
+    ],
+    quotes: [
+      { text: 'ঘুমিয়ে আছে শিশুর পিতা সব শিশুরই অন্তরে।', author: 'গোলাম মোস্তফা' }
+    ]
+  },
+  {
+    code: 'ta',
+    name: 'Tamil',
+    nativeName: 'தமிழ்',
+    flag: '🇮🇳',
+    dir: 'ltr',
+    script: 'Tamil',
+    words: [
+      'மற்றும்', 'ஒரு', 'இந்த', 'என்று', 'தன்', 'அவர்', 'அல்லது', 'நேரம்', 'வாழ்க்கை', 'மனிதன்', 'நாள்', 'வேலை', 'சொல்', 'விசைப்பலகை', 'வேகம்', 'துல்லியம்', 'வெற்றி', 'கல்வி', 'அறிவு'
+    ],
+    sentences: [
+      'தொடர்ந்து தட்டச்சு பயிற்சி செய்வது உங்கள் விரல்களின் வேகத்தையும் திறனையும் அதிகரிக்கும்.',
+      'கற்க கசடறக் கற்பவை கற்றபின் நிற்க அதற்குத் தக.'
+    ],
+    quotes: [
+      { text: 'யாதும் ஊரே யாவரும் கேளிர்.', author: 'கணியன் பூங்குன்றனார்' }
+    ]
+  },
+  {
+    code: 'te',
+    name: 'Telugu',
+    nativeName: 'తెలుగు',
+    flag: '🇮🇳',
+    dir: 'ltr',
+    script: 'Telugu',
+    words: [
+      'మరియు', 'ఒక', 'ఈ', 'అని', 'తన', 'సమయం', 'జీవితం', 'మనిషి', 'రోజు', 'పని', 'పదం', 'కీబోర్డ్', 'వేగం', 'ఖచ్చితత్వం', 'విజయం', 'జ్ఞానం'
+    ],
+    sentences: [
+      'క్రమం తప్పకుండా టైపింగ్ సాధన చేయడం ద్వారా వేగం మరియు ఖచ్చితత్వం మెరుగవుతాయి.',
+      'జ్ఞానమే నిజమైన సంపద మరియు విజయానికి మార్గం.'
+    ],
+    quotes: [
+      { text: 'కృషితో నాస్తి దుర్భిక్షం.', author: 'సూక్తి' }
+    ]
+  },
+  {
+    code: 'th',
+    name: 'Thai',
+    nativeName: 'ภาษาไทย',
+    flag: '🇹🇭',
+    dir: 'ltr',
+    script: 'Thai',
+    words: [
+      'และ', 'การ', 'ที่', 'ใน', 'มี', 'เป็น', 'ได้', 'ไม่', 'จะ', 'ให้', 'เวลา', 'ชีวิต', 'คน', 'วัน', 'งาน', 'แป้นพิมพ์', 'ความเร็ว', 'ความแม่นยำ', 'ความสำเร็จ', 'การเรียนรู้'
+    ],
+    sentences: [
+      'การฝึกพิมพ์สัมผัสอย่างสม่ำเสมอช่วยเพิ่มความเร็วในการทำงานได้อย่างมีประสิทธิภาพ',
+      'ความรู้คือพลังอันยิ่งใหญ่ที่จะนำพาไปสู่ความสำเร็จ'
+    ],
+    quotes: [
+      { text: 'ความพยายามอยู่ที่ไหน ความสำเร็จอยู่ที่นั่น', author: 'สุภาษิตไทย' }
+    ]
+  },
+  {
+    code: 'ms',
+    name: 'Malay',
+    nativeName: 'Bahasa Melayu',
+    flag: '🇲🇾',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'dan', 'di', 'yang', 'ke', 'dari', 'ini', 'dalam', 'untuk', 'tidak', 'dengan', 'ada', 'pada', 'itu', 'adalah', 'akan', 'masa', 'hidup', 'hari', 'orang', 'kerja', 'papan kekunci', 'kelajuan', 'ketepatan', 'kejayaan'
+    ],
+    sentences: [
+      'Latihan menaip secara berterusan meningkatkan kemahiran dan ketangkasan jari anda.',
+      'Ilmu adalah pelita yang menerangi jalan menuju kejayaan.'
+    ],
+    quotes: [
+      { text: 'Hendak seribu daya, tak hendak seribu dalih.', author: 'Peribahasa Melayu' }
+    ]
+  },
+  {
+    code: 'bg',
+    name: 'Bulgarian',
+    nativeName: 'Български',
+    flag: '🇧🇬',
+    dir: 'ltr',
+    script: 'Cyrillic',
+    words: [
+      'и', 'в', 'на', 'се', 'за', 'да', 'че', 'е', 'от', 'с', 'по', 'не', 'са', 'как', 'време', 'живот', 'ден', 'човек', 'работа', 'клавиатура', 'скорост', 'точност', 'успех', 'знание'
+    ],
+    sentences: [
+      'Бързото и точно писане на клавиатура значително улеснява вашата работа.',
+      'Знанието е светлина, която отваря вратите към по-добро бъдеще.'
+    ],
+    quotes: [
+      { text: 'Учението е светлина, а неучението — тъмнина.', author: 'Поговорка' }
+    ]
+  },
+  {
+    code: 'hr',
+    name: 'Croatian',
+    nativeName: 'Hrvatski',
+    flag: '🇭🇷',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'i', 'u', 'se', 'na', 'da', 'je', 'za', 'o', 'su', 'od', 'sa', 'kao', 'ali', 'vrijeme', 'zivot', 'dan', 'covjek', 'rad', 'rijec', 'tipkovnica', 'brzina', 'tocnost', 'uspjeh', 'znanje'
+    ],
+    sentences: [
+      'Redovito vježbanje brzog tipkanja na tipkovnici poboljšava fokus i radni učinak.',
+      'Znanje je najvrjednija imovina koju čovjek može steći.'
+    ],
+    quotes: [
+      { text: 'Ustrajnost vodi do cilja.', author: 'Izreka' }
+    ]
+  },
+  {
+    code: 'sr',
+    name: 'Serbian',
+    nativeName: 'Српски',
+    flag: '🇷🇸',
+    dir: 'ltr',
+    script: 'Cyrillic',
+    words: [
+      'и', 'у', 'се', 'на', 'да', 'је', 'за', 'о', 'су', 'од', 'са', 'као', 'али', 'време', 'живот', 'дан', 'човек', 'рад', 'реч', 'тастатура', 'брзина', 'тачност', 'успех', 'знање'
+    ],
+    sentences: [
+      'Брзо и тачно куцање на тастатури значајно повећава вашу продуктивност.',
+      'Знање је светлост која осветљава пут ка бољој будућности.'
+    ],
+    quotes: [
+      { text: 'Ко зна — тај вреди.', author: 'Српска пословица' }
+    ]
+  },
+  {
+    code: 'ka',
+    name: 'Georgian',
+    nativeName: 'ქართული',
+    flag: '🇬🇪',
+    dir: 'ltr',
+    script: 'Georgian',
+    words: [
+      'და', 'რომ', 'ეს', 'არ', 'არის', 'იყო', 'კი', 'თუ', 'დრო', 'ცხოვრება', 'დღე', 'ადამიანი', 'საქმე', 'სიტყვა', 'კლავიატურა', 'სიჩქარე', 'სიზუსტე', 'წარმატება', 'ცოდნა'
+    ],
+    sentences: [
+      'კლავიატურაზე სწრაფი და უშეცდომო ბეჭდვა თქვენი დროის დაზოგვის საუკეთესო გზაა.',
+      'ცოდნა ყველაზე დიდი განძია, რაც კი ადამიანს შეიძლება ჰქონდეს.'
+    ],
+    quotes: [
+      { text: 'რასაცა გასცემ შენია, რაც არა - დაკარგულია.', author: 'შოთა რუსთაველი' }
+    ]
+  },
+  {
+    code: 'hy',
+    name: 'Armenian',
+    nativeName: 'Հայերեն',
+    flag: '🇦🇲',
+    dir: 'ltr',
+    script: 'Armenian',
+    words: [
+      'և', 'որ', 'այս', 'չի', 'է', 'էր', 'մի', 'եթե', 'ժամանակ', 'կյանք', 'օր', 'մարդ', 'աշխատանք', 'բառ', 'ստեղնաշար', 'արագություն', 'ճշգրտություն', 'հաջողություն', 'գիտելիք'
+    ],
+    sentences: [
+      'Արագ և ճշգրիտ մեքենագրությունը ժամանակակից աշխարհում անփոխարինելի հմտություն է։',
+      'Գիտելիքը լույս է և հաջողության հիմնասյունը։'
+    ],
+    quotes: [
+      { text: 'Ով աշխատի, նա կուտի։', author: 'Հայկական ասացվածք' }
+    ]
+  },
+  {
+    code: 'mn',
+    name: 'Mongolian',
+    nativeName: 'Монгол',
+    flag: '🇲🇳',
+    dir: 'ltr',
+    script: 'Cyrillic',
+    words: [
+      'ба', 'энэ', 'нэг', 'байх', 'нь', 'гэж', 'бол', 'цаг', 'амьдрал', 'өдөр', 'хүн', 'ажил', 'үг', 'гар', 'хурд', 'нарийвчлал', 'амжилт', 'эрдэм', 'мэдлэг'
+    ],
+    sentences: [
+      'Гар дээр хурдан бөгөөд алдаагүй бичих нь ажлын бүтээмжийг эрс нэмэгдүүлдэг.',
+      'Эрдэм сурахад насны хязгаар үгүй.'
+    ],
+    quotes: [
+      { text: 'Эрдэмтэй хүн даруу, их мөрөн дөлгөөн.', author: 'Монгол ардын зүйр үг' }
+    ]
+  },
+  {
+    code: 'la',
+    name: 'Latin',
+    nativeName: 'Latina',
+    flag: '🏛️',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'et', 'in', 'est', 'non', 'ad', 'ut', 'cum', 'per', 'sed', 'ex', 'tempus', 'vita', 'dies', 'homo', 'opus', 'verbum', 'celeritas', 'accuratio', 'victoria', 'scientia', 'sapientia'
+    ],
+    sentences: [
+      'Exercitatio artem parat et facultatem celeriter scribendi auget.',
+      'Scientia ipsa potentia est in omnibus vitae viis.'
+    ],
+    quotes: [
+      { text: 'Veni, vidi, vici.', author: 'Julius Caesar' },
+      { text: 'Carpe diem.', author: 'Horatius' }
+    ]
   }
 ];
 
