@@ -30,8 +30,6 @@ import { DinoGameView } from './components/dino/DinoGameView';
 import { AdminView } from './components/admin/AdminView';
 import { OwnerAboutView } from './components/owner/OwnerAboutView';
 import { LanguageSelectView } from './components/languages/LanguageSelectView';
-import { YoshAvlodAdModal } from './components/sponsor/YoshAvlodAdModal';
-import { NetworkStatusGuard } from './components/network/NetworkStatusGuard';
 import { antiCheatManager } from './utils/antiCheat';
 
 import {
@@ -74,8 +72,6 @@ function MainAppContent() {
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isInitialAdOpen, setIsInitialAdOpen] = useState<boolean>(true); // Opens on site entry (10s countdown)
-  const [isCornerAdOpen, setIsCornerAdOpen] = useState<boolean>(false);
   const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
   const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
 
@@ -143,17 +139,6 @@ function MainAppContent() {
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number; rawWpm: number; errors: number }[]>([]);
   const [finalResult, setFinalResult] = useState<TypingResult | null>(null);
-
-  // Periodic Sponsor Prompt (Every 60s of browsing when user is not typing)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isTestActive) {
-        setIsCornerAdOpen(true);
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [isTestActive]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -609,25 +594,6 @@ function MainAppContent() {
       />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
-
-      {/* Network Offline / VPN Detection Guard */}
-      <NetworkStatusGuard />
-
-      {/* 10-Second Sponsor Ad on Page Entry */}
-      <YoshAvlodAdModal
-        isOpen={isInitialAdOpen}
-        onClose={() => setIsInitialAdOpen(false)}
-        variant="modal"
-        durationSeconds={10}
-      />
-
-      {/* 10-Second Periodic Corner Sponsor Prompt */}
-      <YoshAvlodAdModal
-        isOpen={isCornerAdOpen}
-        onClose={() => setIsCornerAdOpen(false)}
-        variant="corner"
-        durationSeconds={10}
-      />
     </div>
   );
 }

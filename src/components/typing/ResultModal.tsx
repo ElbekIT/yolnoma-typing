@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { TypingResult } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
-import { YoshAvlodBanner } from '../sponsor/YoshAvlodBanner';
 
 interface ResultModalProps {
   result: TypingResult | null;
@@ -294,7 +293,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
         {/* Ultra-lightweight Timeline Chart */}
         {result.wpmHistory && result.wpmHistory.length > 1 && (
-          <div className="mb-4">
+          <div className="mb-5">
             <LightweightSvgChart
               data={result.wpmHistory}
               mainColor={themeConfig.mainColor}
@@ -302,11 +301,6 @@ export const ResultModal: React.FC<ResultModalProps> = ({
             />
           </div>
         )}
-
-        {/* Sponsor Banner (10s Countdown) */}
-        <div className="mb-4">
-          <YoshAvlodBanner autoCloseSeconds={10} />
-        </div>
 
         {/* Action Buttons Bar */}
         <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-[var(--sub-alt)]">
