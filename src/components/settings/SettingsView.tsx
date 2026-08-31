@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import { themes } from '../../config/themes';
 import { languagesList } from '../../config/languages';
 import { ThemeMode, CaretStyle, TapeMode, SoundProfile, LanguageCode } from '../../types';
+import { YoshAvlodBanner } from '../sponsor/YoshAvlodBanner';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -112,6 +113,9 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
+      {/* Official Sponsor Showcase Banner (10s Countdown with Auto-collapse) */}
+      <YoshAvlodBanner autoCloseSeconds={10} />
+
       <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl">
         <h2 className="text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
           <Sliders className="w-6 h-6 text-[var(--main-color)]" />
