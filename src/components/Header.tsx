@@ -72,6 +72,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
+    { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
     { id: 'dino', label: 'Dino Runner (O\'yin)', enLabel: 'Dino Runner Game', icon: Gamepad2 },

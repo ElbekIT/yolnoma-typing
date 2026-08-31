@@ -17,6 +17,7 @@ interface TypingHeaderProps {
   setCustomText: (txt: string) => void;
   onReset: () => void;
   isTestActive?: boolean;
+  onOpenLanguagePage?: () => void;
 }
 
 export const TypingHeader: React.FC<TypingHeaderProps> = ({
@@ -27,7 +28,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   wordCountMode,
   setWordCountMode,
   onReset,
-  isTestActive = false
+  isTestActive = false,
+  onOpenLanguagePage
 }) => {
   const { language, setLanguage, modeBarWidth, modeBarScale, tapeMode, setTapeMode } = useSettings();
   const [showLangModal, setShowLangModal] = useState(false);
@@ -267,11 +269,15 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3">
           <button
             onClick={() => {
-              setSearchQuery('');
-              setShowLangModal(true);
+              if (onOpenLanguagePage) {
+                onOpenLanguagePage();
+              } else {
+                setSearchQuery('');
+                setShowLangModal(true);
+              }
             }}
             className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-80 hover:opacity-100 py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40"
-            title="Tilni tanlash"
+            title="Tilni tanlash sahifasiga o'tish"
           >
             <Globe className="w-3.5 h-3.5" />
             <span>{currentLang.flag} {currentLang.nativeName}</span>

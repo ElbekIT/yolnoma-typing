@@ -126,7 +126,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     name: currentName,
     avatarUrl: currentAvatar,
     wpm: 0,
-    accuracy: 100,
+    accuracy: 0,
     progressPercent: 0,
     carColor: 'blue'
   });
@@ -136,7 +136,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     name: 'Raqib (Kutilmoqda)',
     avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=Opponent',
     wpm: 0,
-    accuracy: 100,
+    accuracy: 0,
     progressPercent: 0,
     carColor: 'red',
     isBot: false
@@ -243,7 +243,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
           name: currentName,
           avatarUrl: currentAvatar,
           wpm: 0,
-          accuracy: 100,
+          accuracy: 0,
           progressPercent: 0,
           carColor: 'red'
         };
@@ -355,7 +355,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         name: currentName,
         avatarUrl: currentAvatar,
         wpm: 0,
-        accuracy: 100,
+        accuracy: 0,
         progressPercent: 0,
         carColor: 'blue'
       };
@@ -366,7 +366,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         name: 'Raqib kutilmoqda...',
         avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=waiting',
         wpm: 0,
-        accuracy: 100,
+        accuracy: 0,
         progressPercent: 0,
         carColor: 'red'
       });
@@ -514,7 +514,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         name: currentName,
         avatarUrl: currentAvatar,
         wpm: 0,
-        accuracy: 100,
+        accuracy: 0,
         progressPercent: 0,
         carColor: 'blue'
       });
@@ -524,7 +524,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         name: 'Cyber_Racer_Bot',
         avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberBot',
         wpm: 0,
-        accuracy: 100,
+        accuracy: 0,
         progressPercent: 0,
         carColor: 'red',
         isBot: true

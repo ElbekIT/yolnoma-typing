@@ -173,14 +173,14 @@ export function calculateWpm(
   elapsedSeconds: number,
   totalTypedCharsCount?: number
 ): number {
-  if (elapsedSeconds <= 0) return 0;
+  if (elapsedSeconds <= 0 || correctCharsCount <= 0) return 0;
   const timeInMinutes = elapsedSeconds / 60;
+  if (timeInMinutes <= 0) return 0;
 
   if (totalTypedCharsCount !== undefined && totalTypedCharsCount > 0) {
-    const incorrectCount = Math.max(0, totalTypedCharsCount - correctCharsCount);
-    // Errors penalize score: subtract 2.0 penalty chars per error
-    // Making mistakes directly drops WPM down!
-    const netCorrectChars = Math.max(0, correctCharsCount - incorrectCount * 2.0);
+    const uncorrectedErrors = Math.max(0, totalTypedCharsCount - correctCharsCount);
+    // Standard Net WPM calculation: (Correct Characters - Uncorrected Errors) / 5 / minutes
+    const netCorrectChars = Math.max(0, correctCharsCount - uncorrectedErrors);
     const wordsTyped = netCorrectChars / 5;
     return Math.max(0, Math.round(wordsTyped / timeInMinutes));
   }
@@ -198,19 +198,17 @@ export function calculateNetWpm(
 }
 
 export function calculateCpm(typedCharsCount: number, elapsedSeconds: number): number {
-  if (elapsedSeconds <= 0) return 0;
+  if (elapsedSeconds <= 0 || typedCharsCount <= 0) return 0;
   const timeInMinutes = elapsedSeconds / 60;
+  if (timeInMinutes <= 0) return 0;
   return Math.max(0, Math.round(typedCharsCount / timeInMinutes));
 }
 
 export function calculateAccuracy(correctChars: number, totalTypedChars: number): number {
-  if (totalTypedChars <= 0) return 100;
+  if (totalTypedChars <= 0) return 0;
   if (correctChars <= 0) return 0;
 
-  const wrongChars = Math.max(0, totalTypedChars - correctChars);
-  // Errors add a 1.5x penalty to total count, causing Accuracy to drop sharply on mistakes
-  const effectiveTotal = correctChars + wrongChars * 1.5;
-  const acc = (correctChars / effectiveTotal) * 100;
+  const acc = (correctChars / totalTypedChars) * 100;
   return Math.max(0, Math.min(100, Math.round(acc)));
 }
 

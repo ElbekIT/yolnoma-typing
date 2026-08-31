@@ -29,6 +29,7 @@ import { LessonsView } from './components/lessons/LessonsView';
 import { DinoGameView } from './components/dino/DinoGameView';
 import { AdminView } from './components/admin/AdminView';
 import { OwnerAboutView } from './components/owner/OwnerAboutView';
+import { LanguageSelectView } from './components/languages/LanguageSelectView';
 import { antiCheatManager } from './utils/antiCheat';
 
 import {
@@ -433,10 +434,11 @@ function MainAppContent() {
     }
   };
 
-  // Live stats calculation
-  const liveElapsed = startTimeRef.current > 0 && isTestActive
-    ? Math.max(1, Math.floor((Date.now() - startTimeRef.current) / 1000))
-    : (elapsedSeconds || 1);
+  // Live stats calculation (Exact International Standard - Starts at 0 WPM and 0% ACC)
+  const hasStartedTyping = typedInput.length > 0 && isTestActive && startTimeRef.current > 0;
+  const liveElapsed = hasStartedTyping
+    ? Math.max(0.5, (Date.now() - startTimeRef.current) / 1000)
+    : 0;
 
   const targetChars = targetText.split('');
   const typedChars = typedInput.split('');
@@ -445,10 +447,16 @@ function MainAppContent() {
     if (idx < targetChars.length && ch === targetChars[idx]) liveCorrect++;
   });
 
-  const totalAttempted = Math.max(typedInput.length, totalKeystrokesRef.current);
-  const liveWpm = calculateWpm(liveCorrect, liveElapsed, totalAttempted);
-  const liveCpm = calculateCpm(typedInput.length, liveElapsed);
-  const liveAcc = calculateAccuracy(liveCorrect, totalAttempted);
+  const totalAttempted = typedInput.length;
+  const liveWpm = hasStartedTyping && totalAttempted > 0
+    ? calculateWpm(liveCorrect, liveElapsed, totalAttempted)
+    : 0;
+  const liveCpm = hasStartedTyping && totalAttempted > 0
+    ? calculateCpm(typedInput.length, liveElapsed)
+    : 0;
+  const liveAcc = totalAttempted > 0
+    ? calculateAccuracy(liveCorrect, totalAttempted)
+    : 0;
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';
@@ -477,6 +485,7 @@ function MainAppContent() {
               setCustomText={setCustomText}
               onReset={initTestText}
               isTestActive={isTestActive}
+              onOpenLanguagePage={() => setActiveTab('languages')}
             />
 
             <LiveStats
@@ -508,6 +517,16 @@ function MainAppContent() {
               }}
             />
           </div>
+        )}
+
+        {activeTab === 'languages' && (
+          <LanguageSelectView
+            onConfirm={() => {
+              initTestText();
+              setActiveTab('typing');
+            }}
+            onCancel={() => setActiveTab('typing')}
+          />
         )}
 
         {activeTab === 'lessons' && <LessonsView />}
