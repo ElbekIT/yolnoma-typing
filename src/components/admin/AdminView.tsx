@@ -38,6 +38,7 @@ import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
+import { antiCheatManager } from '../../utils/antiCheat';
 import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
@@ -479,6 +480,9 @@ export const AdminView: React.FC = () => {
     try {
       // Remove from bannedUsers node
       await remove(ref(rtdb, `bannedUsers/${u.uid}`));
+
+      // If unbanning current device/user, clear local storage device ban
+      antiCheatManager.clearDeviceBan();
 
       // Update in users node
       await update(ref(rtdb, `users/${u.uid}`), {

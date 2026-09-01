@@ -476,6 +476,11 @@ function MainAppContent() {
 
   const currentTargetChar = targetText[typedInput.length] || '';
 
+  // DevTools inspection block
+  if (isDevToolsBlocked) {
+    return <DevToolsBlockedScreen />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
       <Header
