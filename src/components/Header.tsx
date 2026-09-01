@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake },
     { id: 'owner', label: 'Sayt Haqida & Muallif', enLabel: 'About & Creator', icon: Sparkles },
-    ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
+    ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
   ];

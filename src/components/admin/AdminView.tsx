@@ -54,7 +54,8 @@ import {
   logoutAdminBackend,
   isAdminSessionActive,
   clearAdminSession,
-  isOwnerUser
+  isOwnerUser,
+  isSuperOwnerEmail
 } from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {

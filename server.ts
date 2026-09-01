@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
-import cookieParser from 'cookie-parser';
 import { createServer as createViteServer } from 'vite';
 
 const app = express();
@@ -332,7 +331,6 @@ app.use((req, res, next) => {
 });
 
 // Security & Body parsing with strict size limits
-app.use(cookieParser());
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
@@ -551,14 +549,13 @@ const serverAnnouncements: StoredAnnouncement[] = [
 const serverVerifiedLeaderboard: VerifiedTypingRecord[] = [];
 
 // -------------------------------------------------------------
-// ADMIN AUTHENTICATION MIDDLEWARE (HttpOnly Cookie + Header Support)
+// ADMIN AUTHENTICATION MIDDLEWARE
 // -------------------------------------------------------------
 
 const requireAdminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
-  const token = tokenFromCookie || tokenFromHeader || (req.body && req.body.adminToken) || (req.query && req.query.adminToken as string);
+  const token = tokenFromHeader || (req.body && req.body.adminToken) || (req.query && req.query.adminToken as string);
 
   if (!token) {
     return res.status(401).json({ success: false, error: 'Avtorizatsiya talab qilinadi (Token topilmadi)' });
@@ -570,53 +567,12 @@ const requireAdminAuth = (req: express.Request, res: express.Response, next: exp
   }
 
   (req as any).adminUser = verification.payload;
-  (req as any).adminToken = token;
   next();
 };
 
 // -------------------------------------------------------------
 // PUBLIC API ENDPOINTS
 // -------------------------------------------------------------
-
-// -------------------------------------------------------------
-// DYNAMIC SECURE SYSTEM BOOTSTRAP & FIREBASE CONFIG
-// All sensitive keys reside on the backend server only.
-// -------------------------------------------------------------
-const SERVER_FIREBASE_CONFIG = {
-  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAGUfqFnP1R__rX4wiWfYMLF-z74rG3ucQ",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "typing-euro.firebaseapp.com",
-  databaseURL: process.env.FIREBASE_DATABASE_URL || "https://typing-euro-default-rtdb.firebaseio.com",
-  projectId: process.env.FIREBASE_PROJECT_ID || "typing-euro",
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "typing-euro.firebasestorage.app",
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "595263740564",
-  appId: process.env.FIREBASE_APP_ID || "1:595263740564:web:224a293689db4fe679f281",
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-Y0X828SHR9"
-};
-
-// Dynamic bootstrap script served directly by backend
-app.get('/api/system/bootstrap.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
-  const payload = JSON.stringify(SERVER_FIREBASE_CONFIG);
-  const script = `(function(){try{window.__YOLNOMA_BOOTSTRAP__={cfg:${payload},t:${Date.now()},v:"3.0"};}catch(e){}})();`;
-  res.send(script);
-});
-
-// Dynamic JSON config endpoint (/api/config and /api/system/client-config)
-const sendClientConfig = (req: express.Request, res: express.Response) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.json({
-    success: true,
-    config: SERVER_FIREBASE_CONFIG,
-    ...SERVER_FIREBASE_CONFIG
-  });
-};
-
-app.get('/api/config', sendClientConfig);
-app.get('/api/system/client-config', sendClientConfig);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -986,14 +942,6 @@ app.post('/api/admin/login', (req, res) => {
       isRootOwner: isOwnerEmailValid
     });
 
-    // Set secure HttpOnly cookie for session protection
-    res.cookie('yolnoma_admin_token', tokenData.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 6 * 60 * 60 * 1000 // 6 hours
-    });
-
     return res.json({
       success: true,
       message: 'Admin autentifikatsiyasi muvaffaqiyatli yakunlandi.',
@@ -1015,8 +963,7 @@ app.post('/api/admin/login', (req, res) => {
 app.post('/api/admin/verify-token', (req, res) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
-  const token = tokenFromCookie || tokenFromHeader || req.body.token;
+  const token = tokenFromHeader || req.body.token;
 
   if (!token) {
     return res.status(401).json({ valid: false, error: 'Token topilmadi' });
@@ -1039,15 +986,7 @@ app.post('/api/admin/verify-token', (req, res) => {
 app.post('/api/admin/logout', (req, res) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
-  const token = tokenFromCookie || tokenFromHeader || req.body.token;
-
-  // Clear HttpOnly cookie
-  res.clearCookie('yolnoma_admin_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  });
+  const token = tokenFromHeader || req.body.token;
 
   if (token) {
     invalidatedTokens.add(token);
@@ -1068,9 +1007,9 @@ app.post('/api/admin/logout', (req, res) => {
 // 4. Admin Active Sessions: List All Active Sessions
 app.get('/api/admin/sessions', requireAdminAuth, (req, res) => {
   try {
-    const currentToken = (req as any).adminToken || req.cookies?.['yolnoma_admin_token'] || (
-      req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : ''
-    );
+    const currentToken = req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.substring(7)
+      : '';
 
     // Clean expired sessions (older than 24 hours)
     const now = Date.now();
