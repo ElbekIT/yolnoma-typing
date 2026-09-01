@@ -68,10 +68,11 @@ function persistAdminSession(token: string, expiresAt: number, sessionId?: strin
     sessionStorage.setItem(ADMIN_AUTH_FLAG, 'true');
     if (sessionId) sessionStorage.setItem(ADMIN_SESSION_ID_KEY, sessionId);
 
-    localStorage.setItem(ADMIN_TOKEN_KEY, token);
-    localStorage.setItem(ADMIN_EXPIRES_KEY, String(expiresAt));
-    localStorage.setItem(ADMIN_AUTH_FLAG, 'true');
-    if (sessionId) localStorage.setItem(ADMIN_SESSION_ID_KEY, sessionId);
+    // Explicitly do NOT store in localStorage so refreshing page or closing tab requires re-auth
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(ADMIN_EXPIRES_KEY);
+    localStorage.removeItem(ADMIN_AUTH_FLAG);
+    localStorage.removeItem(ADMIN_SESSION_ID_KEY);
   } catch (e) {
     console.error('Error persisting admin session:', e);
   }
@@ -133,7 +134,7 @@ export async function loginAdminBackend(
 
     if (res.ok && data && data.success) {
       const token = data.token || `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      const expiresAt = data.expiresAt || Date.now() + 24 * 60 * 60 * 1000;
+      const expiresAt = data.expiresAt || Date.now() + 6 * 60 * 60 * 1000;
       persistAdminSession(token, expiresAt, data.sessionId);
       return { success: true, sessionId: data.sessionId };
     }
@@ -150,7 +151,7 @@ export async function loginAdminBackend(
     // Fallback if offline/network glitch and local hash is verified
     if (isLocallyValid && isOwnerAcc) {
       const token = `adm_sec_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      const expiresAt = Date.now() + 6 * 60 * 60 * 1000;
       persistAdminSession(token, expiresAt);
       return { success: true };
     }
@@ -163,7 +164,7 @@ export async function loginAdminBackend(
     // Network offline or container dev mode
     if (isLocallyValid && isOwnerAcc) {
       const token = `adm_sec_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      const expiresAt = Date.now() + 6 * 60 * 60 * 1000;
       persistAdminSession(token, expiresAt);
       return { success: true };
     }
@@ -179,7 +180,7 @@ export async function loginAdminBackend(
  */
 export async function fetchAdminSessions(): Promise<{ success: boolean; sessions: AdminSessionItem[]; error?: string }> {
   const token = getAdminToken();
-  if (!token) return { success: false, sessions: [], error: 'Token mavjud emas' };
+  if (!token) return { success: false, sessions: [], error: 'Token topilmadi. Qayta kiring.' };
 
   try {
     const res = await fetch('/api/admin/sessions', {
@@ -188,14 +189,19 @@ export async function fetchAdminSessions(): Promise<{ success: boolean; sessions
       }
     });
 
-    if (res.ok) {
-      const data = await res.json();
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data && data.success) {
       return { success: true, sessions: data.sessions || [] };
     }
 
-    return { success: false, sessions: [], error: 'Seanslarni yuklashda xatolik' };
+    return {
+      success: false,
+      sessions: [],
+      error: data?.error || 'Seanslarni yuklashda xatolik yuz berdi'
+    };
   } catch {
-    return { success: false, sessions: [] };
+    return { success: false, sessions: [], error: 'Server bilan aloqa o\'rnatilmadi' };
   }
 }
 

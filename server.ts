@@ -1006,35 +1006,71 @@ app.post('/api/admin/logout', (req, res) => {
 
 // 4. Admin Active Sessions: List All Active Sessions
 app.get('/api/admin/sessions', requireAdminAuth, (req, res) => {
-  const currentToken = req.headers.authorization?.startsWith('Bearer ')
-    ? req.headers.authorization.substring(7)
-    : '';
+  try {
+    const currentToken = req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.substring(7)
+      : '';
 
-  // Clean expired sessions
-  const now = Date.now();
-  for (const [sId, sess] of activeAdminSessions.entries()) {
-    if (now - sess.lastActive > 24 * 60 * 60 * 1000) {
-      activeAdminSessions.delete(sId);
+    // Clean expired sessions (older than 24 hours)
+    const now = Date.now();
+    for (const [sId, sess] of activeAdminSessions.entries()) {
+      if (now - sess.lastActive > 24 * 60 * 60 * 1000) {
+        activeAdminSessions.delete(sId);
+      }
     }
+
+    const clientIp = getClientIp(req);
+    const adminUser = (req as any).adminUser;
+
+    // If current session is not registered yet (e.g. server restart), add it automatically
+    let hasCurrent = false;
+    for (const sess of activeAdminSessions.values()) {
+      if (sess.token === currentToken) {
+        sess.lastActive = now;
+        hasCurrent = true;
+        break;
+      }
+    }
+
+    if (!hasCurrent && currentToken) {
+      const autoId = `adm_sess_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+      activeAdminSessions.set(autoId, {
+        sessionId: autoId,
+        token: currentToken,
+        username: adminUser?.sub || 'Admin (Root)',
+        email: ROOT_OWNER_EMAIL,
+        ip: clientIp,
+        userAgent: (req.headers['user-agent'] || 'Asosiy Boshqaruv Qurilmasi').substring(0, 100),
+        loginTime: Date.now(),
+        lastActive: Date.now(),
+        isRootOwner: true
+      });
+    }
+
+    const sessions = Array.from(activeAdminSessions.values()).map((s) => ({
+      sessionId: s.sessionId,
+      username: s.username && s.username.length > 8 ? `${s.username.slice(0, 4)}***${s.username.slice(-4)}` : (s.username || 'Admin'),
+      emailMasked: s.email ? s.email.replace(/^(.{2})(.*)(@.*)$/, '$1***$3') : 'yu***@gmail.com',
+      ip: s.ip || clientIp,
+      userAgent: s.userAgent || 'Desktop Browser',
+      loginTime: s.loginTime || Date.now(),
+      lastActive: s.lastActive || Date.now(),
+      isRootOwner: s.isRootOwner !== false,
+      isCurrent: s.token === currentToken || activeAdminSessions.size === 1
+    }));
+
+    return res.json({
+      success: true,
+      sessions,
+      totalActive: sessions.length
+    });
+  } catch (err) {
+    console.error('Error fetching admin sessions:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Seanslarni yuklashda xatolik yuz berdi'
+    });
   }
-
-  const sessions = Array.from(activeAdminSessions.values()).map((s) => ({
-    sessionId: s.sessionId,
-    username: s.username.length > 8 ? `${s.username.slice(0, 4)}***${s.username.slice(-4)}` : 'Admin',
-    emailMasked: s.email ? s.email.replace(/^(.{2})(.*)(@.*)$/, '$1***$3') : '***@***',
-    ip: s.ip,
-    userAgent: s.userAgent,
-    loginTime: s.loginTime,
-    lastActive: s.lastActive,
-    isRootOwner: s.isRootOwner,
-    isCurrent: s.token === currentToken
-  }));
-
-  res.json({
-    success: true,
-    sessions,
-    totalActive: sessions.length
-  });
 });
 
 // 5. Admin Active Sessions: Terminate / Kick Stranger Admin

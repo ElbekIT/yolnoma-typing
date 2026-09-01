@@ -28,6 +28,7 @@ export const AdminSessionsTab: React.FC = () => {
       const res = await fetchAdminSessions();
       if (res.success) {
         setSessions(res.sessions);
+        setNotification(null);
       } else if (res.error) {
         setNotification({ type: 'error', message: res.error });
       }

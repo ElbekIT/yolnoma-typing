@@ -62,7 +62,8 @@ export const AdminView: React.FC = () => {
   const { user, profile } = useAuth();
 
   // 3-Step Backend Authentication Gate State (Username + Password + 2FA PIN)
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());
+  // Strictly resets whenever the admin tab is left, navigated away from, or refreshed
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [inputUsername, setInputUsername] = useState('');
   const [inputPassword, setInputPassword] = useState('');
   const [input2FA, setInput2FA] = useState('');
@@ -103,12 +104,11 @@ export const AdminView: React.FC = () => {
 
   const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
 
-  // Keep authenticated state stable across tab switches and reloads
+  // Strict session cleanup on unmount: when navigating away to other tabs (typing, dino, leaderboard, etc.), clear session immediately
   useEffect(() => {
-    const active = isAdminSessionActive();
-    if (active && !isAdminAuthenticated) {
-      setIsAdminAuthenticated(true);
-    }
+    return () => {
+      clearAdminSession();
+    };
   }, []);
 
   // Lockout countdown timer
