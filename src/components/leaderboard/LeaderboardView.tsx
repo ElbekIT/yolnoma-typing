@@ -614,7 +614,7 @@ export const LeaderboardView: React.FC = () => {
                 {getHeaderTitle()}
               </h1>
               <p className="text-xs text-[var(--sub-color)] mt-0.5">
-                Real-vaqt rejimida sinxronlanadi • Jami {activeFilteredList.length} ta ishtirokchi
+                Jonli reyting jadvali • Jami {activeFilteredList.length} ta ishtirokchi
               </p>
             </div>
 

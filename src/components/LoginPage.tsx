@@ -63,42 +63,42 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Top Brand Header */}
-      <header className="max-w-7xl w-full mx-auto p-6 flex items-center justify-between z-10">
+      <header className="max-w-7xl w-full mx-auto p-4 sm:p-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
           <img
             src="/yolnoma_icon.svg"
             alt="Yolnoma Logo"
-            className="w-11 h-11 object-contain drop-shadow-xl"
+            className="w-9 h-9 sm:w-11 sm:h-11 object-contain drop-shadow-xl"
           />
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-              Yolnoma <span className="text-cyan-400 font-bold text-xs px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/30">PRO ARENA</span>
+            <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">
+              Yolnoma <span className="text-cyan-400 font-bold text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/30">PRO ARENA</span>
             </h1>
-            <p className="text-[11px] text-slate-400 font-medium">Uzbekistan #1 Speed Typing Platform</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium">Uzbekistan #1 Speed Typing Platform</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-full">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Firebase Realtime Sync Live</span>
+        <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 bg-cyan-950/40 border border-cyan-500/30 px-3 py-1.5 rounded-full">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span>Online Arena</span>
         </div>
       </header>
 
       {/* Main Content Hero Section */}
-      <main className="max-w-6xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center z-10 my-auto">
+      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center z-10 my-auto">
         {/* Left Side: Pitch & Features */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-xs font-extrabold tracking-wider uppercase">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-[11px] sm:text-xs font-extrabold tracking-wider uppercase">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Monkeytype Level Typing Experience</span>
+            <span>Tez Yozish Platformasi</span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
             Klaviaturada yozish <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400">tezligingizni</span> maksimal darajaga ko'taring
           </h2>
 
-          <p className="text-slate-300 text-base leading-relaxed max-w-xl">
-            Google yoki GitHub orqali tizimga kiring va barcha natijalaringiz real vaqt rejimida har bir qurilmangizda avtomatik va xavfsiz saqlansin. Global reytingda o'z o'rningizni egallang!
+          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
+            Google yoki GitHub orqali tizimga kiring va barcha natijalaringiz har bir qurilmangizda avtomatik va xavfsiz saqlansin. Global reytingda o'z o'rningizni egallang!
           </p>
 
           {/* Key Advantages Grid */}

@@ -96,8 +96,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)] border-b border-[var(--sub-alt)] px-4 py-2.5 transition-colors duration-150">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)] border-b border-[var(--sub-alt)] px-3 sm:px-4 py-2.5 safe-top transition-colors duration-150">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Side: Brand Logo & Navigation Icons */}
           <div className="flex items-center gap-3 sm:gap-6">
             {/* 3-lines Hamburger Button */}
@@ -456,7 +456,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
           />
 
           {/* Drawer Container */}
-          <div className="relative w-80 sm:w-88 max-w-[90vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-5 flex flex-col justify-between shadow-xl overflow-y-auto">
+          <div className="relative w-80 sm:w-88 max-w-[90vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-4 sm:p-5 flex flex-col justify-between shadow-xl overflow-y-auto safe-top safe-bottom">
             {/* Top Drawer Section */}
             <div>
               {/* Drawer Header */}

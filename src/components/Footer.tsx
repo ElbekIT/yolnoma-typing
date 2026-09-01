@@ -9,7 +9,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenOwner, onOpenAdmin }) => {
   return (
-    <footer className="w-full py-4 px-4 mt-auto select-none">
+    <footer className="w-full py-4 px-4 mt-auto select-none safe-bottom">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-[var(--sub-color)] opacity-70 hover:opacity-100 transition-opacity">
         {/* Left Info */}
         <div className="flex items-center gap-3">

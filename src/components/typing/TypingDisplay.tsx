@@ -322,13 +322,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [tapeMode, currentTypedLen, activeWordIdx, targetText]);
 
-  const calculatedFontSize = Math.max(22, fontSize || 28);
+  const baseFontSize = Math.max(22, fontSize || 28);
   const lineHeightMultiplier = 1.55;
   // In Tape Mode: height is 1 single line; in standard mode: 3 lines
   const isTape = tapeMode !== 'off';
   const containerHeight = isTape
-    ? Math.round(calculatedFontSize * lineHeightMultiplier * 1.35)
-    : Math.round(calculatedFontSize * lineHeightMultiplier * 3);
+    ? Math.round(baseFontSize * lineHeightMultiplier * 1.35)
+    : Math.round(baseFontSize * lineHeightMultiplier * 3);
 
   return (
     <div
@@ -336,12 +336,12 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
       onMouseMove={handleMouseMove}
-      className={`relative w-full max-w-[1220px] xl:max-w-[1300px] mx-auto my-3 sm:my-5 bg-transparent border-0 select-none px-2 sm:px-4 md:px-6 ${
+      className={`relative w-full max-w-[1220px] xl:max-w-[1300px] mx-auto my-2 sm:my-5 bg-transparent border-0 select-none px-2 sm:px-4 md:px-6 touch-manipulation ${
         mouseHidden ? 'cursor-none' : 'cursor-text'
       }`}
       style={{
         fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', 'Fira Code', monospace`,
-        fontSize: `${calculatedFontSize}px`,
+        fontSize: `clamp(18px, 4.2vw, ${baseFontSize}px)`,
         direction: isRtl ? 'rtl' : 'ltr'
       }}
     >
@@ -349,6 +349,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       <input
         ref={inputRef}
         type="text"
+        inputMode="text"
+        enterKeyHint="done"
         value={typedInput}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
@@ -359,7 +361,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         autoComplete="off"
         autoCapitalize="off"
         autoCorrect="off"
-        spellCheck="false"
+        spellCheck={false}
         disabled={isTestFinished}
         className="absolute top-0 left-0 w-full h-[70%] opacity-0 z-0 cursor-text focus:outline-none"
       />

@@ -225,8 +225,8 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-5 sm:p-7 shadow-2xl text-[var(--text-color)] my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-y-auto safe-top safe-bottom">
+      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-4 sm:p-7 shadow-2xl text-[var(--text-color)] my-auto max-h-[94vh] overflow-y-auto">
         
         {/* Top Header & PB Notification */}
         <div className="flex items-center justify-between gap-2 mb-5 pb-3 border-b border-[var(--sub-alt)]">
