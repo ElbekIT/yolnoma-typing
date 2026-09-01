@@ -259,15 +259,31 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
 
-  // Windowed word rendering for ultra-fast performance in 3-line mode, or full words in tape mode
-  const visibleWords = useMemo(() => {
-    if (tapeMode !== 'off') {
-      return parsedWords;
-    }
-    const start = Math.max(0, activeWordIdx - 30);
-    const end = Math.min(parsedWords.length, activeWordIdx + 140);
-    return parsedWords.slice(start, end);
-  }, [parsedWords, activeWordIdx, tapeMode]);
+  // All parsed words rendered directly for rock-solid ref retention & smooth scrolling
+  const visibleWords = parsedWords;
+
+  // Measure dynamic line height based on actual rendered font & viewport
+  const [measuredLineHeight, setMeasuredLineHeight] = useState<number>(36);
+
+  useLayoutEffect(() => {
+    const updateLineHeight = () => {
+      const firstEl = wordRefs.current[0];
+      if (firstEl) {
+        const h = firstEl.offsetHeight;
+        if (h > 0) {
+          setMeasuredLineHeight(h);
+        }
+      }
+    };
+
+    updateLineHeight();
+    const timer = setTimeout(updateLineHeight, 50);
+    window.addEventListener('resize', updateLineHeight);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateLineHeight);
+    };
+  }, [fontFamily, fontSize, targetText]);
 
   // Reset scroll on test restart or text change
   useEffect(() => {
@@ -277,18 +293,33 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [currentTypedLen, targetText]);
 
-  // Handle smooth 3-line vertical scrolling (Standard mode)
+  // Handle smooth 3-line vertical scrolling (Monkeytype Standard Mode)
   useLayoutEffect(() => {
     if (tapeMode !== 'off') return;
     const activeEl = wordRefs.current[activeWordIdx];
     const firstEl = wordRefs.current[0];
-    if (activeEl && firstEl) {
-      const lineDifference = activeEl.offsetTop - firstEl.offsetTop;
-      if (lineDifference !== scrollOffset) {
-        setScrollOffset(lineDifference);
-      }
+    if (!activeEl || !firstEl) {
+      setScrollOffset(0);
+      return;
     }
-  }, [activeWordIdx, parsedWords.length, tapeMode]);
+
+    const topDiff = activeEl.offsetTop - firstEl.offsetTop;
+    const effLineHeight = measuredLineHeight > 0 ? measuredLineHeight : 36;
+
+    // Line 0 (top line) & Line 1 (second line):
+    // Keep scrollOffset at 0! Lines 0, 1, 2 stay rock-solid without clipping top line.
+    if (topDiff < effLineHeight * 0.75) {
+      setScrollOffset(0);
+    } else if (topDiff < effLineHeight * 1.75) {
+      // User is on the 2nd line: keep scrollOffset at 0 so the 1st line remains fully visible!
+      setScrollOffset(0);
+    } else {
+      // Line 2 (3rd line) and beyond:
+      // Scroll text upward so the active word sits comfortably on the 2nd (middle) line
+      const targetOffset = topDiff - effLineHeight;
+      setScrollOffset(Math.max(0, targetOffset));
+    }
+  }, [activeWordIdx, measuredLineHeight, tapeMode, targetText]);
 
   // Handle smooth horizontal scrolling for Tape mode (letter / word)
   useLayoutEffect(() => {
@@ -322,13 +353,14 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   }, [tapeMode, currentTypedLen, activeWordIdx, targetText]);
 
-  const baseFontSize = Math.max(22, fontSize || 28);
+  const baseFontSize = Math.max(20, fontSize || 28);
   const lineHeightMultiplier = 1.55;
-  // In Tape Mode: height is 1 single line; in standard mode: 3 lines
+  // In Tape Mode: height is 1 single line; in standard mode: exactly 3 lines with padding buffer
   const isTape = tapeMode !== 'off';
+  const effHeight = measuredLineHeight > 0 ? measuredLineHeight : Math.round(baseFontSize * lineHeightMultiplier);
   const containerHeight = isTape
-    ? Math.round(baseFontSize * lineHeightMultiplier * 1.35)
-    : Math.round(baseFontSize * lineHeightMultiplier * 3);
+    ? Math.round(effHeight * 1.35)
+    : Math.round(effHeight * 3 + 8);
 
   return (
     <div
@@ -336,12 +368,12 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
       onMouseMove={handleMouseMove}
-      className={`relative w-full max-w-[1220px] xl:max-w-[1300px] mx-auto my-2 sm:my-5 bg-transparent border-0 select-none px-2 sm:px-4 md:px-6 touch-manipulation ${
+      className={`relative w-full max-w-[1220px] xl:max-w-[1300px] mx-auto my-1.5 sm:my-4 bg-transparent border-0 select-none px-2 sm:px-4 md:px-6 touch-manipulation ${
         mouseHidden ? 'cursor-none' : 'cursor-text'
       }`}
       style={{
         fontFamily: fontFamily || `'Roboto Mono', 'JetBrains Mono', 'Fira Code', monospace`,
-        fontSize: `clamp(18px, 4.2vw, ${baseFontSize}px)`,
+        fontSize: `clamp(17px, 4.5vw, ${baseFontSize}px)`,
         direction: isRtl ? 'rtl' : 'ltr'
       }}
     >
@@ -358,12 +390,12 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         onBlur={() => setIsFocused(false)}
         onCopy={(e) => e.preventDefault()}
         onPaste={(e) => e.preventDefault()}
-        autoComplete="off"
-        autoCapitalize="off"
+        autoCapitalize="none"
         autoCorrect="off"
+        autoComplete="off"
         spellCheck={false}
         disabled={isTestFinished}
-        className="absolute top-0 left-0 w-full h-[70%] opacity-0 z-0 cursor-text focus:outline-none"
+        className="absolute top-0 left-0 w-full h-[80%] opacity-0 z-0 cursor-text focus:outline-none"
       />
 
       {/* Unfocused overlay with mouse click focus hint */}
