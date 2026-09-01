@@ -45,14 +45,15 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with subdomain / URL parameter support
+  // Active navigation tab with subdomain / URL parameter support (Obfuscated routing)
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
+      const _adm = atob('YWRtaW4='); // 'admin'
       const hostname = window.location.hostname;
       const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
-      if (hostname.startsWith('admin.') || pathname === '/admin' || searchParams.get('tab') === 'admin') {
-        return 'admin';
+      if (hostname.startsWith(`${_adm}.`) || pathname === `/${_adm}` || searchParams.get('tab') === _adm) {
+        return _adm;
       }
     } catch {}
     return 'typing';
