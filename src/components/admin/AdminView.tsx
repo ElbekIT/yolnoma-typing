@@ -32,7 +32,8 @@ import {
   EyeOff,
   LogOut,
   Check,
-  Gamepad2
+  Gamepad2,
+  Laptop
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
@@ -45,6 +46,7 @@ import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { AdminInboxTab } from './AdminInboxTab';
 import { AdminServerTab } from './AdminServerTab';
 import { AdminDinoTab } from './AdminDinoTab';
+import { AdminSessionsTab } from './AdminSessionsTab';
 import { maskEmail } from '../../utils/maskEmail';
 import {
   loginAdminBackend,
@@ -52,7 +54,8 @@ import {
   logoutAdminBackend,
   isAdminSessionActive,
   clearAdminSession,
-  isOwnerUser
+  isOwnerUser,
+  isSuperOwnerEmail
 } from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {
@@ -76,7 +79,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'dino' | 'inbox' | 'notifications' | 'server'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'dino' | 'inbox' | 'notifications' | 'sessions' | 'server'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
@@ -129,11 +132,16 @@ export const AdminView: React.FC = () => {
     e.preventDefault();
     if (isAuthenticating || (lockoutRemainingSec && lockoutRemainingSec > 0)) return;
 
+    if (!user || !user.email) {
+      setAuthError("Admin panelga kirish uchun avval saytga Bosh Administrator (Root Owner) akkaunti orqali kirishingiz shart!");
+      return;
+    }
+
     setAuthError(null);
     setIsAuthenticating(true);
 
     try {
-      const res = await loginAdminBackend(inputUsername, inputPassword, input2FA);
+      const res = await loginAdminBackend(inputUsername, inputPassword, input2FA, user.email);
 
       if (res.success) {
         setIsAdminAuthenticated(true);
@@ -550,6 +558,27 @@ export const AdminView: React.FC = () => {
           </p>
         </div>
 
+        {/* Current user auth check indicator */}
+        {user ? (
+          <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-left flex items-center gap-2.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div>
+              <span className="text-[10px] text-[var(--sub-color)] block uppercase">Tizimga kirilgan hisob:</span>
+              <span className="font-mono">{showFullEmails ? user.email : maskEmail(user.email || '')}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold text-left flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-extrabold text-amber-300">Saytga kirilmagan</p>
+              <p className="text-[11px] font-normal text-slate-300 mt-0.5">
+                Admin panelga kirish uchun avval saytning yuqori o'ng qismidagi "Kirish" tugmasi orqali ruxsat etilgan Administrator akkauntingizga kiring.
+              </p>
+            </div>
+          </div>
+        )}
+
         {isLockedOut && (
           <div className="p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-bold text-left space-y-1 animate-in fade-in">
             <div className="flex items-center gap-2 text-rose-400 font-black">
@@ -687,7 +716,7 @@ export const AdminView: React.FC = () => {
                 VERIFIED OWNER • 2FA ACTIVE
               </span>
               <span className="text-xs font-mono text-amber-300/80">
-                {showFullEmails ? 'yuldashivagavharoy@gmail.com' : maskEmail('yuldashivagavharoy@gmail.com')}
+                {user?.email ? (showFullEmails ? user.email : maskEmail(user.email)) : 'Bosh Administrator'}
               </span>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight mt-1">
@@ -787,10 +816,7 @@ export const AdminView: React.FC = () => {
         </button>
 
         <button
-          onClick={() => {
-            setActiveTab('notifications');
-            setTargetUserForMessage(null);
-          }}
+          onClick={() => setActiveTab('notifications')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'notifications'
               ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
@@ -799,6 +825,18 @@ export const AdminView: React.FC = () => {
         >
           <Bell className="w-4 h-4" />
           <span>📢 Habar Yuborish / Xabarnomalar</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('sessions')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'sessions'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <Laptop className="w-4 h-4" />
+          <span>🛡️ Faol Admin Seanslari</span>
         </button>
 
         <button
@@ -815,7 +853,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'dino' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'dino' && activeTab !== 'sessions' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1127,7 +1165,12 @@ export const AdminView: React.FC = () => {
         />
       )}
 
-      {/* TAB 6: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
+      {/* TAB 6: FAOL ADMIN SEANSLARI */}
+      {activeTab === 'sessions' && (
+        <AdminSessionsTab />
+      )}
+
+      {/* TAB 7: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
       {activeTab === 'server' && (
         <AdminServerTab />
       )}

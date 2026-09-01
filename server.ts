@@ -339,11 +339,14 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_a
 
 // Server-side hashed admin credentials with SHA-512 + HMAC
 // Defaults configured securely; can be overridden via environment variables
+const ROOT_OWNER_EMAIL = (process.env.ADMIN_OWNER_EMAIL || 'yuldashivagavharoy@gmail.com').trim().toLowerCase();
+
 const VALID_ADMIN_ACCOUNTS = [
   {
-    username: (process.env.ADMIN_USERNAME || 'admin').trim(),
-    password: (process.env.ADMIN_PASSWORD || 'Yolnoma@2026!').trim(),
-    pin: (process.env.ADMIN_2FA_PIN || '778899').trim()
+    username: (process.env.ADMIN_USERNAME || '12gG625Gh872H376H4386').trim(),
+    password: (process.env.ADMIN_PASSWORD || '7H736H349K346Hh276J').trim(),
+    pin: (process.env.ADMIN_2FA_PIN || '73H3888262638545726H7274920385628').trim(),
+    ownerEmail: ROOT_OWNER_EMAIL
   }
 ];
 
@@ -357,8 +360,21 @@ interface AdminLoginAttempt {
   lastAttempt: number;
 }
 
+interface ActiveAdminSession {
+  sessionId: string;
+  token: string;
+  username: string;
+  email: string;
+  ip: string;
+  userAgent: string;
+  loginTime: number;
+  lastActive: number;
+  isRootOwner: boolean;
+}
+
 const adminLoginAttempts = new Map<string, AdminLoginAttempt>();
 const invalidatedTokens = new Set<string>();
+const activeAdminSessions = new Map<string, ActiveAdminSession>();
 
 // Helper: Constant-time string comparison to mitigate timing attacks
 function safeCompare(a: string, b: string): boolean {
@@ -842,12 +858,26 @@ app.post('/api/admin/login', (req, res) => {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    const { username, password, pin } = req.body;
+    const { username, password, pin, email } = req.body;
 
     if (!username || !password || !pin) {
       return res.status(400).json({
         success: false,
         error: 'Barcha maydonlarni (Username, Parol, 2FA PIN) kiritish shart.'
+      });
+    }
+
+    // Dual-Security Gate: Must be authenticated as the Super Owner Email
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const isOwnerEmailValid = safeCompare(cleanEmail, ROOT_OWNER_EMAIL);
+
+    if (!isOwnerEmailValid) {
+      attemptRecord.failedAttempts += 1;
+      attemptRecord.lastAttempt = now;
+      adminLoginAttempts.set(clientIp, attemptRecord);
+      return res.status(403).json({
+        success: false,
+        error: "Ruxsat berilmadi! Admin panelga faqat tasdiqlangan Bosh Administrator akkaunti orqali kirish mumkin!"
       });
     }
 
@@ -897,12 +927,27 @@ app.post('/api/admin/login', (req, res) => {
     // Successful Login: Reset attempts and generate cryptographically signed session token
     adminLoginAttempts.delete(clientIp);
     const tokenData = generateAdminToken(username.trim());
+    const sessionId = `adm_sess_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+
+    // Track active admin session on server
+    activeAdminSessions.set(sessionId, {
+      sessionId,
+      token: tokenData.token,
+      username: cleanUser,
+      email: cleanEmail,
+      ip: clientIp,
+      userAgent: (req.headers['user-agent'] || 'Noma\'lum brauzer').substring(0, 100),
+      loginTime: Date.now(),
+      lastActive: Date.now(),
+      isRootOwner: isOwnerEmailValid
+    });
 
     return res.json({
       success: true,
       message: 'Admin autentifikatsiyasi muvaffaqiyatli yakunlandi.',
       token: tokenData.token,
       expiresAt: tokenData.expiresAt,
+      sessionId,
       role: 'owner_admin'
     });
   } catch (err: any) {
@@ -945,12 +990,84 @@ app.post('/api/admin/logout', (req, res) => {
 
   if (token) {
     invalidatedTokens.add(token);
+    // Also remove from active admin sessions
+    for (const [sId, sess] of activeAdminSessions.entries()) {
+      if (sess.token === token) {
+        activeAdminSessions.delete(sId);
+      }
+    }
     if (invalidatedTokens.size > 5000) {
       invalidatedTokens.clear();
     }
   }
 
   return res.json({ success: true, message: 'Admin seansi muvaffaqiyatli yakunlandi' });
+});
+
+// 4. Admin Active Sessions: List All Active Sessions
+app.get('/api/admin/sessions', requireAdminAuth, (req, res) => {
+  const currentToken = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.substring(7)
+    : '';
+
+  // Clean expired sessions
+  const now = Date.now();
+  for (const [sId, sess] of activeAdminSessions.entries()) {
+    if (now - sess.lastActive > 24 * 60 * 60 * 1000) {
+      activeAdminSessions.delete(sId);
+    }
+  }
+
+  const sessions = Array.from(activeAdminSessions.values()).map((s) => ({
+    sessionId: s.sessionId,
+    username: s.username.length > 8 ? `${s.username.slice(0, 4)}***${s.username.slice(-4)}` : 'Admin',
+    emailMasked: s.email ? s.email.replace(/^(.{2})(.*)(@.*)$/, '$1***$3') : '***@***',
+    ip: s.ip,
+    userAgent: s.userAgent,
+    loginTime: s.loginTime,
+    lastActive: s.lastActive,
+    isRootOwner: s.isRootOwner,
+    isCurrent: s.token === currentToken
+  }));
+
+  res.json({
+    success: true,
+    sessions,
+    totalActive: sessions.length
+  });
+});
+
+// 5. Admin Active Sessions: Terminate / Kick Stranger Admin
+app.post('/api/admin/sessions/terminate', requireAdminAuth, (req, res) => {
+  const { sessionId } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({ success: false, error: 'Session ID talab qilinadi' });
+  }
+
+  const targetSession = activeAdminSessions.get(sessionId);
+  if (!targetSession) {
+    return res.status(404).json({ success: false, error: 'Bunday faol seans topilmadi yoki allaqachon tugatilgan' });
+  }
+
+  // ROOT OWNER IMMUNITY: Nobody can ever kick the root owner!
+  if (targetSession.isRootOwner || safeCompare(targetSession.email.toLowerCase(), ROOT_OWNER_EMAIL)) {
+    return res.status(403).json({
+      success: false,
+      error: 'Asosiy Bosh Administrator (Root Owner) seansini chiqarib yuborish mumkin emas! U daxlsizdir.'
+    });
+  }
+
+  // Invalidate token and remove session
+  if (targetSession.token) {
+    invalidatedTokens.add(targetSession.token);
+  }
+  activeAdminSessions.delete(sessionId);
+
+  res.json({
+    success: true,
+    message: 'Begona seans muvaffaqiyatli to\'xtatildi va admin paneldan chiqarib yuborildi.'
+  });
 });
 
 // -------------------------------------------------------------

@@ -1,22 +1,37 @@
 const ADMIN_TOKEN_KEY = 'yolnoma_admin_secure_token_v3';
 const ADMIN_EXPIRES_KEY = 'yolnoma_admin_token_exp_v3';
 const ADMIN_AUTH_FLAG = 'yolnoma_admin_auth_active_v3';
+const ADMIN_SESSION_ID_KEY = 'yolnoma_admin_session_id_v3';
 
-// Cryptographic SHA-256 Hash of authorized admin credentials.
-// Plain credentials are NEVER exposed in the client-side JavaScript bundle.
-const SECURE_ADMIN_HASH = '871bb088adb8961d69ab09da2182e47cbc901d59d286dd2985b1d4437edc10c8';
+// Cryptographic SHA-256 Hashes
+// Credentials and owner identity are NEVER stored in plain text anywhere in the frontend code bundle.
+const SECURE_ADMIN_HASH = 'f19b9b946e564edb79fd732c13c5f53b1bfadbec8a8a0f627d4c9e32d082b639';
+const ROOT_OWNER_EMAIL_HASH = '435719690a6a5df68f9713b77a760665dea71e450f4c4b7deab1767a288bebaf';
 
 export interface AdminLoginResponse {
   success: boolean;
   error?: string;
   lockoutRemainingSec?: number;
   remainingAttempts?: number;
+  sessionId?: string;
+}
+
+export interface AdminSessionItem {
+  sessionId: string;
+  username: string;
+  emailMasked: string;
+  ip: string;
+  userAgent: string;
+  loginTime: number;
+  lastActive: number;
+  isRootOwner: boolean;
+  isCurrent: boolean;
 }
 
 /**
  * Calculates SHA-256 digest in browser environment
  */
-async function computeSha256(text: string): Promise<string> {
+export async function computeSha256(text: string): Promise<string> {
   try {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
       const msgBuffer = new TextEncoder().encode(text);
@@ -29,6 +44,15 @@ async function computeSha256(text: string): Promise<string> {
 }
 
 /**
+ * Checks if the provided email belongs to the Root Super Admin via cryptographic hash
+ */
+export async function isSuperOwnerEmail(email?: string | null): Promise<boolean> {
+  if (!email) return false;
+  const hash = await computeSha256(email.trim().toLowerCase());
+  return hash === ROOT_OWNER_EMAIL_HASH;
+}
+
+/**
  * Validates admin credentials securely without exposing plain text in code.
  */
 async function localValidateAdmin(u: string, p: string, pin: string): Promise<boolean> {
@@ -37,27 +61,30 @@ async function localValidateAdmin(u: string, p: string, pin: string): Promise<bo
   return hash === SECURE_ADMIN_HASH;
 }
 
-function persistAdminSession(token: string, expiresAt: number) {
+function persistAdminSession(token: string, expiresAt: number, sessionId?: string) {
   try {
     sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
     sessionStorage.setItem(ADMIN_EXPIRES_KEY, String(expiresAt));
     sessionStorage.setItem(ADMIN_AUTH_FLAG, 'true');
+    if (sessionId) sessionStorage.setItem(ADMIN_SESSION_ID_KEY, sessionId);
 
     localStorage.setItem(ADMIN_TOKEN_KEY, token);
     localStorage.setItem(ADMIN_EXPIRES_KEY, String(expiresAt));
     localStorage.setItem(ADMIN_AUTH_FLAG, 'true');
+    if (sessionId) localStorage.setItem(ADMIN_SESSION_ID_KEY, sessionId);
   } catch (e) {
     console.error('Error persisting admin session:', e);
   }
 }
 
 /**
- * Executes a secure, resilient authentication request.
+ * Executes a secure, resilient authentication request requiring both Admin Credentials and Super Owner Account verification.
  */
 export async function loginAdminBackend(
   username: string,
   password: string,
-  pin: string
+  pin: string,
+  currentUserEmail?: string | null
 ): Promise<AdminLoginResponse> {
   const u = username.trim();
   const p = password.trim();
@@ -67,6 +94,22 @@ export async function loginAdminBackend(
     return {
       success: false,
       error: 'Barcha maydonlarni (Username, Parol, 2FA PIN) kiritish shart.'
+    };
+  }
+
+  // Dual-Auth Requirement: User must be signed into the authenticated Super Owner account
+  if (!currentUserEmail) {
+    return {
+      success: false,
+      error: 'Admin panelga kirish uchun avval saytga Bosh Administrator akkaunti orqali kirgan bo\'lishingiz shart!'
+    };
+  }
+
+  const isOwnerAcc = await isSuperOwnerEmail(currentUserEmail);
+  if (!isOwnerAcc) {
+    return {
+      success: false,
+      error: 'Ruxsat etilmadi! Ushbu akkaunt Bosh Administrator (Root Owner) maqomiga ega emas.'
     };
   }
 
@@ -81,22 +124,31 @@ export async function loginAdminBackend(
       body: JSON.stringify({
         username: u,
         password: p,
-        pin: pinCode
+        pin: pinCode,
+        email: currentUserEmail
       })
     });
 
-    if (res.ok) {
-      const data = await res.json().catch(() => null);
-      if (data && data.success) {
-        const token = data.token || `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-        const expiresAt = data.expiresAt || Date.now() + 24 * 60 * 60 * 1000;
-        persistAdminSession(token, expiresAt);
-        return { success: true };
-      }
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data && data.success) {
+      const token = data.token || `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+      const expiresAt = data.expiresAt || Date.now() + 24 * 60 * 60 * 1000;
+      persistAdminSession(token, expiresAt, data.sessionId);
+      return { success: true, sessionId: data.sessionId };
     }
 
-    // If server returned 401/404 or network glitch, but credentials match valid admin list
-    if (isLocallyValid) {
+    if (data && data.error) {
+      return {
+        success: false,
+        error: data.error,
+        lockoutRemainingSec: data.lockoutRemainingSec,
+        remainingAttempts: data.remainingAttempts
+      };
+    }
+
+    // Fallback if offline/network glitch and local hash is verified
+    if (isLocallyValid && isOwnerAcc) {
       const token = `adm_sec_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
       persistAdminSession(token, expiresAt);
@@ -109,7 +161,7 @@ export async function loginAdminBackend(
     };
   } catch {
     // Network offline or container dev mode
-    if (isLocallyValid) {
+    if (isLocallyValid && isOwnerAcc) {
       const token = `adm_sec_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
       persistAdminSession(token, expiresAt);
@@ -121,6 +173,62 @@ export async function loginAdminBackend(
     };
   }
 }
+
+/**
+ * Fetches active admin sessions from the backend
+ */
+export async function fetchAdminSessions(): Promise<{ success: boolean; sessions: AdminSessionItem[]; error?: string }> {
+  const token = getAdminToken();
+  if (!token) return { success: false, sessions: [], error: 'Token mavjud emas' };
+
+  try {
+    const res = await fetch('/api/admin/sessions', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, sessions: data.sessions || [] };
+    }
+
+    return { success: false, sessions: [], error: 'Seanslarni yuklashda xatolik' };
+  } catch {
+    return { success: false, sessions: [] };
+  }
+}
+
+/**
+ * Terminates / kicks an active admin session.
+ * Super Admin (Root Owner) is protected and can never be kicked.
+ */
+export async function terminateAdminSession(sessionId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  const token = getAdminToken();
+  if (!token) return { success: false, error: 'Token mavjud emas' };
+
+  try {
+    const res = await fetch('/api/admin/sessions/terminate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sessionId })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      return { success: true, message: data.message || 'Seans muvaffaqiyatli to\'xtatildi' };
+    }
+
+    return { success: false, error: data.error || 'Seansni tugatishda xatolik yuz berdi' };
+  } catch {
+    return { success: false, error: 'Server bilan aloqa uzildi' };
+  }
+}
+
+
 
 /**
  * Returns the active admin bearer token if valid.
