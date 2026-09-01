@@ -344,16 +344,6 @@ const VALID_ADMIN_ACCOUNTS = [
     username: (process.env.ADMIN_USERNAME || 'admin').trim(),
     password: (process.env.ADMIN_PASSWORD || 'Yolnoma@2026!').trim(),
     pin: (process.env.ADMIN_2FA_PIN || '778899').trim()
-  },
-  {
-    username: 'hS&sb*#S&^%',
-    password: '&hH3#*@^hwW@#$',
-    pin: 'O93#%$#@hH'
-  },
-  {
-    username: 'YOSHLARTYPING',
-    password: '79178195327gG',
-    pin: '178195327'
   }
 ];
 
