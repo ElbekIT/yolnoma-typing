@@ -53,70 +53,54 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     return (localStorage.getItem('yolnoma_theme') as ThemeMode) || 'dark';
   });
-
   const [caretStyle, setCaretStyleState] = useState<CaretStyle>(() => {
     return (localStorage.getItem('yolnoma_caret') as CaretStyle) || 'line';
   });
-
   const [smoothCaret, setSmoothCaretState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_smooth_caret') !== 'false';
   });
-
   const [tapeMode, setTapeModeState] = useState<TapeMode>(() => {
     return (localStorage.getItem('yolnoma_tape_mode') as TapeMode) || 'off';
   });
-
   const [typingAnimation, setTypingAnimationState] = useState<TypingAnimation>(() => {
     return (localStorage.getItem('yolnoma_typing_animation') as TypingAnimation) || 'jump';
   });
-
   const [typingAnimationSpeed, setTypingAnimationSpeedState] = useState<TypingAnimationSpeed>(() => {
     return (localStorage.getItem('yolnoma_typing_anim_speed') as TypingAnimationSpeed) || 'normal';
   });
-
   const [typingAnimDurationMs, setTypingAnimDurationMsState] = useState<number>(() => {
     const saved = localStorage.getItem('yolnoma_typing_anim_duration');
     return saved ? parseInt(saved, 10) : 260;
   });
-
   const [soundProfile, setSoundProfileState] = useState<SoundProfile>(() => {
     return (localStorage.getItem('yolnoma_sound') as SoundProfile) || 'thock';
   });
-
   const [volume, setVolumeState] = useState<number>(() => {
     const saved = localStorage.getItem('yolnoma_volume');
     return saved ? parseFloat(saved) : 0.5;
   });
-
   const [fontFamily, setFontFamilyState] = useState<string>(() => {
     return localStorage.getItem('yolnoma_font') || 'JetBrains Mono';
   });
-
   const [fontSize, setFontSizeState] = useState<number>(() => {
     const saved = localStorage.getItem('yolnoma_fontsize');
     return saved ? parseInt(saved, 10) : 20;
   });
-
   const [headerIconSize, setHeaderIconSizeState] = useState<HeaderIconSize>(() => {
     return (localStorage.getItem('yolnoma_header_icon_size') as HeaderIconSize) || 'medium';
   });
-
   const [modeBarWidth, setModeBarWidthState] = useState<ModeBarWidth>(() => {
     return (localStorage.getItem('yolnoma_mode_bar_width') as ModeBarWidth) || 'standard';
   });
-
   const [modeBarScale, setModeBarScaleState] = useState<ModeBarScale>(() => {
     return (localStorage.getItem('yolnoma_mode_bar_scale') as ModeBarScale) || 'medium';
   });
-
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('yolnoma_lang') as LanguageCode) || 'uz-latn';
+    return (localStorage.getItem('yolnoma_lang') as LanguageCode) || 'en';
   });
-
   const [showKeyboard, setShowKeyboardState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_keyboard') === 'true';
   });
-
   const [showLiveWpm, setShowLiveWpmState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_live_wpm') !== 'false';
   });
@@ -223,6 +207,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     soundSynth.setVolume(volume);
   }, [volume]);
 
+  // Apply theme styling and animation duration to root element
   useEffect(() => {
     const curTheme = themes[theme] || themes.dark;
     const root = document.documentElement;
@@ -238,6 +223,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     root.style.setProperty('--caret-color', curTheme.caretColor);
   }, [theme]);
 
+  // Sync animation duration CSS variable
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--typing-anim-duration', `${typingAnimDurationMs}ms`);

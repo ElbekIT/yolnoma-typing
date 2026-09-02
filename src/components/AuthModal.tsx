@@ -85,6 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-6 shadow-2xl text-[var(--text-color)]">
+        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -92,6 +93,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <X className="w-5 h-5" />
         </button>
 
+        {/* Modal Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[var(--main-color)]/10 text-[var(--main-color)] flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-6 h-6" />
@@ -108,6 +110,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </p>
         </div>
 
+        {/* Feedback messages */}
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -122,8 +125,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
+        {/* Social Sign-In Providers: Google & GitHub */}
         {mode !== 'forgot' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+            {/* Google Sign In */}
             <button
               type="button"
               onClick={handleGoogleSignIn}
@@ -151,6 +156,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <span>Google orqali</span>
             </button>
 
+            {/* GitHub Sign In */}
             <button
               type="button"
               onClick={handleGithubSignIn}
@@ -174,6 +180,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
+        {/* Email Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'register' && (
             <div>
@@ -238,7 +245,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold shadow-md hover:opacity-90 transition-all mt-4 disabled:opacity-50 cursor-pointer"
+            className="w-full py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold shadow-md hover:opacity-90 transition-all mt-4 disabled:opacity-50"
           >
             {loading
               ? 'Processing...'
@@ -250,18 +257,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </button>
         </form>
 
+        {/* Switch Mode Links */}
         <div className="text-center mt-4 text-xs text-[var(--sub-color)] font-medium">
           {mode === 'login' ? (
             <p>
               Don't have an account?{' '}
-              <button onClick={() => setMode('register')} className="text-[var(--main-color)] font-bold hover:underline cursor-pointer">
+              <button onClick={() => setMode('register')} className="text-[var(--main-color)] font-bold hover:underline">
                 Sign Up
               </button>
             </p>
           ) : (
             <p>
               Already registered?{' '}
-              <button onClick={() => setMode('login')} className="text-[var(--main-color)] font-bold hover:underline cursor-pointer">
+              <button onClick={() => setMode('login')} className="text-[var(--main-color)] font-bold hover:underline">
                 Sign In
               </button>
             </p>

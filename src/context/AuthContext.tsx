@@ -14,7 +14,8 @@ import {
 } from 'firebase/auth';
 import { ref, set, update, push, get, child, onValue, remove } from 'firebase/database';
 import { auth, rtdb, googleProvider, githubProvider } from '../config/firebase';
-import { UserProfile, TypingResult, UserNotificationItem } from '../types';
+import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
+import { antiCheatManager } from '../utils/antiCheat';
 
 interface AuthContextType {
   user: User | null;
@@ -49,12 +50,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [userResultsHistory, setUserResultsHistory] = useState<TypingResult[]>([]);
   const [localNotifications, setLocalNotifications] = useState<UserNotificationItem[]>([
     {
       id: 'welcome-1',
-      title: 'Yolnoma Typing Platformaga Xush Kelibsiz! 🚀',
+      title: 'Yolnoma Typing Platformaga Xush Kelibsiz! ⚡',
       message: 'Klaviatura tezligingizni oshiring, darajangizni yuksaltiring va reytingda 1-o\'rinni egallang.',
       timestamp: Date.now() - 60000,
       read: false,
@@ -64,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ]);
   const [remoteNotifications, setRemoteNotifications] = useState<UserNotificationItem[]>([]);
 
+  // Get set of read notification IDs from localStorage
   const getReadNotificationIds = (): Set<string> => {
     try {
       const saved = localStorage.getItem('yolnoma_read_notifications');
@@ -81,12 +83,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.warn('Error saving read notification:', e);
     }
+
     setLocalNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
     setRemoteNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+
+    // If user is logged in, mark as read in RTDB if it exists in user's direct notifications
     if (user?.uid) {
       try {
         const notifRef = ref(rtdb, `notifications/${user.uid}/${id}`);
@@ -116,8 +121,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLocalNotifications((prev) => [newItem, ...prev]);
   };
 
+  // Realtime listeners for Global Announcements & User Direct Notifications
   useEffect(() => {
     const readSet = getReadNotificationIds();
+
     const globalRef = ref(rtdb, 'global_announcements');
     const unsubGlobal = onValue(globalRef, (snapshot) => {
       const list: UserNotificationItem[] = [];
@@ -128,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (item) {
             list.push({
               id: key,
-              title: item.title || "E'lon",
+              title: item.title || 'Eʼlon',
               message: item.message || '',
               timestamp: item.timestamp || Date.now(),
               read: readSet.has(key),
@@ -139,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
       }
+
       setRemoteNotifications((prev) => {
         const directOnly = prev.filter((p) => p.target !== 'all');
         return [...list, ...directOnly].sort((a, b) => b.timestamp - a.timestamp);
@@ -169,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
         }
+
         setRemoteNotifications((prev) => {
           const globalOnly = prev.filter((p) => p.target === 'all');
           return [...globalOnly, ...directList].sort((a, b) => b.timestamp - a.timestamp);
@@ -182,6 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [user?.uid]);
 
+  // Combined notifications list
   const notifications = React.useMemo(() => {
     const combined = [...remoteNotifications, ...localNotifications];
     const uniqueMap = new Map<string, UserNotificationItem>();
@@ -193,6 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Array.from(uniqueMap.values()).sort((a, b) => b.timestamp - a.timestamp);
   }, [remoteNotifications, localNotifications]);
 
+  // Send Admin Notification to All or Specific User
   const sendAdminNotification = async (
     target: 'all' | string,
     title: string,
@@ -203,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!title.trim() || !message.trim()) {
       throw new Error('Sarlavha va xabar matnini kiritish majburiy!');
     }
+
     if (target === 'all') {
       const newRef = push(ref(rtdb, 'global_announcements'));
       const notifData: Omit<UserNotificationItem, 'read'> = {
@@ -232,6 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Delete Admin Notification
   const deleteAdminNotification = async (id: string, target: 'all' | string = 'all') => {
     if (target === 'all') {
       await remove(ref(rtdb, `global_announcements/${id}`));
@@ -240,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Local Storage Helpers
   const getLocalResults = (): TypingResult[] => {
     try {
       const saved = localStorage.getItem('yolnoma_results_history');
@@ -336,6 +350,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const local = getSavedLocalProfile(firebaseUser.uid);
     const fallback = local || createDefaultProfile(firebaseUser);
 
+    // Sync from Realtime Database in background
     try {
       const dbRef = ref(rtdb);
       const snapshot = await get(child(dbRef, `users/${firebaseUser.uid}`));
@@ -349,6 +364,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         saveLocalProfile(firebaseUser.uid, merged);
         return merged;
       } else {
+        // Save fallback to RTDB
         await set(ref(rtdb, `users/${firebaseUser.uid}`), fallback);
         await set(ref(rtdb, `leaderboard/${firebaseUser.uid}`), {
           uid: fallback.uid,
@@ -368,6 +384,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.warn('RTDB profile sync fallback:', e);
     }
+
     return fallback;
   };
 
@@ -376,6 +393,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Handle OAuth redirect result if any
     getRedirectResult(auth)
       .then(async (res) => {
         if (res && res.user) {
@@ -386,31 +404,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
       .catch((err) => console.error('Redirect result error:', err));
 
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+
     let rtdbUnsub: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (rtdbUnsub) {
         rtdbUnsub();
         rtdbUnsub = null;
       }
+
       if (firebaseUser) {
+        antiCheatManager.setUserId(firebaseUser.uid);
         setUser(firebaseUser);
         const instantProfile = createDefaultProfile(firebaseUser);
         setProfile(instantProfile);
         setLoading(false);
 
-        try {
-          fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: firebaseUser.uid, email: firebaseUser.email })
-          }).catch(() => {});
-        } catch {}
-
+        // Live Realtime listener for Instant Bans / Admin Updates
         try {
           const userRef = ref(rtdb, `users/${firebaseUser.uid}`);
           rtdbUnsub = onValue(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const liveData = snapshot.val() as Partial<UserProfile>;
+              if (liveData.isBanned) {
+                antiCheatManager.banDeviceAndUser(liveData.blockReason || 'Admin tomonidan bloklangan');
+              }
               setProfile((prev) => {
                 if (!prev) return liveData as UserProfile;
                 return {
@@ -426,9 +447,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('Realtime profile listener error:', err);
         }
 
+        // Fetch & sync full RTDB profile in background
         fetchOrCreateProfile(firebaseUser)
           .then((p) => {
-            if (p) setProfile(p);
+            if (p) {
+              const isConsistent = antiCheatManager.validateProfileConsistency(p);
+              if (!isConsistent) {
+                return;
+              }
+              setProfile(p);
+            }
           })
           .catch((err) => console.warn('Async RTDB profile sync:', err));
       } else {
@@ -440,6 +468,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      clearTimeout(safetyTimer);
       if (rtdbUnsub) rtdbUnsub();
       unsubscribe();
     };
@@ -478,7 +507,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.user) {
         const p = await fetchOrCreateProfile(res.user);
         setProfile(p);
-        addNotification('GitHub orqali kirdingiz', `Xush kelibsiz, ${p.displayName}!`);
+        addNotification('GitHub orqali kirdingiz', `Xush kelibsiz, ${p.displayName}! 🚀`);
       }
     } catch (err: any) {
       console.warn('GitHub Popup error, fallback to redirect:', err);
@@ -490,7 +519,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ) {
         await signInWithRedirect(auth, githubProvider);
       } else if (err?.code === 'auth/account-exists-with-different-credential') {
-        throw new Error('Bu email bilan boshqa usul orqali hisob ochilgan. Iltimos, o\'sha usul bilan kiring.');
+        throw new Error('Bu email bilan boshqa usul orqali (masalan, Google) hisob ochilgan. Iltimos, o\'sha usul bilan kiring.');
       } else {
         throw err;
       }
@@ -507,6 +536,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       saveLocalProfile(res.user.uid, p);
       setProfile(p);
 
+      // Async write to RTDB
       set(ref(rtdb, `users/${res.user.uid}`), p).catch(() => {});
       set(ref(rtdb, `leaderboard/${res.user.uid}`), {
         uid: p.uid,
@@ -523,7 +553,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastActive: Date.now()
       }).catch(() => {});
 
-      addNotification("Ro'yhatdan o'tildi!", `Xush kelibsiz, @${username}!`);
+      addNotification('Ro\'yhatdan o\'tildi!', `Xush kelibsiz, @${username}!`);
     }
   };
 
@@ -542,46 +572,99 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    try {
-      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-    } catch {}
     await firebaseSignOut(auth);
     setUser(null);
     setProfile(null);
     setUserResultsHistory(getLocalResults());
   };
 
-  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+  // Internal trusted updater for stats verified by anti-cheat
+  const updateProfileInternalStats = async (statsUpdates: Partial<UserProfile>) => {
     if (!profile) return;
-    const updated: UserProfile = { ...profile, ...updates, lastActive: Date.now() };
+    const updated: UserProfile = { ...profile, ...statsUpdates, lastActive: Date.now() };
     setProfile(updated);
+
     if (user) {
       saveLocalProfile(user.uid, updated);
+
       if (updated.isBanned) {
         try {
           await remove(ref(rtdb, `leaderboard/${user.uid}`));
         } catch {}
         return;
       }
+
       try {
-        await update(ref(rtdb, `users/${user.uid}`), updates);
+        await update(ref(rtdb, `users/${user.uid}`), statsUpdates);
         await update(ref(rtdb, `leaderboard/${user.uid}`), {
           uid: user.uid,
           displayName: updated.displayName,
           username: updated.username,
-          highestWpm: updated.highestWpm || 0,
-          time15Wpm: updated.time15Wpm || 0,
-          time30Wpm: updated.time30Wpm || 0,
-          time60Wpm: updated.time60Wpm || 0,
-          time120Wpm: updated.time120Wpm || 0,
-          highestAccuracy: updated.highestAccuracy || 0,
+          highestWpm: Math.min(260, Math.max(0, updated.highestWpm || 0)),
+          time15Wpm: Math.min(260, Math.max(0, updated.time15Wpm || 0)),
+          time30Wpm: Math.min(260, Math.max(0, updated.time30Wpm || 0)),
+          time60Wpm: Math.min(260, Math.max(0, updated.time60Wpm || 0)),
+          time120Wpm: Math.min(260, Math.max(0, updated.time120Wpm || 0)),
+          highestAccuracy: Math.min(100, Math.max(0, updated.highestAccuracy || 0)),
           country: updated.country || '🇺🇿 Uzbekistan',
-          level: updated.level || 1,
-          xp: updated.xp || 250,
+          level: Math.min(100, Math.max(1, updated.level || 1)),
+          xp: Math.min(250000, Math.max(0, updated.xp || 250)),
           rankTitle: updated.rankTitle || 'Typing Novice',
           bio: updated.bio || '',
           avatarUrl: updated.avatarUrl || '',
           totalTests: updated.totalTests || 0,
+          lastActive: Date.now()
+        });
+      } catch (err) {
+        console.warn('Update profile internal stats RTDB error:', err);
+      }
+    }
+  };
+
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+    if (!profile) return;
+
+    // Security Guard: Filter out direct manual manipulation of test stats/scores
+    const sanitizedUpdates: Partial<UserProfile> = { ...updates };
+    delete (sanitizedUpdates as any).highestWpm;
+    delete (sanitizedUpdates as any).time15Wpm;
+    delete (sanitizedUpdates as any).time30Wpm;
+    delete (sanitizedUpdates as any).time60Wpm;
+    delete (sanitizedUpdates as any).time120Wpm;
+    delete (sanitizedUpdates as any).highestAccuracy;
+    delete (sanitizedUpdates as any).averageWpm;
+    delete (sanitizedUpdates as any).xp;
+    delete (sanitizedUpdates as any).level;
+    delete (sanitizedUpdates as any).totalTests;
+    delete (sanitizedUpdates as any).totalTimeTypedSeconds;
+    delete (sanitizedUpdates as any).totalWordsTyped;
+    delete (sanitizedUpdates as any).totalCharsTyped;
+    delete (sanitizedUpdates as any).dinoHighScore;
+    delete (sanitizedUpdates as any).dinoMaxDistance;
+    delete (sanitizedUpdates as any).dinoGamesPlayed;
+
+    const updated: UserProfile = { ...profile, ...sanitizedUpdates, lastActive: Date.now() };
+    setProfile(updated);
+
+    if (user) {
+      saveLocalProfile(user.uid, updated);
+
+      if (updated.isBanned) {
+        try {
+          await remove(ref(rtdb, `leaderboard/${user.uid}`));
+        } catch {}
+        return;
+      }
+
+      // Sync directly to Realtime Database
+      try {
+        await update(ref(rtdb, `users/${user.uid}`), sanitizedUpdates);
+        await update(ref(rtdb, `leaderboard/${user.uid}`), {
+          displayName: updated.displayName,
+          username: updated.username,
+          country: updated.country || '🇺🇿 Uzbekistan',
+          bio: updated.bio || '',
+          avatarUrl: updated.avatarUrl || '',
           lastActive: Date.now()
         });
       } catch (err) {
@@ -596,6 +679,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newFollowing = isFollowing
       ? profile.following.filter((id) => id !== targetUid)
       : [...profile.following, targetUid];
+
     await updateUserProfile({
       following: newFollowing,
       followingCount: newFollowing.length
@@ -609,7 +693,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteAccount = async () => {
     if (!user) return;
     try {
-      addNotification("Hisob o'chirildi", "Hisobingiz muvaffaqiyatli o'chirildi.", 'warning');
+      addNotification('Hisob o\'chirildi', 'Hisobingiz muvaffaqiyatli o\'chirildi.', 'warning');
       localStorage.removeItem(`yolnoma_user_profile_${user.uid}`);
       await deleteUser(user);
       setUser(null);
@@ -636,7 +720,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    addNotification("Ma'lumotlar yuklab olindi", 'Profilingiz fayli saqlandi.');
+
+    addNotification('Ma\'lumotlar yuklab olindi', 'Profilingiz fayli saqlandi.');
   };
 
   const adminUpdateUser = async (targetUid: string, updates: Partial<UserProfile>) => {
@@ -668,30 +753,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const guestId = getGuestId();
     const userId = user ? user.uid : guestId;
     const username = profile ? profile.username : `guest_${guestId.replace('guest_', '')}`;
-    const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
-    const isPersonalBest = rawResult.wpm > existingPBest;
 
-    if (isPersonalBest && !profile) {
-      localStorage.setItem('yolnoma_guest_best_wpm', String(rawResult.wpm));
+    const isStatisticallyValid = antiCheatManager.validateTypingResult(
+      rawResult.wpm,
+      rawResult.accuracy,
+      rawResult.testTimeSeconds,
+      rawResult.correctChars
+    );
+
+    const safeWpm = isStatisticallyValid ? Math.min(260, Math.max(0, rawResult.wpm)) : 0;
+    const safeAccuracy = isStatisticallyValid ? Math.min(100, Math.max(0, rawResult.accuracy)) : 0;
+
+    const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
+    const isPersonalBest = isStatisticallyValid && safeWpm > existingPBest;
+
+    if (isPersonalBest) {
+      if (!profile) {
+        localStorage.setItem('yolnoma_guest_best_wpm', String(safeWpm));
+      }
     }
 
     const fullResult: TypingResult = {
       ...rawResult,
+      wpm: safeWpm,
+      accuracy: safeAccuracy,
       userId,
       username,
       isPersonalBest,
       timestamp: Date.now()
     };
 
+    // Update local history
     const currentLocal = getLocalResults();
     const newLocal = [fullResult, ...currentLocal];
     saveLocalResults(newLocal);
     setUserResultsHistory(newLocal);
 
+    if (!isStatisticallyValid || safeWpm <= 0) {
+      return fullResult;
+    }
+
     if (user && profile) {
+      // Calculate updated stats
       const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
-      const newXp = profile.xp + xpEarned;
-      const newLevel = Math.floor(newXp / 500) + 1;
+      const newXp = Math.min(250000, profile.xp + xpEarned);
+      const newLevel = Math.min(100, Math.floor(newXp / 500) + 1);
+
       if (newLevel > profile.level) {
         addNotification('YANGI DARAJA! 🎉', `Tabriklaymiz! ${newLevel}-darajaga erishdingiz!`, 'level_up');
       }
@@ -705,13 +812,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
       const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-      const newHighestWpm = Math.max(profile.highestWpm || 0, fullResult.wpm);
-      const newTime15 = fullResult.timeMode === 15 ? Math.max(profile.time15Wpm || 0, fullResult.wpm) : (profile.time15Wpm || 0);
-      const newTime30 = fullResult.timeMode === 30 ? Math.max(profile.time30Wpm || 0, fullResult.wpm) : (profile.time30Wpm || 0);
-      const newTime60 = fullResult.timeMode === 60 ? Math.max(profile.time60Wpm || 0, fullResult.wpm) : (profile.time60Wpm || 0);
-      const newTime120 = fullResult.timeMode === 120 ? Math.max(profile.time120Wpm || 0, fullResult.wpm) : (profile.time120Wpm || 0);
+      const newHighestWpm = Math.min(260, Math.max(profile.highestWpm || 0, fullResult.wpm));
+
+      const newTime15 = fullResult.timeMode === 15 ? Math.min(260, Math.max(profile.time15Wpm || 0, fullResult.wpm)) : (profile.time15Wpm || 0);
+      const newTime30 = fullResult.timeMode === 30 ? Math.min(260, Math.max(profile.time30Wpm || 0, fullResult.wpm)) : (profile.time30Wpm || 0);
+      const newTime60 = fullResult.timeMode === 60 ? Math.min(260, Math.max(profile.time60Wpm || 0, fullResult.wpm)) : (profile.time60Wpm || 0);
+      const newTime120 = fullResult.timeMode === 120 ? Math.min(260, Math.max(profile.time120Wpm || 0, fullResult.wpm)) : (profile.time120Wpm || 0);
+
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
-      const newAvgWpm = Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests);
+      const newAvgWpm = Math.min(260, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
 
       const profileUpdates: Partial<UserProfile> = {
         totalTests: newTotalTests,
@@ -730,8 +839,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         rankTitle,
         lastActive: Date.now()
       };
-      await updateUserProfile(profileUpdates);
 
+      await updateProfileInternalStats(profileUpdates);
+
+      // Save result in RTDB
       try {
         const resultRef = push(ref(rtdb, `results/${userId}`));
         await set(resultRef, fullResult);
@@ -739,6 +850,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('RTDB save result error:', err);
       }
 
+      // Backend Anti-Cheat & Cryptographic Verification Submission
       try {
         fetch('/api/typing/submit', {
           method: 'POST',
@@ -763,7 +875,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }).catch(() => {});
       } catch {}
     } else {
+      // Guest User - Push live score to RTDB Leaderboard
       try {
+        // Backend Anti-Cheat & Cryptographic Verification Submission for Guest
         fetch('/api/typing/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -784,7 +898,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           })
         }).catch(() => {});
       } catch {}
-
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));
         const guest15 = rawResult.timeMode === 15 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0);
@@ -819,6 +932,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('Guest RTDB sync error:', e);
       }
     }
+
     return fullResult;
   };
 
@@ -828,21 +942,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     obstaclesDodged: number
   ): Promise<{ isPersonalBest: boolean; bestScore: number }> => {
     const guestId = getGuestId();
+    const userId = user ? user.uid : guestId;
     const currentBest = profile
       ? profile.dinoHighScore || 0
       : Number(localStorage.getItem('yolnoma_guest_dino_best') || 0);
-    const isPersonalBest = score > currentBest;
-    const bestScore = Math.max(score, currentBest);
+
+    const isValid = antiCheatManager.validateDinoScore(score, distance, obstaclesDodged);
+    if (!isValid || score <= 0) {
+      return { isPersonalBest: false, bestScore: currentBest };
+    }
+
+    const safeScore = Math.min(50000, Math.max(0, Math.round(score)));
+    const safeDistance = Math.min(50000, Math.max(0, Math.round(distance)));
+
+    const isPersonalBest = safeScore > currentBest;
+    const bestScore = Math.max(safeScore, currentBest);
 
     if (user && profile) {
       const newGamesPlayed = (profile.dinoGamesPlayed || 0) + 1;
-      const newMaxDistance = Math.max(profile.dinoMaxDistance || 0, Math.round(distance));
-      const xpEarned = Math.max(5, Math.floor(score / 10));
-      const newXp = profile.xp + xpEarned;
-      const newLevel = Math.floor(newXp / 500) + 1;
+      const newMaxDistance = Math.max(profile.dinoMaxDistance || 0, safeDistance);
+      
+      // Earn extra XP for Dino Run: 1 XP per 10 points (capped)
+      const xpEarned = Math.min(250, Math.max(5, Math.floor(safeScore / 10)));
+      const newXp = Math.min(250000, profile.xp + xpEarned);
+      const newLevel = Math.min(100, Math.floor(newXp / 500) + 1);
 
-      if (isPersonalBest && score >= 100) {
-        addNotification('YANGI DINO REKORD! 🦖', `Tabriklaymiz! Dino Runner da ${score} ball bilan yangi shaxsiy rekord o'rnatdingiz!`, 'achievement');
+      if (isPersonalBest && safeScore >= 100) {
+        addNotification('YANGI DINO REKORD! 🦖', `Tabriklaymiz! Dino Runner da ${safeScore} ball bilan yangi shaxsiy rekord o'rnatdingiz!`, 'achievement');
       }
 
       const updates: Partial<UserProfile> = {
@@ -853,8 +979,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         level: newLevel,
         lastActive: Date.now()
       };
-      await updateUserProfile(updates);
 
+      await updateProfileInternalStats(updates);
+
+      // Push to Realtime Database dino_leaderboard
       try {
         await update(ref(rtdb, `dino_leaderboard/${user.uid}`), {
           uid: user.uid,
@@ -873,6 +1001,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('Dino RTDB leaderboard sync error:', err);
       }
     } else {
+      // Guest User
       localStorage.setItem('yolnoma_guest_dino_best', String(bestScore));
       try {
         await set(ref(rtdb, `dino_leaderboard/${guestId}`), {
@@ -892,6 +1021,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('Guest Dino RTDB sync error:', err);
       }
     }
+
     return { isPersonalBest, bestScore };
   };
 
@@ -937,3 +1067,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

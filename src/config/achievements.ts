@@ -6,7 +6,7 @@ export const initialAchievements: Achievement[] = [
     title: 'First Step',
     description: 'Complete your very first typing test on Yolnoma Typing.',
     category: 'special',
-    icon: '🎯',
+    icon: '⚡',
     progress: 0,
     targetValue: 1,
     currentValue: 0
@@ -16,7 +16,7 @@ export const initialAchievements: Achievement[] = [
     title: 'Speed Demon I',
     description: 'Reach a typing speed of 50 WPM or higher.',
     category: 'speed',
-    icon: '⚡',
+    icon: '🚀',
     progress: 0,
     targetValue: 50,
     currentValue: 0
@@ -26,7 +26,7 @@ export const initialAchievements: Achievement[] = [
     title: 'Keyboard Ninja',
     description: 'Reach a typing speed of 100 WPM or higher.',
     category: 'speed',
-    icon: '⚔️',
+    icon: '🔥',
     progress: 0,
     targetValue: 100,
     currentValue: 0
@@ -36,7 +36,7 @@ export const initialAchievements: Achievement[] = [
     title: 'Lightning Fingers',
     description: 'Reach a typing speed of 150 WPM or higher.',
     category: 'speed',
-    icon: '🔥',
+    icon: '⚡',
     progress: 0,
     targetValue: 150,
     currentValue: 0
@@ -46,7 +46,7 @@ export const initialAchievements: Achievement[] = [
     title: 'Flawless Precision',
     description: 'Complete a typing test with 100% accuracy.',
     category: 'accuracy',
-    icon: '✨',
+    icon: '🎯',
     progress: 0,
     targetValue: 100,
     currentValue: 0
@@ -66,7 +66,7 @@ export const initialAchievements: Achievement[] = [
     title: 'Century Typer',
     description: 'Complete 100 typing tests.',
     category: 'volume',
-    icon: '👑',
+    icon: '🏆',
     progress: 0,
     targetValue: 100,
     currentValue: 0
@@ -76,7 +76,7 @@ export const initialAchievements: Achievement[] = [
     title: 'Consistent Practice',
     description: 'Maintain a 7-day typing streak.',
     category: 'streak',
-    icon: '🌟',
+    icon: '📅',
     progress: 0,
     targetValue: 7,
     currentValue: 0

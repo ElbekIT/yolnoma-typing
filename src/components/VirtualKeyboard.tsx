@@ -7,6 +7,7 @@ interface VirtualKeyboardProps {
 
 const KeyCap = memo(({ keyLabel, isPressed, isActiveTarget }: { keyLabel: string; isPressed: boolean; isActiveTarget: boolean }) => {
   let base = 'h-7 sm:h-8 px-2 rounded flex items-center justify-center font-mono text-[10px] sm:text-xs font-semibold uppercase border transition-colors duration-75 shrink-0 ';
+
   if (isActiveTarget) {
     base += 'bg-[var(--main-color)] text-white border-[var(--main-color)] ';
   } else if (isPressed) {
@@ -28,6 +29,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
 
   useEffect(() => {
     if (!showKeyboard) return;
+
     let timer: NodeJS.Timeout;
     const handleKeyDown = (e: KeyboardEvent) => {
       setPressedKey(e.key.toLowerCase());
@@ -65,6 +67,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
             />
           ))}
         </div>
+
         <div className="flex gap-1 sm:gap-1.5">
           {row2.map((k) => (
             <KeyCap
@@ -75,6 +78,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
             />
           ))}
         </div>
+
         <div className="flex gap-1 sm:gap-1.5">
           {row3.map((k) => (
             <KeyCap
@@ -85,6 +89,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
             />
           ))}
         </div>
+
         <div className="flex gap-1 sm:gap-1.5 w-full justify-center mt-0.5">
           <KeyCap
             keyLabel="space"
