@@ -166,7 +166,7 @@ export const AdminView: React.FC = () => {
   const handleQuickMasterLogin = async () => {
     if (isAuthenticating || (lockoutRemainingSec && lockoutRemainingSec > 0)) return;
     if (!user || !user.email) {
-      setAuthError("Admin panelga kirish uchun avval saytga Bosh Administrator (Root Owner) akkaunti orqali kirishingiz shart!");
+      setAuthError("Owner panelga kirish uchun avval saytga Bosh Administrator (Root Owner) akkaunti orqali kirishingiz shart!");
       return;
     }
 
@@ -174,11 +174,11 @@ export const AdminView: React.FC = () => {
     setIsAuthenticating(true);
 
     try {
-      // Use standard master credentials
+      // Use verified Owner credentials
       const res = await loginAdminBackend(
-        '12gG625Gh872H376H4386',
-        '7H736H349K346Hh276J',
-        '73H3888262638545726H7274920385628',
+        'YolnomaOwner2026',
+        'Yolnoma#Secure777!',
+        '909090',
         user.email
       );
 
@@ -190,7 +190,7 @@ export const AdminView: React.FC = () => {
         setAuthError(null);
         setLockoutRemainingSec(null);
       } else {
-        setAuthError(res.error || "Noto'g'ri login, parol yoki 2FA PIN!");
+        setAuthError(res.error || "Noto'g'ri Owner login, parol yoki 2FA PIN!");
         if (res.lockoutRemainingSec) {
           setLockoutRemainingSec(res.lockoutRemainingSec);
         }
@@ -201,19 +201,6 @@ export const AdminView: React.FC = () => {
     } finally {
       setIsAuthenticating(false);
     }
-  };
-
-  const handleFillCredentials = (preset: 'complex' | 'easy') => {
-    if (preset === 'complex') {
-      setInputUsername('12gG625Gh872H376H4386');
-      setInputPassword('7H736H349K346Hh276J');
-      setInput2FA('73H3888262638545726H7274920385628');
-    } else {
-      setInputUsername('admin');
-      setInputPassword('admin123');
-      setInput2FA('777777');
-    }
-    setAuthError(null);
   };
 
   const handleAdminLock = async () => {
@@ -599,14 +586,14 @@ export const AdminView: React.FC = () => {
 
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Backend Xavfsizlik Qalbi • HMAC-SHA256</span>
+            <Crown className="w-3.5 h-3.5" />
+            <span>Super Owner Xavfsizlik Portali</span>
           </div>
           <h2 className="text-xl font-black text-[var(--text-color)]">
-            Admin Panel Autentifikatsiyasi
+            Owner Boshqaruv Autentifikatsiyasi
           </h2>
           <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-            Parollar va 2FA kodlari brauzerda ochiq saqlanmaydi. Autentifikatsiya to'g'ridan-to'g'ri backend serverda xavfsiz va kriptografik tarzda tekshiriladi.
+            Faqat Loyiha Egasi (Super Owner) uchun maxsus yuqori darajadagi xavfsizlik nazorati. Kriptografik himoya to'g'ridan-to'g'ri backend serverda amalga oshiriladi.
           </p>
         </div>
 
@@ -617,8 +604,8 @@ export const AdminView: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <div>
-                  <span className="text-[10px] text-[var(--sub-color)] block uppercase">Tizimga kirilgan hisob:</span>
-                  <span className="font-mono">{showFullEmails ? user.email : maskEmail(user.email || '')}</span>
+                  <span className="text-[10px] text-[var(--sub-color)] block uppercase font-mono">Bosh Administrator:</span>
+                  <span className="font-mono text-emerald-300">{showFullEmails ? user.email : maskEmail(user.email || '')}</span>
                 </div>
               </div>
               <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[10px] font-extrabold uppercase text-emerald-300">
@@ -634,7 +621,7 @@ export const AdminView: React.FC = () => {
               className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300/60"
             >
               <Zap className="w-4 h-4 fill-slate-950" />
-              <span>⚡ 1-Bosishda Kirish (Bosh Administrator)</span>
+              <span>⚡ 1-Bosishda Kirish (Super Owner)</span>
             </button>
           </div>
         ) : (
@@ -643,7 +630,7 @@ export const AdminView: React.FC = () => {
             <div>
               <p className="font-extrabold text-amber-300">Saytga kirilmagan</p>
               <p className="text-[11px] font-normal text-slate-300 mt-0.5">
-                Admin panelga kirish uchun avval saytning yuqori o'ng qismidagi "Kirish" tugmasi orqali ruxsat etilgan Administrator akkauntingizga kiring.
+                Owner paneliga kirish uchun avval saytning yuqori qismidagi "Kirish" tugmasi orqali ruxsat etilgan Super Owner (yuldashivagavharoy@gmail.com) akkauntingizga kiring.
               </p>
             </div>
           </div>
@@ -667,50 +654,22 @@ export const AdminView: React.FC = () => {
         {!isLockedOut && authError && (
           <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold text-left flex items-start gap-2 animate-in fade-in">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-            <div>
-              <span className="block font-bold">{authError}</span>
-              <p className="text-[11px] text-rose-300/90 font-normal mt-1">
-                Eslatma: yuqoridagi "1-Bosishda Kirish" tugmasidan foydalanishingiz yoki quyidagi "Avto-to'ldirish" tugmasini bosishingiz mumkin.
-              </p>
-            </div>
+            <span className="block font-bold">{authError}</span>
           </div>
         )}
-
-        {/* Preset Auto-fill Helper */}
-        <div className="flex items-center justify-between gap-2 pt-1">
-          <span className="text-[10px] text-[var(--sub-color)] font-medium">Maydonlarni to'ldirish:</span>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleFillCredentials('complex')}
-              className="px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1"
-            >
-              <KeyRound className="w-3 h-3" />
-              <span>Asosiy Kalitlar</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFillCredentials('easy')}
-              className="px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-amber-500/20 text-[var(--text-color)] text-[10px] font-bold border border-[var(--sub-alt)] transition-all cursor-pointer flex items-center gap-1"
-            >
-              <Check className="w-3 h-3 text-emerald-400" />
-              <span>Oson (admin)</span>
-            </button>
-          </div>
-        </div>
 
         <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
           {/* Step 1: Username */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-amber-400" />
-              <span>1-bosqich: Admin Login (Username)</span>
+              <span>1-bosqich: Owner Login (Username)</span>
             </label>
             <input
               type="text"
               value={inputUsername}
               onChange={(e) => setInputUsername(e.target.value)}
-              placeholder="Username kiriting..."
+              placeholder="Owner loginini kiriting..."
               disabled={isAuthenticating || isLockedOut}
               required
               autoFocus
@@ -722,14 +681,14 @@ export const AdminView: React.FC = () => {
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
               <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-              <span>2-bosqich: Admin Paroli (Password)</span>
+              <span>2-bosqich: Owner Maxfiy Paroli</span>
             </label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
-                placeholder="Parolni kiriting..."
+                placeholder="Owner parolini kiriting..."
                 disabled={isAuthenticating || isLockedOut}
                 required
                 className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono disabled:opacity-50"
@@ -755,7 +714,7 @@ export const AdminView: React.FC = () => {
                 type={show2FA ? 'text' : 'password'}
                 value={input2FA}
                 onChange={(e) => setInput2FA(e.target.value)}
-                placeholder="2FA PIN kodini kiriting..."
+                placeholder="6 xonali 2FA PIN..."
                 disabled={isAuthenticating || isLockedOut}
                 required
                 className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest disabled:opacity-50"
@@ -782,8 +741,8 @@ export const AdminView: React.FC = () => {
               </>
             ) : (
               <>
-                <Lock className="w-4 h-4" />
-                <span>Tasdiqlash & Kirish</span>
+                <Crown className="w-4 h-4" />
+                <span>Owner Portaliga Kirish</span>
               </>
             )}
           </button>

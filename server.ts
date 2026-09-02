@@ -225,27 +225,9 @@ const ROOT_OWNER_EMAIL = (process.env.ADMIN_OWNER_EMAIL || 'yuldashivagavharoy@g
 
 const VALID_ADMIN_ACCOUNTS = [
   {
-    username: (process.env.ADMIN_USERNAME || '12gG625Gh872H376H4386').trim(),
-    password: (process.env.ADMIN_PASSWORD || '7H736H349K346Hh276J').trim(),
-    pin: (process.env.ADMIN_2FA_PIN || '73H3888262638545726H7274920385628').trim(),
-    ownerEmail: ROOT_OWNER_EMAIL
-  },
-  {
-    username: 'admin',
-    password: '7H736H349K346Hh276J',
-    pin: '73H3888262638545726H7274920385628',
-    ownerEmail: ROOT_OWNER_EMAIL
-  },
-  {
-    username: 'admin',
-    password: 'admin123',
-    pin: '777777',
-    ownerEmail: ROOT_OWNER_EMAIL
-  },
-  {
-    username: 'owner',
-    password: 'yolnoma2026',
-    pin: '123456',
+    username: (process.env.ADMIN_USERNAME || 'YolnomaOwner2026').trim(),
+    password: (process.env.ADMIN_PASSWORD || 'Yolnoma#Secure777!').trim(),
+    pin: (process.env.ADMIN_2FA_PIN || '909090').trim(),
     ownerEmail: ROOT_OWNER_EMAIL
   }
 ];
