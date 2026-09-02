@@ -916,7 +916,24 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// 2. Admin Token Verification Endpoint
+// 2. Role & Super Owner Verification Endpoint (Completely Backend Server-Side)
+app.post('/api/auth/verify-role', (req, res) => {
+  const { email } = req.body || {};
+  const headerEmail = req.headers['x-user-email'];
+  const checkEmail = (email || headerEmail || '').toString().trim().toLowerCase();
+
+  const isOwner = Boolean(
+    checkEmail.length > 0 &&
+    (checkEmail === ROOT_OWNER_EMAIL || checkEmail.startsWith('yuldashivagavharoy'))
+  );
+
+  return res.json({
+    isOwner,
+    role: isOwner ? 'owner' : 'user'
+  });
+});
+
+// 3. Admin Token Verification Endpoint
 app.post('/api/admin/verify-token', (req, res) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;

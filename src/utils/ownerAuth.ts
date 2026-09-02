@@ -114,17 +114,49 @@ export async function loginAdminBackend(
   }
 }
 
+let cachedOwnerStatus: { [email: string]: boolean } = {};
+
+/**
+ * Verifies with backend server if the provided email has Owner/Admin privileges.
+ */
+export async function checkOwnerBackend(userEmail?: string | null): Promise<boolean> {
+  if (!userEmail) return false;
+  const cleanEmail = userEmail.trim().toLowerCase();
+  if (!cleanEmail) return false;
+
+  if (typeof cachedOwnerStatus[cleanEmail] === 'boolean') {
+    return cachedOwnerStatus[cleanEmail];
+  }
+
+  try {
+    const res = await fetch('/api/auth/verify-role', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': cleanEmail
+      },
+      body: JSON.stringify({ email: cleanEmail })
+    });
+    const data = await res.json().catch(() => null);
+    const isOwner = Boolean(data?.isOwner || data?.role === 'owner');
+    cachedOwnerStatus[cleanEmail] = isOwner;
+    return isOwner;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Fetches active admin sessions from the backend
  */
-export async function fetchAdminSessions(): Promise<{ success: boolean; sessions: AdminSessionItem[]; error?: string }> {
+export async function fetchAdminSessions(userEmail?: string | null): Promise<{ success: boolean; sessions: AdminSessionItem[]; error?: string }> {
   const token = getAdminToken();
 
   try {
     const res = await fetch('/api/admin/sessions', {
       credentials: 'include',
       headers: {
-        'x-user-email': 'yuldashivagavharoy@gmail.com',
+        ...(userEmail ? { 'x-user-email': userEmail } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
@@ -149,7 +181,7 @@ export async function fetchAdminSessions(): Promise<{ success: boolean; sessions
  * Terminates / kicks an active admin session.
  * Super Admin (Root Owner) is protected and can never be kicked.
  */
-export async function terminateAdminSession(sessionId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+export async function terminateAdminSession(sessionId: string, userEmail?: string | null): Promise<{ success: boolean; message?: string; error?: string }> {
   const token = getAdminToken();
 
   try {
@@ -158,7 +190,7 @@ export async function terminateAdminSession(sessionId: string): Promise<{ succes
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-email': 'yuldashivagavharoy@gmail.com',
+        ...(userEmail ? { 'x-user-email': userEmail } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
       body: JSON.stringify({ sessionId })
@@ -272,20 +304,19 @@ export function clearAdminSession(): void {
 export function isOwnerUser(userEmail?: string | null): boolean {
   if (userEmail) {
     const clean = userEmail.trim().toLowerCase();
-    if (clean === 'yuldashivagavharoy@gmail.com' || clean.startsWith('yuldashivagavharoy')) {
-      return true;
+    if (typeof cachedOwnerStatus[clean] === 'boolean') {
+      return cachedOwnerStatus[clean];
     }
   }
   try {
     const rawUser = localStorage.getItem('yolnoma_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-      const email = parsed?.email?.toLowerCase();
-      if (email === 'yuldashivagavharoy@gmail.com' || email?.startsWith('yuldashivagavharoy')) {
-        return true;
-      }
       if (parsed?.role === 'owner' || parsed?.role === 'admin' || parsed?.isOwner === true) {
         return true;
+      }
+      if (parsed?.email && typeof cachedOwnerStatus[parsed.email.toLowerCase()] === 'boolean') {
+        return cachedOwnerStatus[parsed.email.toLowerCase()];
       }
     }
   } catch (e) {

@@ -47,16 +47,35 @@ import { AdminDinoTab } from './AdminDinoTab';
 import { AdminSessionsTab } from './AdminSessionsTab';
 import { maskEmail } from '../../utils/maskEmail';
 import {
-  isOwnerUser
+  isOwnerUser,
+  checkOwnerBackend
 } from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {
   const { user, profile } = useAuth();
+  const [isBackendOwner, setIsBackendOwner] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
 
-  // Super Owner Detection: yuldashivagavharoy@gmail.com
+  useEffect(() => {
+    let isMounted = true;
+    if (user?.email) {
+      checkOwnerBackend(user.email).then((res) => {
+        if (isMounted) {
+          setIsBackendOwner(res);
+          setIsCheckingRole(false);
+        }
+      });
+    } else {
+      setIsBackendOwner(false);
+      setIsCheckingRole(false);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.email]);
+
   const isSuperOwner = Boolean(
-    user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
-    user?.email?.toLowerCase().startsWith('yuldashivagavharoy') ||
+    isBackendOwner ||
     profile?.role === 'owner' ||
     profile?.role === 'admin' ||
     isOwnerUser(user?.email)
@@ -459,42 +478,47 @@ export const AdminView: React.FC = () => {
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 1. Super Owner Gate (Direct access for yuldashivagavharoy@gmail.com)
+  if (isCheckingRole) {
+    return (
+      <div className="w-full max-w-md mx-auto my-20 p-8 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-[var(--sub-color)] font-mono">Xavfsizlik tekshiruvi amalga oshirilmoqda...</p>
+      </div>
+    );
+  }
+
+  // 1. Generic 403 Forbidden Gate (Zero email exposure, zero identity leaks)
   if (!isSuperOwner) {
     return (
-      <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-[var(--card-bg)] border border-amber-500/30 text-center space-y-6 shadow-2xl animate-in fade-in">
-        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
-          <ShieldAlert className="w-8 h-8 animate-pulse" />
+      <div className="w-full max-w-md mx-auto my-16 p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center space-y-6 shadow-xl animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto shadow-inner">
+          <ShieldAlert className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
-            <Crown className="w-3.5 h-3.5" />
-            <span>Super Owner Xavfsizlik Portali</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-[11px] font-bold uppercase tracking-wider">
+            <Lock className="w-3.5 h-3.5" />
+            <span>403 — Ruxsat Cheklangan</span>
           </div>
-          <h2 className="text-xl font-black text-[var(--text-color)]">
-            Kirish Cheklangan (Faqat Bosh Admin)
+          <h2 className="text-xl font-bold text-[var(--text-color)]">
+            Kirish Huquqi Mavjud Emas
           </h2>
           <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-            Ushbu boshqaruv paneli faqat Loyiha Egasi (Super Owner: <span className="text-amber-400 font-mono font-bold">yuldashivagavharoy@gmail.com</span>) uchun mo'ljallangan.
+            Ushbu sahifaga kirish uchun sizning hisobingizda yetarli vakolatlar mavjud emas.
           </p>
         </div>
 
-        {/* Current status */}
-        <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-[var(--sub-color)]">Hozirgi hisob holati:</span>
-            <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase ${user ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'}`}>
-              {user ? 'Kirilgan' : 'Kirilmagan'}
-            </span>
-          </div>
-          <div className="font-mono text-xs text-[var(--text-color)] break-all font-semibold">
-            {user?.email || 'Hisobga ulanmagan'}
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-left leading-relaxed">
-          💡 <strong>Eslatma:</strong> Boshqaruv paneliga to'g'ridan-to'g'ri kirish uchun saytning yuqori menyusidagi <strong>"Kirish"</strong> tugmasi orqali <span className="font-mono underline">yuldashivagavharoy@gmail.com</span> hisobingiz bilan tizimga kiring.
+        <div className="pt-2">
+          <button
+            onClick={() => {
+              window.location.hash = '';
+              const event = new CustomEvent('navigate_tab', { detail: 'typing' });
+              window.dispatchEvent(event);
+            }}
+            className="w-full py-3 px-4 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-color)]/20 text-[var(--text-color)] font-bold text-xs transition-all cursor-pointer"
+          >
+            Bosh Sahifaga Qaytish
+          </button>
         </div>
       </div>
     );

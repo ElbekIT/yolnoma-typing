@@ -64,6 +64,14 @@ function MainAppContent() {
   const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());
 
   useEffect(() => {
+    const handleNav = (e: any) => {
+      if (e.detail) setActiveTab(e.detail);
+    };
+    window.addEventListener('navigate_tab', handleNav);
+    return () => window.removeEventListener('navigate_tab', handleNav);
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = antiCheatManager.subscribeDevTools((isOpen) => {
       setIsDevToolsBlocked(isOpen);
     });

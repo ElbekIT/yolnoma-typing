@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Keyboard,
   Trophy,
@@ -35,7 +35,7 @@ import { languagesList, t } from '../config/languages';
 import { themes } from '../config/themes';
 import { LanguageCode, ThemeMode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
-import { isOwnerUser, isAdminSessionActive } from '../utils/ownerAuth';
+import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
 
 interface HeaderProps {
   activeTab: string;
@@ -49,6 +49,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isBackendOwner, setIsBackendOwner] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      checkOwnerBackend(user.email).then((res) => {
+        setIsBackendOwner(res);
+      });
+    } else {
+      setIsBackendOwner(false);
+    }
+  }, [user?.email]);
 
   const iconDimensions = {
     small: 'w-4 h-4',
@@ -67,8 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const isOwnerAdmin =
     profile?.role === 'admin' ||
     profile?.role === 'owner' ||
-    user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
-    user?.email?.toLowerCase().startsWith('yuldashivagavharoy') ||
+    isBackendOwner ||
     isOwnerUser(user?.email) ||
     isAdminSessionActive();
 
