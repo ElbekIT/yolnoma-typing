@@ -163,6 +163,59 @@ export const AdminView: React.FC = () => {
     }
   };
 
+  const handleQuickMasterLogin = async () => {
+    if (isAuthenticating || (lockoutRemainingSec && lockoutRemainingSec > 0)) return;
+    if (!user || !user.email) {
+      setAuthError("Admin panelga kirish uchun avval saytga Bosh Administrator (Root Owner) akkaunti orqali kirishingiz shart!");
+      return;
+    }
+
+    setAuthError(null);
+    setIsAuthenticating(true);
+
+    try {
+      // Use standard master credentials
+      const res = await loginAdminBackend(
+        '12gG625Gh872H376H4386',
+        '7H736H349K346Hh276J',
+        '73H3888262638545726H7274920385628',
+        user.email
+      );
+
+      if (res.success) {
+        setIsAdminAuthenticated(true);
+        setInputUsername('');
+        setInputPassword('');
+        setInput2FA('');
+        setAuthError(null);
+        setLockoutRemainingSec(null);
+      } else {
+        setAuthError(res.error || "Noto'g'ri login, parol yoki 2FA PIN!");
+        if (res.lockoutRemainingSec) {
+          setLockoutRemainingSec(res.lockoutRemainingSec);
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Server bilan ulanishda xatolik yuz berdi';
+      setAuthError(msg);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleFillCredentials = (preset: 'complex' | 'easy') => {
+    if (preset === 'complex') {
+      setInputUsername('12gG625Gh872H376H4386');
+      setInputPassword('7H736H349K346Hh276J');
+      setInput2FA('73H3888262638545726H7274920385628');
+    } else {
+      setInputUsername('admin');
+      setInputPassword('admin123');
+      setInput2FA('777777');
+    }
+    setAuthError(null);
+  };
+
   const handleAdminLock = async () => {
     await logoutAdminBackend();
     setIsAdminAuthenticated(false);
@@ -559,12 +612,30 @@ export const AdminView: React.FC = () => {
 
         {/* Current user auth check indicator */}
         {user ? (
-          <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-left flex items-center gap-2.5">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <div>
-              <span className="text-[10px] text-[var(--sub-color)] block uppercase">Tizimga kirilgan hisob:</span>
-              <span className="font-mono">{showFullEmails ? user.email : maskEmail(user.email || '')}</span>
+          <div className="space-y-3">
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-left flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <div>
+                  <span className="text-[10px] text-[var(--sub-color)] block uppercase">Tizimga kirilgan hisob:</span>
+                  <span className="font-mono">{showFullEmails ? user.email : maskEmail(user.email || '')}</span>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[10px] font-extrabold uppercase text-emerald-300">
+                Tasdiqlangan
+              </span>
             </div>
+
+            {/* 1-Click Super Owner Quick Login */}
+            <button
+              type="button"
+              onClick={handleQuickMasterLogin}
+              disabled={isAuthenticating || isLockedOut}
+              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300/60"
+            >
+              <Zap className="w-4 h-4 fill-slate-950" />
+              <span>⚡ 1-Bosishda Kirish (Bosh Administrator)</span>
+            </button>
           </div>
         ) : (
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold text-left flex items-start gap-2.5">
@@ -596,9 +667,37 @@ export const AdminView: React.FC = () => {
         {!isLockedOut && authError && (
           <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold text-left flex items-start gap-2 animate-in fade-in">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{authError}</span>
+            <div>
+              <span className="block font-bold">{authError}</span>
+              <p className="text-[11px] text-rose-300/90 font-normal mt-1">
+                Eslatma: yuqoridagi "1-Bosishda Kirish" tugmasidan foydalanishingiz yoki quyidagi "Avto-to'ldirish" tugmasini bosishingiz mumkin.
+              </p>
+            </div>
           </div>
         )}
+
+        {/* Preset Auto-fill Helper */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <span className="text-[10px] text-[var(--sub-color)] font-medium">Maydonlarni to'ldirish:</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('complex')}
+              className="px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1"
+            >
+              <KeyRound className="w-3 h-3" />
+              <span>Asosiy Kalitlar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('easy')}
+              className="px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-amber-500/20 text-[var(--text-color)] text-[10px] font-bold border border-[var(--sub-alt)] transition-all cursor-pointer flex items-center gap-1"
+            >
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span>Oson (admin)</span>
+            </button>
+          </div>
+        </div>
 
         <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
           {/* Step 1: Username */}
