@@ -23,14 +23,12 @@ import {
 
 interface OwnerAboutViewProps {
   onStartTyping?: () => void;
-  onGoToBattle?: () => void;
   onGoToLessons?: () => void;
   onGoToLeaderboard?: () => void;
 }
 
 export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   onStartTyping,
-  onGoToBattle,
   onGoToLessons,
   onGoToLeaderboard
 }) => {
@@ -54,12 +52,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
       desc: "WPM (so'z/daqiqa), CPM (belgi/daqiqa) va Aniqlik (%) ko'rsatkichlarini har lahzada hisoblovchi matematik dvigatel.",
       badge: "Tezkor Motor"
     },
-    {
-      icon: Swords,
-      title: "Jonli Battle Arena",
-      desc: "Do'stlar va onlayn ishtirokchilar bilan real-vaqtda klaviatura poygalari o'tkazish hamda PUBG uslubidagi taklifnomalar.",
-      badge: "Realtime Battle"
-    },
+    // Battle feature removed
     {
       icon: GraduationCap,
       title: "Interaktiv Saboqlar & Mashqlar",
@@ -90,7 +83,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
     { name: "React 18", category: "Frontend Framework", level: "Senior" },
     { name: "TypeScript", category: "Type Safety & Robust Logic", level: "Advanced" },
     { name: "Tailwind CSS", category: "Modern Responsive UI/UX", level: "Expert" },
-    { name: "Firebase RTDB", category: "Realtime Battle & Sockets", level: "Architecture" },
+    { name: "Firebase RTDB", category: "Realtime features & Sockets", level: "Architecture" },
     { name: "Cloud Firestore", category: "Persistent Database", level: "Database" },
     { name: "Web Audio API", category: "Sound Synthesizer", level: "Interactive" },
     { name: "Anti-Cheat Engine", category: "Keystroke Validation", level: "Security" },
@@ -146,7 +139,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             </div>
             <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
               <div className="text-2xl font-black text-purple-500 font-mono">24/7</div>
-              <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Jonli Battle Arena</div>
+              <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Doimiy Qo'llab-quvvatlash</div>
             </div>
           </div>
         </div>
@@ -432,7 +425,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             O'z Tezligingizni Sinashga Tayyormisiz?
           </h3>
           <p className="text-xs text-[var(--sub-color)]">
-            Hoziroq yozish testini boshlang yoki Battle Arenada bellashing!
+            Hoziroq yozish testini boshlang va natijalaringizni yaxshilang!
           </p>
         </div>
 
@@ -447,15 +440,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             </button>
           )}
 
-          {onGoToBattle && (
-            <button
-              onClick={onGoToBattle}
-              className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <Swords className="w-4 h-4 text-rose-500" />
-              <span>Battle Arena</span>
-            </button>
-          )}
+          {/* Battle action removed */}
 
           {onGoToLessons && (
             <button

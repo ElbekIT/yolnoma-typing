@@ -553,36 +553,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
-          {/* Dino Runner Stats Card */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-3xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🦖</span>
-                <div>
-                  <h4 className="text-xs font-bold text-[var(--text-color)]">T-Rex Dino Runner Statistikasi</h4>
-                  <p className="text-[10px] text-[var(--sub-color)]">O'yin natijalari va eng yaxshi masofa</p>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-500 font-mono text-xs font-black">
-                Rekord: {profile.dinoHighScore || 0} ball
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 pt-1">
-              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 text-center">
-                <span className="text-[9px] uppercase font-bold text-[var(--sub-color)] block">Eng Yuqori Ball</span>
-                <span className="text-lg font-black text-amber-500 font-mono">{profile.dinoHighScore || 0}</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 text-center">
-                <span className="text-[9px] uppercase font-bold text-[var(--sub-color)] block">Maksimal Masofa</span>
-                <span className="text-lg font-black text-[var(--main-color)] font-mono">{profile.dinoMaxDistance || 0} m</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 text-center">
-                <span className="text-[9px] uppercase font-bold text-[var(--sub-color)] block">O'yinlar Soni</span>
-                <span className="text-lg font-black text-emerald-500 font-mono">{profile.dinoGamesPlayed || 0}</span>
-              </div>
-            </div>
-          </div>
+          {/* Dino stats removed */}
 
           {/* Privacy & Data Confidentiality Card */}
           <div className="bg-[var(--card-bg)] border border-emerald-500/20 p-5 rounded-3xl space-y-3">

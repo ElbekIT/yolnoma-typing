@@ -30,7 +30,7 @@ import {
   Eye,
   EyeOff,
   Check,
-  Gamepad2,
+  
   Laptop
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
@@ -43,7 +43,6 @@ import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { AdminInboxTab } from './AdminInboxTab';
 import { AdminServerTab } from './AdminServerTab';
-import { AdminDinoTab } from './AdminDinoTab';
 import { AdminSessionsTab } from './AdminSessionsTab';
 import { maskEmail } from '../../utils/maskEmail';
 import {
@@ -106,7 +105,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'dino' | 'inbox' | 'notifications' | 'sessions' | 'server'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications' | 'sessions' | 'server'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
@@ -616,17 +615,7 @@ export const AdminView: React.FC = () => {
           <span>👥 Barcha Foydalanuvchilar ({usersList.length})</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('dino')}
-          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
-            activeTab === 'dino'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
-          }`}
-        >
-          <Gamepad2 className="w-4 h-4" />
-          <span>🎮 Dino O'yin Reytingi</span>
-        </button>
+        {/* Dino admin tab removed */}
 
         <button
           onClick={() => setActiveTab('inbox')}
@@ -683,7 +672,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'dino' && activeTab !== 'sessions' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'sessions' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -976,10 +965,7 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: DINO O'YINI REYTINGI */}
-      {activeTab === 'dino' && (
-        <AdminDinoTab />
-      )}
+      {/* Dino admin tab removed */}
 
       {/* TAB 4: KELGAN MUROJAATLAR / INBOX */}
       {activeTab === 'inbox' && (

@@ -195,9 +195,8 @@ class AntiCheatSystem {
 
     // 2. Check Tests vs XP (Each test awards ~50-250 XP; 0 tests cannot have 10,000 XP)
     const totalTests = profile.totalTests || 0;
-    const dinoGames = profile.dinoGamesPlayed || 0;
-    if (totalTests === 0 && dinoGames === 0 && xp > 1500) {
-      this.banDeviceAndUser('Mashq qilmasdan sun\'iy ravishda oshirilgan XP va daraja aniqlandi!');
+    if (totalTests === 0 && xp > 1500) {
+      this.banDeviceAndUser('Mashq qilmasdan sun'iy ravishda oshirilgan XP va daraja aniqlandi!');
       return false;
     }
 
@@ -210,24 +209,7 @@ class AntiCheatSystem {
     return true;
   }
 
-  /**
-   * Validates Dino runner score before submission
-   */
-  public validateDinoScore(score: number, distance: number, obstaclesDodged: number): boolean {
-    if (score < 0 || distance < 0 || obstaclesDodged < 0) {
-      this.banDeviceAndUser('Dino o\'yinida noqonuniy manfiy parametrlar kiritildi.');
-      return false;
-    }
-    if (score > 50000) {
-      this.banDeviceAndUser(`Dino o'yinida soxta ball (${score}) aniqlandi!`);
-      return false;
-    }
-    if (distance > 0 && score > distance * 5) {
-      this.banDeviceAndUser('Dino o\'yinida masofa va ball nomutanosibligi aniqlandi!');
-      return false;
-    }
-    return true;
-  }
+  // Dino validation removed
 
   private triggerCheat(reason: string) {
     if (this.onCheatCallback) {
