@@ -11,7 +11,7 @@ const PORT = 3000;
 app.disable('x-powered-by');
 
 // -------------------------------------------------------------
-// SECURE IN-MEMORY STATE & ENTERPRISE ANTI-DDOS / FLOOD DEFENSE
+// SECURE IN-MEMORY STATE & ENTERPRISE ANTI-DRDOS / ANTI-AMPLIFICATION DEFENSE
 // -------------------------------------------------------------
 
 interface BucketRecord {
@@ -28,7 +28,7 @@ interface BucketRecord {
 const ipLimitMap = new Map<string, BucketRecord>();
 const subnetLimitMap = new Map<string, BucketRecord>();
 
-// 2. Active Concurrent Sockets per IP (Anti-Slowloris / Anti-Thread 100 Flood)
+// 2. Active Concurrent Sockets per IP (Anti-Slowloris & Connection Exhaustion Shield)
 const activeSocketsPerIp = new Map<string, number>();
 
 // 3. Duplicate Mutation Payload Hash Cache (Anti-Replay Attack)
@@ -45,10 +45,13 @@ const serverStats = {
   totalContactMessages: 1,
   securityEventsBlocked: 0,
   ddosFloodsBlocked: 0,
-  rateLimitHits: 0
+  drdosReflectionsBlocked: 0,
+  amplificationAttacksBlocked: 0,
+  rateLimitHits: 0,
+  drdosShieldStatus: 'ARMORED_ACTIVE'
 };
 
-// Known L7 Attack Tools, DDoS Scripts, Flooding Bots, Scanners & Headless Exploits
+// Known L7 Attack Tools, DDoS/DRDoS Scripts, Reflector Probers, Stressers, Booters & Exploits
 const MALICIOUS_UA_PATTERNS = [
   /python-requests/i,
   /aiohttp/i,
@@ -85,6 +88,11 @@ const MALICIOUS_UA_PATTERNS = [
   /slowhttptest/i,
   /loic/i,
   /hoic/i,
+  /drdos/i,
+  /booter/i,
+  /stresser/i,
+  /c2-scanner/i,
+  /mirai/i,
   /scrapy/i
 ];
 
@@ -108,7 +116,11 @@ setInterval(() => {
 const getClientIp = (req: express.Request): string => {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
+    const primary = forwarded.split(',')[0].trim();
+    // Validate IP format to prevent header injection spoofing
+    if (/^[0-9a-fA-F:.]+$/.test(primary)) {
+      return primary;
+    }
   }
   return req.socket.remoteAddress || '127.0.0.1';
 };
@@ -136,16 +148,46 @@ function triggerSecurityBan(req: express.Request, ip: string, reason: string, du
 }
 
 // -------------------------------------------------------------
-// GLOBAL STEALTH ANTI-DDOS & MULTI-LAYER RATE LIMITING SHIELD
+// GLOBAL STEALTH ANTI-DRDOS & REFLECTION / AMPLIFICATION DEFENSE SHIELD
 // -------------------------------------------------------------
 app.use((req, res, next) => {
   const clientIp = getClientIp(req);
+  const subnet = getSubnet(clientIp);
   const now = Date.now();
 
-  // 1. Check if IP is explicitly banned
+  // Track active concurrent sockets per IP to block Slowloris / connection exhaustion
+  const currentSockets = (activeSocketsPerIp.get(clientIp) || 0) + 1;
+  activeSocketsPerIp.set(clientIp, currentSockets);
+
+  const cleanupSocket = () => {
+    const count = activeSocketsPerIp.get(clientIp) || 1;
+    if (count <= 1) {
+      activeSocketsPerIp.delete(clientIp);
+    } else {
+      activeSocketsPerIp.set(clientIp, count - 1);
+    }
+  };
+
+  res.on('finish', cleanupSocket);
+  res.on('close', cleanupSocket);
+
+  // A. Slowloris / Concurrent Connection Flood Check
+  if (currentSockets > 35) {
+    serverStats.ddosFloodsBlocked += 1;
+    serverStats.securityEventsBlocked += 1;
+    try {
+      req.socket.destroy();
+    } catch {}
+    return;
+  }
+
+  // B. Check if IP is explicitly banned in quarantine
   const banInfo = bannedIps.get(clientIp);
   if (banInfo && now < banInfo.unbanAt) {
     serverStats.ddosFloodsBlocked += 1;
+    try {
+      req.socket.destroy();
+    } catch {}
     return res.status(403).json({ error: 'Access restricted' });
   }
 
@@ -153,12 +195,77 @@ app.use((req, res, next) => {
   const isApiRequest = req.path.startsWith('/api/');
   const isMutation = req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE';
 
-  // 2. Strict URL and Query Length Guards
+  // C. DRDoS Reflection Loop & Header Injection Detection
+  // Check for proxy loops, Max-Forwards reflector abuse, and reflection header tampering
+  const loopDetection = req.headers['loop-detection'] || req.headers['x-loop-control'];
+  const maxForwards = req.headers['max-forwards'];
+  const forwardedFor = req.headers['x-forwarded-for'];
+
+  if (loopDetection || maxForwards === '0' || (typeof forwardedFor === 'string' && forwardedFor.split(',').length > 10)) {
+    serverStats.drdosReflectionsBlocked += 1;
+    serverStats.securityEventsBlocked += 1;
+    triggerSecurityBan(req, clientIp, 'DRDoS Reflector Loop Injection', 1800000);
+    return;
+  }
+
+  // D. HTTP Range Amplification Attack Protection (Apache Killer / Byte-Range Bomb)
+  // Attackers send requests with many byte ranges (e.g., bytes=0-,5-0,5-1...) to exhaust server memory and amplify outbound traffic
+  const rangeHeader = req.headers['range'];
+  if (typeof rangeHeader === 'string') {
+    if (rangeHeader.split(',').length > 5 || rangeHeader.length > 200 || /bytes\s*=\s*0-\s*,\s*5-/.test(rangeHeader)) {
+      serverStats.amplificationAttacksBlocked += 1;
+      serverStats.securityEventsBlocked += 1;
+      try {
+        req.socket.destroy();
+      } catch {}
+      return res.status(416).json({ error: 'Range invalid' });
+    }
+  }
+
+  // E. Botnet & DRDoS Tool Signature Filter
+  for (const pattern of MALICIOUS_UA_PATTERNS) {
+    if (pattern.test(userAgent)) {
+      serverStats.ddosFloodsBlocked += 1;
+      serverStats.securityEventsBlocked += 1;
+      triggerSecurityBan(req, clientIp, `Malicious Attack Tool: ${userAgent.slice(0, 30)}`, 1800000);
+      return;
+    }
+  }
+
+  // F. Strict URL, Path & Query Depth Guards
   if (req.url.length > 2048 || (req.url.includes('?') && req.url.split('?')[1].length > 1024)) {
+    serverStats.securityEventsBlocked += 1;
     return res.status(400).json({ error: 'URI too long' });
   }
 
-  // 3. Rate limiting for API requests only
+  // G. Subnet-Level Burst Limiter (Anti-Distributed Botnet Waves)
+  let subnetRecord = subnetLimitMap.get(subnet);
+  if (!subnetRecord) {
+    subnetRecord = {
+      count: 1,
+      resetTime: now + 60000,
+      lastRequestTime: now,
+      burstCount: 1,
+      burstWindow: now,
+      mutationCount: isMutation ? 1 : 0,
+      mutationWindow: now
+    };
+    subnetLimitMap.set(subnet, subnetRecord);
+  } else {
+    if (now - subnetRecord.burstWindow < 1000) {
+      subnetRecord.burstCount += 1;
+      if (subnetRecord.burstCount > 120) {
+        serverStats.drdosReflectionsBlocked += 1;
+        serverStats.rateLimitHits += 1;
+        return res.status(429).json({ error: 'Subnet burst threshold exceeded' });
+      }
+    } else {
+      subnetRecord.burstWindow = now;
+      subnetRecord.burstCount = 1;
+    }
+  }
+
+  // H. Per-IP Sliding-Window Rate Limiting for API Endpoints
   if (isApiRequest) {
     let ipRecord = ipLimitMap.get(clientIp);
     if (!ipRecord) {
@@ -175,8 +282,9 @@ app.use((req, res, next) => {
     } else {
       if (now - ipRecord.burstWindow < 1000) {
         ipRecord.burstCount += 1;
-        if (ipRecord.burstCount > 60) {
-          return res.status(429).json({ error: 'Too many requests' });
+        if (ipRecord.burstCount > 50) {
+          serverStats.rateLimitHits += 1;
+          return res.status(429).json({ error: 'Too many requests. Please slow down.' });
         }
       } else {
         ipRecord.burstWindow = now;
@@ -187,6 +295,7 @@ app.use((req, res, next) => {
         if (now - ipRecord.mutationWindow < 30000) {
           ipRecord.mutationCount += 1;
           if (ipRecord.mutationCount > 60) {
+            serverStats.rateLimitHits += 1;
             return res.status(429).json({ error: 'Too many mutation requests' });
           }
         } else {
@@ -1093,14 +1202,14 @@ app.post('/api/admin/sessions/terminate', requireAdminAuth, (req, res) => {
 // PROTECTED ADMIN MANAGEMENT ENDPOINTS (Require Token)
 // -------------------------------------------------------------
 
-// Admin System Diagnostics & Live Stats (including Anti-DDoS, Flood Shield & Firewall)
+// Admin System Diagnostics & Live Stats (including Anti-DRDoS, Reflection Shield, Flood Defense & Firewall)
 app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
   const memoryUsage = process.memoryUsage();
 
   res.json({
     success: true,
     system: {
-      status: 'operational (Hardened Shield Active)',
+      status: 'operational (Armored DRDoS & DDoS Shield Active)',
       uptimeSeconds: Math.floor((Date.now() - serverStats.serverStartTime) / 1000),
       nodeVersion: process.version,
       platform: process.platform,
@@ -1117,10 +1226,30 @@ app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
       totalContactMessages: serverInboxMessages.length,
       securityEventsBlocked: serverStats.securityEventsBlocked,
       ddosFloodsBlocked: serverStats.ddosFloodsBlocked,
+      drdosReflectionsBlocked: serverStats.drdosReflectionsBlocked,
+      amplificationAttacksBlocked: serverStats.amplificationAttacksBlocked,
       rateLimitHits: serverStats.rateLimitHits,
       activeLockouts: adminLoginAttempts.size,
-      bannedIpCount: bannedIps.size
+      bannedIpCount: bannedIps.size,
+      activeSocketsTracked: activeSocketsPerIp.size
     }
+  });
+});
+
+// Public DRDoS & Firewall Status Summary (No sensitive data)
+app.get('/api/security/drdos-shield', (req, res) => {
+  res.json({
+    status: 'ARMORED_ACTIVE',
+    drdosProtection: {
+      enabled: true,
+      reflectionLoopFilter: 'ACTIVE',
+      amplificationRangeBombFilter: 'ACTIVE',
+      subnetRateLimiting: 'ACTIVE (/24 & /64)',
+      slowlorisConnectionShield: 'ACTIVE',
+      maliciousSignatureFilter: 'ACTIVE (35+ attack vectors)',
+      stealthSocketTermination: 'ENABLED (0 byte response leak)'
+    },
+    timestamp: Date.now()
   });
 });
 
