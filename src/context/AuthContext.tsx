@@ -15,7 +15,6 @@ import {
 import { ref, set, update, push, get, child, onValue, remove } from 'firebase/database';
 import { auth, rtdb, googleProvider, githubProvider } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
-import { antiCheatManager } from '../utils/antiCheat';
 
 interface AuthContextType {
   user: User | null;
@@ -40,7 +39,7 @@ interface AuthContextType {
   exportPersonalData: () => void;
   adminUpdateUser: (targetUid: string, updates: Partial<UserProfile>) => Promise<void>;
   saveTestResult: (result: Omit<TypingResult, 'userId' | 'username'>) => Promise<TypingResult>;
-  // Dino game removed
+  saveDinoScore: (score: number, distance: number, obstaclesDodged: number) => Promise<{ isPersonalBest: boolean; bestScore: number }>;
   userResultsHistory: TypingResult[];
   refreshHistory: () => Promise<void>;
 }
@@ -298,29 +297,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? firebaseUser.email.split('@')[0]
       : `typer_${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const isOwnerEmail = Boolean(
-      firebaseUser.email && (
-        firebaseUser.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
-        firebaseUser.email.toLowerCase().startsWith('yuldashivagavharoy') ||
-        firebaseUser.email.toLowerCase().includes('admin')
-      )
-    );
-
     const fresh: UserProfile = {
       uid: firebaseUser.uid,
       email: firebaseUser.email || '',
       username,
       displayName: firebaseUser.displayName || username,
       avatarUrl: firebaseUser.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${firebaseUser.uid}`,
-      bannerColor: isOwnerEmail ? '#f59e0b' : '#38bdf8',
+      bannerColor: '#38bdf8',
       createdAt: Date.now(),
       lastActive: Date.now(),
-      xp: isOwnerEmail ? 5000 : 250,
-      level: isOwnerEmail ? 10 : 1,
-      rankTitle: isOwnerEmail ? '👑 Super Admin (Owner)' : 'Typing Novice',
-      role: isOwnerEmail ? 'owner' : 'user',
-      isVerified: isOwnerEmail ? true : false,
-      usernameChangesLeft: 99,
+      xp: 250,
+      level: 1,
+      rankTitle: 'Typing Novice',
+      role: firebaseUser.email?.includes('admin') ? 'admin' : 'user',
+      isVerified: false,
+      usernameChangesLeft: 2,
       followers: [],
       following: [],
       followersCount: 0,
@@ -364,17 +355,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const snapshot = await get(child(dbRef, `users/${firebaseUser.uid}`));
       if (snapshot.exists()) {
         const remoteData = snapshot.val() as UserProfile;
-        const isOwnerEmail = Boolean(
-          firebaseUser.email && (
-            firebaseUser.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
-            firebaseUser.email.toLowerCase().startsWith('yuldashivagavharoy')
-          )
-        );
         const merged: UserProfile = {
           ...fallback,
           ...remoteData,
-          role: (isOwnerEmail || remoteData.role === 'owner' || fallback.role === 'owner') ? 'owner' : (remoteData.role || fallback.role),
-          isVerified: isOwnerEmail ? true : (remoteData.isVerified ?? fallback.isVerified),
           lastActive: Date.now()
         };
         saveLocalProfile(firebaseUser.uid, merged);
@@ -433,7 +416,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (firebaseUser) {
-        antiCheatManager.setUserId(firebaseUser.uid);
         setUser(firebaseUser);
         const instantProfile = createDefaultProfile(firebaseUser);
         setProfile(instantProfile);
@@ -445,9 +427,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           rtdbUnsub = onValue(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const liveData = snapshot.val() as Partial<UserProfile>;
-              if (liveData.isBanned) {
-                antiCheatManager.banDeviceAndUser(liveData.blockReason || 'Admin tomonidan bloklangan');
-              }
               setProfile((prev) => {
                 if (!prev) return liveData as UserProfile;
                 return {
@@ -466,13 +445,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fetch & sync full RTDB profile in background
         fetchOrCreateProfile(firebaseUser)
           .then((p) => {
-            if (p) {
-              const isConsistent = antiCheatManager.validateProfileConsistency(p);
-              if (!isConsistent) {
-                return;
-              }
-              setProfile(p);
-            }
+            if (p) setProfile(p);
           })
           .catch((err) => console.warn('Async RTDB profile sync:', err));
       } else {
@@ -594,70 +567,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserResultsHistory(getLocalResults());
   };
 
-  // Internal trusted updater for stats verified by anti-cheat
-  const updateProfileInternalStats = async (statsUpdates: Partial<UserProfile>) => {
-    if (!profile) return;
-    const updated: UserProfile = { ...profile, ...statsUpdates, lastActive: Date.now() };
-    setProfile(updated);
-
-    if (user) {
-      saveLocalProfile(user.uid, updated);
-
-      if (updated.isBanned) {
-        try {
-          await remove(ref(rtdb, `leaderboard/${user.uid}`));
-        } catch {}
-        return;
-      }
-
-      try {
-        await update(ref(rtdb, `users/${user.uid}`), statsUpdates);
-        await update(ref(rtdb, `leaderboard/${user.uid}`), {
-          uid: user.uid,
-          displayName: updated.displayName,
-          username: updated.username,
-          highestWpm: Math.min(260, Math.max(0, updated.highestWpm || 0)),
-          time15Wpm: Math.min(260, Math.max(0, updated.time15Wpm || 0)),
-          time30Wpm: Math.min(260, Math.max(0, updated.time30Wpm || 0)),
-          time60Wpm: Math.min(260, Math.max(0, updated.time60Wpm || 0)),
-          time120Wpm: Math.min(260, Math.max(0, updated.time120Wpm || 0)),
-          highestAccuracy: Math.min(100, Math.max(0, updated.highestAccuracy || 0)),
-          country: updated.country || '🇺🇿 Uzbekistan',
-          level: Math.min(100, Math.max(1, updated.level || 1)),
-          xp: Math.min(250000, Math.max(0, updated.xp || 250)),
-          rankTitle: updated.rankTitle || 'Typing Novice',
-          bio: updated.bio || '',
-          avatarUrl: updated.avatarUrl || '',
-          totalTests: updated.totalTests || 0,
-          lastActive: Date.now()
-        });
-      } catch (err) {
-        console.warn('Update profile internal stats RTDB error:', err);
-      }
-    }
-  };
-
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!profile) return;
-
-    // Security Guard: Filter out direct manual manipulation of test stats/scores
-    const sanitizedUpdates: Partial<UserProfile> = { ...updates };
-    delete (sanitizedUpdates as any).highestWpm;
-    delete (sanitizedUpdates as any).time15Wpm;
-    delete (sanitizedUpdates as any).time30Wpm;
-    delete (sanitizedUpdates as any).time60Wpm;
-    delete (sanitizedUpdates as any).time120Wpm;
-    delete (sanitizedUpdates as any).highestAccuracy;
-    delete (sanitizedUpdates as any).averageWpm;
-    delete (sanitizedUpdates as any).xp;
-    delete (sanitizedUpdates as any).level;
-    delete (sanitizedUpdates as any).totalTests;
-    delete (sanitizedUpdates as any).totalTimeTypedSeconds;
-    delete (sanitizedUpdates as any).totalWordsTyped;
-    delete (sanitizedUpdates as any).totalCharsTyped;
-    // Dino fields removed
-
-    const updated: UserProfile = { ...profile, ...sanitizedUpdates, lastActive: Date.now() };
+    const updated: UserProfile = { ...profile, ...updates, lastActive: Date.now() };
     setProfile(updated);
 
     if (user) {
@@ -672,13 +584,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Sync directly to Realtime Database
       try {
-        await update(ref(rtdb, `users/${user.uid}`), sanitizedUpdates);
+        await update(ref(rtdb, `users/${user.uid}`), updates);
         await update(ref(rtdb, `leaderboard/${user.uid}`), {
+          uid: user.uid,
           displayName: updated.displayName,
           username: updated.username,
+          highestWpm: updated.highestWpm || 0,
+          time15Wpm: updated.time15Wpm || 0,
+          time30Wpm: updated.time30Wpm || 0,
+          time60Wpm: updated.time60Wpm || 0,
+          time120Wpm: updated.time120Wpm || 0,
+          highestAccuracy: updated.highestAccuracy || 0,
           country: updated.country || '🇺🇿 Uzbekistan',
+          level: updated.level || 1,
+          xp: updated.xp || 250,
+          rankTitle: updated.rankTitle || 'Typing Novice',
           bio: updated.bio || '',
           avatarUrl: updated.avatarUrl || '',
+          totalTests: updated.totalTests || 0,
           lastActive: Date.now()
         });
       } catch (err) {
@@ -768,29 +691,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userId = user ? user.uid : guestId;
     const username = profile ? profile.username : `guest_${guestId.replace('guest_', '')}`;
 
-    const isStatisticallyValid = antiCheatManager.validateTypingResult(
-      rawResult.wpm,
-      rawResult.accuracy,
-      rawResult.testTimeSeconds,
-      rawResult.correctChars
-    );
-
-    const safeWpm = isStatisticallyValid ? Math.min(260, Math.max(0, rawResult.wpm)) : 0;
-    const safeAccuracy = isStatisticallyValid ? Math.min(100, Math.max(0, rawResult.accuracy)) : 0;
-
     const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
-    const isPersonalBest = isStatisticallyValid && safeWpm > existingPBest;
+    const isPersonalBest = rawResult.wpm > existingPBest;
 
     if (isPersonalBest) {
       if (!profile) {
-        localStorage.setItem('yolnoma_guest_best_wpm', String(safeWpm));
+        localStorage.setItem('yolnoma_guest_best_wpm', String(rawResult.wpm));
       }
     }
 
     const fullResult: TypingResult = {
       ...rawResult,
-      wpm: safeWpm,
-      accuracy: safeAccuracy,
       userId,
       username,
       isPersonalBest,
@@ -803,15 +714,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveLocalResults(newLocal);
     setUserResultsHistory(newLocal);
 
-    if (!isStatisticallyValid || safeWpm <= 0) {
-      return fullResult;
-    }
-
     if (user && profile) {
       // Calculate updated stats
       const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
-      const newXp = Math.min(250000, profile.xp + xpEarned);
-      const newLevel = Math.min(100, Math.floor(newXp / 500) + 1);
+      const newXp = profile.xp + xpEarned;
+      const newLevel = Math.floor(newXp / 500) + 1;
 
       if (newLevel > profile.level) {
         addNotification('YANGI DARAJA! 🎉', `Tabriklaymiz! ${newLevel}-darajaga erishdingiz!`, 'level_up');
@@ -826,15 +733,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
       const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-      const newHighestWpm = Math.min(260, Math.max(profile.highestWpm || 0, fullResult.wpm));
+      const newHighestWpm = Math.max(profile.highestWpm || 0, fullResult.wpm);
 
-      const newTime15 = fullResult.timeMode === 15 ? Math.min(260, Math.max(profile.time15Wpm || 0, fullResult.wpm)) : (profile.time15Wpm || 0);
-      const newTime30 = fullResult.timeMode === 30 ? Math.min(260, Math.max(profile.time30Wpm || 0, fullResult.wpm)) : (profile.time30Wpm || 0);
-      const newTime60 = fullResult.timeMode === 60 ? Math.min(260, Math.max(profile.time60Wpm || 0, fullResult.wpm)) : (profile.time60Wpm || 0);
-      const newTime120 = fullResult.timeMode === 120 ? Math.min(260, Math.max(profile.time120Wpm || 0, fullResult.wpm)) : (profile.time120Wpm || 0);
+      const newTime15 = fullResult.timeMode === 15 ? Math.max(profile.time15Wpm || 0, fullResult.wpm) : (profile.time15Wpm || 0);
+      const newTime30 = fullResult.timeMode === 30 ? Math.max(profile.time30Wpm || 0, fullResult.wpm) : (profile.time30Wpm || 0);
+      const newTime60 = fullResult.timeMode === 60 ? Math.max(profile.time60Wpm || 0, fullResult.wpm) : (profile.time60Wpm || 0);
+      const newTime120 = fullResult.timeMode === 120 ? Math.max(profile.time120Wpm || 0, fullResult.wpm) : (profile.time120Wpm || 0);
 
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
-      const newAvgWpm = Math.min(260, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
+      const newAvgWpm = Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests);
 
       const profileUpdates: Partial<UserProfile> = {
         totalTests: newTotalTests,
@@ -854,7 +761,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastActive: Date.now()
       };
 
-      await updateProfileInternalStats(profileUpdates);
+      await updateUserProfile(profileUpdates);
 
       // Save result in RTDB
       try {
@@ -950,7 +857,86 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return fullResult;
   };
 
-  // Dino game removal: saveDinoScore removed
+  const saveDinoScore = async (
+    score: number,
+    distance: number,
+    obstaclesDodged: number
+  ): Promise<{ isPersonalBest: boolean; bestScore: number }> => {
+    const guestId = getGuestId();
+    const userId = user ? user.uid : guestId;
+    const currentBest = profile
+      ? profile.dinoHighScore || 0
+      : Number(localStorage.getItem('yolnoma_guest_dino_best') || 0);
+
+    const isPersonalBest = score > currentBest;
+    const bestScore = Math.max(score, currentBest);
+
+    if (user && profile) {
+      const newGamesPlayed = (profile.dinoGamesPlayed || 0) + 1;
+      const newMaxDistance = Math.max(profile.dinoMaxDistance || 0, Math.round(distance));
+      
+      // Earn extra XP for Dino Run: 1 XP per 10 points
+      const xpEarned = Math.max(5, Math.floor(score / 10));
+      const newXp = profile.xp + xpEarned;
+      const newLevel = Math.floor(newXp / 500) + 1;
+
+      if (isPersonalBest && score >= 100) {
+        addNotification('YANGI DINO REKORD! 🦖', `Tabriklaymiz! Dino Runner da ${score} ball bilan yangi shaxsiy rekord o'rnatdingiz!`, 'achievement');
+      }
+
+      const updates: Partial<UserProfile> = {
+        dinoHighScore: bestScore,
+        dinoGamesPlayed: newGamesPlayed,
+        dinoMaxDistance: newMaxDistance,
+        xp: newXp,
+        level: newLevel,
+        lastActive: Date.now()
+      };
+
+      await updateUserProfile(updates);
+
+      // Push to Realtime Database dino_leaderboard
+      try {
+        await update(ref(rtdb, `dino_leaderboard/${user.uid}`), {
+          uid: user.uid,
+          displayName: profile.displayName || profile.username,
+          username: profile.username,
+          score: bestScore,
+          distance: newMaxDistance,
+          obstaclesDodged,
+          avatarUrl: profile.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`,
+          level: newLevel,
+          rankTitle: profile.rankTitle || 'Dino Runner',
+          country: profile.country || '🇺🇿 Uzbekistan',
+          timestamp: Date.now()
+        });
+      } catch (err) {
+        console.warn('Dino RTDB leaderboard sync error:', err);
+      }
+    } else {
+      // Guest User
+      localStorage.setItem('yolnoma_guest_dino_best', String(bestScore));
+      try {
+        await set(ref(rtdb, `dino_leaderboard/${guestId}`), {
+          uid: guestId,
+          displayName: `Mehmon (${guestId.replace('guest_', '')})`,
+          username: guestId,
+          score: bestScore,
+          distance: Math.round(distance),
+          obstaclesDodged,
+          avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
+          level: 1,
+          rankTitle: 'Mehmon Runner',
+          country: '🇺🇿 Uzbekistan',
+          timestamp: Date.now()
+        });
+      } catch (err) {
+        console.warn('Guest Dino RTDB sync error:', err);
+      }
+    }
+
+    return { isPersonalBest, bestScore };
+  };
 
   return (
     <AuthContext.Provider
@@ -977,6 +963,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         exportPersonalData,
         adminUpdateUser,
         saveTestResult,
+        saveDinoScore,
         userResultsHistory,
         refreshHistory
       }}

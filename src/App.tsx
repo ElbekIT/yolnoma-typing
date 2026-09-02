@@ -19,11 +19,14 @@ import { ChallengesView } from './components/challenges/ChallengesView';
 import { ProfileView } from './components/profile/ProfileView';
 import { SettingsView } from './components/settings/SettingsView';
 import { PartnersView } from './components/partners/PartnersView';
-// Battle and Dino game removed
-import { update } from 'firebase/database';
+import { BattleView } from './components/battle/BattleView';
+import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
+import { rtdb } from './config/firebase';
+import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { DevToolsBlockedScreen } from './components/DevToolsBlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
+import { DinoGameView } from './components/dino/DinoGameView';
 import { AdminView } from './components/admin/AdminView';
 import { OwnerAboutView } from './components/owner/OwnerAboutView';
 import { LanguageSelectView } from './components/languages/LanguageSelectView';
@@ -42,15 +45,14 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with subdomain / URL parameter support (Obfuscated routing)
+  // Active navigation tab with subdomain / URL parameter support
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
-      const _adm = atob('YWRtaW4='); // 'admin'
       const hostname = window.location.hostname;
       const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
-      if (hostname.startsWith(`${_adm}.`) || pathname === `/${_adm}` || searchParams.get('tab') === _adm) {
-        return _adm;
+      if (hostname.startsWith('admin.') || pathname === '/admin' || searchParams.get('tab') === 'admin') {
+        return 'admin';
       }
     } catch {}
     return 'typing';
@@ -61,22 +63,65 @@ function MainAppContent() {
   const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());
 
   useEffect(() => {
-    const handleNav = (e: any) => {
-      if (e.detail) setActiveTab(e.detail);
-    };
-    window.addEventListener('navigate_tab', handleNav);
-    return () => window.removeEventListener('navigate_tab', handleNav);
-  }, []);
-
-  useEffect(() => {
     const unsubscribe = antiCheatManager.subscribeDevTools((isOpen) => {
       setIsDevToolsBlocked(isOpen);
     });
     return () => unsubscribe();
   }, []);
 
+  // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
+  const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
+
+  // Realtime Battle Invites listener (Supports both authenticated users and guests)
+  useEffect(() => {
+    let myUid = user?.uid;
+    if (!myUid) {
+      myUid = localStorage.getItem('yolnoma_guest_id') || undefined;
+    }
+    if (!myUid) return;
+
+    try {
+      const inviteRef = ref(rtdb, `battles/invites/${myUid}`);
+      const unsubscribe = onValue(inviteRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setIncomingInvite(data as BattleInviteData);
+        } else {
+          setIncomingInvite(null);
+        }
+      });
+      return () => unsubscribe();
+    } catch {
+      // Ignore firebase offline error
+    }
+  }, [user]);
+
+  const handleAcceptInvite = (invite: BattleInviteData) => {
+    const myUid = user?.uid || localStorage.getItem('yolnoma_guest_id');
+    if (myUid) {
+      try {
+        remove(ref(rtdb, `battles/invites/${myUid}`));
+      } catch {}
+    }
+    setIncomingInvite(null);
+    if (invite.roomId) {
+      setPendingBattleRoomCode(invite.roomId);
+    }
+    setActiveTab('battle');
+  };
+
+  const handleDeclineInvite = (invite: BattleInviteData) => {
+    const myUid = user?.uid || localStorage.getItem('yolnoma_guest_id');
+    if (myUid) {
+      try {
+        remove(ref(rtdb, `battles/invites/${myUid}`));
+      } catch {}
+    }
+    setIncomingInvite(null);
+  };
 
   // Test Configurations
   const [mode, setMode] = useState<TextMode>('words');
@@ -431,11 +476,6 @@ function MainAppContent() {
 
   const currentTargetChar = targetText[typedInput.length] || '';
 
-  // DevTools inspection block
-  if (isDevToolsBlocked) {
-    return <DevToolsBlockedScreen />;
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
       <Header
@@ -505,7 +545,18 @@ function MainAppContent() {
         )}
 
         {activeTab === 'lessons' && <LessonsView />}
-        {/* Battle and Dino game views removed */}
+        {activeTab === 'battle' && (
+          <BattleView
+            initialRoomCode={pendingBattleRoomCode}
+            onClearInitialRoomCode={() => setPendingBattleRoomCode(null)}
+          />
+        )}
+        {activeTab === 'dino' && (
+          <DinoGameView
+            onGoToLeaderboard={() => setActiveTab('leaderboard')}
+            onGoToBattle={() => setActiveTab('battle')}
+          />
+        )}
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'leaderboard' && <LeaderboardView />}
         {activeTab === 'statistics' && <StatisticsView />}
@@ -515,6 +566,7 @@ function MainAppContent() {
         {activeTab === 'owner' && (
           <OwnerAboutView
             onStartTyping={() => setActiveTab('typing')}
+            onGoToBattle={() => setActiveTab('battle')}
             onGoToLessons={() => setActiveTab('lessons')}
             onGoToLeaderboard={() => setActiveTab('leaderboard')}
           />
@@ -535,7 +587,11 @@ function MainAppContent() {
         onOpenAdmin={() => setActiveTab('admin')}
       />
 
-      {/* Battle invite modal removed */}
+      <PubgInviteModal
+        invite={incomingInvite}
+        onAccept={handleAcceptInvite}
+        onDecline={handleDeclineInvite}
+      />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>

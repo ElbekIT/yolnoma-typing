@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Keyboard,
   Trophy,
@@ -35,7 +35,7 @@ import { languagesList, t } from '../config/languages';
 import { themes } from '../config/themes';
 import { LanguageCode, ThemeMode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
-import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
+import { isOwnerUser, isAdminSessionActive } from '../utils/ownerAuth';
 
 interface HeaderProps {
   activeTab: string;
@@ -49,17 +49,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isBackendOwner, setIsBackendOwner] = useState(false);
-
-  useEffect(() => {
-    if (user?.email) {
-      checkOwnerBackend(user.email).then((res) => {
-        setIsBackendOwner(res);
-      });
-    } else {
-      setIsBackendOwner(false);
-    }
-  }, [user?.email]);
 
   const iconDimensions = {
     small: 'w-4 h-4',
@@ -75,20 +64,18 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const isOwnerAdmin = Boolean(
-    (user?.email && (user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' || user.email.toLowerCase().startsWith('yuldashivagavharoy'))) ||
+  const isOwnerAdmin =
     profile?.role === 'admin' ||
     profile?.role === 'owner' ||
-    isBackendOwner ||
-    isOwnerUser(user?.email) ||
-    isAdminSessionActive()
-  );
+    isOwnerUser() ||
+    isAdminSessionActive();
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
     { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
-    // Games removed: Battle Arena and Dino Runner
+    { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
+    { id: 'dino', label: 'Dino Runner (O\'yin)', enLabel: 'Dino Runner Game', icon: Gamepad2 },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
     { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy },
     { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },
@@ -96,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake },
     { id: 'owner', label: 'Sayt Haqida & Muallif', enLabel: 'About & Creator', icon: Sparkles },
-    ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
+    ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
   ];
@@ -170,7 +157,25 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 <GraduationCap className={iconDimensions} />
               </button>
 
-              {/* Game quick links removed */}
+              <button
+                onClick={() => setActiveTab('battle')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'battle' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Battle Arena"
+              >
+                <Swords className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('dino')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'dino' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Dino Runner O'yini"
+              >
+                <Gamepad2 className={iconDimensions} />
+              </button>
 
               <button
                 onClick={() => setActiveTab('settings')}

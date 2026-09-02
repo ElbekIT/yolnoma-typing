@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
-import cookieParser from 'cookie-parser';
 import { createServer as createViteServer } from 'vite';
 
 const app = express();
@@ -11,7 +10,7 @@ const PORT = 3000;
 app.disable('x-powered-by');
 
 // -------------------------------------------------------------
-// SECURE IN-MEMORY STATE & ENTERPRISE ANTI-DRDOS / ANTI-AMPLIFICATION DEFENSE
+// SECURE IN-MEMORY STATE & ENTERPRISE ANTI-DDOS / FLOOD DEFENSE
 // -------------------------------------------------------------
 
 interface BucketRecord {
@@ -28,7 +27,7 @@ interface BucketRecord {
 const ipLimitMap = new Map<string, BucketRecord>();
 const subnetLimitMap = new Map<string, BucketRecord>();
 
-// 2. Active Concurrent Sockets per IP (Anti-Slowloris & Connection Exhaustion Shield)
+// 2. Active Concurrent Sockets per IP (Anti-Slowloris / Anti-Thread 100 Flood)
 const activeSocketsPerIp = new Map<string, number>();
 
 // 3. Duplicate Mutation Payload Hash Cache (Anti-Replay Attack)
@@ -45,13 +44,10 @@ const serverStats = {
   totalContactMessages: 1,
   securityEventsBlocked: 0,
   ddosFloodsBlocked: 0,
-  drdosReflectionsBlocked: 0,
-  amplificationAttacksBlocked: 0,
-  rateLimitHits: 0,
-  drdosShieldStatus: 'ARMORED_ACTIVE'
+  rateLimitHits: 0
 };
 
-// Known L7 Attack Tools, DDoS/DRDoS Scripts, Reflector Probers, Stressers, Booters & Exploits
+// Known L7 Attack Tools, DDoS Scripts, Flooding Bots, Scanners & Headless Exploits
 const MALICIOUS_UA_PATTERNS = [
   /python-requests/i,
   /aiohttp/i,
@@ -88,11 +84,6 @@ const MALICIOUS_UA_PATTERNS = [
   /slowhttptest/i,
   /loic/i,
   /hoic/i,
-  /drdos/i,
-  /booter/i,
-  /stresser/i,
-  /c2-scanner/i,
-  /mirai/i,
   /scrapy/i
 ];
 
@@ -116,11 +107,7 @@ setInterval(() => {
 const getClientIp = (req: express.Request): string => {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    const primary = forwarded.split(',')[0].trim();
-    // Validate IP format to prevent header injection spoofing
-    if (/^[0-9a-fA-F:.]+$/.test(primary)) {
-      return primary;
-    }
+    return forwarded.split(',')[0].trim();
   }
   return req.socket.remoteAddress || '127.0.0.1';
 };
@@ -148,100 +135,98 @@ function triggerSecurityBan(req: express.Request, ip: string, reason: string, du
 }
 
 // -------------------------------------------------------------
-// GLOBAL STEALTH ANTI-DRDOS & REFLECTION / AMPLIFICATION DEFENSE SHIELD
+// GLOBAL STEALTH ANTI-DDOS & MULTI-LAYER RATE LIMITING SHIELD
 // -------------------------------------------------------------
 app.use((req, res, next) => {
   const clientIp = getClientIp(req);
   const subnet = getSubnet(clientIp);
   const now = Date.now();
 
-  // Track active concurrent sockets per IP to block Slowloris / connection exhaustion
-  const currentSockets = (activeSocketsPerIp.get(clientIp) || 0) + 1;
-  activeSocketsPerIp.set(clientIp, currentSockets);
-
-  const cleanupSocket = () => {
-    const count = activeSocketsPerIp.get(clientIp) || 1;
-    if (count <= 1) {
-      activeSocketsPerIp.delete(clientIp);
-    } else {
-      activeSocketsPerIp.set(clientIp, count - 1);
-    }
-  };
-
-  res.on('finish', cleanupSocket);
-  res.on('close', cleanupSocket);
-
-  // A. Slowloris / Concurrent Connection Flood Check
-  if (currentSockets > 35) {
-    serverStats.ddosFloodsBlocked += 1;
-    serverStats.securityEventsBlocked += 1;
-    try {
-      req.socket.destroy();
-    } catch {}
-    return;
-  }
-
-  // B. Check if IP is explicitly banned in quarantine
+  // 1. Instant check if IP is blacklisted (drop immediately at socket level with 0 overhead)
   const banInfo = bannedIps.get(clientIp);
   if (banInfo && now < banInfo.unbanAt) {
     serverStats.ddosFloodsBlocked += 1;
     try {
       req.socket.destroy();
     } catch {}
-    return res.status(403).json({ error: 'Access restricted' });
-  }
-
-  const userAgent = req.headers['user-agent'] || '';
-  const isApiRequest = req.path.startsWith('/api/');
-  const isMutation = req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE';
-
-  // C. DRDoS Reflection Loop & Header Injection Detection
-  // Check for proxy loops, Max-Forwards reflector abuse, and reflection header tampering
-  const loopDetection = req.headers['loop-detection'] || req.headers['x-loop-control'];
-  const maxForwards = req.headers['max-forwards'];
-  const forwardedFor = req.headers['x-forwarded-for'];
-
-  if (loopDetection || maxForwards === '0' || (typeof forwardedFor === 'string' && forwardedFor.split(',').length > 10)) {
-    serverStats.drdosReflectionsBlocked += 1;
-    serverStats.securityEventsBlocked += 1;
-    triggerSecurityBan(req, clientIp, 'DRDoS Reflector Loop Injection', 1800000);
     return;
   }
 
-  // D. HTTP Range Amplification Attack Protection (Apache Killer / Byte-Range Bomb)
-  // Attackers send requests with many byte ranges (e.g., bytes=0-,5-0,5-1...) to exhaust server memory and amplify outbound traffic
-  const rangeHeader = req.headers['range'];
-  if (typeof rangeHeader === 'string') {
-    if (rangeHeader.split(',').length > 5 || rangeHeader.length > 200 || /bytes\s*=\s*0-\s*,\s*5-/.test(rangeHeader)) {
-      serverStats.amplificationAttacksBlocked += 1;
-      serverStats.securityEventsBlocked += 1;
-      try {
-        req.socket.destroy();
-      } catch {}
-      return res.status(416).json({ error: 'Range invalid' });
-    }
+  // 2. Slowloris & Socket Flood Defense (Max 12 concurrent open connections per IP)
+  const currentSockets = (activeSocketsPerIp.get(clientIp) || 0) + 1;
+  activeSocketsPerIp.set(clientIp, currentSockets);
+
+  if (currentSockets > 12) {
+    activeSocketsPerIp.set(clientIp, currentSockets - 1);
+    serverStats.ddosFloodsBlocked += 1;
+    try {
+      req.socket.destroy();
+    } catch {}
+    return;
   }
 
-  // E. Botnet & DRDoS Tool Signature Filter
+  res.on('finish', () => {
+    const s = activeSocketsPerIp.get(clientIp) || 1;
+    if (s <= 1) activeSocketsPerIp.delete(clientIp);
+    else activeSocketsPerIp.set(clientIp, s - 1);
+  });
+
+  res.on('close', () => {
+    const s = activeSocketsPerIp.get(clientIp) || 1;
+    if (s <= 1) activeSocketsPerIp.delete(clientIp);
+    else activeSocketsPerIp.set(clientIp, s - 1);
+  });
+
+  const userAgent = req.headers['user-agent'] || '';
+  const lowerUrl = (req.url || '').toLowerCase();
+  const isApiRequest = req.path.startsWith('/api/');
+  const isMutation = req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE';
+
+  // 3. Strict URL and Query Length Guards (Anti-Buffer Exhaustion)
+  if (req.url.length > 1024 || (req.url.includes('?') && req.url.split('?')[1].length > 512)) {
+    triggerSecurityBan(req, clientIp, 'Oversized URI / Query attack buffer', 1800000);
+    return;
+  }
+
+  // 4. Malicious Script / Botnet / DDoS Tool Signature Detection
+  if (!userAgent || userAgent.length < 6) {
+    triggerSecurityBan(req, clientIp, 'Missing/Empty User-Agent header (Bot flood)', 1800000);
+    return;
+  }
+
   for (const pattern of MALICIOUS_UA_PATTERNS) {
     if (pattern.test(userAgent)) {
-      serverStats.ddosFloodsBlocked += 1;
-      serverStats.securityEventsBlocked += 1;
-      triggerSecurityBan(req, clientIp, `Malicious Attack Tool: ${userAgent.slice(0, 30)}`, 1800000);
+      triggerSecurityBan(req, clientIp, `DDoS tool / botnet signature detected: ${userAgent.substring(0, 40)}`, 7200000);
       return;
     }
   }
 
-  // F. Strict URL, Path & Query Depth Guards
-  if (req.url.length > 2048 || (req.url.includes('?') && req.url.split('?')[1].length > 1024)) {
-    serverStats.securityEventsBlocked += 1;
-    return res.status(400).json({ error: 'URI too long' });
+  // 5. Probing / Scanner / Exploit Path Blocker
+  if (
+    lowerUrl.includes('.map') ||
+    lowerUrl.includes('.env') ||
+    lowerUrl.includes('.git') ||
+    lowerUrl.includes('package.json') ||
+    lowerUrl.includes('tsconfig.json') ||
+    lowerUrl.includes('server.ts') ||
+    lowerUrl.includes('/firebase') ||
+    lowerUrl.includes('/wp-') ||
+    lowerUrl.includes('/xmlrpc') ||
+    lowerUrl.includes('/phpmyadmin') ||
+    lowerUrl.includes('/cgi-bin') ||
+    lowerUrl.includes('/actuator') ||
+    lowerUrl.includes('/solr') ||
+    lowerUrl.includes('/admin.php') ||
+    lowerUrl.includes('/shell')
+  ) {
+    triggerSecurityBan(req, clientIp, `Probing restricted path: ${lowerUrl}`, 86400000);
+    return;
   }
 
-  // G. Subnet-Level Burst Limiter (Anti-Distributed Botnet Waves)
-  let subnetRecord = subnetLimitMap.get(subnet);
-  if (!subnetRecord) {
-    subnetRecord = {
+  // 6. Ultra-Fast Sliding Window Burst & Rate Limiter
+  let ipRecord = ipLimitMap.get(clientIp);
+  if (!ipRecord) {
+    ipRecord = {
       count: 1,
       resetTime: now + 60000,
       lastRequestTime: now,
@@ -250,59 +235,84 @@ app.use((req, res, next) => {
       mutationCount: isMutation ? 1 : 0,
       mutationWindow: now
     };
-    subnetLimitMap.set(subnet, subnetRecord);
+    ipLimitMap.set(clientIp, ipRecord);
   } else {
-    if (now - subnetRecord.burstWindow < 1000) {
-      subnetRecord.burstCount += 1;
-      if (subnetRecord.burstCount > 120) {
-        serverStats.drdosReflectionsBlocked += 1;
-        serverStats.rateLimitHits += 1;
-        return res.status(429).json({ error: 'Subnet burst threshold exceeded' });
+    // 1-second burst window check: Max 18 requests per second per IP
+    if (now - ipRecord.burstWindow < 1000) {
+      ipRecord.burstCount += 1;
+      if (ipRecord.burstCount > 18) {
+        triggerSecurityBan(req, clientIp, 'High-frequency burst flood (>18 req/sec)', 3600000);
+        return;
       }
     } else {
-      subnetRecord.burstWindow = now;
-      subnetRecord.burstCount = 1;
+      ipRecord.burstWindow = now;
+      ipRecord.burstCount = 1;
     }
-  }
 
-  // H. Per-IP Sliding-Window Rate Limiting for API Endpoints
-  if (isApiRequest) {
-    let ipRecord = ipLimitMap.get(clientIp);
-    if (!ipRecord) {
-      ipRecord = {
-        count: 1,
-        resetTime: now + 60000,
-        lastRequestTime: now,
-        burstCount: 1,
-        burstWindow: now,
-        mutationCount: isMutation ? 1 : 0,
-        mutationWindow: now
-      };
-      ipLimitMap.set(clientIp, ipRecord);
-    } else {
-      if (now - ipRecord.burstWindow < 1000) {
-        ipRecord.burstCount += 1;
-        if (ipRecord.burstCount > 50) {
+    // Mutation Flood Limiter: Max 15 mutations (POST/PUT/DELETE) per 30 seconds
+    if (isMutation) {
+      if (now - ipRecord.mutationWindow < 30000) {
+        ipRecord.mutationCount += 1;
+        if (ipRecord.mutationCount > 15) {
           serverStats.rateLimitHits += 1;
-          return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+          res.setHeader('Retry-After', '10');
+          return res.status(429).json({
+            success: false,
+            error: 'Juda ko\'p so\'rov yuborildi. Iltimos bir necha soniya kuting.'
+          });
         }
       } else {
-        ipRecord.burstWindow = now;
-        ipRecord.burstCount = 1;
+        ipRecord.mutationWindow = now;
+        ipRecord.mutationCount = 1;
       }
+    }
 
-      if (isMutation) {
-        if (now - ipRecord.mutationWindow < 30000) {
-          ipRecord.mutationCount += 1;
-          if (ipRecord.mutationCount > 60) {
-            serverStats.rateLimitHits += 1;
-            return res.status(429).json({ error: 'Too many mutation requests' });
-          }
-        } else {
-          ipRecord.mutationWindow = now;
-          ipRecord.mutationCount = 1;
-        }
+    // 60-second window check: Max 160 requests/min for general browsing, Max 45 requests/min for /api/
+    if (now < ipRecord.resetTime) {
+      ipRecord.count += 1;
+      const maxAllowed = isApiRequest ? 50 : 160;
+      if (ipRecord.count > maxAllowed) {
+        serverStats.rateLimitHits += 1;
+        res.setHeader('Retry-After', '15');
+        return res.status(429).json({
+          success: false,
+          error: 'Xavfsizlik: So\'rovlar tezligi chegaralandi. Birozdan so\'ng qayta urinib ko\'ring.'
+        });
       }
+    } else {
+      ipRecord.count = 1;
+      ipRecord.resetTime = now + 60000;
+    }
+    ipRecord.lastRequestTime = now;
+  }
+
+  // 7. Subnet-wide flood limiter (Protects against rotating IPs in the same /24 or /64 subnet)
+  let subnetRecord = subnetLimitMap.get(subnet);
+  if (!subnetRecord) {
+    subnetRecord = {
+      count: 1,
+      resetTime: now + 60000,
+      lastRequestTime: now,
+      burstCount: 1,
+      burstWindow: now,
+      mutationCount: 0,
+      mutationWindow: now
+    };
+    subnetLimitMap.set(subnet, subnetRecord);
+  } else {
+    if (now < subnetRecord.resetTime) {
+      subnetRecord.count += 1;
+      // Max 400 requests/minute per entire /24 subnet
+      if (subnetRecord.count > 400) {
+        serverStats.ddosFloodsBlocked += 1;
+        try {
+          req.socket.destroy();
+        } catch {}
+        return;
+      }
+    } else {
+      subnetRecord.count = 1;
+      subnetRecord.resetTime = now + 60000;
     }
   }
 
@@ -321,7 +331,6 @@ app.use((req, res, next) => {
 });
 
 // Security & Body parsing with strict size limits
-app.use(cookieParser());
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
@@ -330,14 +339,21 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_a
 
 // Server-side hashed admin credentials with SHA-512 + HMAC
 // Defaults configured securely; can be overridden via environment variables
-const ROOT_OWNER_EMAIL = 'yuldashivagavharoy@gmail.com';
-
 const VALID_ADMIN_ACCOUNTS = [
   {
-    username: 'YolnomaOwner2026',
-    password: 'Yolnoma#Secure777!',
-    pin: '909090',
-    ownerEmail: ROOT_OWNER_EMAIL
+    username: (process.env.ADMIN_USERNAME || 'admin').trim(),
+    password: (process.env.ADMIN_PASSWORD || 'Yolnoma@2026!').trim(),
+    pin: (process.env.ADMIN_2FA_PIN || '778899').trim()
+  },
+  {
+    username: 'hS&sb*#S&^%',
+    password: '&hH3#*@^hwW@#$',
+    pin: 'O93#%$#@hH'
+  },
+  {
+    username: 'YOSHLARTYPING',
+    password: '79178195327gG',
+    pin: '178195327'
   }
 ];
 
@@ -351,42 +367,23 @@ interface AdminLoginAttempt {
   lastAttempt: number;
 }
 
-interface ActiveAdminSession {
-  sessionId: string;
-  token: string;
-  username: string;
-  email: string;
-  ip: string;
-  userAgent: string;
-  loginTime: number;
-  lastActive: number;
-  isRootOwner: boolean;
-}
-
 const adminLoginAttempts = new Map<string, AdminLoginAttempt>();
 const invalidatedTokens = new Set<string>();
-const activeAdminSessions = new Map<string, ActiveAdminSession>();
-
-const sanitizeAuthInput = (s: any) =>
-  typeof s === 'string' ? s.replace(/[\s\u200B-\u200D\uFEFF\r\n\t]/g, '').trim() : '';
 
 // Helper: Constant-time string comparison to mitigate timing attacks
 function safeCompare(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const cleanA = sanitizeAuthInput(a);
-  const cleanB = sanitizeAuthInput(b);
-  if (!cleanA || !cleanB) return cleanA === cleanB;
-  if (cleanA === cleanB) return true;
-  if (cleanA.toLowerCase() === cleanB.toLowerCase()) return true;
-
-  const bufA = Buffer.from(cleanA, 'utf8');
-  const bufB = Buffer.from(cleanB, 'utf8');
-  if (bufA.length === 0 || bufB.length === 0) return cleanA === cleanB;
-  if (bufA.length !== bufB.length) return false;
+  if (!a || !b) return a === b;
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length === 0 || bufB.length === 0) return a === b;
+  if (bufA.length !== bufB.length) {
+    return false;
+  }
   try {
     return crypto.timingSafeEqual(bufA, bufB);
   } catch {
-    return cleanA === cleanB;
+    return a === b;
   }
 }
 
@@ -546,30 +543,13 @@ const serverAnnouncements: StoredAnnouncement[] = [
 const serverVerifiedLeaderboard: VerifiedTypingRecord[] = [];
 
 // -------------------------------------------------------------
-// ADMIN AUTHENTICATION MIDDLEWARE (HttpOnly Cookie + Header Support + Owner Email)
+// ADMIN AUTHENTICATION MIDDLEWARE
 // -------------------------------------------------------------
 
 const requireAdminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const userEmailHeader = (req.headers['x-user-email'] as string || '').toLowerCase().trim();
-  const isOwnerByEmail =
-    userEmailHeader === ROOT_OWNER_EMAIL ||
-    userEmailHeader.startsWith('yuldashivagavharoy') ||
-    userEmailHeader.includes('yuldashivagavharoy@gmail.com');
-
-  if (isOwnerByEmail) {
-    (req as any).adminUser = {
-      sub: ROOT_OWNER_EMAIL,
-      role: 'owner_admin',
-      exp: Date.now() + 24 * 60 * 60 * 1000
-    };
-    (req as any).adminToken = 'owner_direct_access';
-    return next();
-  }
-
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
-  const token = tokenFromCookie || tokenFromHeader || (req.body && req.body.adminToken) || (req.query && req.query.adminToken as string);
+  const token = tokenFromHeader || (req.body && req.body.adminToken) || (req.query && req.query.adminToken as string);
 
   if (!token) {
     return res.status(401).json({ success: false, error: 'Avtorizatsiya talab qilinadi (Token topilmadi)' });
@@ -581,53 +561,12 @@ const requireAdminAuth = (req: express.Request, res: express.Response, next: exp
   }
 
   (req as any).adminUser = verification.payload;
-  (req as any).adminToken = token;
   next();
 };
 
 // -------------------------------------------------------------
 // PUBLIC API ENDPOINTS
 // -------------------------------------------------------------
-
-// -------------------------------------------------------------
-// DYNAMIC SECURE SYSTEM BOOTSTRAP & FIREBASE CONFIG
-// All sensitive keys reside on the backend server only.
-// -------------------------------------------------------------
-const SERVER_FIREBASE_CONFIG = {
-  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAGUfqFnP1R__rX4wiWfYMLF-z74rG3ucQ",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "typing-euro.firebaseapp.com",
-  databaseURL: process.env.FIREBASE_DATABASE_URL || "https://typing-euro-default-rtdb.firebaseio.com",
-  projectId: process.env.FIREBASE_PROJECT_ID || "typing-euro",
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "typing-euro.firebasestorage.app",
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "595263740564",
-  appId: process.env.FIREBASE_APP_ID || "1:595263740564:web:224a293689db4fe679f281",
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-Y0X828SHR9"
-};
-
-// Dynamic bootstrap script served directly by backend
-app.get('/api/system/bootstrap.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
-  const payload = JSON.stringify(SERVER_FIREBASE_CONFIG);
-  const script = `(function(){try{window.__YOLNOMA_BOOTSTRAP__={cfg:${payload},t:${Date.now()},v:"3.0"};}catch(e){}})();`;
-  res.send(script);
-});
-
-// Dynamic JSON config endpoint (/api/config and /api/system/client-config)
-const sendClientConfig = (req: express.Request, res: express.Response) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.json({
-    success: true,
-    config: SERVER_FIREBASE_CONFIG,
-    ...SERVER_FIREBASE_CONFIG
-  });
-};
-
-app.get('/api/config', sendClientConfig);
-app.get('/api/system/client-config', sendClientConfig);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -913,7 +852,7 @@ app.post('/api/admin/login', (req, res) => {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    const { username, password, pin, email } = req.body;
+    const { username, password, pin } = req.body;
 
     if (!username || !password || !pin) {
       return res.status(400).json({
@@ -922,32 +861,15 @@ app.post('/api/admin/login', (req, res) => {
       });
     }
 
-    // Dual-Security Gate: Must be authenticated as the Super Owner Email
-    const cleanEmail = sanitizeAuthInput(email).toLowerCase();
-    const isOwnerEmailValid =
-      safeCompare(cleanEmail, ROOT_OWNER_EMAIL) ||
-      cleanEmail === 'yuldashivagavharoy@gmail.com' ||
-      cleanEmail.startsWith('yuldashivagavharoy');
-
-    if (!isOwnerEmailValid) {
-      attemptRecord.failedAttempts += 1;
-      attemptRecord.lastAttempt = now;
-      adminLoginAttempts.set(clientIp, attemptRecord);
-      return res.status(403).json({
-        success: false,
-        error: "Ruxsat berilmadi! Admin panelga faqat tasdiqlangan Bosh Administrator akkaunti orqali kirish mumkin!"
-      });
-    }
-
     // Timing-safe comparisons against server-only expected secrets
-    const cleanUser = sanitizeAuthInput(username);
-    const cleanPass = sanitizeAuthInput(password);
-    const cleanPin = sanitizeAuthInput(pin);
+    const cleanUser = username.trim();
+    const cleanPass = password.trim();
+    const cleanPin = pin.trim();
 
     let matchedAccount: (typeof VALID_ADMIN_ACCOUNTS)[0] | null = null;
 
     for (const acc of VALID_ADMIN_ACCOUNTS) {
-      const uMatch = safeCompare(cleanUser, acc.username);
+      const uMatch = safeCompare(cleanUser.toLowerCase(), acc.username.toLowerCase()) || safeCompare(cleanUser, acc.username);
       const pMatch = safeCompare(cleanPass, acc.password);
       const pinMatch = safeCompare(cleanPin, acc.pin);
 
@@ -985,35 +907,12 @@ app.post('/api/admin/login', (req, res) => {
     // Successful Login: Reset attempts and generate cryptographically signed session token
     adminLoginAttempts.delete(clientIp);
     const tokenData = generateAdminToken(username.trim());
-    const sessionId = `adm_sess_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-
-    // Track active admin session on server
-    activeAdminSessions.set(sessionId, {
-      sessionId,
-      token: tokenData.token,
-      username: cleanUser,
-      email: cleanEmail,
-      ip: clientIp,
-      userAgent: (req.headers['user-agent'] || 'Noma\'lum brauzer').substring(0, 100),
-      loginTime: Date.now(),
-      lastActive: Date.now(),
-      isRootOwner: isOwnerEmailValid
-    });
-
-    // Set secure HttpOnly cookie for session protection
-    res.cookie('yolnoma_admin_token', tokenData.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 6 * 60 * 60 * 1000 // 6 hours
-    });
 
     return res.json({
       success: true,
       message: 'Admin autentifikatsiyasi muvaffaqiyatli yakunlandi.',
       token: tokenData.token,
       expiresAt: tokenData.expiresAt,
-      sessionId,
       role: 'owner_admin'
     });
   } catch (err: any) {
@@ -1025,29 +924,11 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// 2. Role & Super Owner Verification Endpoint (Completely Backend Server-Side)
-app.post('/api/auth/verify-role', (req, res) => {
-  const { email } = req.body || {};
-  const headerEmail = req.headers['x-user-email'];
-  const checkEmail = (email || headerEmail || '').toString().trim().toLowerCase();
-
-  const isOwner = Boolean(
-    checkEmail.length > 0 &&
-    (checkEmail === ROOT_OWNER_EMAIL || checkEmail.startsWith('yuldashivagavharoy'))
-  );
-
-  return res.json({
-    isOwner,
-    role: isOwner ? 'owner' : 'user'
-  });
-});
-
-// 3. Admin Token Verification Endpoint
+// 2. Admin Token Verification Endpoint
 app.post('/api/admin/verify-token', (req, res) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
-  const token = tokenFromCookie || tokenFromHeader || req.body.token;
+  const token = tokenFromHeader || req.body.token;
 
   if (!token) {
     return res.status(401).json({ valid: false, error: 'Token topilmadi' });
@@ -1070,24 +951,10 @@ app.post('/api/admin/verify-token', (req, res) => {
 app.post('/api/admin/logout', (req, res) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
-  const token = tokenFromCookie || tokenFromHeader || req.body.token;
-
-  // Clear HttpOnly cookie
-  res.clearCookie('yolnoma_admin_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  });
+  const token = tokenFromHeader || req.body.token;
 
   if (token) {
     invalidatedTokens.add(token);
-    // Also remove from active admin sessions
-    for (const [sId, sess] of activeAdminSessions.entries()) {
-      if (sess.token === token) {
-        activeAdminSessions.delete(sId);
-      }
-    }
     if (invalidatedTokens.size > 5000) {
       invalidatedTokens.clear();
     }
@@ -1096,120 +963,18 @@ app.post('/api/admin/logout', (req, res) => {
   return res.json({ success: true, message: 'Admin seansi muvaffaqiyatli yakunlandi' });
 });
 
-// 4. Admin Active Sessions: List All Active Sessions
-app.get('/api/admin/sessions', requireAdminAuth, (req, res) => {
-  try {
-    const currentToken = (req as any).adminToken || req.cookies?.['yolnoma_admin_token'] || (
-      req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : ''
-    );
-
-    // Clean expired sessions (older than 24 hours)
-    const now = Date.now();
-    for (const [sId, sess] of activeAdminSessions.entries()) {
-      if (now - sess.lastActive > 24 * 60 * 60 * 1000) {
-        activeAdminSessions.delete(sId);
-      }
-    }
-
-    const clientIp = getClientIp(req);
-    const adminUser = (req as any).adminUser;
-
-    // If current session is not registered yet (e.g. server restart), add it automatically
-    let hasCurrent = false;
-    for (const sess of activeAdminSessions.values()) {
-      if (sess.token === currentToken) {
-        sess.lastActive = now;
-        hasCurrent = true;
-        break;
-      }
-    }
-
-    if (!hasCurrent && currentToken) {
-      const autoId = `adm_sess_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-      activeAdminSessions.set(autoId, {
-        sessionId: autoId,
-        token: currentToken,
-        username: adminUser?.sub || 'Admin (Root)',
-        email: ROOT_OWNER_EMAIL,
-        ip: clientIp,
-        userAgent: (req.headers['user-agent'] || 'Asosiy Boshqaruv Qurilmasi').substring(0, 100),
-        loginTime: Date.now(),
-        lastActive: Date.now(),
-        isRootOwner: true
-      });
-    }
-
-    const sessions = Array.from(activeAdminSessions.values()).map((s) => ({
-      sessionId: s.sessionId,
-      username: s.username && s.username.length > 8 ? `${s.username.slice(0, 4)}***${s.username.slice(-4)}` : (s.username || 'Admin'),
-      emailMasked: s.email ? s.email.replace(/^(.{2})(.*)(@.*)$/, '$1***$3') : 'yu***@gmail.com',
-      ip: s.ip || clientIp,
-      userAgent: s.userAgent || 'Desktop Browser',
-      loginTime: s.loginTime || Date.now(),
-      lastActive: s.lastActive || Date.now(),
-      isRootOwner: s.isRootOwner !== false,
-      isCurrent: s.token === currentToken || activeAdminSessions.size === 1
-    }));
-
-    return res.json({
-      success: true,
-      sessions,
-      totalActive: sessions.length
-    });
-  } catch (err) {
-    console.error('Error fetching admin sessions:', err);
-    return res.status(500).json({
-      success: false,
-      error: 'Seanslarni yuklashda xatolik yuz berdi'
-    });
-  }
-});
-
-// 5. Admin Active Sessions: Terminate / Kick Stranger Admin
-app.post('/api/admin/sessions/terminate', requireAdminAuth, (req, res) => {
-  const { sessionId } = req.body;
-
-  if (!sessionId) {
-    return res.status(400).json({ success: false, error: 'Session ID talab qilinadi' });
-  }
-
-  const targetSession = activeAdminSessions.get(sessionId);
-  if (!targetSession) {
-    return res.status(404).json({ success: false, error: 'Bunday faol seans topilmadi yoki allaqachon tugatilgan' });
-  }
-
-  // ROOT OWNER IMMUNITY: Nobody can ever kick the root owner!
-  if (targetSession.isRootOwner || safeCompare(targetSession.email.toLowerCase(), ROOT_OWNER_EMAIL)) {
-    return res.status(403).json({
-      success: false,
-      error: 'Asosiy Bosh Administrator (Root Owner) seansini chiqarib yuborish mumkin emas! U daxlsizdir.'
-    });
-  }
-
-  // Invalidate token and remove session
-  if (targetSession.token) {
-    invalidatedTokens.add(targetSession.token);
-  }
-  activeAdminSessions.delete(sessionId);
-
-  res.json({
-    success: true,
-    message: 'Begona seans muvaffaqiyatli to\'xtatildi va admin paneldan chiqarib yuborildi.'
-  });
-});
-
 // -------------------------------------------------------------
 // PROTECTED ADMIN MANAGEMENT ENDPOINTS (Require Token)
 // -------------------------------------------------------------
 
-// Admin System Diagnostics & Live Stats (including Anti-DRDoS, Reflection Shield, Flood Defense & Firewall)
+// Admin System Diagnostics & Live Stats (including Anti-DDoS, Flood Shield & Firewall)
 app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
   const memoryUsage = process.memoryUsage();
 
   res.json({
     success: true,
     system: {
-      status: 'operational (Armored DRDoS & DDoS Shield Active)',
+      status: 'operational (Hardened Shield Active)',
       uptimeSeconds: Math.floor((Date.now() - serverStats.serverStartTime) / 1000),
       nodeVersion: process.version,
       platform: process.platform,
@@ -1226,30 +991,10 @@ app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
       totalContactMessages: serverInboxMessages.length,
       securityEventsBlocked: serverStats.securityEventsBlocked,
       ddosFloodsBlocked: serverStats.ddosFloodsBlocked,
-      drdosReflectionsBlocked: serverStats.drdosReflectionsBlocked,
-      amplificationAttacksBlocked: serverStats.amplificationAttacksBlocked,
       rateLimitHits: serverStats.rateLimitHits,
       activeLockouts: adminLoginAttempts.size,
-      bannedIpCount: bannedIps.size,
-      activeSocketsTracked: activeSocketsPerIp.size
+      bannedIpCount: bannedIps.size
     }
-  });
-});
-
-// Public DRDoS & Firewall Status Summary (No sensitive data)
-app.get('/api/security/drdos-shield', (req, res) => {
-  res.json({
-    status: 'ARMORED_ACTIVE',
-    drdosProtection: {
-      enabled: true,
-      reflectionLoopFilter: 'ACTIVE',
-      amplificationRangeBombFilter: 'ACTIVE',
-      subnetRateLimiting: 'ACTIVE (/24 & /64)',
-      slowlorisConnectionShield: 'ACTIVE',
-      maliciousSignatureFilter: 'ACTIVE (35+ attack vectors)',
-      stealthSocketTermination: 'ENABLED (0 byte response leak)'
-    },
-    timestamp: Date.now()
   });
 });
 

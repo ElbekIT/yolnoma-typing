@@ -72,7 +72,7 @@ export interface UserProfile {
   isBlocked?: boolean;
   blockReason?: string;
   isSuspended?: boolean;
-  role: 'user' | 'admin' | 'owner';
+  role: 'user' | 'admin';
 
   // Username changes
   usernameChangesLeft: number;
@@ -113,10 +113,28 @@ export interface UserProfile {
   rankChangeAmount?: number;
   profileVisitorsCount?: number;
 
-  // Dino Runner Stats removed
+  // Dino Runner Stats
+  dinoHighScore?: number;
+  dinoGamesPlayed?: number;
+  dinoMaxDistance?: number;
 }
 
-// DinoLeaderboardEntry removed
+export interface DinoLeaderboardEntry {
+  uid: string;
+  username: string;
+  displayName: string;
+  score: number;
+  distance?: number;
+  obstaclesDodged?: number;
+  avatarUrl?: string;
+  level?: number;
+  rankTitle?: string;
+  country?: string;
+  timestamp: number;
+  isBanned?: boolean;
+  isBlocked?: boolean;
+  rank?: number;
+}
 
 export interface TypingResult {
   id?: string;
@@ -176,7 +194,22 @@ export interface CharacterStat {
   accuracy: number;
 }
 
-// Battle and Dino battle types removed
+export type BattleGameType = 'speedway' | 'dino';
+
+export interface DinoBattlePlayerState {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  score: number;
+  distance: number;
+  obstaclesDodged: number;
+  isAlive: boolean;
+  isWinner?: boolean;
+  isBot?: boolean;
+  dinoY?: number;
+  isJumping?: boolean;
+  isDucking?: boolean;
+}
 
 export interface AdminInboxMessage {
   id: string;

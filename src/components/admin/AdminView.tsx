@@ -27,76 +27,46 @@ import {
   Send,
   MessageSquare,
   Lock,
+  KeyRound,
   Eye,
   EyeOff,
+  LogOut,
   Check,
-  
-  Laptop
+  Gamepad2
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
-import { antiCheatManager } from '../../utils/antiCheat';
 import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { AdminInboxTab } from './AdminInboxTab';
 import { AdminServerTab } from './AdminServerTab';
-import { AdminSessionsTab } from './AdminSessionsTab';
+import { AdminDinoTab } from './AdminDinoTab';
 import { maskEmail } from '../../utils/maskEmail';
 import {
-  isOwnerUser,
-  checkOwnerBackend
+  loginAdminBackend,
+  verifyAdminSessionBackend,
+  logoutAdminBackend,
+  isAdminSessionActive,
+  clearAdminSession,
+  isOwnerUser
 } from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
 
-  const isDirectOwner = Boolean(
-    (user?.email && (
-      user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
-      user.email.toLowerCase().startsWith('yuldashivagavharoy')
-    )) ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    isOwnerUser(user?.email)
-  );
-
-  const [isBackendOwner, setIsBackendOwner] = useState<boolean>(isDirectOwner);
-  const [isCheckingRole, setIsCheckingRole] = useState<boolean>(!isDirectOwner && authLoading);
-
-  useEffect(() => {
-    let isMounted = true;
-    if (isDirectOwner) {
-      setIsBackendOwner(true);
-      setIsCheckingRole(false);
-      return;
-    }
-
-    if (user?.email) {
-      checkOwnerBackend(user.email).then((res) => {
-        if (isMounted) {
-          setIsBackendOwner(res);
-          setIsCheckingRole(false);
-        }
-      });
-    } else if (!authLoading) {
-      setIsBackendOwner(false);
-      setIsCheckingRole(false);
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.email, isDirectOwner, authLoading]);
-
-  const isSuperOwner = Boolean(
-    isDirectOwner ||
-    isBackendOwner ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    isOwnerUser(user?.email)
-  );
+  // 3-Step Backend Authentication Gate State (Username + Password + 2FA PIN)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());
+  const [inputUsername, setInputUsername] = useState('');
+  const [inputPassword, setInputPassword] = useState('');
+  const [input2FA, setInput2FA] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [show2FA, setShow2FA] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [lockoutRemainingSec, setLockoutRemainingSec] = useState<number | null>(null);
 
   // Email Privacy Setting (Default: Masked for Privacy)
   const [showFullEmails, setShowFullEmails] = useState(false);
@@ -105,7 +75,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications' | 'sessions' | 'server'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'dino' | 'inbox' | 'notifications' | 'server'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
@@ -129,9 +99,70 @@ export const AdminView: React.FC = () => {
 
   const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
 
+  // Keep authenticated state stable across tab switches and reloads
+  useEffect(() => {
+    const active = isAdminSessionActive();
+    if (active && !isAdminAuthenticated) {
+      setIsAdminAuthenticated(true);
+    }
+  }, []);
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockoutRemainingSec && lockoutRemainingSec > 0) {
+      const timer = setInterval(() => {
+        setLockoutRemainingSec((prev) => {
+          if (!prev || prev <= 1) {
+            clearInterval(timer);
+            setAuthError(null);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [lockoutRemainingSec]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isAuthenticating || (lockoutRemainingSec && lockoutRemainingSec > 0)) return;
+
+    setAuthError(null);
+    setIsAuthenticating(true);
+
+    try {
+      const res = await loginAdminBackend(inputUsername, inputPassword, input2FA);
+
+      if (res.success) {
+        setIsAdminAuthenticated(true);
+        setInputUsername('');
+        setInputPassword('');
+        setInput2FA('');
+        setAuthError(null);
+        setLockoutRemainingSec(null);
+      } else {
+        setAuthError(res.error || "Noto'g'ri login, parol yoki 2FA PIN kiritildi!");
+        if (res.lockoutRemainingSec) {
+          setLockoutRemainingSec(res.lockoutRemainingSec);
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Server bilan ulanishda xatolik yuz berdi';
+      setAuthError(msg);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleAdminLock = async () => {
+    await logoutAdminBackend();
+    setIsAdminAuthenticated(false);
+  };
+
   // Fetch users & leaderboard from Firebase Realtime DB with exact LeaderboardView synchronization
   useEffect(() => {
-    if (!isSuperOwner) {
+    if (!isAdminAuthenticated) {
       setLoading(false);
       return;
     }
@@ -304,7 +335,7 @@ export const AdminView: React.FC = () => {
       console.error('Error fetching admin data:', e);
       setLoading(false);
     }
-  }, [isSuperOwner]);
+  }, [isAdminAuthenticated]);
 
   const openEditModal = (u: UserProfile) => {
     setEditingUser(u);
@@ -449,9 +480,6 @@ export const AdminView: React.FC = () => {
       // Remove from bannedUsers node
       await remove(ref(rtdb, `bannedUsers/${u.uid}`));
 
-      // If unbanning current device/user, clear local storage device ban
-      antiCheatManager.clearDeviceBan();
-
       // Update in users node
       await update(ref(rtdb, `users/${u.uid}`), {
         isBanned: false,
@@ -495,47 +523,147 @@ export const AdminView: React.FC = () => {
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isCheckingRole && !isSuperOwner) {
-    return (
-      <div className="w-full max-w-md mx-auto my-20 p-8 text-center space-y-4">
-        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs text-[var(--sub-color)] font-mono">Xavfsizlik tekshiruvi amalga oshirilmoqda...</p>
-      </div>
-    );
-  }
+  // 1. Two-Step Password & 2FA Gate Screen
+  if (!isAdminAuthenticated) {
+    const isLockedOut = !!lockoutRemainingSec && lockoutRemainingSec > 0;
 
-  // 1. Generic 403 Forbidden Gate (Zero email exposure, zero identity leaks)
-  if (!isSuperOwner) {
     return (
-      <div className="w-full max-w-md mx-auto my-16 p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center space-y-6 shadow-xl animate-in fade-in">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto shadow-inner">
-          <ShieldAlert className="w-8 h-8" />
+      <div className="w-full max-w-md mx-auto my-12 p-8 rounded-3xl bg-[var(--card-bg)] border border-amber-500/30 text-center space-y-6 shadow-2xl animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
+          <ShieldAlert className="w-8 h-8 animate-pulse" />
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-[11px] font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-wider">
             <Lock className="w-3.5 h-3.5" />
-            <span>403 — Ruxsat Cheklangan</span>
+            <span>Backend Xavfsizlik Qalbi • HMAC-SHA256</span>
           </div>
-          <h2 className="text-xl font-bold text-[var(--text-color)]">
-            Kirish Huquqi Mavjud Emas
+          <h2 className="text-xl font-black text-[var(--text-color)]">
+            Admin Panel Autentifikatsiyasi
           </h2>
           <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-            Ushbu sahifaga kirish uchun sizning hisobingizda yetarli vakolatlar mavjud emas.
+            Parollar va 2FA kodlari brauzerda ochiq saqlanmaydi. Autentifikatsiya to'g'ridan-to'g'ri backend serverda xavfsiz va kriptografik tarzda tekshiriladi.
           </p>
         </div>
 
-        <div className="pt-2">
+        {isLockedOut && (
+          <div className="p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-bold text-left space-y-1 animate-in fade-in">
+            <div className="flex items-center gap-2 text-rose-400 font-black">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Xavfsizlik Qulfi Faollashdi</span>
+            </div>
+            <p className="text-[11px] font-normal leading-relaxed">
+              Ko'p marotaba noto'g'ri urinish tufayli kirish vaqtincha to'xtatildi. Qayta urinish uchun kuting:
+            </p>
+            <div className="text-center py-1 font-mono text-sm font-black text-rose-400">
+              ⏱ {Math.floor(lockoutRemainingSec / 60)} daqiqa {lockoutRemainingSec % 60} soniya
+            </div>
+          </div>
+        )}
+
+        {!isLockedOut && authError && (
+          <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold text-left flex items-start gap-2 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{authError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
+          {/* Step 1: Username */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-amber-400" />
+              <span>1-bosqich: Admin Login (Username)</span>
+            </label>
+            <input
+              type="text"
+              value={inputUsername}
+              onChange={(e) => setInputUsername(e.target.value)}
+              placeholder="Username kiriting..."
+              disabled={isAuthenticating || isLockedOut}
+              required
+              autoFocus
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-wide disabled:opacity-50"
+            />
+          </div>
+
+          {/* Step 2: Password */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+              <span>2-bosqich: Admin Paroli (Password)</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={inputPassword}
+                onChange={(e) => setInputPassword(e.target.value)}
+                placeholder="Parolni kiriting..."
+                disabled={isAuthenticating || isLockedOut}
+                required
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sub-color)] hover:text-white"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Step 3: 2FA PIN */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-[var(--sub-color)] flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              <span>3-bosqich: 2FA Xavfsizlik PIN Kodi</span>
+            </label>
+            <div className="relative">
+              <input
+                type={show2FA ? 'text' : 'password'}
+                value={input2FA}
+                onChange={(e) => setInput2FA(e.target.value)}
+                placeholder="2FA PIN kodini kiriting..."
+                disabled={isAuthenticating || isLockedOut}
+                required
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-500 font-mono tracking-widest disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => setShow2FA(!show2FA)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sub-color)] hover:text-white"
+              >
+                {show2FA ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
           <button
-            onClick={() => {
-              window.location.hash = '';
-              const event = new CustomEvent('navigate_tab', { detail: 'typing' });
-              window.dispatchEvent(event);
-            }}
-            className="w-full py-3 px-4 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-color)]/20 text-[var(--text-color)] font-bold text-xs transition-all cursor-pointer"
+            type="submit"
+            disabled={isAuthenticating || isLockedOut}
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:opacity-95 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            Bosh Sahifaga Qaytish
+            {isAuthenticating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span>Backend Tekshirilmoqda...</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4" />
+                <span>Tasdiqlash & Kirish</span>
+              </>
+            )}
           </button>
+        </form>
+
+        <div className="pt-2 border-t border-[var(--sub-alt)] text-[10px] text-[var(--sub-color)] font-mono space-y-1">
+          <p className="text-emerald-400 font-bold flex items-center justify-center gap-1">
+            <Check className="w-3.5 h-3.5" />
+            Zero Client-Side Plaintext Secret Exposure
+          </p>
+          <p>Yolnoma Typing Server v3.0 • End-to-End Cryptographic Protection</p>
         </div>
       </div>
     );
@@ -552,10 +680,10 @@ export const AdminView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-black font-mono font-extrabold text-[10px] uppercase tracking-wider">
-                VERIFIED SUPER OWNER • ACTIVE
+                VERIFIED OWNER • 2FA ACTIVE
               </span>
               <span className="text-xs font-mono text-amber-300/80">
-                {user?.email ? (showFullEmails ? user.email : maskEmail(user.email)) : 'Bosh Administrator'}
+                {showFullEmails ? 'yuldashivagavharoy@gmail.com' : maskEmail('yuldashivagavharoy@gmail.com')}
               </span>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight mt-1">
@@ -586,6 +714,16 @@ export const AdminView: React.FC = () => {
             <FileText className="w-4 h-4" />
             <span>Matnlar & Tillar</span>
           </button>
+
+          {/* Lock / Logout Button */}
+          <button
+            onClick={handleAdminLock}
+            className="px-3.5 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/40 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+            title="Admin panelni qulflash va seansdan chiqish"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Qulflash</span>
+          </button>
         </div>
       </div>
 
@@ -615,7 +753,17 @@ export const AdminView: React.FC = () => {
           <span>👥 Barcha Foydalanuvchilar ({usersList.length})</span>
         </button>
 
-        {/* Dino admin tab removed */}
+        <button
+          onClick={() => setActiveTab('dino')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'dino'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span>🎮 Dino O'yin Reytingi</span>
+        </button>
 
         <button
           onClick={() => setActiveTab('inbox')}
@@ -635,7 +783,10 @@ export const AdminView: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('notifications')}
+          onClick={() => {
+            setActiveTab('notifications');
+            setTargetUserForMessage(null);
+          }}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'notifications'
               ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
@@ -644,18 +795,6 @@ export const AdminView: React.FC = () => {
         >
           <Bell className="w-4 h-4" />
           <span>📢 Habar Yuborish / Xabarnomalar</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('sessions')}
-          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
-            activeTab === 'sessions'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
-          }`}
-        >
-          <Laptop className="w-4 h-4" />
-          <span>🛡️ Faol Admin Seanslari</span>
         </button>
 
         <button
@@ -672,7 +811,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'sessions' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'dino' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -965,7 +1104,10 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* Dino admin tab removed */}
+      {/* TAB 3: DINO O'YINI REYTINGI */}
+      {activeTab === 'dino' && (
+        <AdminDinoTab />
+      )}
 
       {/* TAB 4: KELGAN MUROJAATLAR / INBOX */}
       {activeTab === 'inbox' && (
@@ -981,12 +1123,7 @@ export const AdminView: React.FC = () => {
         />
       )}
 
-      {/* TAB 6: FAOL ADMIN SEANSLARI */}
-      {activeTab === 'sessions' && (
-        <AdminSessionsTab />
-      )}
-
-      {/* TAB 7: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
+      {/* TAB 6: BACKEND DIAGNOSTIKA & XAVFSIZLIK */}
       {activeTab === 'server' && (
         <AdminServerTab />
       )}

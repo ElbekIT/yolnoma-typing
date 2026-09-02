@@ -266,7 +266,23 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Dino stats removed */}
+          {/* Dino Runner Stats Card if played */}
+          {(userProfile.dinoHighScore || 0) > 0 && (
+            <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🦖</span>
+                <div>
+                  <h4 className="text-xs font-bold text-[var(--text-color)]">Dino Runner Rekordi</h4>
+                  <p className="text-[10px] text-[var(--sub-color)]">
+                    {userProfile.dinoMaxDistance || 0} metr masofa
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-500 font-mono text-xs font-black">
+                {userProfile.dinoHighScore} ball
+              </span>
+            </div>
+          )}
 
           {/* Achievements & Badges */}
           <div>

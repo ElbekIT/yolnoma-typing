@@ -13,21 +13,12 @@ export default defineConfig(() => {
     },
     esbuild: {
       legalComments: 'none' as const,
-      drop: (process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []) as ('console' | 'debugger')[],
     },
     build: {
       sourcemap: false,
       minify: 'esbuild' as const,
       cssMinify: true,
       chunkSizeWarningLimit: 2000,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            icons: ['lucide-react'],
-          },
-        },
-      },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

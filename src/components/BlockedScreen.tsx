@@ -53,7 +53,7 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
         <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs text-slate-300 flex items-center gap-2">
           <Mail className="w-4 h-4 text-rose-400 shrink-0" />
           <span className="text-left text-[11px]">
-            Murojaat va qayta tiklash boʻyicha rasmiy aloqa: <strong className="text-rose-400">support@yolnoma.uz</strong>
+            Murojaat va qayta tiklash boʻyicha email: <strong className="text-rose-400">yuldashivagavharoy@gmail.com</strong>
           </span>
         </div>
 
