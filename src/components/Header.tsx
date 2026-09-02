@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     profile?.role === 'owner' ||
     user?.email?.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
     user?.email?.toLowerCase().startsWith('yuldashivagavharoy') ||
-    isOwnerUser() ||
+    isOwnerUser(user?.email) ||
     isAdminSessionActive();
 
   const navItems = [

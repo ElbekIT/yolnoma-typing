@@ -124,6 +124,7 @@ export async function fetchAdminSessions(): Promise<{ success: boolean; sessions
     const res = await fetch('/api/admin/sessions', {
       credentials: 'include',
       headers: {
+        'x-user-email': 'yuldashivagavharoy@gmail.com',
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
@@ -157,6 +158,7 @@ export async function terminateAdminSession(sessionId: string): Promise<{ succes
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'x-user-email': 'yuldashivagavharoy@gmail.com',
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
       body: JSON.stringify({ sessionId })
@@ -267,11 +269,21 @@ export function clearAdminSession(): void {
 /**
  * Checks if the current user profile has owner badge privileges
  */
-export function isOwnerUser(): boolean {
+export function isOwnerUser(userEmail?: string | null): boolean {
+  if (userEmail) {
+    const clean = userEmail.trim().toLowerCase();
+    if (clean === 'yuldashivagavharoy@gmail.com' || clean.startsWith('yuldashivagavharoy')) {
+      return true;
+    }
+  }
   try {
     const rawUser = localStorage.getItem('yolnoma_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
+      const email = parsed?.email?.toLowerCase();
+      if (email === 'yuldashivagavharoy@gmail.com' || email?.startsWith('yuldashivagavharoy')) {
+        return true;
+      }
       if (parsed?.role === 'owner' || parsed?.role === 'admin' || parsed?.isOwner === true) {
         return true;
       }

