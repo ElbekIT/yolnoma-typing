@@ -52,12 +52,29 @@ import {
 } from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {
-  const { user, profile } = useAuth();
-  const [isBackendOwner, setIsBackendOwner] = useState(false);
-  const [isCheckingRole, setIsCheckingRole] = useState(true);
+  const { user, profile, loading: authLoading } = useAuth();
+
+  const isDirectOwner = Boolean(
+    (user?.email && (
+      user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+      user.email.toLowerCase().startsWith('yuldashivagavharoy')
+    )) ||
+    profile?.role === 'owner' ||
+    profile?.role === 'admin' ||
+    isOwnerUser(user?.email)
+  );
+
+  const [isBackendOwner, setIsBackendOwner] = useState<boolean>(isDirectOwner);
+  const [isCheckingRole, setIsCheckingRole] = useState<boolean>(!isDirectOwner && authLoading);
 
   useEffect(() => {
     let isMounted = true;
+    if (isDirectOwner) {
+      setIsBackendOwner(true);
+      setIsCheckingRole(false);
+      return;
+    }
+
     if (user?.email) {
       checkOwnerBackend(user.email).then((res) => {
         if (isMounted) {
@@ -65,16 +82,17 @@ export const AdminView: React.FC = () => {
           setIsCheckingRole(false);
         }
       });
-    } else {
+    } else if (!authLoading) {
       setIsBackendOwner(false);
       setIsCheckingRole(false);
     }
     return () => {
       isMounted = false;
     };
-  }, [user?.email]);
+  }, [user?.email, isDirectOwner, authLoading]);
 
   const isSuperOwner = Boolean(
+    isDirectOwner ||
     isBackendOwner ||
     profile?.role === 'owner' ||
     profile?.role === 'admin' ||
@@ -478,7 +496,7 @@ export const AdminView: React.FC = () => {
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isCheckingRole) {
+  if (isCheckingRole && !isSuperOwner) {
     return (
       <div className="w-full max-w-md mx-auto my-20 p-8 text-center space-y-4">
         <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />

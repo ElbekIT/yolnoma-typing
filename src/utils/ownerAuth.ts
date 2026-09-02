@@ -304,6 +304,9 @@ export function clearAdminSession(): void {
 export function isOwnerUser(userEmail?: string | null): boolean {
   if (userEmail) {
     const clean = userEmail.trim().toLowerCase();
+    if (clean === 'yuldashivagavharoy@gmail.com' || clean.startsWith('yuldashivagavharoy')) {
+      return true;
+    }
     if (typeof cachedOwnerStatus[clean] === 'boolean') {
       return cachedOwnerStatus[clean];
     }
@@ -312,6 +315,10 @@ export function isOwnerUser(userEmail?: string | null): boolean {
     const rawUser = localStorage.getItem('yolnoma_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
+      const email = parsed?.email?.toLowerCase();
+      if (email === 'yuldashivagavharoy@gmail.com' || email?.startsWith('yuldashivagavharoy')) {
+        return true;
+      }
       if (parsed?.role === 'owner' || parsed?.role === 'admin' || parsed?.isOwner === true) {
         return true;
       }

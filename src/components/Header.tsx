@@ -75,12 +75,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const isOwnerAdmin =
+  const isOwnerAdmin = Boolean(
+    (user?.email && (user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' || user.email.toLowerCase().startsWith('yuldashivagavharoy'))) ||
     profile?.role === 'admin' ||
     profile?.role === 'owner' ||
     isBackendOwner ||
     isOwnerUser(user?.email) ||
-    isAdminSessionActive();
+    isAdminSessionActive()
+  );
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },

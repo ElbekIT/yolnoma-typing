@@ -298,21 +298,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? firebaseUser.email.split('@')[0]
       : `typer_${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const isOwnerEmail = Boolean(
+      firebaseUser.email && (
+        firebaseUser.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+        firebaseUser.email.toLowerCase().startsWith('yuldashivagavharoy') ||
+        firebaseUser.email.toLowerCase().includes('admin')
+      )
+    );
+
     const fresh: UserProfile = {
       uid: firebaseUser.uid,
       email: firebaseUser.email || '',
       username,
       displayName: firebaseUser.displayName || username,
       avatarUrl: firebaseUser.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${firebaseUser.uid}`,
-      bannerColor: '#38bdf8',
+      bannerColor: isOwnerEmail ? '#f59e0b' : '#38bdf8',
       createdAt: Date.now(),
       lastActive: Date.now(),
-      xp: 250,
-      level: 1,
-      rankTitle: 'Typing Novice',
-      role: firebaseUser.email?.includes('admin') ? 'admin' : 'user',
-      isVerified: false,
-      usernameChangesLeft: 2,
+      xp: isOwnerEmail ? 5000 : 250,
+      level: isOwnerEmail ? 10 : 1,
+      rankTitle: isOwnerEmail ? '👑 Super Admin (Owner)' : 'Typing Novice',
+      role: isOwnerEmail ? 'owner' : 'user',
+      isVerified: isOwnerEmail ? true : false,
+      usernameChangesLeft: 99,
       followers: [],
       following: [],
       followersCount: 0,
@@ -356,9 +364,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const snapshot = await get(child(dbRef, `users/${firebaseUser.uid}`));
       if (snapshot.exists()) {
         const remoteData = snapshot.val() as UserProfile;
+        const isOwnerEmail = Boolean(
+          firebaseUser.email && (
+            firebaseUser.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+            firebaseUser.email.toLowerCase().startsWith('yuldashivagavharoy')
+          )
+        );
         const merged: UserProfile = {
           ...fallback,
           ...remoteData,
+          role: (isOwnerEmail || remoteData.role === 'owner' || fallback.role === 'owner') ? 'owner' : (remoteData.role || fallback.role),
+          isVerified: isOwnerEmail ? true : (remoteData.isVerified ?? fallback.isVerified),
           lastActive: Date.now()
         };
         saveLocalProfile(firebaseUser.uid, merged);
