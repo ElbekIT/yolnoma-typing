@@ -221,13 +221,13 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_a
 
 // Server-side hashed admin credentials with SHA-512 + HMAC
 // Defaults configured securely; can be overridden via environment variables
-const ROOT_OWNER_EMAIL = (process.env.ADMIN_OWNER_EMAIL || 'yuldashivagavharoy@gmail.com').trim().toLowerCase();
+const ROOT_OWNER_EMAIL = 'yuldashivagavharoy@gmail.com';
 
 const VALID_ADMIN_ACCOUNTS = [
   {
-    username: (process.env.ADMIN_USERNAME || 'YolnomaOwner2026').trim(),
-    password: (process.env.ADMIN_PASSWORD || 'Yolnoma#Secure777!').trim(),
-    pin: (process.env.ADMIN_2FA_PIN || '909090').trim(),
+    username: 'YolnomaOwner2026',
+    password: 'Yolnoma#Secure777!',
+    pin: '909090',
     ownerEmail: ROOT_OWNER_EMAIL
   }
 ];
