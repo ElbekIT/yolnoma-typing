@@ -72,7 +72,7 @@ export interface UserProfile {
   isBlocked?: boolean;
   blockReason?: string;
   isSuspended?: boolean;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'owner';
 
   // Username changes
   usernameChangesLeft: number;

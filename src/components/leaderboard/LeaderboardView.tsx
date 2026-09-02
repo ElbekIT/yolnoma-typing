@@ -129,17 +129,27 @@ export const LeaderboardView: React.FC = () => {
 
       const updateRankingsFromMap = () => {
         let source = Array.from(fetchedMap.values());
-        source = source.filter((u) => (u.highestWpm || 0) > 0 && !u.isBanned && !u.isBlocked);
+        // Strict anti-tamper filter: Ignore impossible speeds (human max 260 WPM), impossible accuracy or fake levels
+        source = source.filter(
+          (u) =>
+            (u.highestWpm || 0) > 0 &&
+            (u.highestWpm || 0) <= 260 &&
+            (u.highestAccuracy || 0) <= 100 &&
+            (u.level || 1) <= 100 &&
+            !u.isBanned &&
+            !u.isBlocked
+        );
 
         // Sort based on category
         if (selectedCategory === 'weekly-xp') {
-          source.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+          source.sort((a, b) => Math.min(250000, b.xp || 0) - Math.min(250000, a.xp || 0));
         } else {
           source.sort((a, b) => getWpmForSelectedMode(b) - getWpmForSelectedMode(a));
         }
 
         const formatted = source.map((u, idx) => {
-          const wpmVal = getWpmForSelectedMode(u);
+          const rawSpeed = getWpmForSelectedMode(u);
+          const wpmVal = Math.min(260, Math.max(0, rawSpeed));
           const rawWpmVal = Math.round(wpmVal * 1.05);
           const consistencyVal = Math.min(99.9, Math.max(82.0, (u.highestAccuracy || 98) - 2.5));
           const dateStr = u.lastActive
@@ -370,9 +380,12 @@ export const LeaderboardView: React.FC = () => {
           });
         }
 
+        // Filter impossible scores (> 50,000)
+        const validList = list.filter((item) => (item.score || 0) > 0 && (item.score || 0) <= 50000);
+
         // Sort descending by score
-        list.sort((a, b) => (b.score || 0) - (a.score || 0));
-        const ranked = list.map((item, idx) => ({ ...item, rank: idx + 1 }));
+        validList.sort((a, b) => (b.score || 0) - (a.score || 0));
+        const ranked = validList.map((item, idx) => ({ ...item, rank: idx + 1 }));
 
         setDinoRankings(ranked);
         setLoading(false);

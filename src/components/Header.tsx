@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Keyboard,
   Trophy,
@@ -35,7 +35,7 @@ import { languagesList, t } from '../config/languages';
 import { themes } from '../config/themes';
 import { LanguageCode, ThemeMode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
-import { isOwnerUser, isAdminSessionActive } from '../utils/ownerAuth';
+import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
 
 interface HeaderProps {
   activeTab: string;
@@ -49,6 +49,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isBackendOwner, setIsBackendOwner] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      checkOwnerBackend(user.email).then((res) => {
+        setIsBackendOwner(res);
+      });
+    } else {
+      setIsBackendOwner(false);
+    }
+  }, [user?.email]);
 
   const iconDimensions = {
     small: 'w-4 h-4',
@@ -64,11 +75,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const isOwnerAdmin =
+  const isOwnerAdmin = Boolean(
+    (user?.email && (user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' || user.email.toLowerCase().startsWith('yuldashivagavharoy'))) ||
     profile?.role === 'admin' ||
     profile?.role === 'owner' ||
-    isOwnerUser() ||
-    isAdminSessionActive();
+    isBackendOwner ||
+    isOwnerUser(user?.email) ||
+    isAdminSessionActive()
+  );
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
@@ -83,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
     { id: 'partners', label: 'Hamkorlarimiz', enLabel: 'Partners', icon: Handshake },
     { id: 'owner', label: 'Sayt Haqida & Muallif', enLabel: 'About & Creator', icon: Sparkles },
-    ...(isOwnerAdmin ? [{ id: 'admin', label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
+    ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
     { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
   ];

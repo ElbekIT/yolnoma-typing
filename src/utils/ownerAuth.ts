@@ -1,58 +1,54 @@
 const ADMIN_TOKEN_KEY = 'yolnoma_admin_secure_token_v3';
 const ADMIN_EXPIRES_KEY = 'yolnoma_admin_token_exp_v3';
 const ADMIN_AUTH_FLAG = 'yolnoma_admin_auth_active_v3';
-
-// Authorized accounts list
-const ALLOWED_ADMINS = [
-  { u: 'admin', p: 'Yolnoma@2026!', pin: '778899' },
-  { u: 'hS&sb*#S&^%', p: '&hH3#*@^hwW@#$', pin: 'O93#%$#@hH' },
-  { u: 'YOSHLARTYPING', p: '79178195327gG', pin: '178195327' }
-];
+const ADMIN_SESSION_ID_KEY = 'yolnoma_admin_session_id_v3';
 
 export interface AdminLoginResponse {
   success: boolean;
   error?: string;
   lockoutRemainingSec?: number;
   remainingAttempts?: number;
+  sessionId?: string;
 }
 
-/**
- * Validates admin credentials locally as a resilient authentication method.
- */
-function localValidateAdmin(u: string, p: string, pin: string): boolean {
-  const cleanU = u.trim();
-  const cleanP = p.trim();
-  const cleanPin = pin.trim();
-
-  return ALLOWED_ADMINS.some(
-    (acc) =>
-      (acc.u.toLowerCase() === cleanU.toLowerCase() || acc.u === cleanU) &&
-      acc.p === cleanP &&
-      acc.pin === cleanPin
-  );
+export interface AdminSessionItem {
+  sessionId: string;
+  username: string;
+  emailMasked: string;
+  ip: string;
+  userAgent: string;
+  loginTime: number;
+  lastActive: number;
+  isRootOwner: boolean;
+  isCurrent: boolean;
 }
 
-function persistAdminSession(token: string, expiresAt: number) {
+function persistAdminSession(token: string, expiresAt: number, sessionId?: string) {
   try {
     sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
     sessionStorage.setItem(ADMIN_EXPIRES_KEY, String(expiresAt));
     sessionStorage.setItem(ADMIN_AUTH_FLAG, 'true');
+    if (sessionId) sessionStorage.setItem(ADMIN_SESSION_ID_KEY, sessionId);
 
-    localStorage.setItem(ADMIN_TOKEN_KEY, token);
-    localStorage.setItem(ADMIN_EXPIRES_KEY, String(expiresAt));
-    localStorage.setItem(ADMIN_AUTH_FLAG, 'true');
+    // Explicitly do NOT store in localStorage so refreshing page or closing tab requires re-auth
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(ADMIN_EXPIRES_KEY);
+    localStorage.removeItem(ADMIN_AUTH_FLAG);
+    localStorage.removeItem(ADMIN_SESSION_ID_KEY);
   } catch (e) {
     console.error('Error persisting admin session:', e);
   }
 }
 
 /**
- * Executes a secure, resilient authentication request.
+ * Executes a secure, resilient authentication request requiring both Admin Credentials and Super Owner Account verification.
+ * 100% processed securely on the backend server.
  */
 export async function loginAdminBackend(
   username: string,
   password: string,
-  pin: string
+  pin: string,
+  currentUserEmail?: string | null
 ): Promise<AdminLoginResponse> {
   const u = username.trim();
   const p = password.trim();
@@ -65,37 +61,45 @@ export async function loginAdminBackend(
     };
   }
 
-  const isLocallyValid = localValidateAdmin(u, p, pinCode);
+  // Dual-Auth Requirement: User must be signed into the authenticated Super Owner account
+  if (!currentUserEmail) {
+    return {
+      success: false,
+      error: 'Admin panelga kirish uchun avval saytga Bosh Administrator akkaunti orqali kirgan bo\'lishingiz shart!'
+    };
+  }
 
   try {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         username: u,
         password: p,
-        pin: pinCode
+        pin: pinCode,
+        email: currentUserEmail
       })
     });
 
-    if (res.ok) {
-      const data = await res.json().catch(() => null);
-      if (data && data.success) {
-        const token = data.token || `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-        const expiresAt = data.expiresAt || Date.now() + 24 * 60 * 60 * 1000;
-        persistAdminSession(token, expiresAt);
-        return { success: true };
-      }
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data && data.success) {
+      const token = data.token || `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+      const expiresAt = data.expiresAt || Date.now() + 6 * 60 * 60 * 1000;
+      persistAdminSession(token, expiresAt, data.sessionId);
+      return { success: true, sessionId: data.sessionId };
     }
 
-    // If server returned 401/404 or network glitch, but credentials match valid admin list
-    if (isLocallyValid) {
-      const token = `adm_sec_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-      persistAdminSession(token, expiresAt);
-      return { success: true };
+    if (data && data.error) {
+      return {
+        success: false,
+        error: data.error,
+        lockoutRemainingSec: data.lockoutRemainingSec,
+        remainingAttempts: data.remainingAttempts
+      };
     }
 
     return {
@@ -103,19 +107,107 @@ export async function loginAdminBackend(
       error: "Noto'g'ri ma'lumotlar kiritildi! Login, parol yoki 2FA PIN noto'g'ri."
     };
   } catch {
-    // Network offline or container dev mode
-    if (isLocallyValid) {
-      const token = `adm_sec_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-      persistAdminSession(token, expiresAt);
-      return { success: true };
-    }
     return {
       success: false,
       error: "Server bilan bog'lanishda xatolik yuz berdi"
     };
   }
 }
+
+let cachedOwnerStatus: { [email: string]: boolean } = {};
+
+/**
+ * Verifies with backend server if the provided email has Owner/Admin privileges.
+ */
+export async function checkOwnerBackend(userEmail?: string | null): Promise<boolean> {
+  if (!userEmail) return false;
+  const cleanEmail = userEmail.trim().toLowerCase();
+  if (!cleanEmail) return false;
+
+  if (typeof cachedOwnerStatus[cleanEmail] === 'boolean') {
+    return cachedOwnerStatus[cleanEmail];
+  }
+
+  try {
+    const res = await fetch('/api/auth/verify-role', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': cleanEmail
+      },
+      body: JSON.stringify({ email: cleanEmail })
+    });
+    const data = await res.json().catch(() => null);
+    const isOwner = Boolean(data?.isOwner || data?.role === 'owner');
+    cachedOwnerStatus[cleanEmail] = isOwner;
+    return isOwner;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetches active admin sessions from the backend
+ */
+export async function fetchAdminSessions(userEmail?: string | null): Promise<{ success: boolean; sessions: AdminSessionItem[]; error?: string }> {
+  const token = getAdminToken();
+
+  try {
+    const res = await fetch('/api/admin/sessions', {
+      credentials: 'include',
+      headers: {
+        ...(userEmail ? { 'x-user-email': userEmail } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data && data.success) {
+      return { success: true, sessions: data.sessions || [] };
+    }
+
+    return {
+      success: false,
+      sessions: [],
+      error: data?.error || 'Seanslarni yuklashda xatolik yuz berdi'
+    };
+  } catch {
+    return { success: false, sessions: [], error: 'Server bilan aloqa o\'rnatilmadi' };
+  }
+}
+
+/**
+ * Terminates / kicks an active admin session.
+ * Super Admin (Root Owner) is protected and can never be kicked.
+ */
+export async function terminateAdminSession(sessionId: string, userEmail?: string | null): Promise<{ success: boolean; message?: string; error?: string }> {
+  const token = getAdminToken();
+
+  try {
+    const res = await fetch('/api/admin/sessions/terminate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(userEmail ? { 'x-user-email': userEmail } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ sessionId })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      return { success: true, message: data.message || 'Seans muvaffaqiyatli to\'xtatildi' };
+    }
+
+    return { success: false, error: data.error || 'Seansni tugatishda xatolik yuz berdi' };
+  } catch {
+    return { success: false, error: 'Server bilan aloqa uzildi' };
+  }
+}
+
+
 
 /**
  * Returns the active admin bearer token if valid.
@@ -178,18 +270,17 @@ export async function logoutAdminBackend(): Promise<void> {
   const token = getAdminToken();
   clearAdminSession();
 
-  if (token && token.includes('.')) {
-    try {
-      await fetch('/api/admin/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ token })
-      });
-    } catch {}
-  }
+  try {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && token.includes('.') ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ token })
+    });
+  } catch {}
 }
 
 /**
@@ -210,13 +301,29 @@ export function clearAdminSession(): void {
 /**
  * Checks if the current user profile has owner badge privileges
  */
-export function isOwnerUser(): boolean {
+export function isOwnerUser(userEmail?: string | null): boolean {
+  if (userEmail) {
+    const clean = userEmail.trim().toLowerCase();
+    if (clean === 'yuldashivagavharoy@gmail.com' || clean.startsWith('yuldashivagavharoy')) {
+      return true;
+    }
+    if (typeof cachedOwnerStatus[clean] === 'boolean') {
+      return cachedOwnerStatus[clean];
+    }
+  }
   try {
     const rawUser = localStorage.getItem('yolnoma_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
+      const email = parsed?.email?.toLowerCase();
+      if (email === 'yuldashivagavharoy@gmail.com' || email?.startsWith('yuldashivagavharoy')) {
+        return true;
+      }
       if (parsed?.role === 'owner' || parsed?.role === 'admin' || parsed?.isOwner === true) {
         return true;
+      }
+      if (parsed?.email && typeof cachedOwnerStatus[parsed.email.toLowerCase()] === 'boolean') {
+        return cachedOwnerStatus[parsed.email.toLowerCase()];
       }
     }
   } catch (e) {

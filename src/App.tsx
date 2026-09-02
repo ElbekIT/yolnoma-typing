@@ -45,14 +45,15 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with subdomain / URL parameter support
+  // Active navigation tab with subdomain / URL parameter support (Obfuscated routing)
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
+      const _adm = atob('YWRtaW4='); // 'admin'
       const hostname = window.location.hostname;
       const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
-      if (hostname.startsWith('admin.') || pathname === '/admin' || searchParams.get('tab') === 'admin') {
-        return 'admin';
+      if (hostname.startsWith(`${_adm}.`) || pathname === `/${_adm}` || searchParams.get('tab') === _adm) {
+        return _adm;
       }
     } catch {}
     return 'typing';
@@ -61,6 +62,14 @@ function MainAppContent() {
 
   // DevTools detection state
   const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());
+
+  useEffect(() => {
+    const handleNav = (e: any) => {
+      if (e.detail) setActiveTab(e.detail);
+    };
+    window.addEventListener('navigate_tab', handleNav);
+    return () => window.removeEventListener('navigate_tab', handleNav);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = antiCheatManager.subscribeDevTools((isOpen) => {
@@ -475,6 +484,11 @@ function MainAppContent() {
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';
+
+  // DevTools inspection block
+  if (isDevToolsBlocked) {
+    return <DevToolsBlockedScreen />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
