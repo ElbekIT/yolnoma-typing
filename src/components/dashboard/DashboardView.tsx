@@ -1,13 +1,11 @@
 import React from 'react';
 import {
-  Trophy,
   Zap,
   Target,
   Clock,
   TrendingUp,
   Activity,
   Calendar,
-  CheckCircle2,
   Award
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -21,11 +19,9 @@ export const DashboardView: React.FC = () => {
   const totalTests = profile?.totalTests || userResultsHistory.length;
   const highestWpm = profile?.highestWpm || Math.max(...userResultsHistory.map((r) => r.wpm), 0);
   const highestAccuracy = profile?.highestAccuracy || Math.max(...userResultsHistory.map((r) => r.accuracy), 0);
-
   const totalSeconds = profile?.totalTimeTypedSeconds || userResultsHistory.reduce((acc, r) => acc + r.testTimeSeconds, 0);
   const totalHoursFormatted = (totalSeconds / 3600).toFixed(1);
 
-  // Chart data from recent history
   const chartData = [...userResultsHistory]
     .slice(0, 15)
     .reverse()
@@ -38,18 +34,16 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
-      {/* Top Welcome Banner */}
       <div className="bg-gradient-to-r from-[var(--main-color)] to-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Welcome Back, {profile?.displayName || 'Typer'}! ⚡
+            Welcome Back, {profile?.displayName || 'Typer'}! 👋
           </h2>
           <p className="text-xs sm:text-sm opacity-90 mt-2 max-w-xl">
             You have completed <span className="font-bold">{totalTests} tests</span> and spent{' '}
             <span className="font-bold">{totalHoursFormatted} hours</span> honing your typing speed and precision.
           </p>
         </div>
-
         <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
           <Award className="w-10 h-10 text-amber-300" />
           <div>
@@ -59,7 +53,6 @@ export const DashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Summary Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between text-[var(--sub-color)] mb-2">
@@ -98,13 +91,11 @@ export const DashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Speed Trend Chart */}
       <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
         <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-[var(--main-color)]" />
           <span>Speed Trend Progression</span>
         </h3>
-
         {chartData.length > 0 ? (
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -145,13 +136,11 @@ export const DashboardView: React.FC = () => {
         )}
       </div>
 
-      {/* Recent Tests Table */}
       <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
         <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
           <Calendar className="w-4 h-4 text-[var(--main-color)]" />
           <span>Recent Test History</span>
         </h3>
-
         {userResultsHistory.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-medium">

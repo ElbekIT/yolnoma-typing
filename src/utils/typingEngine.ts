@@ -23,7 +23,6 @@ export function generateTestText(
   wordCount: number = 25,
   customText?: string
 ): GeneratedText {
-  // If explicitly in custom mode with customText provided
   if (mode === 'custom' && customText && customText.trim().length > 0) {
     const raw = customText.trim();
     return {
@@ -33,8 +32,6 @@ export function generateTestText(
   }
 
   const langInfo = getLanguageInfo(language);
-
-  // Custom texts added by owner
   const customTexts = getCustomTextsForLanguage(language);
 
   if (mode === 'custom') {
@@ -81,7 +78,6 @@ export function generateTestText(
 
   if (mode === 'sentences') {
     const sentencesList = langInfo.sentences && langInfo.sentences.length > 0 ? langInfo.sentences : getLanguageInfo('uz-latn').sentences;
-    // Pick 2-3 random sentences freshly shuffled
     const shuffled = shuffleArray(sentencesList);
     const selectedSentences = shuffled.slice(0, Math.min(3, shuffled.length)).join(' ');
     return {
@@ -90,9 +86,7 @@ export function generateTestText(
     };
   }
 
-  // Base words pool - merge default language words with any owner custom words
   let wordsPool = [...langInfo.words];
-
   if (customTexts && customTexts.length > 0) {
     customTexts.forEach((ct) => {
       if (ct.words && ct.words.length > 0) {
@@ -107,13 +101,11 @@ export function generateTestText(
   }
 
   if (mode === 'words') {
-    // In Monkeytype-style words mode: ensure all words are lowercase and clean
     wordsPool = wordsPool.map((w) => w.trim().toLowerCase()).filter((w) => w.length > 0);
   } else if (langInfo.sentences && langInfo.sentences.length > 0) {
-    // Mix in clean words from sentences for other modes
     langInfo.sentences.forEach((s) => {
       s.split(/\s+/).forEach((w) => {
-        const clean = w.replace(/[^a-zA-Zʻʼo'g'O'G'а-яА-ЯўЎқҚғҒҳҲ]/g, '').toLowerCase();
+        const clean = w.replace(/[^a-zA-Z o'g'O'G' ]/g, '').toLowerCase();
         if (clean.length > 2 && clean.length <= 10 && !wordsPool.includes(clean)) {
           wordsPool.push(clean);
         }
@@ -128,11 +120,9 @@ export function generateTestText(
     wordsPool = wordsPool.map((w, idx) => (idx % 2 === 0 ? w + syms[idx % syms.length] : w));
   }
 
-  // Difficulty adjustment
   if (difficulty === 'hard' || difficulty === 'expert') {
     wordsPool = wordsPool.filter((w) => w.length >= 5);
   } else if (difficulty === 'easy') {
-    // In easy mode, prefer smooth natural typing words (length 2-8)
     const easyWords = wordsPool.filter((w) => w.length <= 8);
     if (easyWords.length >= 30) {
       wordsPool = easyWords;
@@ -141,7 +131,6 @@ export function generateTestText(
 
   const count = wordCount > 0 ? wordCount : 250;
   const selectedWords: string[] = [];
-
   let currentShuffle = shuffleArray(wordsPool);
   let shuffleIndex = 0;
 
@@ -150,9 +139,7 @@ export function generateTestText(
       currentShuffle = shuffleArray(wordsPool);
       shuffleIndex = 0;
     }
-
     let word = currentShuffle[shuffleIndex++];
-    // Prevent consecutive identical words
     if (selectedWords.length > 0 && selectedWords[selectedWords.length - 1] === word && currentShuffle.length > 1) {
       if (shuffleIndex < currentShuffle.length) {
         word = currentShuffle[shuffleIndex];
@@ -179,7 +166,6 @@ export function calculateWpm(
 
   if (totalTypedCharsCount !== undefined && totalTypedCharsCount > 0) {
     const uncorrectedErrors = Math.max(0, totalTypedCharsCount - correctCharsCount);
-    // Standard Net WPM calculation: (Correct Characters - Uncorrected Errors) / 5 / minutes
     const netCorrectChars = Math.max(0, correctCharsCount - uncorrectedErrors);
     const wordsTyped = netCorrectChars / 5;
     return Math.max(0, Math.round(wordsTyped / timeInMinutes));
@@ -207,24 +193,15 @@ export function calculateCpm(typedCharsCount: number, elapsedSeconds: number): n
 export function calculateAccuracy(correctChars: number, totalTypedChars: number): number {
   if (totalTypedChars <= 0) return 0;
   if (correctChars <= 0) return 0;
-
   const acc = (correctChars / totalTypedChars) * 100;
   return Math.max(0, Math.min(100, Math.round(acc)));
 }
 
-/**
- * Calculates the locked minimum input length for word boundary protection.
- * Once a space in typedInput is typed, or a space in targetText is passed,
- * backspace cannot delete past spaceIndex + 1 into previous words.
- */
 export function getLockedMinLength(targetText: string, typedInput: string): number {
   if (!targetText || !typedInput) return 0;
-
-  // 1. Check last space typed in typedInput
   const lastSpaceIdx = typedInput.lastIndexOf(' ');
   let lockedMin = lastSpaceIdx !== -1 ? lastSpaceIdx + 1 : 0;
 
-  // 2. Check spaces in targetText that have been passed by typedInput
   for (let i = 0; i < targetText.length; i++) {
     if (targetText[i] === ' ') {
       if (typedInput.length > i) {
@@ -234,27 +211,29 @@ export function getLockedMinLength(targetText: string, typedInput: string): numb
       }
     }
   }
-
   return lockedMin;
 }
 
-/**
- * Calculates target index to jump/pad to when Space key is pressed.
- */
-export function getNextWordStartIndexOnSpace(targetText: string, typedInput: string): number | null {
-  if (!targetText) return null;
-  const words = targetText.split(' ');
-  let charOffset = 0;
-
-  for (let i = 0; i < words.length; i++) {
-    const wordLen = words[i].length;
-    const spaceIdx = charOffset + wordLen;
-
-    if (typedInput.length <= spaceIdx) {
-      return spaceIdx + 1;
-    }
-    charOffset += wordLen + 1;
+export function generateWords(
+  count: number = 50,
+  language: string = 'uz-latn',
+  includePunctuation: boolean = false,
+  includeNumbers: boolean = false
+): string[] {
+  const generated = generateTestText('words', language as LanguageCode, 'medium', count);
+  let words = [...generated.wordsList];
+  if (includeNumbers) {
+    words = words.map((w, i) => (i % 7 === 0 ? Math.floor(Math.random() * 100).toString() : w));
   }
-
-  return null;
+  if (includePunctuation) {
+    const punct = [',', '.', '!', '?', ';', ':'];
+    words = words.map((w, i) => (i % 5 === 0 ? w + punct[Math.floor(Math.random() * punct.length)] : w));
+  }
+  return words;
 }
+
+export function generateQuote(language: string = 'uz-latn'): string[] {
+  const generated = generateTestText('quotes', language as LanguageCode, 'medium');
+  return generated.wordsList;
+}
+

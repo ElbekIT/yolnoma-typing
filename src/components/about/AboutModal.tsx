@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Info, Shield, HelpCircle, FileText, Keyboard } from 'lucide-react';
+import { X, Shield, HelpCircle, FileText } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
       <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 shadow-2xl text-[var(--text-color)] max-h-[85vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -31,11 +31,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Modal Navigation Tabs */}
         <div className="flex gap-2 border-b border-[var(--sub-alt)] mb-6 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('faq')}
-            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors ${
+            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeTab === 'faq'
                 ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
                 : 'text-[var(--sub-color)]'
@@ -44,10 +43,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <HelpCircle className="w-4 h-4" />
             <span>FAQ & Guides</span>
           </button>
-
           <button
             onClick={() => setActiveTab('privacy')}
-            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors ${
+            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeTab === 'privacy'
                 ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
                 : 'text-[var(--sub-color)]'
@@ -56,10 +54,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <Shield className="w-4 h-4" />
             <span>Privacy Policy</span>
           </button>
-
           <button
             onClick={() => setActiveTab('terms')}
-            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors ${
+            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeTab === 'terms'
                 ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
                 : 'text-[var(--sub-color)]'
@@ -70,7 +67,6 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'faq' && (
           <div className="space-y-4 text-xs">
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
@@ -79,14 +75,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 Words Per Minute (WPM) is calculated by dividing total correct characters typed by 5, then dividing by elapsed test time in minutes: <code className="font-mono bg-black/20 px-1 py-0.5 rounded text-[var(--main-color)]">((Correct Chars / 5) / TimeInMinutes)</code>.
               </p>
             </div>
-
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
               <h4 className="font-bold text-sm text-[var(--text-color)]">Does Yolnoma Typing support RTL languages?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
                 Yes! Arabic, Persian, Hebrew, and Urdu scripts are rendered with full RTL (Right-To-Left) direction, aligned cursors, and accurate character metrics.
               </p>
             </div>
-
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
               <h4 className="font-bold text-sm text-[var(--text-color)]">What keyboard shortcuts can I use?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
@@ -99,7 +93,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         {activeTab === 'privacy' && (
           <div className="space-y-3 text-xs text-[var(--sub-color)] leading-relaxed">
             <p>
-              Your privacy is paramount. Yolnoma Typing stores user accounts and test results securely in Firebase Firestore under strict access rules.
+              Your privacy is paramount. Yolnoma Typing stores user accounts and test results securely in Firebase Realtime Database under strict access rules.
             </p>
             <p>
               We do not collect or sell personal identification information. All passwords are encrypted by Firebase Authentication using industry-standard protocols.

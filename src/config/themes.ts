@@ -129,3 +129,6 @@ export const themes: Record<ThemeMode, ThemeConfig> = {
     caretColor: '#f43f5e',
   },
 };
+
+export const themesList: ThemeConfig[] = Object.values(themes);
+

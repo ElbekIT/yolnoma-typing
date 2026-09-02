@@ -1,6 +1,6 @@
 {
-  "name": "Yolnoma Typing",
-  "description": "Professional multi-language typing test and training platform with real-time speed metrics, global leaderboards, achievements, statistics, and dark/light themes.",
+  "name": "Yolnoma Speed Typing Platform",
+  "description": "Uzbekistan and global multi-language speed typing platform with real-time leaderboards, analytics, mechanical audio feedback, and achievements.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

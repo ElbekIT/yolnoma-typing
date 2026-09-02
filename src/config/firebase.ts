@@ -3,13 +3,7 @@ import { getAuth, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
 
-/**
- * Hardened Polymorphic Configuration Guard
- * Encrypted with multi-stage bitwise XOR + dynamic byte shifting + Base64
- * Prevents plain-text discovery by automated scanners, web scrapers, and bot scrapers.
- */
 const _SECURITY_SEED = [0x59, 0x6F, 0x6C, 0x6E, 0x6F, 0x6D, 0x61, 0x54, 0x79, 0x70, 0x65, 0x53, 0x65, 0x63, 0x32, 0x36];
-
 const _CIPHER_STORE = {
   _k1: "FTINLRUkFy1pWkdPaltsEnu0laTCuq+tqpXr1fKWl+eA6dBfEx4n",
   _k2: "IAIHJSg6ew9JTlknYmIvJUaKlJmXvbbUr6PL",
@@ -34,7 +28,6 @@ function _decodeSecureBuffer(payload: string): string {
   }
 }
 
-// Dynamically construct and immediately freeze the runtime configuration
 const _rawConfig = {
   apiKey: _decodeSecureBuffer(_CIPHER_STORE._k1),
   authDomain: _decodeSecureBuffer(_CIPHER_STORE._k2),
@@ -46,10 +39,8 @@ const _rawConfig = {
   measurementId: _decodeSecureBuffer(_CIPHER_STORE._k8)
 };
 
-// Freeze the configuration object to prevent any tampering or runtime inspection
 export const firebaseConfig = Object.freeze(Object.seal(_rawConfig));
 
-// Clean up sensitive globals if attached by external scripts/extensions
 if (typeof window !== 'undefined') {
   try {
     delete (window as any).__FIREBASE_DEFAULTS__;
@@ -59,16 +50,12 @@ if (typeof window !== 'undefined') {
   } catch {}
 }
 
-// Initialize Firebase safely with protection
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
-
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-
 export const githubProvider = new GithubAuthProvider();
 githubProvider.addScope('read:user');
 githubProvider.addScope('user:email');

@@ -9,13 +9,10 @@
       <stop offset="100%" stop-color="#0044AA" />
     </linearGradient>
   </defs>
-
   <!-- Right Dark Arm -->
   <path d="M 40 10 L 85 55 C 92 62 90 74 80 82 L 48 102 C 40 107 30 103 28 94 L 20 60 L 40 10 Z" fill="url(#iconRight)" />
-
   <!-- Left Bright Ribbon Arm -->
   <path d="M 12 18 C 10 10 18 2 28 8 L 60 32 C 68 38 68 50 60 56 L 28 88 C 22 94 12 90 10 82 L 12 18 Z" fill="url(#iconLeft)" />
-
   <!-- Overlapping Curve -->
   <path d="M 32 40 C 44 28 62 40 50 56 C 40 68 22 80 14 62 Z" fill="#0088FF" opacity="0.85" />
 </svg>

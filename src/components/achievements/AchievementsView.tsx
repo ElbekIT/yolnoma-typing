@@ -1,11 +1,10 @@
 import React from 'react';
-import { Award, Lock, CheckCircle, Sparkles } from 'lucide-react';
+import { Award, Lock, CheckCircle } from 'lucide-react';
 import { initialAchievements } from '../../config/achievements';
 import { useAuth } from '../../context/AuthContext';
 
 export const AchievementsView: React.FC = () => {
   const { profile, userResultsHistory } = useAuth();
-
   const unlockedIds = profile?.unlockedAchievements || [];
   const highestWpm = profile?.highestWpm || Math.max(...userResultsHistory.map((r) => r.wpm), 0);
   const totalTests = profile?.totalTests || userResultsHistory.length;
@@ -26,7 +25,6 @@ export const AchievementsView: React.FC = () => {
         {initialAchievements.map((ach) => {
           let isUnlocked = unlockedIds.includes(ach.id);
           let currentVal = 0;
-
           if (ach.id === 'first_test') {
             currentVal = totalTests;
             if (totalTests >= 1) isUnlocked = true;
@@ -46,7 +44,6 @@ export const AchievementsView: React.FC = () => {
             currentVal = totalTests;
             if (totalTests >= 100) isUnlocked = true;
           }
-
           const progressPercent = Math.min(100, Math.round((currentVal / ach.targetValue) * 100));
 
           return (
@@ -71,7 +68,6 @@ export const AchievementsView: React.FC = () => {
                     </span>
                   )}
                 </div>
-
                 <h3 className="font-bold text-sm text-[var(--text-color)]">{ach.title}</h3>
                 <p className="text-xs text-[var(--sub-color)] mt-1 leading-relaxed">{ach.description}</p>
               </div>

@@ -16,19 +16,11 @@
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
-  
   <rect width="300" height="300" fill="#05070d" rx="40" />
-
-  <!-- Outer Triangle -->
   <polygon points="35,60 265,60 150,260" fill="none" stroke="url(#goldGrad)" stroke-width="14" stroke-linejoin="round" filter="url(#glow)" />
-  
-  <!-- Inner Y Shape -->
   <g fill="url(#goldGlow)">
-    <!-- Left arm of Y -->
     <polygon points="75,85 110,85 150,155 130,180" />
-    <!-- Right arm of Y -->
     <polygon points="225,85 190,85 130,180 150,180" />
-    <!-- Stem of Y -->
     <polygon points="135,170 165,170 150,230" />
   </g>
 </svg>

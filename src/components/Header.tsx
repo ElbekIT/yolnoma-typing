@@ -8,7 +8,6 @@ import {
   User as UserIcon,
   Settings,
   Globe,
-  Palette,
   LogIn,
   LogOut,
   Target,
@@ -23,7 +22,6 @@ import {
   Swords,
   GraduationCap,
   ShieldAlert,
-  Info,
   Check,
   AlertCircle,
   MessageSquare,
@@ -31,9 +29,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import { languagesList, t } from '../config/languages';
-import { themes } from '../config/themes';
-import { LanguageCode, ThemeMode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
 import { isOwnerUser, isAdminSessionActive } from '../utils/ownerAuth';
 
@@ -45,7 +40,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
-  const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
+  const { language, headerIconSize } = useSettings();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -63,7 +58,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   }[headerIconSize || 'medium'];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
   const isOwnerAdmin =
     profile?.role === 'admin' ||
     profile?.role === 'owner' ||
@@ -72,10 +66,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
-    { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
+    { id: 'languages', label: "Tillar & Lug'atlar", enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
-    { id: 'dino', label: 'Dino Runner (O\'yin)', enLabel: 'Dino Runner Game', icon: Gamepad2 },
+    { id: 'dino', label: "Dino Runner (O'yin)", enLabel: 'Dino Runner Game', icon: Gamepad2 },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
     { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy },
     { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },
@@ -100,7 +94,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Side: Brand Logo & Navigation Icons */}
           <div className="flex items-center gap-3 sm:gap-6">
-            {/* 3-lines Hamburger Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
               className="p-2 rounded-xl bg-[var(--sub-alt)]/60 text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors flex items-center gap-2 cursor-pointer"
@@ -110,7 +103,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               <span className="text-xs font-bold hidden sm:inline text-[var(--text-color)]">Menyu</span>
             </button>
 
-            {/* Brand Logo */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('typing')}>
               <img
                 src="/yolnoma_icon.svg"
@@ -125,7 +117,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </div>
             </div>
 
-            {/* Quick Icon Links (Monkeytype style) */}
             <div className="hidden md:flex items-center gap-1.5 text-[var(--sub-color)]">
               <button
                 onClick={() => setActiveTab('typing')}
@@ -136,7 +127,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               >
                 <Keyboard className={iconDimensions} />
               </button>
-
               <button
                 onClick={() => setActiveTab('leaderboard')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
@@ -146,7 +136,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               >
                 <Crown className={iconDimensions} />
               </button>
-
               <button
                 onClick={() => setActiveTab('lessons')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
@@ -156,7 +145,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               >
                 <GraduationCap className={iconDimensions} />
               </button>
-
               <button
                 onClick={() => setActiveTab('battle')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
@@ -166,7 +154,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               >
                 <Swords className={iconDimensions} />
               </button>
-
               <button
                 onClick={() => setActiveTab('dino')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
@@ -176,7 +163,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               >
                 <Gamepad2 className={iconDimensions} />
               </button>
-
               <button
                 onClick={() => setActiveTab('settings')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
@@ -193,7 +179,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
           <div className="flex items-center gap-3">
             {user ? (
               <div className="relative">
-                {/* Circular Profile Avatar Button */}
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="relative p-0.5 rounded-full border-2 border-[var(--main-color)]/60 hover:border-[var(--main-color)] bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -211,10 +196,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                   )}
                 </button>
 
-                {/* Profile Dropdown Menu */}
                 {showProfileMenu && (
                   <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl shadow-xl z-50 p-4 text-xs space-y-3 divide-y divide-[var(--sub-alt)]">
-                    {/* User Info Header */}
                     <div className="pb-3 flex items-center gap-3">
                       <img
                         src={profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
@@ -239,7 +222,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       </div>
                     </div>
 
-                    {/* Notifications Section */}
                     <div className="pt-3 space-y-2">
                       <button
                         onClick={() => setShowNotifSection(!showNotifSection)}
@@ -283,24 +265,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                               </button>
                             )}
                           </div>
-
                           {notifications.length > 0 ? (
                             notifications.map((n) => {
                               const isUnread = !n.read;
-                              let badgeColor = 'bg-sky-500/15 text-sky-400 border-sky-500/20';
                               let icon = <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />;
-
                               if (n.type === 'success') {
-                                badgeColor = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
                                 icon = <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />;
                               } else if (n.type === 'warning') {
-                                badgeColor = 'bg-amber-500/15 text-amber-400 border-amber-500/20';
                                 icon = <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />;
                               } else if (n.type === 'achievement' || n.type === 'level_up') {
-                                badgeColor = 'bg-purple-500/15 text-purple-400 border-purple-500/20';
                                 icon = <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />;
                               }
-
                               return (
                                 <div
                                   key={n.id}
@@ -330,7 +305,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                                       </span>
                                     </div>
                                   </div>
-
                                   <p className="text-[11px] text-[var(--text-color)]/90 leading-relaxed whitespace-pre-wrap pl-5">
                                     {n.message}
                                   </p>
@@ -346,7 +320,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       )}
                     </div>
 
-                    {/* Quick Navigation Menu Links */}
                     <div className="pt-3 space-y-1">
                       <button
                         onClick={() => handleSelectTab('profile')}
@@ -358,7 +331,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
-
                       <button
                         onClick={() => handleSelectTab('statistics')}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
@@ -369,7 +341,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
-
                       <button
                         onClick={() => handleSelectTab('achievements')}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
@@ -380,7 +351,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
-
                       <button
                         onClick={() => handleSelectTab('settings')}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold cursor-pointer"
@@ -391,7 +361,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
-
                       {isOwnerAdmin && (
                         <button
                           onClick={() => handleSelectTab('admin')}
@@ -404,7 +373,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           <ChevronRight className="w-4 h-4 text-rose-400 opacity-70" />
                         </button>
                       )}
-
                       <button
                         onClick={() => handleSelectTab('owner')}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-[var(--text-color)] transition-colors font-bold bg-[var(--main-color)]/5 border border-[var(--main-color)]/20 cursor-pointer"
@@ -417,7 +385,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       </button>
                     </div>
 
-                    {/* Logout Button */}
                     <div className="pt-3">
                       <button
                         onClick={() => {
@@ -449,17 +416,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
       {/* Slide-over Side Drawer Menu */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop Overlay */}
           <div
             className="fixed inset-0 bg-black/50 transition-opacity"
             onClick={() => setIsDrawerOpen(false)}
           />
-
-          {/* Drawer Container */}
           <div className="relative w-80 sm:w-88 max-w-[90vw] bg-[var(--card-bg)] text-[var(--text-color)] border-r border-[var(--sub-alt)] h-full z-50 p-4 sm:p-5 flex flex-col justify-between shadow-xl overflow-y-auto safe-top safe-bottom">
-            {/* Top Drawer Section */}
             <div>
-              {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--sub-alt)]">
                 <div
                   className="flex items-center gap-2.5 cursor-pointer"
@@ -474,10 +436,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     <h2 className="text-base font-black tracking-tight text-[var(--text-color)]">
                       Yolnoma <span className="text-[var(--main-color)] text-xs font-bold">Typing</span>
                     </h2>
-                    <p className="text-[10px] text-[var(--sub-color)] font-medium">O'zbekiston №1 Tez Yozish Platformasi</p>
+                    <p className="text-[10px] text-[var(--sub-color)] font-medium">O'zbekiston #1 Tez Yozish Platformasi</p>
                   </div>
                 </div>
-
                 <button
                   onClick={() => setIsDrawerOpen(false)}
                   className="p-1.5 rounded-lg text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -487,22 +448,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 </button>
               </div>
 
-              {/* Clean Navigation Menu Links */}
               <div className="space-y-1">
                 <div className="px-2 py-1 text-[10px] font-bold uppercase text-[var(--sub-color)] tracking-wider">
                   Bo'limlar
                 </div>
-
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
                   const displayLabel = language.startsWith('uz') ? item.label : item.enLabel;
-
                   return (
                     <button
                       key={item.id}
                       onClick={() => handleSelectTab(item.id)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-150 group ${
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-150 group cursor-pointer ${
                         isActive
                           ? 'bg-[var(--main-color)] text-white shadow-lg shadow-[var(--main-color)]/25 scale-[1.01]'
                           : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]/70 hover:text-[var(--main-color)]'
@@ -518,7 +476,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         />
                         <span className="text-sm font-extrabold tracking-wide">{displayLabel}</span>
                       </div>
-
                       <ChevronRight
                         className={`w-4 h-4 transition-transform ${
                           isActive
@@ -532,7 +489,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </div>
             </div>
 
-            {/* Bottom Minimalist User Footer */}
             <div className="pt-5 border-t border-[var(--sub-alt)]/60 mt-5">
               {user ? (
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]">
@@ -551,14 +507,13 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold">
                         <span className="text-[var(--main-color)]">{profile?.highestWpm || 0} WPM</span>
-                        <span className="text-amber-500">• LVL {profile?.level || 1}</span>
+                        <span className="text-amber-500"> • LVL {profile?.level || 1}</span>
                       </div>
                     </div>
                   </div>
-
                   <button
                     onClick={logout}
-                    className="p-2 rounded-xl text-[var(--sub-color)] hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                    className="p-2 rounded-xl text-[var(--sub-color)] hover:text-rose-500 hover:bg-rose-500/10 transition-all cursor-pointer"
                     title="Chiqish"
                   >
                     <LogOut className="w-5 h-5" />
@@ -570,7 +525,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     setIsDrawerOpen(false);
                     onOpenAuth();
                   }}
-                  className="w-full py-3 rounded-2xl bg-[var(--main-color)] text-white font-extrabold text-sm shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2.5 hover:opacity-95 transition-all"
+                  className="w-full py-3 rounded-2xl bg-[var(--main-color)] text-white font-extrabold text-sm shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2.5 hover:opacity-95 transition-all cursor-pointer"
                 >
                   <LogIn className="w-5 h-5" />
                   <span>Tizimga Kirish</span>
@@ -583,4 +538,3 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     </>
   );
 };
-

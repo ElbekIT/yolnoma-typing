@@ -6,20 +6,14 @@ import {
   Calendar,
   Award,
   Zap,
-  Target,
-  Clock,
   Check,
   Shield,
   Trash2,
   AlertTriangle,
   Lock,
   X,
-  ExternalLink,
-  Users,
   CheckCircle2,
   RefreshCw,
-  Search,
-  Ban,
   Bell,
   Mail,
   MessageSquare,
@@ -55,7 +49,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
   const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'global' | 'direct'>('all');
   const [isEditing, setIsEditing] = useState(false);
 
-  // Form State
   const [displayName, setDisplayName] = useState(profile?.displayName || '');
   const [username, setUsername] = useState(profile?.username || '');
   const [bio, setBio] = useState(profile?.bio || '');
@@ -67,7 +60,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
   const [website, setWebsite] = useState(profile?.socialLinks?.website || '');
   const [saving, setSaving] = useState(false);
 
-  // Sync form inputs with profile
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.displayName || '');
@@ -82,15 +74,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     }
   }, [profile]);
 
-  // Deletion Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [deleting, setDeleting] = useState(false);
-
-  // Admin Search
-  const [adminSearchQuery, setAdminSearchQuery] = useState('');
-  const [adminUsersList, setAdminUsersList] = useState<UserProfile[]>([]);
 
   if (loading && user) {
     return (
@@ -113,7 +100,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             Oldin kirishni bosing, Google orqali ro'yhatdan o'ting, keyin bemalol profilingizga kira olasiz! Rahmat.
           </p>
         </div>
-
         {onOpenAuth && (
           <button
             onClick={onOpenAuth}
@@ -127,7 +113,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
   }
 
   const changesLeft = profile.usernameChangesLeft ?? 2;
-
   const presetAvatars = [
     `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`,
     `https://api.dicebear.com/7.x/bottts/svg?seed=yolnoma1`,
@@ -151,17 +136,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     '🇦🇿 Azerbaijan'
   ];
 
-  const emojis = ['⚡', '🏆', '⌨️', '🚀', '💻', '🎮', '🔥', '💯'];
+  const emojis = ['⚡', '🔥', '💻', '🚀', '🎯', '✨', '👑', '😎'];
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim() || !bio.trim()) {
-      addNotification('Maydonlar to\'liq emas', 'Ismingiz va Bio ma\'lumotingizni kiritishingiz shart!', 'warning');
+      addNotification("Maydonlar to'liq emas", "Ismingiz va Bio ma'lumotingizni kiritishingiz shart!", 'warning');
       return;
     }
 
     setSaving(true);
-
     const updates: Partial<UserProfile> = {
       displayName: displayName.trim(),
       bio: bio.trim(),
@@ -175,7 +159,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
       }
     };
 
-    // Username change check
     const currentUsername = profile?.username || '';
     if (username.trim().toLowerCase() !== currentUsername.toLowerCase()) {
       if (changesLeft <= 0) {
@@ -192,7 +175,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     setSaving(false);
     setIsEditing(false);
     addNotification('Profil Saqlandi!', 'Profilingiz muvaffaqiyatli saqlandi. Bosh sahifaga yo\'naltirildingiz.');
-
     if (onSavedHome) {
       onSavedHome();
     }
@@ -216,12 +198,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     await adminUpdateUser(targetUser.uid, { isVerified: !targetUser.isVerified });
   };
 
-  const handleAdminToggleBan = async (targetUser: UserProfile) => {
-    await adminUpdateUser(targetUser.uid, { isBanned: !targetUser.isBanned });
-  };
-
   const unreadCount = notifications.filter((n) => !n.read).length;
-
   const filteredNotifications = notifications.filter((n) => {
     if (notifFilter === 'unread') return !n.read;
     if (notifFilter === 'global') return n.target === 'all';
@@ -231,7 +208,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-      {/* Top Profile Tab Navigation */}
       <div className="flex items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-3 flex-wrap">
         <div className="flex items-center gap-2">
           <button
@@ -245,7 +221,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             <User className="w-4 h-4" />
             <span>Mening Profilim</span>
           </button>
-
           <button
             onClick={() => setActiveTab('notifications')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer relative ${
@@ -262,7 +237,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
               </span>
             )}
           </button>
-
           {profile.role === 'admin' && (
             <button
               onClick={() => setActiveTab('admin')}
@@ -277,7 +251,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </button>
           )}
         </div>
-
         {activeTab === 'notifications' && notifications.length > 0 && (
           <button
             onClick={clearNotifications}
@@ -290,7 +263,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
 
       {activeTab === 'notifications' && (
         <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm space-y-5 animate-in fade-in">
-          {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[var(--sub-alt)] pb-4">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-[var(--main-color)]/15 text-[var(--main-color)]">
@@ -301,11 +273,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   Sizga Yuborilgan Habarnomalar
                 </h2>
                 <p className="text-xs text-[var(--sub-color)]">
-                  Admin tomonidan yuborilgan eʼlonlar, maxsus xabarlar va tizim yangiliklari
+                  Admin tomonidan yuborilgan e'lonlar, maxsus xabarlar va tizim yangiliklari
                 </p>
               </div>
             </div>
-
             {notifications.length > 0 && (
               <button
                 onClick={clearNotifications}
@@ -316,7 +287,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             )}
           </div>
 
-          {/* Filter Bar */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setNotifFilter('all')}
@@ -346,7 +316,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
               }`}
             >
-              🌐 Umumiy Eʼlonlar
+              📢 Umumiy E'lonlar
             </button>
             <button
               onClick={() => setNotifFilter('direct')}
@@ -356,11 +326,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   : 'bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
               }`}
             >
-              👤 Shaxsiy Xabarlar
+              📩 Shaxsiy Xabarlar
             </button>
           </div>
 
-          {/* Notifications List */}
           <div className="space-y-3">
             {filteredNotifications.length === 0 ? (
               <div className="py-12 text-center text-xs text-[var(--sub-color)] space-y-2">
@@ -371,7 +340,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
               filteredNotifications.map((n) => {
                 const isUnread = !n.read;
                 let icon = <MessageSquare className="w-4 h-4 text-sky-400 shrink-0" />;
-
                 if (n.type === 'success') {
                   icon = <Check className="w-4 h-4 text-emerald-400 shrink-0" />;
                 } else if (n.type === 'warning') {
@@ -379,7 +347,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 } else if (n.type === 'achievement' || n.type === 'level_up') {
                   icon = <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />;
                 }
-
                 return (
                   <div
                     key={n.id}
@@ -398,7 +365,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                         </h4>
                         {n.target === 'all' ? (
                           <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono">
-                            Eʼlon
+                            E'lon
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px] font-bold font-mono">
@@ -415,11 +382,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                         </span>
                       </div>
                     </div>
-
                     <p className="text-xs text-[var(--text-color)]/95 leading-relaxed whitespace-pre-wrap pl-6">
                       {n.message}
                     </p>
-
                     <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[var(--sub-alt)] text-[11px] pl-6">
                       <span className="font-semibold text-[var(--main-color)]">
                         Yuboruvchi: {n.sender || 'Admin (Yolnoma)'}
@@ -440,7 +405,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
         </div>
       )}
 
-      {activeTab === 'profile' ? (
+      {activeTab === 'profile' && (
         <>
           {(!profile.bio || profile.bio.trim() === '') && (
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-semibold flex items-center justify-between gap-3 animate-pulse">
@@ -457,13 +422,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           )}
 
-          {/* Profile Header Banner */}
           <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
             <div
               className="h-36 w-full relative"
               style={{ backgroundColor: profile.bannerColor || '#38bdf8' }}
             />
-
             <div className="p-6 pt-0 relative">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 mb-4">
                 <div className="flex items-end gap-4">
@@ -491,7 +454,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                     <p className="text-xs text-[var(--sub-color)] font-mono">@{profile.username}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   <button
                     onClick={() => setIsEditing(true)}
@@ -503,11 +465,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 </div>
               </div>
 
-              {/* Bio & Socials */}
               <p className="text-xs text-[var(--text-color)] max-w-2xl leading-relaxed mb-4 whitespace-pre-wrap">
                 {profile.bio || 'No bio written yet. Click edit to introduce yourself to the typing community!'}
               </p>
-
               <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--sub-color)] border-t border-[var(--sub-alt)] pt-4">
                 <span className="flex items-center gap-1">
                   <Globe className="w-3.5 h-3.5 text-[var(--main-color)]" />
@@ -526,7 +486,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
-          {/* Stats Summary Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
               <span className="text-[10px] text-[var(--sub-color)] font-bold uppercase">Highest Speed</span>
@@ -534,17 +493,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 {profile.highestWpm} <span className="text-xs font-normal text-[var(--sub-color)]">WPM</span>
               </div>
             </div>
-
             <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
               <span className="text-[10px] text-[var(--sub-color)] font-bold uppercase">Accuracy</span>
               <div className="text-2xl font-mono font-extrabold text-emerald-500 mt-1">{profile.highestAccuracy}%</div>
             </div>
-
             <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
               <span className="text-[10px] text-[var(--sub-color)] font-bold uppercase">Completed Tests</span>
               <div className="text-2xl font-mono font-extrabold text-[var(--text-color)] mt-1">{profile.totalTests}</div>
             </div>
-
             <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
               <span className="text-[10px] text-[var(--sub-color)] font-bold uppercase">Active Streak</span>
               <div className="text-2xl font-mono font-extrabold text-amber-500 mt-1">
@@ -553,7 +509,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
-          {/* Dino Runner Stats Card */}
           <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-3xl space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -567,7 +522,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 Rekord: {profile.dinoHighScore || 0} ball
               </span>
             </div>
-
             <div className="grid grid-cols-3 gap-3 pt-1">
               <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 text-center">
                 <span className="text-[9px] uppercase font-bold text-[var(--sub-color)] block">Eng Yuqori Ball</span>
@@ -584,7 +538,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
-          {/* Privacy & Data Confidentiality Card */}
           <div className="bg-[var(--card-bg)] border border-emerald-500/20 p-5 rounded-3xl space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -604,7 +557,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 </div>
               </div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
               <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex items-center justify-between">
                 <div>
@@ -615,7 +567,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   <Lock className="w-2.5 h-2.5" /> Maxfiy
                 </span>
               </div>
-
               <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-[var(--sub-color)] font-bold block">Xavfsiz Foydalanuvchi ID</span>
@@ -628,7 +579,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
-          {/* Danger Zone / Deletion Row */}
           <div className="bg-[var(--card-bg)] border border-rose-500/20 p-5 rounded-3xl flex items-center justify-between">
             <div>
               <h4 className="text-xs font-bold text-rose-500">Danger Zone: Account Deletion</h4>
@@ -636,21 +586,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 Permanently remove your profile, stats, and historical typing test scores.
               </p>
             </div>
-
             <button
               onClick={() => {
                 setDeleteStep(1);
                 setShowDeleteModal(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete Account</span>
             </button>
           </div>
         </>
-      ) : (
-        /* Admin Control Panel View */
+      )}
+
+      {activeTab === 'admin' && (
         <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 space-y-6">
           <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-4">
             <div>
@@ -662,21 +612,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
-          {/* Current User Quick Management */}
           <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/50 space-y-3">
             <h4 className="text-xs font-bold uppercase text-[var(--sub-color)]">Manage Current Logged-in User</h4>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => handleAdminResetUsernameChanges(profile.uid)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--card-bg)] text-xs font-bold hover:text-[var(--main-color)] transition-all border border-[var(--sub-alt)]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--card-bg)] text-xs font-bold hover:text-[var(--main-color)] transition-all border border-[var(--sub-alt)] cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Grant +2 Username Changes</span>
               </button>
-
               <button
                 onClick={() => handleAdminToggleVerification(profile)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--card-bg)] text-xs font-bold hover:text-sky-400 transition-all border border-[var(--sub-alt)]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--card-bg)] text-xs font-bold hover:text-sky-400 transition-all border border-[var(--sub-alt)] cursor-pointer"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
                 <span>{profile.isVerified ? 'Remove Verified Badge' : 'Grant Verified Badge'}</span>
@@ -686,19 +634,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
         </div>
       )}
 
-      {/* Edit Profile Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto">
           <div className="w-full max-w-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-2xl text-[var(--text-color)] my-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">Edit Profile Settings</h3>
-              <button onClick={() => setIsEditing(false)} className="text-[var(--sub-color)] hover:text-[var(--text-color)]">
+              <button onClick={() => setIsEditing(false)} className="text-[var(--sub-color)] hover:text-[var(--text-color)] cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 text-xs">
-              {/* Avatar Preset Picker */}
               <div>
                 <label className="block font-semibold mb-2 text-[var(--sub-color)]">Choose Avatar Preset or Custom Image URL</label>
                 <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-2">
@@ -723,7 +669,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 />
               </div>
 
-              {/* Display Name */}
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="block font-semibold text-[var(--sub-color)]">
@@ -742,7 +687,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 />
               </div>
 
-              {/* Username with Rules & Counter */}
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="block font-semibold text-[var(--sub-color)]">Unique Username</label>
@@ -774,7 +718,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 )}
               </div>
 
-              {/* Bio with 250 character counter & emojis */}
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="block font-semibold text-[var(--sub-color)]">
@@ -791,7 +734,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 outline-none focus:border-[var(--main-color)]"
                   placeholder="O'zingiz haqingizda qisqacha ma'lumot yozing..."
                 />
-                {/* Emoji Bar */}
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-[10px] text-[var(--sub-color)] font-mono mr-1">Emojis:</span>
                   {emojis.map((emoji) => (
@@ -799,7 +741,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                       key={emoji}
                       type="button"
                       onClick={() => bio.length < 250 && setBio((prev) => (prev + emoji).substring(0, 250))}
-                      className="p-1 hover:bg-[var(--sub-alt)] rounded text-xs"
+                      className="p-1 hover:bg-[var(--sub-alt)] rounded text-xs cursor-pointer"
                     >
                       {emoji}
                     </button>
@@ -807,13 +749,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 </div>
               </div>
 
-              {/* Country Selection */}
               <div>
                 <label className="block font-semibold mb-1 text-[var(--sub-color)]">Country / Flag</label>
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 outline-none focus:border-[var(--main-color)]"
+                  className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 outline-none focus:border-[var(--main-color)] cursor-pointer"
                 >
                   {presetCountries.map((c) => (
                     <option key={c} value={c}>
@@ -823,7 +764,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 </select>
               </div>
 
-              {/* Banner Color */}
               <div>
                 <label className="block font-semibold mb-1 text-[var(--sub-color)]">Cover Banner Color</label>
                 <div className="flex items-center gap-3">
@@ -841,14 +781,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] font-bold text-[var(--sub-color)]"
+                  className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] font-bold text-[var(--sub-color)] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-[var(--main-color)] text-white font-bold"
+                  className="px-5 py-2 rounded-xl bg-[var(--main-color)] text-white font-bold cursor-pointer"
                 >
                   {saving ? 'Saving...' : 'Save Profile'}
                 </button>
@@ -858,7 +798,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
         </div>
       )}
 
-      {/* Double Confirmation Account Deletion Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="w-full max-w-md bg-[var(--card-bg)] border border-rose-500/30 rounded-3xl p-6 shadow-2xl space-y-4">
@@ -875,17 +814,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 <p className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300">
                   Are you absolutely sure you want to permanently delete your account? This action cannot be undone. All your profile information, test history, achievements, and leaderboard records will be erased.
                 </p>
-
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     onClick={() => setShowDeleteModal(false)}
-                    className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] font-bold text-[var(--sub-color)]"
+                    className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] font-bold text-[var(--sub-color)] cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => setDeleteStep(2)}
-                    className="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold"
+                    className="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold cursor-pointer"
                   >
                     Proceed to Step 2
                   </button>
@@ -896,7 +834,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                 <p>
                   To confirm permanent deletion, please type <strong className="text-rose-500 font-mono">DELETE</strong> in the box below:
                 </p>
-
                 <input
                   type="text"
                   value={deleteConfirmInput}
@@ -904,18 +841,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   placeholder="Type DELETE here..."
                   className="w-full p-3 rounded-xl bg-[var(--sub-alt)] border border-rose-500/30 font-mono text-center font-bold text-rose-500 outline-none"
                 />
-
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     onClick={() => setShowDeleteModal(false)}
-                    className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] font-bold text-[var(--sub-color)]"
+                    className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] font-bold text-[var(--sub-color)] cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleDeleteAccount}
                     disabled={deleteConfirmInput !== 'DELETE' || deleting}
-                    className={`px-5 py-2 rounded-xl text-white font-bold transition-all ${
+                    className={`px-5 py-2 rounded-xl text-white font-bold transition-all cursor-pointer ${
                       deleteConfirmInput === 'DELETE'
                         ? 'bg-rose-500 hover:bg-rose-600'
                         : 'bg-rose-500/40 cursor-not-allowed'

@@ -1,874 +1,264 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Crown,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Users,
-  CheckCircle2,
-  Globe,
-  Flame,
-  Zap,
   Trophy,
+  Medal,
+  Globe,
   Clock,
-  Gamepad2,
-  Sparkles,
-  Award,
-  ArrowUpRight
+  Zap,
+  Target,
+  CheckCircle2,
+  Calendar,
+  Lock,
+  UserCheck
 } from 'lucide-react';
+import { LeaderboardEntry, UserProfile } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
+import { PublicProfileModal } from '../profile/PublicProfileModal';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
-import { useAuth } from '../../context/AuthContext';
-import { UserProfile, DinoLeaderboardEntry } from '../../types';
-import { PublicProfileModal } from '../profile/PublicProfileModal';
 
-interface LeaderboardEntry extends UserProfile {
-  rank: number;
-  rawWpm?: number;
-  consistency?: number;
-  testDateFormatted?: string;
+interface LeaderboardViewProps {
+  onOpenAuth?: () => void;
 }
 
-export const LeaderboardView: React.FC = () => {
-  const { profile: currentUser, user } = useAuth();
-
-  // Top Level Mode: Typing vs Dino Game
-  const [boardType, setBoardType] = useState<'typing' | 'dino'>('typing');
-
-  // Typing Mode selections (Monkeytype style)
-  const [selectedCategory, setSelectedCategory] = useState<'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily'>('all-time-uzbek');
-  const [selectedTimeMode, setSelectedTimeMode] = useState<'all' | 15 | 30 | 60 | 120>('all');
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [rankings, setRankings] = useState<LeaderboardEntry[]>([]);
-  const [dinoRankings, setDinoRankings] = useState<DinoLeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
-
-  // Selected User Profile Modal
+export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenAuth }) => {
+  const { user, profile } = useAuth();
+  const { language } = useSettings();
+  const [filterMode, setFilterMode] = useState<number>(30);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeLeaderboard, setActiveLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 1. Fetch Typing Leaderboard
   useEffect(() => {
-    if (boardType !== 'typing') return;
-
-    let unsubscribeRtdb: (() => void) | null = null;
-    setLoading(true);
-
-    const fetchLeaderboard = async () => {
-      const fetchedMap = new Map<string, UserProfile>();
-
-      // Load current user if completed test
-      if (currentUser && (currentUser.highestWpm || 0) > 0) {
-        fetchedMap.set(currentUser.uid, currentUser);
-      }
-
-      // Load guest user if completed test
-      try {
-        const guestId = localStorage.getItem('yolnoma_guest_id');
-        const guestBest = Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
-        if (guestId && guestBest > 0 && !currentUser) {
-          fetchedMap.set(guestId, {
-            uid: guestId,
-            email: '',
-            username: guestId,
-            displayName: `Mehmon (${guestId.replace('guest_', '')})`,
-            highestWpm: guestBest,
-            highestAccuracy: 98,
-            country: '🇺🇿 Uzbekistan',
-            level: 1,
-            rankTitle: 'Mehmon Typer',
-            bio: 'Tezkor Mehmon',
-            avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
-            totalTests: 1,
-            totalTimeTypedSeconds: 60,
-            totalWordsTyped: guestBest,
-            totalCharsTyped: guestBest * 5,
-            averageWpm: guestBest,
-            currentStreak: 1,
-            longestStreak: 1,
-            createdAt: Date.now(),
-            lastActive: Date.now(),
-            isVerified: false,
-            xp: 250,
-            role: 'user',
-            usernameChangesLeft: 2,
-            followers: [],
-            following: [],
-            followersCount: 0,
-            followingCount: 0,
-            pinnedAchievements: [],
-            unlockedAchievements: ['first_test'],
-            isPublic: true,
-            privacy: {
-              profileVisibility: 'public',
-              allowMessages: 'everyone',
-              showOnlineStatus: true,
-              showStats: true,
-              allowFollow: true
-            },
-            socialLinks: { twitter: '', github: '', discord: '', website: '' },
-            notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
-          });
-        }
-      } catch (e) {
-        console.warn('Guest profile load error:', e);
-      }
-
-      const getWpmForSelectedMode = (u: UserProfile) => {
-        if (selectedTimeMode === 15) return u.time15Wpm || u.highestWpm || 0;
-        if (selectedTimeMode === 30) return u.time30Wpm || u.highestWpm || 0;
-        if (selectedTimeMode === 60) return u.time60Wpm || u.highestWpm || 0;
-        if (selectedTimeMode === 120) return u.time120Wpm || u.highestWpm || 0;
-        return u.highestWpm || 0;
-      };
-
-      const updateRankingsFromMap = () => {
-        let source = Array.from(fetchedMap.values());
-        // Strict anti-tamper filter: Ignore impossible speeds (human max 260 WPM), impossible accuracy or fake levels
-        source = source.filter(
-          (u) =>
-            (u.highestWpm || 0) > 0 &&
-            (u.highestWpm || 0) <= 260 &&
-            (u.highestAccuracy || 0) <= 100 &&
-            (u.level || 1) <= 100 &&
-            !u.isBanned &&
-            !u.isBlocked
-        );
-
-        // Sort based on category
-        if (selectedCategory === 'weekly-xp') {
-          source.sort((a, b) => Math.min(250000, b.xp || 0) - Math.min(250000, a.xp || 0));
-        } else {
-          source.sort((a, b) => getWpmForSelectedMode(b) - getWpmForSelectedMode(a));
-        }
-
-        const formatted = source.map((u, idx) => {
-          const rawSpeed = getWpmForSelectedMode(u);
-          const wpmVal = Math.min(260, Math.max(0, rawSpeed));
-          const rawWpmVal = Math.round(wpmVal * 1.05);
-          const consistencyVal = Math.min(99.9, Math.max(82.0, (u.highestAccuracy || 98) - 2.5));
-          const dateStr = u.lastActive
-            ? new Date(u.lastActive).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-              })
-            : 'Bugun';
-
-          return {
-            ...u,
-            highestWpm: wpmVal,
-            rank: idx + 1,
-            rawWpm: rawWpmVal,
-            consistency: Number(consistencyVal.toFixed(2)),
-            testDateFormatted: dateStr
-          };
-        });
-
-        setRankings(formatted);
-        setLoading(false);
-      };
-
-      updateRankingsFromMap();
-
-      // Realtime Firebase DB sync
-      try {
-        const bannedSet = new Set<string>();
-
-        const bannedRef = ref(rtdb, 'bannedUsers');
-        onValue(bannedRef, (bannedSnap) => {
-          bannedSet.clear();
-          if (bannedSnap.exists()) {
-            const bannedObj = bannedSnap.val();
-            Object.keys(bannedObj).forEach((id) => {
-              if (bannedObj[id]) bannedSet.add(id);
-            });
-          }
-          bannedSet.forEach((bannedId) => {
-            fetchedMap.delete(bannedId);
-          });
-          updateRankingsFromMap();
-        });
-
-        const leaderboardRef = ref(rtdb, 'leaderboard');
-        unsubscribeRtdb = onValue(leaderboardRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const val = snapshot.val();
-            const activeKeys = new Set(Object.keys(val));
-            fetchedMap.forEach((_, mapKey) => {
-              if (!activeKeys.has(mapKey) && mapKey !== currentUser?.uid && !mapKey.startsWith('guest_')) {
-                fetchedMap.delete(mapKey);
-              }
-            });
-
-            Object.keys(val).forEach((key) => {
-              const item = val[key];
-              if (!item) return;
-
-              if (bannedSet.has(key) || item.isBanned || item.isBlocked) {
-                fetchedMap.delete(key);
-                return;
-              }
-
-              const existing = fetchedMap.get(key);
-              if (!existing) {
-                fetchedMap.set(key, {
-                  uid: key,
-                  email: '',
-                  username: item.username || item.displayName || 'typer',
-                  displayName: item.displayName || item.username || 'Typer',
-                  highestWpm: item.highestWpm || 0,
-                  time15Wpm: item.time15Wpm || 0,
-                  time30Wpm: item.time30Wpm || 0,
-                  time60Wpm: item.time60Wpm || 0,
-                  time120Wpm: item.time120Wpm || 0,
-                  highestAccuracy: item.highestAccuracy || 0,
-                  country: item.country || '🇺🇿 Uzbekistan',
-                  level: item.level || 1,
-                  rankTitle: item.rankTitle || 'Typing Novice',
-                  bio: item.bio || '',
-                  avatarUrl: item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${key}`,
-                  totalTests: item.totalTests || 1,
-                  totalTimeTypedSeconds: 60,
-                  totalWordsTyped: Math.round(item.highestWpm || 0),
-                  totalCharsTyped: Math.round((item.highestWpm || 0) * 5),
-                  averageWpm: item.highestWpm || 0,
-                  currentStreak: 1,
-                  longestStreak: 1,
-                  createdAt: item.createdAt || Date.now(),
-                  lastActive: item.lastActive || Date.now(),
-                  isVerified: false,
-                  xp: typeof item.xp === 'number' ? item.xp : (item.level || 1) * 250,
-                  role: 'user',
-                  usernameChangesLeft: 2,
-                  followers: [],
-                  following: [],
-                  followersCount: 0,
-                  followingCount: 0,
-                  pinnedAchievements: [],
-                  unlockedAchievements: ['first_test'],
-                  isPublic: true,
-                  privacy: {
-                    profileVisibility: 'public',
-                    allowMessages: 'everyone',
-                    showOnlineStatus: true,
-                    showStats: true,
-                    allowFollow: true
-                  },
-                  socialLinks: { twitter: '', github: '', discord: '', website: '' },
-                  notificationsConfig: { emailAlerts: true, achievementAlerts: true, streakReminders: true }
-                });
-              } else {
-                if (item.highestWpm !== undefined && item.highestWpm >= (existing.highestWpm || 0)) {
-                  existing.highestWpm = item.highestWpm;
-                }
-                if (item.highestAccuracy !== undefined && item.highestAccuracy > 0) {
-                  existing.highestAccuracy = item.highestAccuracy;
-                }
-                if (typeof item.xp === 'number') existing.xp = item.xp;
-                if (item.level) existing.level = item.level;
-                if (item.displayName) existing.displayName = item.displayName;
-                if (item.username) existing.username = item.username;
-                if (item.avatarUrl) existing.avatarUrl = item.avatarUrl;
-                if (item.isBanned !== undefined) existing.isBanned = item.isBanned;
-              }
-            });
-            updateRankingsFromMap();
-          } else {
-            setLoading(false);
-          }
-        });
-      } catch (e) {
-        console.warn('RTDB setup error:', e);
-        setLoading(false);
-      }
-    };
-
-    fetchLeaderboard();
-
-    return () => {
-      if (unsubscribeRtdb) unsubscribeRtdb();
-    };
-  }, [boardType, selectedCategory, selectedTimeMode, currentUser]);
-
-  // 2. Fetch Dino Runner Leaderboard
-  useEffect(() => {
-    if (boardType !== 'dino') return;
-
-    setLoading(true);
-    let unsubscribeDino: (() => void) | null = null;
-
-    try {
-      const dinoRef = ref(rtdb, 'dino_leaderboard');
-      unsubscribeDino = onValue(dinoRef, (snapshot) => {
-        const list: DinoLeaderboardEntry[] = [];
-        const seenUids = new Set<string>();
-
-        // Current User Local check
-        if (currentUser && (currentUser.dinoHighScore || 0) > 0) {
-          list.push({
-            uid: currentUser.uid,
-            displayName: currentUser.displayName || currentUser.username,
-            username: currentUser.username,
-            score: currentUser.dinoHighScore || 0,
-            distance: currentUser.dinoMaxDistance || 0,
-            obstaclesDodged: 0,
-            avatarUrl: currentUser.avatarUrl,
-            level: currentUser.level,
-            rankTitle: currentUser.rankTitle,
-            country: currentUser.country,
-            timestamp: currentUser.lastActive || Date.now()
-          });
-          seenUids.add(currentUser.uid);
-        }
-
-        // Guest user local check
-        try {
-          const guestId = localStorage.getItem('yolnoma_guest_id');
-          const guestDino = Number(localStorage.getItem('yolnoma_guest_dino_best') || 0);
-          if (guestId && guestDino > 0 && !currentUser) {
-            list.push({
-              uid: guestId,
-              displayName: `Mehmon (${guestId.replace('guest_', '')})`,
-              username: guestId,
-              score: guestDino,
-              distance: Math.round(guestDino * 0.7),
-              obstaclesDodged: 0,
-              avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
-              level: 1,
-              rankTitle: 'Mehmon Runner',
-              country: '🇺🇿 Uzbekistan',
-              timestamp: Date.now()
-            });
-            seenUids.add(guestId);
-          }
-        } catch {}
-
+    if (!rtdb) {
+      setLoading(false);
+      return;
+    }
+    const leaderboardRef = ref(rtdb, 'leaderboard');
+    const unsubscribe = onValue(
+      leaderboardRef,
+      (snapshot) => {
         if (snapshot.exists()) {
           const val = snapshot.val();
-          Object.keys(val).forEach((k) => {
-            const item = val[k];
-            if (!item || !item.score) return;
-
-            const existingIdx = list.findIndex((p) => p.uid === k);
-            const entry: DinoLeaderboardEntry = {
-              uid: k,
-              displayName: item.displayName || item.username || 'Dino Runner',
-              username: item.username || k,
-              score: item.score,
-              distance: item.distance || Math.round(item.score * 0.7),
-              obstaclesDodged: item.obstaclesDodged || 0,
-              avatarUrl: item.avatarUrl,
-              level: item.level || 1,
-              rankTitle: item.rankTitle || 'Runner',
-              country: item.country || '🇺🇿 Uzbekistan',
-              timestamp: item.timestamp || Date.now()
-            };
-
-            if (existingIdx >= 0) {
-              if (entry.score >= list[existingIdx].score) {
-                list[existingIdx] = entry;
-              }
-            } else {
-              list.push(entry);
-            }
+          const list: LeaderboardEntry[] = Object.keys(val).map((k) => ({
+            ...val[k],
+            id: k
+          }));
+          list.sort((a, b) => {
+            if (b.wpm !== a.wpm) return b.wpm - a.wpm;
+            return b.accuracy - a.accuracy;
           });
+          setActiveLeaderboard(list);
+        } else {
+          setActiveLeaderboard([]);
         }
-
-        // Filter impossible scores (> 50,000)
-        const validList = list.filter((item) => (item.score || 0) > 0 && (item.score || 0) <= 50000);
-
-        // Sort descending by score
-        validList.sort((a, b) => (b.score || 0) - (a.score || 0));
-        const ranked = validList.map((item, idx) => ({ ...item, rank: idx + 1 }));
-
-        setDinoRankings(ranked);
         setLoading(false);
-      });
-    } catch (e) {
-      console.warn('Dino Leaderboard fetch error:', e);
-      setLoading(false);
+      },
+      () => {
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const filteredEntries = activeLeaderboard.filter((entry) => {
+    if (filterMode && entry.timeMode !== filterMode) return false;
+    return true;
+  });
+
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-400 text-amber-400 flex items-center justify-center font-bold font-mono">
+          <Medal className="w-5 h-5" />
+        </div>
+      );
     }
-
-    return () => {
-      if (unsubscribeDino) unsubscribeDino();
-    };
-  }, [boardType, currentUser]);
-
-  // Filter rankings for Typing
-  const filteredTyping = rankings.filter((r) => {
-    const uname = r.username || '';
-    const dname = r.displayName || '';
+    if (rank === 2) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-slate-300/20 border border-slate-300 text-slate-300 flex items-center justify-center font-bold font-mono">
+          <Medal className="w-5 h-5" />
+        </div>
+      );
+    }
+    if (rank === 3) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-amber-700/20 border border-amber-700 text-amber-600 flex items-center justify-center font-bold font-mono">
+          <Medal className="w-5 h-5" />
+        </div>
+      );
+    }
     return (
-      uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dname.toLowerCase().includes(searchQuery.toLowerCase())
+      <div className="w-8 h-8 rounded-xl bg-[var(--sub-alt)] text-[var(--sub-color)] flex items-center justify-center font-bold font-mono text-xs">
+        #{rank}
+      </div>
     );
-  });
-
-  // Filter rankings for Dino
-  const filteredDino = dinoRankings.filter((r) => {
-    const uname = r.username || '';
-    const dname = r.displayName || '';
-    return (
-      uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dname.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
-
-  const activeFilteredList = boardType === 'typing' ? filteredTyping : filteredDino;
-  const totalPages = Math.max(1, Math.ceil(activeFilteredList.length / pageSize));
-  const pageRankings = activeFilteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const openUserProfile = (u: UserProfile) => {
-    setSelectedUser(u);
-    setIsModalOpen(true);
   };
 
-  const getHeaderTitle = () => {
-    if (boardType === 'dino') {
-      return 'T-Rex Dino Runner Barcha Rekordlar Reytingi 🦖';
-    }
-    const timeLabel = selectedTimeMode === 'all' ? 'All Times' : `Time ${selectedTimeMode}`;
-    if (selectedCategory === 'all-time-uzbek') return `All-time Uzbek ${timeLabel} Leaderboard`;
-    if (selectedCategory === 'all-time-english') return `All-time English ${timeLabel} Leaderboard`;
-    if (selectedCategory === 'weekly-xp') return `Weekly XP Leaderboard`;
-    return `Daily ${timeLabel} Leaderboard`;
+  const handleUserClick = (entry: LeaderboardEntry) => {
+    const mockProfile: UserProfile = {
+      uid: entry.userId,
+      email: '',
+      displayName: entry.displayName || entry.username,
+      username: entry.username,
+      avatarUrl: entry.avatarUrl,
+      bio: 'Yolnoma typing raqobatchisi',
+      country: entry.country || '🇺🇿 Uzbekistan',
+      highestWpm: entry.wpm,
+      highestAccuracy: entry.accuracy,
+      totalTests: 1,
+      totalTimeTypedSeconds: 60,
+      currentStreak: 1,
+      longestStreak: 1,
+      totalWordsTyped: 50,
+      totalCharsTyped: 250,
+      averageWpm: entry.wpm,
+      unlockedAchievements: [],
+      followers: [],
+      following: [],
+      followersCount: 0,
+      followingCount: 0,
+      pinnedAchievements: [],
+      usernameChangesLeft: 2,
+      privacy: {
+        profileVisibility: 'public',
+        allowMessages: 'everyone',
+        showOnlineStatus: true,
+        showStats: true,
+        allowFollow: true
+      },
+      isPublic: true,
+      isVerified: entry.isVerified,
+      rankTitle: entry.wpm >= 100 ? 'Cyber Legend' : entry.wpm >= 70 ? 'Typing Master' : 'Speed Novice',
+      role: 'user',
+      createdAt: entry.timestamp || Date.now(),
+      lastActive: Date.now(),
+      level: Math.max(1, Math.floor(entry.wpm / 15)),
+      xp: entry.wpm * 20
+    };
+    setSelectedUser(mockProfile);
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-4 px-2 sm:px-4 font-mono select-none space-y-6 animate-in fade-in duration-200">
-      {/* Top Level Game Switcher Tabs */}
-      <div className="p-1.5 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm max-w-xl mx-auto grid grid-cols-2 gap-2">
-        <button
-          onClick={() => {
-            setBoardType('typing');
-            setCurrentPage(1);
-            setSearchQuery('');
-          }}
-          className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all cursor-pointer ${
-            boardType === 'typing'
-              ? 'bg-[var(--main-color)] text-white shadow-md'
-              : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-          }`}
-        >
-          <Zap className="w-4 h-4" />
-          <span>Tez Yozish Reytingi</span>
-        </button>
+    <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-amber-500" />
+            <span>Global Typing Leaderboard</span>
+          </h2>
+          <p className="text-xs text-[var(--sub-color)] mt-1">
+            Real-time rankings across all languages and test duration modes
+          </p>
+        </div>
 
-        <button
-          onClick={() => {
-            setBoardType('dino');
-            setCurrentPage(1);
-            setSearchQuery('');
-          }}
-          className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all cursor-pointer ${
-            boardType === 'dino'
-              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-md'
-              : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-          }`}
-        >
-          <Gamepad2 className="w-4 h-4" />
-          <span>Dino Runner Rekordlari 🦖</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-[var(--sub-alt)] p-1 rounded-2xl">
+            {[15, 30, 60, 120].map((sec) => (
+              <button
+                key={sec}
+                onClick={() => setFilterMode(sec)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                  filterMode === sec
+                    ? 'bg-[var(--main-color)] text-white shadow-sm'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+              >
+                {sec}s
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Grid with Left Sidebar & Main Table */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-        {/* Left Sidebar Category & Time Selectors */}
-        <div className="md:col-span-1 space-y-4">
-          {boardType === 'typing' ? (
-            <>
-              {/* Main Category Group */}
-              <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-                <button
-                  onClick={() => {
-                    setSelectedCategory('all-time-uzbek');
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                    selectedCategory === 'all-time-uzbek'
-                      ? 'bg-[var(--main-color)] text-white'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>all-time uzbek</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSelectedCategory('all-time-english');
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                    selectedCategory === 'all-time-english'
-                      ? 'bg-[var(--main-color)] text-white'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>all-time english</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSelectedCategory('weekly-xp');
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                    selectedCategory === 'weekly-xp'
-                      ? 'bg-[var(--main-color)] text-white'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Zap className="w-3.5 h-3.5 text-amber-400" />
-                    <span>weekly xp</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSelectedCategory('daily');
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                    selectedCategory === 'daily'
-                      ? 'bg-[var(--main-color)] text-white'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Flame className="w-3.5 h-3.5 text-rose-400" />
-                    <span>daily</span>
-                  </span>
-                </button>
-              </div>
-
-              {/* Time Mode Sub-Group */}
-              {selectedCategory !== 'weekly-xp' && (
-                <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-                  {(['all', 15, 30, 60, 120] as const).map((tm) => (
-                    <button
-                      key={tm}
-                      onClick={() => {
-                        setSelectedTimeMode(tm);
-                        setCurrentPage(1);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                        selectedTimeMode === tm
-                          ? 'bg-[var(--main-color)] text-white'
-                          : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
+        {loading ? (
+          <div className="py-20 text-center space-y-3">
+            <div className="w-8 h-8 border-3 border-[var(--main-color)] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-[var(--sub-color)] font-mono">Loading rankings...</p>
+          </div>
+        ) : filteredEntries.length === 0 ? (
+          <div className="py-16 text-center space-y-2">
+            <Trophy className="w-12 h-12 text-[var(--sub-color)]/30 mx-auto" />
+            <h4 className="text-sm font-bold text-[var(--text-color)]">No Scores Yet for {filterMode}s Mode</h4>
+            <p className="text-xs text-[var(--sub-color)] max-w-sm mx-auto">
+              Be the first to complete a typing test in this mode to claim the #1 spot on the leaderboard!
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-medium">
+              <thead>
+                <tr className="border-b border-[var(--sub-alt)] text-[var(--sub-color)] font-bold uppercase text-[10px] bg-[var(--sub-alt)]/30">
+                  <th className="py-3 px-4 w-16 text-center">Rank</th>
+                  <th className="py-3 px-4">User</th>
+                  <th className="py-3 px-4">Speed (WPM)</th>
+                  <th className="py-3 px-4">Accuracy</th>
+                  <th className="py-3 px-4">Mode</th>
+                  <th className="py-3 px-4">Language</th>
+                  <th className="py-3 px-4">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--sub-alt)]">
+                {filteredEntries.map((entry, idx) => {
+                  const rank = idx + 1;
+                  const isCurrent = profile?.uid === entry.userId;
+                  return (
+                    <tr
+                      key={entry.id || idx}
+                      className={`hover:bg-[var(--sub-alt)]/50 transition-colors ${
+                        isCurrent ? 'bg-[var(--main-color)]/5 border-l-4 border-[var(--main-color)]' : ''
                       }`}
                     >
-                      <Trophy className="w-3.5 h-3.5 opacity-70" />
-                      <span>{tm === 'all' ? 'all' : `time ${tm}`}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            /* Dino Left Sidebar Info Card */
-            <div className="bg-[var(--card-bg)]/60 p-4 rounded-3xl border border-[var(--sub-alt)] space-y-3 text-xs">
-              <div className="flex items-center gap-2 text-amber-500 font-black">
-                <Gamepad2 className="w-4 h-4" />
-                <span>Dino Runner Haqida</span>
-              </div>
-              <p className="text-[var(--sub-color)] leading-relaxed">
-                Har safar Dino o'yinini o'ynaganingizda to'plagan eng yuqori balingiz ushbu umumiy peshqadamlar jadvaliga avtomatik kiritiladi.
-              </p>
-              <div className="p-3 rounded-2xl bg-[var(--sub-alt)] space-y-1.5 font-bold">
-                <div className="text-[var(--text-color)] flex items-center justify-between">
-                  <span>Sizning Rekordingiz:</span>
-                  <span className="text-amber-500 font-mono">
-                    {currentUser?.dinoHighScore || localStorage.getItem('yolnoma_guest_dino_best') || 0}
-                  </span>
-                </div>
-                <div className="text-[var(--sub-color)] flex items-center justify-between text-[11px]">
-                  <span>Jami Ishtirokchilar:</span>
-                  <span className="text-[var(--text-color)]">{dinoRankings.length} ta</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[var(--sub-color)]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Ism yoki username izlash..."
-              className="w-full pl-8 pr-3 py-2 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] outline-none focus:border-[var(--main-color)]"
-            />
-          </div>
-        </div>
-
-        {/* Right Main Table Content */}
-        <div className="md:col-span-3 space-y-4">
-          {/* Header Title & Info Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--sub-alt)] pb-3">
-            <div>
-              <h1 className="text-xl font-black text-[var(--text-color)] tracking-tight">
-                {getHeaderTitle()}
-              </h1>
-              <p className="text-xs text-[var(--sub-color)] mt-0.5">
-                Jonli reyting jadvali • Jami {activeFilteredList.length} ta ishtirokchi
-              </p>
-            </div>
-
-            {/* Pagination controls top right */}
-            <div className="flex items-center gap-2 text-xs text-[var(--sub-color)] self-end sm:self-auto">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <span className="font-bold text-[var(--main-color)]">
-                # {currentPage} / {totalPages}
-              </span>
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30 cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Table View (Typing vs Dino) */}
-          <div className="w-full overflow-x-auto">
-            {boardType === 'typing' ? (
-              <table className="w-full text-left text-xs font-mono">
-                <thead>
-                  <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
-                    <th className="pb-2 px-2 w-10">#</th>
-                    <th className="pb-2 px-2">name</th>
-                    <th className="pb-2 px-2 text-center">mode</th>
-                    <th className="pb-2 px-2 text-right">wpm</th>
-                    <th className="pb-2 px-2 text-right">accuracy</th>
-                    <th className="pb-2 px-2 text-right hidden sm:table-cell">raw</th>
-                    <th className="pb-2 px-2 text-right hidden md:table-cell">consistency</th>
-                    <th className="pb-2 px-2 text-right">date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--sub-alt)]/40">
-                  {pageRankings.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="py-12 text-center text-[var(--sub-color)]">
-                        <p className="font-bold text-sm text-[var(--text-color)] mb-1">Foydalanuvchilar topilmadi</p>
-                        <p className="text-xs">Ushbu rejimda reyting natijalari hali kiritilmagan.</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    pageRankings.map((item: any) => {
-                      const isSelf = currentUser?.uid === item.uid;
-
-                      const activeTimeDisplay =
-                        selectedTimeMode === 'all'
-                          ? item.time15Wpm === item.highestWpm
-                            ? '15s'
-                            : item.time30Wpm === item.highestWpm
-                            ? '30s'
-                            : item.time120Wpm === item.highestWpm
-                            ? '120s'
-                            : '60s'
-                          : `${selectedTimeMode}s`;
-
-                      return (
-                        <tr
-                          key={item.uid}
-                          onClick={() => openUserProfile(item)}
-                          className={`cursor-pointer transition-all hover:bg-[var(--sub-alt)]/30 ${
-                            isSelf ? 'bg-[var(--main-color)]/10 font-bold' : ''
-                          }`}
+                      <td className="py-3.5 px-4 text-center">{getRankBadge(rank)}</td>
+                      <td className="py-3.5 px-4">
+                        <div
+                          onClick={() => handleUserClick(entry)}
+                          className="flex items-center gap-3 cursor-pointer group"
                         >
-                          <td className="py-2.5 px-2 font-bold text-[var(--sub-color)]">
-                            {item.rank === 1 ? (
-                              <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
-                            ) : item.rank === 2 ? (
-                              <span className="text-slate-300 font-bold">2</span>
-                            ) : item.rank === 3 ? (
-                              <span className="text-amber-700 font-bold">3</span>
-                            ) : (
-                              item.rank
-                            )}
-                          </td>
-
-                          <td className="py-2.5 px-2">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
-                                alt="avatar"
-                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]"
-                              />
-                              <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
-                                {item.displayName}
+                          <img
+                            src={
+                              entry.avatarUrl ||
+                              `https://api.dicebear.com/7.x/identicon/svg?seed=${entry.userId}`
+                            }
+                            alt={entry.username}
+                            className="w-9 h-9 rounded-xl object-cover bg-[var(--sub-alt)] border border-[var(--sub-alt)] group-hover:scale-105 transition-transform"
+                          />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-sm text-[var(--text-color)] group-hover:text-[var(--main-color)] transition-colors">
+                                {entry.displayName || entry.username}
                               </span>
-                              {item.isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
-                              {isSelf && (
-                                <span className="px-1 py-0.2 rounded bg-[var(--main-color)] text-white text-[8px] font-black uppercase">
-                                  siz
-                                </span>
+                              {entry.isVerified && (
+                                <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400/20" title="Verified" />
                               )}
                             </div>
-                          </td>
-
-                          <td className="py-2.5 px-2 text-center">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--main-color)] font-mono text-[10px] font-black border border-[var(--sub-color)]/20 shadow-xs">
-                              <Clock className="w-3 h-3 text-[var(--main-color)] shrink-0" />
-                              <span>{activeTimeDisplay}</span>
-                            </span>
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right font-black text-sm text-[var(--main-color)]">
-                            {item.highestWpm}
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right text-[var(--text-color)]">
-                            {(item.highestAccuracy || 98).toFixed(2)}%
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden sm:table-cell">
-                            {item.rawWpm || Math.round((item.highestWpm || 0) * 1.05)}
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden md:table-cell">
-                            {(item.consistency || 92.5).toFixed(2)}%
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] text-[10px]">
-                            {item.testDateFormatted || 'Bugun'}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            ) : (
-              /* Dino Leaderboard Table */
-              <table className="w-full text-left text-xs font-mono">
-                <thead>
-                  <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
-                    <th className="pb-2 px-2 w-12">#</th>
-                    <th className="pb-2 px-2">Ishtirokchi</th>
-                    <th className="pb-2 px-2 text-center">Unvon / Level</th>
-                    <th className="pb-2 px-2 text-right">Rekord Ball</th>
-                    <th className="pb-2 px-2 text-right hidden sm:table-cell">Masofa</th>
-                    <th className="pb-2 px-2 text-right">Sana</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--sub-alt)]/40">
-                  {pageRankings.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-12 text-center text-[var(--sub-color)]">
-                        <Gamepad2 className="w-8 h-8 text-[var(--main-color)] mx-auto mb-2 opacity-60" />
-                        <p className="font-bold text-sm text-[var(--text-color)] mb-1">Dino rekordlari hali mavjud emas</p>
-                        <p className="text-xs">Dino Runner menyusiga o'tib birinchi rekordni o'rnating!</p>
+                            <span className="text-[10px] text-[var(--sub-color)] font-mono">@{entry.username}</span>
+                          </div>
+                        </div>
                       </td>
+                      <td className="py-3.5 px-4 font-mono font-black text-sm text-[var(--main-color)]">
+                        {entry.wpm} <span className="text-[10px] font-normal text-[var(--sub-color)]">WPM</span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-500">{entry.accuracy}%</td>
+                      <td className="py-3.5 px-4 text-[var(--text-color)] font-mono">{entry.timeMode}s</td>
+                      <td className="py-3.5 px-4 text-[var(--sub-color)] uppercase font-mono">{entry.language}</td>
+                      <td className="py-3.5 px-4 text-[var(--sub-color)]">{new Date(entry.timestamp).toLocaleDateString()}</td>
                     </tr>
-                  ) : (
-                    pageRankings.map((item: any) => {
-                      const isSelf = currentUser?.uid === item.uid;
-                      const dateStr = item.timestamp
-                        ? new Date(item.timestamp).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          })
-                        : 'Bugun';
-
-                      return (
-                        <tr
-                          key={item.uid}
-                          className={`transition-all hover:bg-[var(--sub-alt)]/30 ${
-                            isSelf ? 'bg-amber-500/10 font-bold' : ''
-                          }`}
-                        >
-                          <td className="py-2.5 px-2 font-bold text-[var(--sub-color)]">
-                            {item.rank === 1 ? (
-                              <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
-                            ) : item.rank === 2 ? (
-                              <span className="w-5 h-5 rounded-full bg-slate-300 text-black flex items-center justify-center text-[10px] font-black">2</span>
-                            ) : item.rank === 3 ? (
-                              <span className="w-5 h-5 rounded-full bg-amber-700 text-white flex items-center justify-center text-[10px] font-black">3</span>
-                            ) : (
-                              <span className="px-1">{item.rank}</span>
-                            )}
-                          </td>
-
-                          <td className="py-2.5 px-2">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
-                                alt="avatar"
-                                className="w-6 h-6 rounded-full object-cover shrink-0 bg-[var(--sub-alt)] border border-[var(--sub-color)]/20"
-                              />
-                              <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
-                                {item.displayName}
-                              </span>
-                              {isSelf && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500 text-black text-[8px] font-black uppercase">
-                                  siz
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          <td className="py-2.5 px-2 text-center">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-[10px] font-bold border border-[var(--sub-color)]/20 shadow-xs">
-                              <Award className="w-3 h-3 text-amber-500 shrink-0" />
-                              <span>LVL {item.level || 1}</span>
-                            </span>
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right font-black text-sm text-amber-500 font-mono">
-                            {item.score}
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden sm:table-cell">
-                            {item.distance || Math.round(item.score * 0.7)} m
-                          </td>
-
-                          <td className="py-2.5 px-2 text-right text-[var(--sub-color)] text-[10px]">
-                            {dateStr}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            )}
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Profile Modal */}
       <PublicProfileModal
+        isOpen={!!selectedUser}
         userProfile={selectedUser}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => setSelectedUser(null)}
       />
     </div>
   );

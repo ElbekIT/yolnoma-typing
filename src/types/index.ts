@@ -10,11 +10,38 @@ export type TextMode = 'words' | 'sentences' | 'quotes' | 'code' | 'numbers' | '
 export type TimeMode = 15 | 30 | 60 | 120 | 300 | 0; // 0 for custom/word-count
 export type WordCountMode = 100 | 200 | 300 | 400 | 500 | 10 | 25 | 50 | 0; // 0 for time-based
 export type DifficultyMode = 'easy' | 'medium' | 'hard' | 'expert';
-
 export type CaretStyle = 'line' | 'block' | 'underline' | 'outline';
 export type TapeMode = 'off' | 'letter' | 'word';
 export type SoundProfile = 'off' | 'cherry-blue' | 'cherry-red' | 'thock' | 'typewriter' | 'soft-bubble';
 export type ThemeMode = 'dark' | 'light' | 'cyberpunk' | 'serene' | 'dracula' | 'nord' | 'matrix' | 'sunset';
+
+export type TypingMode = 'time' | 'words' | 'quote' | 'zen' | 'custom';
+
+export interface LeaderboardEntry {
+  id?: string;
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  wpm: number;
+  accuracy: number;
+  timeMode?: number;
+  language: string;
+  country?: string;
+  timestamp: number;
+  isVerified?: boolean;
+}
+
+export interface TypingStats {
+  wpm: number;
+  rawWpm: number;
+  accuracy: number;
+  correctChars: number;
+  incorrectChars: number;
+  totalChars: number;
+  timeElapsed: number;
+  history: { second: number; wpm: number; rawWpm: number; errors: number }[];
+}
 
 export interface UserSocialLinks {
   twitter?: string;
@@ -60,35 +87,29 @@ export interface UserProfile {
   bannerColor?: string;
   createdAt: number;
   lastActive: number;
-
   // Level & XP
   xp: number;
   level: number;
   rankTitle: string;
-
   // Moderation & Verification
   isVerified?: boolean;
   isBanned?: boolean;
   isBlocked?: boolean;
   blockReason?: string;
   isSuspended?: boolean;
-  role: 'user' | 'admin';
-
+  role: 'user' | 'admin' | 'owner';
   // Username changes
   usernameChangesLeft: number;
-
   // Social & Privacy
   socialLinks?: UserSocialLinks;
   privacy: UserPrivacySettings;
   notificationsConfig?: UserNotificationSettings;
-
   // Social connections
   followers: string[];
   following: string[];
   followersCount: number;
   followingCount: number;
   pinnedAchievements: string[];
-
   // Stats
   unlockedAchievements: string[];
   totalTests: number;
@@ -104,15 +125,12 @@ export interface UserProfile {
   averageWpm: number;
   currentStreak: number;
   longestStreak: number;
-  lastTestDate?: string; // YYYY-MM-DD
+  lastTestDate?: string;
   preferredLanguage?: LanguageCode;
   isPublic: boolean;
-
-  // Leaderboard dynamics
   rankChange?: 'up' | 'down' | 'same';
   rankChangeAmount?: number;
   profileVisitorsCount?: number;
-
   // Dino Runner Stats
   dinoHighScore?: number;
   dinoGamesPlayed?: number;
@@ -169,14 +187,14 @@ export interface Achievement {
   category: 'speed' | 'accuracy' | 'volume' | 'streak' | 'special';
   icon: string;
   unlockedAt?: number;
-  progress: number; // 0 to 100
+  progress: number;
   targetValue: number;
   currentValue: number;
 }
 
 export interface DailyChallenge {
   id: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   title: string;
   description: string;
   language: LanguageCode;
