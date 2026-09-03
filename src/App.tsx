@@ -32,7 +32,6 @@ const LessonsView = React.lazy(() => import('./components/lessons/LessonsView').
 const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
 const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
-const CodingView = React.lazy(() => import('./components/coding/CodingView').then(m => ({ default: m.CodingView })));
 
 function ViewLoadingFallback() {
   return (
@@ -74,7 +73,6 @@ function MainAppContent() {
       }
 
       // Direct URL route support (e.g. /battle, /arena, /leaderboard, /lessons, /profile)
-      if (['coding', 'code', 'judge', 'coder', 'kodlash'].includes(pathname)) return 'coding';
       if (['battle', 'arena', 'duel'].includes(pathname)) return 'battle';
       if (['leaderboard', 'rating', 'reyting'].includes(pathname)) return 'leaderboard';
       if (['lessons', 'darslar'].includes(pathname)) return 'lessons';
@@ -645,7 +643,6 @@ function MainAppContent() {
           )}
 
           {activeTab === 'lessons' && <LessonsView />}
-          {activeTab === 'coding' && <CodingView />}
           {activeTab === 'battle' && (
             <BattleView
               initialRoomCode={pendingBattleRoomCode}

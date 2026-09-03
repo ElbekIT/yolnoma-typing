@@ -27,8 +27,7 @@ import {
   Check,
   AlertCircle,
   MessageSquare,
-  Gamepad2,
-  Code2
+  Gamepad2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -87,7 +86,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   const navItems = [
     { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
-    { id: 'coding', label: 'Kodlash Arenasi (Online Judge)', enLabel: 'Coding Arena', icon: Code2 },
     { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
@@ -180,16 +178,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title="Battle Arena"
               >
                 <Swords className={iconDimensions} />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('coding')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'coding' ? 'text-cyan-400 bg-cyan-500/20' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
-                }`}
-                title="Kodlash Arenasi (Online Judge)"
-              >
-                <Code2 className={iconDimensions} />
               </button>
 
               <button
