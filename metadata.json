@@ -1,6 +1,6 @@
 {
   "name": "Yolnoma Typing",
-  "description": "O'zbekistondagi №1 klaviaturada tez yozish arena platformasi. Tezlik va aniqligingizni oshiring, musobaqalarda qatnashing!",
+  "description": "O'zbekistondagi №1 klaviaturada tez yozish va Interactive Online Judge (JavaScript & Python) kodlash arenasi. Tezlik, aniqlik va dasturlash reytingi!",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -13,13 +13,15 @@ import {
   Clock,
   Sparkles,
   Award,
-  ArrowUpRight
+  ArrowUpRight,
+  Code2
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
+import { CodingLeaderboard } from '../coding/CodingLeaderboard';
 
 interface LeaderboardEntry extends UserProfile {
   rank: number;
@@ -31,8 +33,8 @@ interface LeaderboardEntry extends UserProfile {
 export const LeaderboardView: React.FC = () => {
   const { profile: currentUser, user } = useAuth();
 
-  // Typing Mode selections (Monkeytype style)
-  const [selectedCategory, setSelectedCategory] = useState<'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily'>('all-time-uzbek');
+  // Typing & Coding Mode selections (Monkeytype style)
+  const [selectedCategory, setSelectedCategory] = useState<'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily' | 'coding'>('all-time-uzbek');
   const [selectedTimeMode, setSelectedTimeMode] = useState<'all' | 15 | 30 | 60 | 120>('all');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -313,10 +315,30 @@ export const LeaderboardView: React.FC = () => {
                 <span>daily</span>
               </span>
             </button>
+
+            <button
+              onClick={() => {
+                setSelectedCategory('coding');
+                setCurrentPage(1);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                selectedCategory === 'coding'
+                  ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20'
+                  : 'text-cyan-400 hover:text-cyan-300 hover:bg-[var(--sub-alt)]'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Code2 className="w-3.5 h-3.5" />
+                <span>Coding (Judge)</span>
+              </span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-400/20 text-cyan-300 font-mono">
+                Online
+              </span>
+            </button>
           </div>
 
           {/* Time Filter Group */}
-          {selectedCategory !== 'weekly-xp' && (
+          {selectedCategory !== 'weekly-xp' && selectedCategory !== 'coding' && (
             <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
               <span className="text-[10px] text-[var(--sub-color)] font-bold px-3 py-1 block uppercase tracking-wider">
                 Vaqt Bo'yicha Filtr
@@ -359,8 +381,12 @@ export const LeaderboardView: React.FC = () => {
 
         {/* Right Main Table Content */}
         <div className="md:col-span-3 space-y-4">
-          {/* Header Title & Info Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--sub-alt)] pb-3">
+          {selectedCategory === 'coding' ? (
+            <CodingLeaderboard />
+          ) : (
+            <>
+              {/* Header Title & Info Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--sub-alt)] pb-3">
             <div>
               <h1 className="text-xl font-black text-[var(--text-color)] tracking-tight">
                 {getHeaderTitle()}
@@ -504,7 +530,9 @@ export const LeaderboardView: React.FC = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </>
+      )}
+    </div>
       </div>
 
       {/* Profile Modal */}
