@@ -1,6 +1,6 @@
 {
   "name": "Yolnoma Typing",
-  "description": "Dunyo bo'yicha 125+ tilda klaviaturada tez yozish va musobaqa platformasi. Barcha jahon tillarida tezlik va aniqligingizni oshiring!",
+  "description": "O'zbekistondagi №1 klaviaturada tez yozish arena platformasi. Tezlik va aniqligingizni oshiring, musobaqalarda qatnashing!",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
