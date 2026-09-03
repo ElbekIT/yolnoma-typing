@@ -61,73 +61,113 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with clean root domain preservation (yolnoma.uz)
+  // Route to URL slug mapping
+  const TAB_TO_PATH: Record<string, string> = {
+    typing: '',
+    languages: 'languages',
+    leaderboard: 'leaderboard',
+    battle: 'battle',
+    lessons: 'lessons',
+    statistics: 'statistics',
+    profile: 'profile',
+    settings: 'settings',
+    achievements: 'achievements',
+    challenges: 'challenges',
+    partners: 'partners',
+    owner: 'about',
+    dashboard: 'dashboard',
+    admin: atob('YWRtaW4=')
+  };
+
+  const TAB_TITLES: Record<string, string> = {
+    typing: 'Yolnoma Typing - Tez Yozish Mashqi & Arena',
+    languages: '125+ Jahon Tillari - Yolnoma Typing',
+    leaderboard: 'Peshqadamlar Reytingi - Yolnoma Typing',
+    battle: 'Speedway Battle Arena - Yolnoma Typing',
+    lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
+    statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
+    profile: 'Foydalanuvchi Profili - Yolnoma Typing',
+    settings: 'Sozlamalar - Yolnoma Typing',
+    achievements: 'Yutuqlar & Unvonlar - Yolnoma Typing',
+    challenges: 'Musobaqalar & Bellashuvlar - Yolnoma Typing',
+    partners: 'Hamkorlar - Yolnoma Typing',
+    owner: 'Sayt Haqida & Muallif - Yolnoma Typing',
+    dashboard: 'Boshqaruv Paneli - Yolnoma Typing',
+    admin: 'Admin Panel - Yolnoma Typing'
+  };
+
+  const resolvePathToTab = useCallback((rawPath: string): string => {
+    const pathname = (rawPath || '').replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
+    const _adm = atob('YWRtaW4=');
+    if (!pathname || pathname === 'typing' || pathname === 'home' || pathname === 'index.html') return 'typing';
+    if (pathname === _adm) return _adm;
+    if (['languages', 'tillar', 'language', 'til'].includes(pathname)) return 'languages';
+    if (['leaderboard', 'rating', 'reyting', 'top'].includes(pathname)) return 'leaderboard';
+    if (['battle', 'arena', 'duel', 'jang'].includes(pathname)) return 'battle';
+    if (['lessons', 'darslar', 'saboqlar'].includes(pathname)) return 'lessons';
+    if (['statistics', 'statistika', 'stats'].includes(pathname)) return 'statistics';
+    if (['profile', 'profil'].includes(pathname)) return 'profile';
+    if (['settings', 'sozlamalar'].includes(pathname)) return 'settings';
+    if (['achievements', 'yutuqlar'].includes(pathname)) return 'achievements';
+    if (['challenges', 'musobaqalar', 'muvaffaqiyatlar'].includes(pathname)) return 'challenges';
+    if (['partners', 'hamkorlar'].includes(pathname)) return 'partners';
+    if (['about', 'owner', 'haqida'].includes(pathname)) return 'owner';
+    if (['dashboard'].includes(pathname)) return 'dashboard';
+    // Graceful fallback: never throw 404, default smoothly to typing arena
+    return 'typing';
+  }, []);
+
+  // Active navigation tab initialized from current browser route
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
-      const _adm = atob('YWRtaW4='); // 'admin'
+      const _adm = atob('YWRtaW4=');
       const hostname = window.location.hostname;
       const searchParams = new URLSearchParams(window.location.search);
 
-      // Check saved tab from session or fallback redirect from 404.html
-      const savedSessionTab = sessionStorage.getItem('yolnoma_active_tab') || sessionStorage.getItem('yolnoma_target_tab');
-      if (sessionStorage.getItem('yolnoma_target_tab')) {
-        sessionStorage.removeItem('yolnoma_target_tab');
-      }
-      if (sessionStorage.getItem('yolnoma_redirect_path')) {
-        sessionStorage.removeItem('yolnoma_redirect_path');
-      }
-
-      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
-
-      if (hostname.startsWith(`${_adm}.`) || pathname === _adm || searchParams.get('tab') === _adm) {
+      if (hostname.startsWith(`${_adm}.`) || searchParams.get('tab') === _adm) {
         return _adm;
       }
 
-      const targetPath = pathname || savedSessionTab || '';
+      const redirectRoute = searchParams.get('route') || sessionStorage.getItem('yolnoma_target_tab') || sessionStorage.getItem('yolnoma_redirect_route');
+      if (sessionStorage.getItem('yolnoma_target_tab')) sessionStorage.removeItem('yolnoma_target_tab');
+      if (sessionStorage.getItem('yolnoma_redirect_route')) sessionStorage.removeItem('yolnoma_redirect_route');
 
-      // Direct route resolution
-      if (['battle', 'arena', 'duel'].includes(targetPath)) return 'battle';
-      if (['leaderboard', 'rating', 'reyting'].includes(targetPath)) return 'leaderboard';
-      if (['lessons', 'darslar'].includes(targetPath)) return 'lessons';
-      if (['statistics', 'statistika', 'stats'].includes(targetPath)) return 'statistics';
-      if (['profile', 'profil'].includes(targetPath)) return 'profile';
-      if (['settings', 'sozlamalar'].includes(targetPath)) return 'settings';
-      if (['achievements', 'yutuqlar'].includes(targetPath)) return 'achievements';
-      if (['challenges', 'musobaqalar'].includes(targetPath)) return 'challenges';
-      if (['partners', 'hamkorlar'].includes(targetPath)) return 'partners';
-      if (['owner', 'haqida', 'about'].includes(targetPath)) return 'owner';
-      if (['languages', 'tillar', 'language', 'til'].includes(targetPath)) return 'languages';
-      if (['dashboard'].includes(targetPath)) return 'dashboard';
-
-      const tabParam = searchParams.get('tab');
-      if (tabParam) return tabParam;
+      const pathCandidate = redirectRoute || window.location.pathname;
+      return resolvePathToTab(pathCandidate);
     } catch {}
     return 'typing';
   });
   const prevUserRef = useRef<string | null>(null);
 
-  // ALWAYS keep URL clean and pristine at root domain: https://yolnoma.uz/
-  // Prevents /languages or other paths from cluttering the address bar and prevents 404 on refresh
+  // Synchronize browser address bar with active tab and update tab title
   useEffect(() => {
     try {
-      if (activeTab && activeTab !== 'admin') {
-        sessionStorage.setItem('yolnoma_active_tab', activeTab);
+      const slug = TAB_TO_PATH[activeTab] ?? (activeTab === 'typing' ? '' : activeTab);
+      const targetUrl = slug ? `/${slug}` : '/';
+      const currentUrl = window.location.pathname;
+
+      if (currentUrl !== targetUrl && activeTab !== 'admin') {
+        window.history.pushState({ tab: activeTab }, '', targetUrl);
       }
-      // Ensure address bar always cleanly displays root domain: https://yolnoma.uz/
-      if (window.location.pathname !== '/' || window.location.search.includes('route=')) {
-        window.history.replaceState(null, '', '/');
+
+      if (TAB_TITLES[activeTab]) {
+        document.title = TAB_TITLES[activeTab];
       }
     } catch {}
   }, [activeTab]);
 
-  // Initial cleanup on mount to immediately wipe any /languages or subpaths from address bar
+  // Handle browser Back & Forward history buttons seamlessly
   useEffect(() => {
-    try {
-      if (window.location.pathname !== '/') {
-        window.history.replaceState(null, '', '/');
-      }
-    } catch {}
-  }, []);
+    const handlePopState = () => {
+      try {
+        const resolved = resolvePathToTab(window.location.pathname);
+        setActiveTab(resolved);
+      } catch {}
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [resolvePathToTab]);
 
   // DevTools detection state
   const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());

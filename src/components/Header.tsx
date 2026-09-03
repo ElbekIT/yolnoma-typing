@@ -161,6 +161,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </button>
 
               <button
+                onClick={() => setActiveTab('languages')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'languages' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="125+ Jahon Tillari"
+              >
+                <Globe className={iconDimensions} />
+              </button>
+
+              <button
                 onClick={() => setActiveTab('lessons')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
