@@ -32,6 +32,7 @@ const LessonsView = React.lazy(() => import('./components/lessons/LessonsView').
 const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
 const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
+const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 
 function ViewLoadingFallback() {
   return (
@@ -60,17 +61,28 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with direct SPA route matching and query param support
+  // Active navigation tab with direct SPA route matching, 404 handling, and fallback support
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       const _adm = atob('YWRtaW4='); // 'admin'
       const hostname = window.location.hostname;
-      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
       const searchParams = new URLSearchParams(window.location.search);
+
+      // Support fallback redirect from 404.html if applicable
+      const redirectRoute = searchParams.get('route') || sessionStorage.getItem('yolnoma_redirect_path');
+      if (sessionStorage.getItem('yolnoma_redirect_path')) {
+        sessionStorage.removeItem('yolnoma_redirect_path');
+      }
+
+      const rawPath = redirectRoute || window.location.pathname;
+      const pathname = rawPath.replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
 
       if (hostname.startsWith(`${_adm}.`) || pathname === _adm || searchParams.get('tab') === _adm) {
         return _adm;
       }
+
+      // Root / home
+      if (!pathname || pathname === 'typing' || pathname === 'home') return 'typing';
 
       // Direct URL route support (e.g. /battle, /arena, /leaderboard, /lessons, /profile)
       if (['battle', 'arena', 'duel'].includes(pathname)) return 'battle';
@@ -83,11 +95,14 @@ function MainAppContent() {
       if (['challenges', 'musobaqalar'].includes(pathname)) return 'challenges';
       if (['partners', 'hamkorlar'].includes(pathname)) return 'partners';
       if (['owner', 'haqida', 'about'].includes(pathname)) return 'owner';
-      if (['languages', 'tillar'].includes(pathname)) return 'languages';
+      if (['languages', 'tillar', 'language', 'til'].includes(pathname)) return 'languages';
       if (['dashboard'].includes(pathname)) return 'dashboard';
 
       const tabParam = searchParams.get('tab');
       if (tabParam) return tabParam;
+
+      // Unknown route or explicit 404
+      return 'not_found';
     } catch {}
     return 'typing';
   });
@@ -97,6 +112,10 @@ function MainAppContent() {
   useEffect(() => {
     try {
       const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+      if (activeTab === 'not_found') {
+        // Retain original invalid path so user and 404 card see exact requested route
+        return;
+      }
       const targetPath = activeTab === 'typing' ? '' : activeTab;
       if (currentPath !== targetPath && !['admin'].includes(activeTab)) {
         window.history.replaceState(null, '', targetPath ? `/${targetPath}` : '/');
@@ -109,7 +128,7 @@ function MainAppContent() {
     const handlePopState = () => {
       try {
         const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
-        if (!pathname || pathname === 'typing') {
+        if (!pathname || pathname === 'typing' || pathname === 'home') {
           setActiveTab('typing');
         } else if (['battle', 'arena', 'duel'].includes(pathname)) {
           setActiveTab('battle');
@@ -131,10 +150,12 @@ function MainAppContent() {
           setActiveTab('partners');
         } else if (['owner', 'about', 'haqida'].includes(pathname)) {
           setActiveTab('owner');
-        } else if (['languages', 'tillar'].includes(pathname)) {
+        } else if (['languages', 'tillar', 'language', 'til'].includes(pathname)) {
           setActiveTab('languages');
         } else if (['dashboard'].includes(pathname)) {
           setActiveTab('dashboard');
+        } else {
+          setActiveTab('not_found');
         }
       } catch {}
     };
@@ -671,6 +692,13 @@ function MainAppContent() {
             />
           )}
           {activeTab === 'settings' && <SettingsView />}
+          {activeTab === 'not_found' && (
+            <NotFoundView
+              onGoHome={() => setActiveTab('typing')}
+              onNavigate={(tab) => setActiveTab(tab)}
+              attemptedPath={window.location.pathname}
+            />
+          )}
         </React.Suspense>
       </main>
 
