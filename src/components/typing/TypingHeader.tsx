@@ -269,15 +269,11 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3">
           <button
             onClick={() => {
-              if (onOpenLanguagePage) {
-                onOpenLanguagePage();
-              } else {
-                setSearchQuery('');
-                setShowLangModal(true);
-              }
+              setSearchQuery('');
+              setShowLangModal(true);
             }}
             className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-80 hover:opacity-100 py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40"
-            title="Tilni tanlash sahifasiga o'tish"
+            title="Tilni tezkor almashtirish (125+ jahon tillari)"
           >
             <Globe className="w-3.5 h-3.5" />
             <span>{currentLang.flag} {currentLang.nativeName}</span>
@@ -390,10 +386,26 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             </div>
 
             {/* Footer Prompt */}
-            <div className="px-4 py-2 border-t border-[var(--sub-alt)]/60 bg-[var(--card-bg)]/80 flex items-center justify-between text-[10px] font-mono text-[var(--sub-color)] opacity-60 shrink-0">
-              <span>{filteredLanguages.length} ta dunyo tili mavjud</span>
+            <div className="px-4 py-2.5 border-t border-[var(--sub-alt)]/60 bg-[var(--card-bg)]/80 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-[var(--sub-color)] opacity-80 shrink-0">
               <div className="flex items-center gap-2">
-                <span>↑↓ - harakatlanish</span>
+                <span>{filteredLanguages.length} ta jahon tili</span>
+                {onOpenLanguagePage && (
+                  <>
+                    <span>•</span>
+                    <button
+                      onClick={() => {
+                        setShowLangModal(false);
+                        onOpenLanguagePage();
+                      }}
+                      className="text-[var(--main-color)] hover:underline font-bold cursor-pointer"
+                    >
+                      Barcha 125+ tillar sahifasi →
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-[9px] opacity-70">
+                <span>↑↓ - harakat</span>
                 <span>enter - tanlash</span>
                 <span>esc - yopish</span>
               </div>

@@ -61,107 +61,72 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with direct SPA route matching, 404 handling, and fallback support
+  // Active navigation tab with clean root domain preservation (yolnoma.uz)
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       const _adm = atob('YWRtaW4='); // 'admin'
       const hostname = window.location.hostname;
       const searchParams = new URLSearchParams(window.location.search);
 
-      // Support fallback redirect from 404.html if applicable
-      const redirectRoute = searchParams.get('route') || sessionStorage.getItem('yolnoma_redirect_path');
+      // Check saved tab from session or fallback redirect from 404.html
+      const savedSessionTab = sessionStorage.getItem('yolnoma_active_tab') || sessionStorage.getItem('yolnoma_target_tab');
+      if (sessionStorage.getItem('yolnoma_target_tab')) {
+        sessionStorage.removeItem('yolnoma_target_tab');
+      }
       if (sessionStorage.getItem('yolnoma_redirect_path')) {
         sessionStorage.removeItem('yolnoma_redirect_path');
       }
 
-      const rawPath = redirectRoute || window.location.pathname;
-      const pathname = rawPath.replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
+      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
 
       if (hostname.startsWith(`${_adm}.`) || pathname === _adm || searchParams.get('tab') === _adm) {
         return _adm;
       }
 
-      // Root / home
-      if (!pathname || pathname === 'typing' || pathname === 'home') return 'typing';
+      const targetPath = pathname || savedSessionTab || '';
 
-      // Direct URL route support (e.g. /battle, /arena, /leaderboard, /lessons, /profile)
-      if (['battle', 'arena', 'duel'].includes(pathname)) return 'battle';
-      if (['leaderboard', 'rating', 'reyting'].includes(pathname)) return 'leaderboard';
-      if (['lessons', 'darslar'].includes(pathname)) return 'lessons';
-      if (['statistics', 'statistika', 'stats'].includes(pathname)) return 'statistics';
-      if (['profile', 'profil'].includes(pathname)) return 'profile';
-      if (['settings', 'sozlamalar'].includes(pathname)) return 'settings';
-      if (['achievements', 'yutuqlar'].includes(pathname)) return 'achievements';
-      if (['challenges', 'musobaqalar'].includes(pathname)) return 'challenges';
-      if (['partners', 'hamkorlar'].includes(pathname)) return 'partners';
-      if (['owner', 'haqida', 'about'].includes(pathname)) return 'owner';
-      if (['languages', 'tillar', 'language', 'til'].includes(pathname)) return 'languages';
-      if (['dashboard'].includes(pathname)) return 'dashboard';
+      // Direct route resolution
+      if (['battle', 'arena', 'duel'].includes(targetPath)) return 'battle';
+      if (['leaderboard', 'rating', 'reyting'].includes(targetPath)) return 'leaderboard';
+      if (['lessons', 'darslar'].includes(targetPath)) return 'lessons';
+      if (['statistics', 'statistika', 'stats'].includes(targetPath)) return 'statistics';
+      if (['profile', 'profil'].includes(targetPath)) return 'profile';
+      if (['settings', 'sozlamalar'].includes(targetPath)) return 'settings';
+      if (['achievements', 'yutuqlar'].includes(targetPath)) return 'achievements';
+      if (['challenges', 'musobaqalar'].includes(targetPath)) return 'challenges';
+      if (['partners', 'hamkorlar'].includes(targetPath)) return 'partners';
+      if (['owner', 'haqida', 'about'].includes(targetPath)) return 'owner';
+      if (['languages', 'tillar', 'language', 'til'].includes(targetPath)) return 'languages';
+      if (['dashboard'].includes(targetPath)) return 'dashboard';
 
       const tabParam = searchParams.get('tab');
       if (tabParam) return tabParam;
-
-      // Unknown route or explicit 404
-      return 'not_found';
     } catch {}
     return 'typing';
   });
   const prevUserRef = useRef<string | null>(null);
 
-  // Synchronize browser URL without reloading so back/forward and sharing work seamlessly
+  // ALWAYS keep URL clean and pristine at root domain: https://yolnoma.uz/
+  // Prevents /languages or other paths from cluttering the address bar and prevents 404 on refresh
   useEffect(() => {
     try {
-      const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
-      if (activeTab === 'not_found') {
-        // Retain original invalid path so user and 404 card see exact requested route
-        return;
+      if (activeTab && activeTab !== 'admin') {
+        sessionStorage.setItem('yolnoma_active_tab', activeTab);
       }
-      const targetPath = activeTab === 'typing' ? '' : activeTab;
-      if (currentPath !== targetPath && !['admin'].includes(activeTab)) {
-        window.history.replaceState(null, '', targetPath ? `/${targetPath}` : '/');
+      // Ensure address bar always cleanly displays root domain: https://yolnoma.uz/
+      if (window.location.pathname !== '/' || window.location.search.includes('route=')) {
+        window.history.replaceState(null, '', '/');
       }
     } catch {}
   }, [activeTab]);
 
-  // Handle browser Back / Forward buttons
+  // Initial cleanup on mount to immediately wipe any /languages or subpaths from address bar
   useEffect(() => {
-    const handlePopState = () => {
-      try {
-        const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
-        if (!pathname || pathname === 'typing' || pathname === 'home') {
-          setActiveTab('typing');
-        } else if (['battle', 'arena', 'duel'].includes(pathname)) {
-          setActiveTab('battle');
-        } else if (['leaderboard', 'rating', 'reyting'].includes(pathname)) {
-          setActiveTab('leaderboard');
-        } else if (['lessons', 'darslar'].includes(pathname)) {
-          setActiveTab('lessons');
-        } else if (['statistics', 'statistika', 'stats'].includes(pathname)) {
-          setActiveTab('statistics');
-        } else if (['profile', 'profil'].includes(pathname)) {
-          setActiveTab('profile');
-        } else if (['settings', 'sozlamalar'].includes(pathname)) {
-          setActiveTab('settings');
-        } else if (['achievements', 'yutuqlar'].includes(pathname)) {
-          setActiveTab('achievements');
-        } else if (['challenges', 'musobaqalar'].includes(pathname)) {
-          setActiveTab('challenges');
-        } else if (['partners', 'hamkorlar'].includes(pathname)) {
-          setActiveTab('partners');
-        } else if (['owner', 'about', 'haqida'].includes(pathname)) {
-          setActiveTab('owner');
-        } else if (['languages', 'tillar', 'language', 'til'].includes(pathname)) {
-          setActiveTab('languages');
-        } else if (['dashboard'].includes(pathname)) {
-          setActiveTab('dashboard');
-        } else {
-          setActiveTab('not_found');
-        }
-      } catch {}
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    try {
+      if (window.location.pathname !== '/') {
+        window.history.replaceState(null, '', '/');
+      }
+    } catch {}
   }, []);
 
   // DevTools detection state

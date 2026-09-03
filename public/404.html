@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Yolnoma Typing - Sahifa Qayta Yo'naltirilmoqda...</title>
+    <title>Yolnoma Typing</title>
     <style>
       body {
         margin: 0;
@@ -19,46 +19,44 @@
         text-align: center;
       }
       .spinner {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border: 3px solid rgba(226, 183, 20, 0.2);
         border-radius: 50%;
         border-top-color: #e2b714;
-        animation: spin 1s ease-in-out infinite;
-        margin-bottom: 20px;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 16px;
       }
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
       h2 {
-        font-size: 1.25rem;
-        margin-bottom: 8px;
+        font-size: 1.15rem;
+        margin: 0 0 6px 0;
         color: #ffffff;
       }
       p {
-        font-size: 0.875rem;
+        font-size: 0.825rem;
         color: #646669;
         margin: 0;
       }
     </style>
     <script>
-      // Single Page App redirect for static hosts / CDNs
       (function () {
-        var pathname = window.location.pathname;
-        var search = window.location.search;
-        var hash = window.location.hash;
-        
-        // Save targeted path for SPA router
-        sessionStorage.setItem('yolnoma_redirect_path', pathname + search + hash);
-
-        // Instant redirect back to index.html with preserved route
-        window.location.replace('/' + (pathname && pathname !== '/' ? '?route=' + encodeURIComponent(pathname.replace(/^\/+/, '')) : '') + hash);
+        // Har qanday noto'g'ri yoki adashgan yo'l kelganda, darhol toza bosh manzilga qaytarish
+        try {
+          var pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+          if (pathname && pathname !== 'index.html' && pathname !== '404' && pathname !== '404.html') {
+            sessionStorage.setItem('yolnoma_target_tab', pathname);
+          }
+        } catch (e) {}
+        window.location.replace('/');
       })();
     </script>
   </head>
   <body>
     <div class="spinner"></div>
     <h2>Yolnoma Typing</h2>
-    <p>Sahifaga ulanmoqda, iltimos kuting...</p>
+    <p>Bosh sahifaga yo'naltirilmoqda...</p>
   </body>
 </html>
