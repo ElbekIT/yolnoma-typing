@@ -11,25 +11,41 @@ import { TypingHeader } from './components/typing/TypingHeader';
 import { LiveStats } from './components/typing/LiveStats';
 import { TypingDisplay } from './components/typing/TypingDisplay';
 import { ResultModal } from './components/typing/ResultModal';
-import { DashboardView } from './components/dashboard/DashboardView';
-import { LeaderboardView } from './components/leaderboard/LeaderboardView';
-import { StatisticsView } from './components/statistics/StatisticsView';
-import { AchievementsView } from './components/achievements/AchievementsView';
-import { ChallengesView } from './components/challenges/ChallengesView';
-import { ProfileView } from './components/profile/ProfileView';
-import { SettingsView } from './components/settings/SettingsView';
-import { PartnersView } from './components/partners/PartnersView';
-import { BattleView } from './components/battle/BattleView';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { DevToolsBlockedScreen } from './components/DevToolsBlockedScreen';
-import { LessonsView } from './components/lessons/LessonsView';
-import { AdminView } from './components/admin/AdminView';
-import { OwnerAboutView } from './components/owner/OwnerAboutView';
-import { LanguageSelectView } from './components/languages/LanguageSelectView';
 import { antiCheatManager } from './utils/antiCheat';
+
+// Lazy-loaded secondary views for high performance & fast initial loading
+const DashboardView = React.lazy(() => import('./components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
+const LeaderboardView = React.lazy(() => import('./components/leaderboard/LeaderboardView').then(m => ({ default: m.LeaderboardView })));
+const StatisticsView = React.lazy(() => import('./components/statistics/StatisticsView').then(m => ({ default: m.StatisticsView })));
+const AchievementsView = React.lazy(() => import('./components/achievements/AchievementsView').then(m => ({ default: m.AchievementsView })));
+const ChallengesView = React.lazy(() => import('./components/challenges/ChallengesView').then(m => ({ default: m.ChallengesView })));
+const ProfileView = React.lazy(() => import('./components/profile/ProfileView').then(m => ({ default: m.ProfileView })));
+const SettingsView = React.lazy(() => import('./components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
+const PartnersView = React.lazy(() => import('./components/partners/PartnersView').then(m => ({ default: m.PartnersView })));
+const BattleView = React.lazy(() => import('./components/battle/BattleView').then(m => ({ default: m.BattleView })));
+const LessonsView = React.lazy(() => import('./components/lessons/LessonsView').then(m => ({ default: m.LessonsView })));
+const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
+const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
+const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
+
+function ViewLoadingFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[380px] w-full py-16 text-center animate-fade-in">
+      <div className="relative w-12 h-12 mb-4">
+        <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20 animate-ping" />
+        <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-cyan-400 border-r-cyan-500 animate-spin" />
+      </div>
+      <p className="text-xs font-mono font-bold tracking-widest text-cyan-400/90 uppercase">
+        Yolnoma Yuklanmoqda...
+      </p>
+    </div>
+  );
+}
 
 import {
   TextMode,
@@ -44,20 +60,88 @@ function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
 
-  // Active navigation tab with subdomain / URL parameter support (Obfuscated routing)
+  // Active navigation tab with direct SPA route matching and query param support
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       const _adm = atob('YWRtaW4='); // 'admin'
       const hostname = window.location.hostname;
-      const pathname = window.location.pathname;
+      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
       const searchParams = new URLSearchParams(window.location.search);
-      if (hostname.startsWith(`${_adm}.`) || pathname === `/${_adm}` || searchParams.get('tab') === _adm) {
+
+      if (hostname.startsWith(`${_adm}.`) || pathname === _adm || searchParams.get('tab') === _adm) {
         return _adm;
       }
+
+      // Direct URL route support (e.g. /battle, /arena, /leaderboard, /lessons, /profile)
+      if (['battle', 'arena', 'duel'].includes(pathname)) return 'battle';
+      if (['leaderboard', 'rating', 'reyting'].includes(pathname)) return 'leaderboard';
+      if (['lessons', 'darslar'].includes(pathname)) return 'lessons';
+      if (['statistics', 'statistika', 'stats'].includes(pathname)) return 'statistics';
+      if (['profile', 'profil'].includes(pathname)) return 'profile';
+      if (['settings', 'sozlamalar'].includes(pathname)) return 'settings';
+      if (['achievements', 'yutuqlar'].includes(pathname)) return 'achievements';
+      if (['challenges', 'musobaqalar'].includes(pathname)) return 'challenges';
+      if (['partners', 'hamkorlar'].includes(pathname)) return 'partners';
+      if (['owner', 'haqida', 'about'].includes(pathname)) return 'owner';
+      if (['languages', 'tillar'].includes(pathname)) return 'languages';
+      if (['dashboard'].includes(pathname)) return 'dashboard';
+
+      const tabParam = searchParams.get('tab');
+      if (tabParam) return tabParam;
     } catch {}
     return 'typing';
   });
   const prevUserRef = useRef<string | null>(null);
+
+  // Synchronize browser URL without reloading so back/forward and sharing work seamlessly
+  useEffect(() => {
+    try {
+      const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+      const targetPath = activeTab === 'typing' ? '' : activeTab;
+      if (currentPath !== targetPath && !['admin'].includes(activeTab)) {
+        window.history.replaceState(null, '', targetPath ? `/${targetPath}` : '/');
+      }
+    } catch {}
+  }, [activeTab]);
+
+  // Handle browser Back / Forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+        if (!pathname || pathname === 'typing') {
+          setActiveTab('typing');
+        } else if (['battle', 'arena', 'duel'].includes(pathname)) {
+          setActiveTab('battle');
+        } else if (['leaderboard', 'rating', 'reyting'].includes(pathname)) {
+          setActiveTab('leaderboard');
+        } else if (['lessons', 'darslar'].includes(pathname)) {
+          setActiveTab('lessons');
+        } else if (['statistics', 'statistika', 'stats'].includes(pathname)) {
+          setActiveTab('statistics');
+        } else if (['profile', 'profil'].includes(pathname)) {
+          setActiveTab('profile');
+        } else if (['settings', 'sozlamalar'].includes(pathname)) {
+          setActiveTab('settings');
+        } else if (['achievements', 'yutuqlar'].includes(pathname)) {
+          setActiveTab('achievements');
+        } else if (['challenges', 'musobaqalar'].includes(pathname)) {
+          setActiveTab('challenges');
+        } else if (['partners', 'hamkorlar'].includes(pathname)) {
+          setActiveTab('partners');
+        } else if (['owner', 'about', 'haqida'].includes(pathname)) {
+          setActiveTab('owner');
+        } else if (['languages', 'tillar'].includes(pathname)) {
+          setActiveTab('languages');
+        } else if (['dashboard'].includes(pathname)) {
+          setActiveTab('dashboard');
+        }
+      } catch {}
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // DevTools detection state
   const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());
@@ -547,45 +631,47 @@ function MainAppContent() {
           </div>
         )}
 
-        {activeTab === 'languages' && (
-          <LanguageSelectView
-            onConfirm={() => {
-              initTestText();
-              setActiveTab('typing');
-            }}
-            onCancel={() => setActiveTab('typing')}
-          />
-        )}
+        <React.Suspense fallback={<ViewLoadingFallback />}>
+          {activeTab === 'languages' && (
+            <LanguageSelectView
+              onConfirm={() => {
+                initTestText();
+                setActiveTab('typing');
+              }}
+              onCancel={() => setActiveTab('typing')}
+            />
+          )}
 
-        {activeTab === 'lessons' && <LessonsView />}
-        {activeTab === 'battle' && (
-          <BattleView
-            initialRoomCode={pendingBattleRoomCode}
-            onClearInitialRoomCode={() => setPendingBattleRoomCode(null)}
-          />
-        )}
-        {activeTab === 'dashboard' && <DashboardView />}
-        {activeTab === 'leaderboard' && <LeaderboardView />}
-        {activeTab === 'statistics' && <StatisticsView />}
-        {activeTab === 'achievements' && <AchievementsView />}
-        {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
-        {activeTab === 'partners' && <PartnersView />}
-        {activeTab === 'owner' && (
-          <OwnerAboutView
-            onStartTyping={() => setActiveTab('typing')}
-            onGoToBattle={() => setActiveTab('battle')}
-            onGoToLessons={() => setActiveTab('lessons')}
-            onGoToLeaderboard={() => setActiveTab('leaderboard')}
-          />
-        )}
-        {activeTab === 'admin' && <AdminView />}
-        {activeTab === 'profile' && (
-          <ProfileView
-            onOpenAuth={() => setIsAuthOpen(true)}
-            onSavedHome={() => setActiveTab('typing')}
-          />
-        )}
-        {activeTab === 'settings' && <SettingsView />}
+          {activeTab === 'lessons' && <LessonsView />}
+          {activeTab === 'battle' && (
+            <BattleView
+              initialRoomCode={pendingBattleRoomCode}
+              onClearInitialRoomCode={() => setPendingBattleRoomCode(null)}
+            />
+          )}
+          {activeTab === 'dashboard' && <DashboardView />}
+          {activeTab === 'leaderboard' && <LeaderboardView />}
+          {activeTab === 'statistics' && <StatisticsView />}
+          {activeTab === 'achievements' && <AchievementsView />}
+          {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
+          {activeTab === 'partners' && <PartnersView />}
+          {activeTab === 'owner' && (
+            <OwnerAboutView
+              onStartTyping={() => setActiveTab('typing')}
+              onGoToBattle={() => setActiveTab('battle')}
+              onGoToLessons={() => setActiveTab('lessons')}
+              onGoToLeaderboard={() => setActiveTab('leaderboard')}
+            />
+          )}
+          {activeTab === 'admin' && <AdminView />}
+          {activeTab === 'profile' && (
+            <ProfileView
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onSavedHome={() => setActiveTab('typing')}
+            />
+          )}
+          {activeTab === 'settings' && <SettingsView />}
+        </React.Suspense>
       </main>
 
       <Footer

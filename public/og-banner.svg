@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070b14" />
+      <stop offset="50%" stop-color="#0c1427" />
+      <stop offset="100%" stop-color="#050810" />
+    </linearGradient>
+
+    <!-- Cyan to Blue Gradient -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+
+    <!-- Amber Glow -->
+    <radialGradient id="amberGlow" cx="80%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Cyan Glow -->
+    <radialGradient id="cyanGlow" cx="20%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Logo Left Gradient -->
+    <linearGradient id="yGradLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#0066FF" />
+    </linearGradient>
+
+    <!-- Card Background -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#15203b" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#0c1324" stop-opacity="0.9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  <rect width="1200" height="630" fill="url(#cyanGlow)" />
+  <rect width="1200" height="630" fill="url(#amberGlow)" />
+
+  <!-- Subtle Cyber Grid -->
+  <g opacity="0.07" stroke="#38bdf8" stroke-width="1">
+    <line x1="0" y1="100" x2="1200" y2="100" />
+    <line x1="0" y1="200" x2="1200" y2="200" />
+    <line x1="0" y1="300" x2="1200" y2="300" />
+    <line x1="0" y1="400" x2="1200" y2="400" />
+    <line x1="0" y1="500" x2="1200" y2="500" />
+    <line x1="200" y1="0" x2="200" y2="630" />
+    <line x1="400" y1="0" x2="400" y2="630" />
+    <line x1="600" y1="0" x2="600" y2="630" />
+    <line x1="800" y1="0" x2="800" y2="630" />
+    <line x1="1000" y1="0" x2="1000" y2="630" />
+  </g>
+
+  <!-- Outer Border Frame -->
+  <rect x="24" y="24" width="1152" height="582" rx="32" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.3" fill="none" />
+
+  <!-- Main Content Wrapper -->
+  <g transform="translate(100, 110)">
+    <!-- Badge -->
+    <rect x="0" y="0" width="310" height="42" rx="21" fill="#0284c7" fill-opacity="0.2" stroke="#38bdf8" stroke-opacity="0.6" stroke-width="1.5" />
+    <text x="24" y="27" font-family="'JetBrains Mono', 'Fira Code', monospace" font-weight="700" font-size="16" fill="#38bdf8" letter-spacing="1">
+      ⚡ MILLIY TEZ YOZISH ARENASI
+    </text>
+
+    <!-- Main Big Title -->
+    <text x="0" y="125" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="76" fill="#ffffff" letter-spacing="-2">
+      YOLNOMA <tspan fill="url(#accentGrad)">TYPING</tspan>
+    </text>
+
+    <!-- Slogan / Subtitle -->
+    <text x="0" y="195" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="700" font-size="28" fill="#e2e8f0" letter-spacing="-0.5">
+      O'zbekistondagi №1 Klaviaturada Tez Yozish Platformasi
+    </text>
+
+    <text x="0" y="240" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="500" font-size="20" fill="#94a3b8">
+      Klaviatura tezligingizni oshiring, 1v1 duellarda qatnashing va reytingda 1-o'rinni egallang!
+    </text>
+
+    <!-- 3 Feature Chips -->
+    <g transform="translate(0, 290)">
+      <!-- Chip 1: Speedway -->
+      <g>
+        <rect x="0" y="0" width="220" height="56" rx="16" fill="url(#cardGrad)" stroke="#38bdf8" stroke-width="1.2" stroke-opacity="0.4" />
+        <text x="24" y="35" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="17" fill="#f8fafc">
+          🏎️ 1v1 Speedway Duel
+        </text>
+      </g>
+
+      <!-- Chip 2: Milliy Reyting -->
+      <g transform="translate(240, 0)">
+        <rect x="0" y="0" width="210" height="56" rx="16" fill="url(#cardGrad)" stroke="#f59e0b" stroke-width="1.2" stroke-opacity="0.4" />
+        <text x="24" y="35" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="17" fill="#f8fafc">
+          🏆 Milliy Reyting
+        </text>
+      </g>
+
+      <!-- Chip 3: 10 Barmoqli Metodika -->
+      <g transform="translate(470, 0)">
+        <rect x="0" y="0" width="240" height="56" rx="16" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.2" stroke-opacity="0.4" />
+        <text x="24" y="35" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="17" fill="#f8fafc">
+          ⌨️ 10 Barmoqli Darslar
+        </text>
+      </g>
+    </g>
+
+    <!-- Bottom URL Link -->
+    <g transform="translate(0, 390)">
+      <text x="0" y="0" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="22" fill="#38bdf8">
+        🌐 https://yolnoma.uz
+      </text>
+    </g>
+  </g>
+
+  <!-- Right Decorative Speedometer / Keyboard Graphic -->
+  <g transform="translate(860, 180)">
+    <circle cx="120" cy="120" r="140" fill="url(#cardGrad)" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.4" />
+    <circle cx="120" cy="120" r="105" stroke="#f59e0b" stroke-width="4" stroke-dasharray="16 8" stroke-opacity="0.8" fill="none" />
+
+    <!-- Big WPM Number -->
+    <text x="120" y="125" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="900" font-size="64" fill="#38bdf8">
+      120+
+    </text>
+    <text x="120" y="165" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="800" font-size="18" fill="#f59e0b" letter-spacing="2">
+      WPM SPEED
+    </text>
+
+    <!-- Orbiting Accent Stars -->
+    <circle cx="240" cy="40" r="6" fill="#38bdf8" opacity="0.9" />
+    <circle cx="10" cy="220" r="4" fill="#f59e0b" opacity="0.8" />
+  </g>
+</svg>

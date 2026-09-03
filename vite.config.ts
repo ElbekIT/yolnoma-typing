@@ -19,12 +19,16 @@ export default defineConfig(() => {
       sourcemap: false,
       minify: 'esbuild' as const,
       cssMinify: true,
-      chunkSizeWarningLimit: 2000,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom'],
-            icons: ['lucide-react'],
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/database'],
+            'vendor-icons': ['lucide-react'],
+            'vendor-charts': ['recharts'],
+            'vendor-motion': ['motion'],
+            'vendor-confetti': ['canvas-confetti'],
           },
         },
       },
