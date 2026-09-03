@@ -26,7 +26,6 @@ import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { DevToolsBlockedScreen } from './components/DevToolsBlockedScreen';
 import { LessonsView } from './components/lessons/LessonsView';
-import { DinoGameView } from './components/dino/DinoGameView';
 import { AdminView } from './components/admin/AdminView';
 import { OwnerAboutView } from './components/owner/OwnerAboutView';
 import { LanguageSelectView } from './components/languages/LanguageSelectView';
@@ -563,12 +562,6 @@ function MainAppContent() {
           <BattleView
             initialRoomCode={pendingBattleRoomCode}
             onClearInitialRoomCode={() => setPendingBattleRoomCode(null)}
-          />
-        )}
-        {activeTab === 'dino' && (
-          <DinoGameView
-            onGoToLeaderboard={() => setActiveTab('leaderboard')}
-            onGoToBattle={() => setActiveTab('battle')}
           />
         )}
         {activeTab === 'dashboard' && <DashboardView />}

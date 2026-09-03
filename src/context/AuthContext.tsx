@@ -40,7 +40,6 @@ interface AuthContextType {
   exportPersonalData: () => void;
   adminUpdateUser: (targetUid: string, updates: Partial<UserProfile>) => Promise<void>;
   saveTestResult: (result: Omit<TypingResult, 'userId' | 'username'>) => Promise<TypingResult>;
-  saveDinoScore: (score: number, distance: number, obstaclesDodged: number) => Promise<{ isPersonalBest: boolean; bestScore: number }>;
   userResultsHistory: TypingResult[];
   refreshHistory: () => Promise<void>;
 }
@@ -655,9 +654,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete (sanitizedUpdates as any).totalTimeTypedSeconds;
     delete (sanitizedUpdates as any).totalWordsTyped;
     delete (sanitizedUpdates as any).totalCharsTyped;
-    delete (sanitizedUpdates as any).dinoHighScore;
-    delete (sanitizedUpdates as any).dinoMaxDistance;
-    delete (sanitizedUpdates as any).dinoGamesPlayed;
 
     const updated: UserProfile = { ...profile, ...sanitizedUpdates, lastActive: Date.now() };
     setProfile(updated);
@@ -952,95 +948,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return fullResult;
   };
 
-  const saveDinoScore = async (
-    score: number,
-    distance: number,
-    obstaclesDodged: number
-  ): Promise<{ isPersonalBest: boolean; bestScore: number }> => {
-    const guestId = getGuestId();
-    const userId = user ? user.uid : guestId;
-    const currentBest = profile
-      ? profile.dinoHighScore || 0
-      : Number(localStorage.getItem('yolnoma_guest_dino_best') || 0);
-
-    const isValid = antiCheatManager.validateDinoScore(score, distance, obstaclesDodged);
-    if (!isValid || score <= 0) {
-      return { isPersonalBest: false, bestScore: currentBest };
-    }
-
-    const safeScore = Math.min(50000, Math.max(0, Math.round(score)));
-    const safeDistance = Math.min(50000, Math.max(0, Math.round(distance)));
-
-    const isPersonalBest = safeScore > currentBest;
-    const bestScore = Math.max(safeScore, currentBest);
-
-    if (user && profile) {
-      const newGamesPlayed = (profile.dinoGamesPlayed || 0) + 1;
-      const newMaxDistance = Math.max(profile.dinoMaxDistance || 0, safeDistance);
-      
-      // Earn extra XP for Dino Run: 1 XP per 10 points (capped)
-      const xpEarned = Math.min(250, Math.max(5, Math.floor(safeScore / 10)));
-      const newXp = Math.min(250000, profile.xp + xpEarned);
-      const newLevel = Math.min(100, Math.floor(newXp / 500) + 1);
-
-      if (isPersonalBest && safeScore >= 100) {
-        addNotification('YANGI DINO REKORD! 🦖', `Tabriklaymiz! Dino Runner da ${safeScore} ball bilan yangi shaxsiy rekord o'rnatdingiz!`, 'achievement');
-      }
-
-      const updates: Partial<UserProfile> = {
-        dinoHighScore: bestScore,
-        dinoGamesPlayed: newGamesPlayed,
-        dinoMaxDistance: newMaxDistance,
-        xp: newXp,
-        level: newLevel,
-        lastActive: Date.now()
-      };
-
-      await updateProfileInternalStats(updates);
-
-      // Push to Realtime Database dino_leaderboard
-      try {
-        await update(ref(rtdb, `dino_leaderboard/${user.uid}`), {
-          uid: user.uid,
-          displayName: profile.displayName || profile.username,
-          username: profile.username,
-          score: bestScore,
-          distance: newMaxDistance,
-          obstaclesDodged,
-          avatarUrl: profile.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`,
-          level: newLevel,
-          rankTitle: profile.rankTitle || 'Dino Runner',
-          country: profile.country || '🇺🇿 Uzbekistan',
-          timestamp: Date.now()
-        });
-      } catch (err) {
-        console.warn('Dino RTDB leaderboard sync error:', err);
-      }
-    } else {
-      // Guest User
-      localStorage.setItem('yolnoma_guest_dino_best', String(bestScore));
-      try {
-        await set(ref(rtdb, `dino_leaderboard/${guestId}`), {
-          uid: guestId,
-          displayName: `Mehmon (${guestId.replace('guest_', '')})`,
-          username: guestId,
-          score: bestScore,
-          distance: Math.round(distance),
-          obstaclesDodged,
-          avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
-          level: 1,
-          rankTitle: 'Mehmon Runner',
-          country: '🇺🇿 Uzbekistan',
-          timestamp: Date.now()
-        });
-      } catch (err) {
-        console.warn('Guest Dino RTDB sync error:', err);
-      }
-    }
-
-    return { isPersonalBest, bestScore };
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -1066,7 +973,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         exportPersonalData,
         adminUpdateUser,
         saveTestResult,
-        saveDinoScore,
         userResultsHistory,
         refreshHistory
       }}

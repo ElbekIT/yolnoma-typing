@@ -89,7 +89,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
-    { id: 'dino', label: 'Dino Runner (O\'yin)', enLabel: 'Dino Runner Game', icon: Gamepad2 },
     { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
     { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy },
     { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },
@@ -179,16 +178,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title="Battle Arena"
               >
                 <Swords className={iconDimensions} />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('dino')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'dino' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
-                }`}
-                title="Dino Runner O'yini"
-              >
-                <Gamepad2 className={iconDimensions} />
               </button>
 
               <button

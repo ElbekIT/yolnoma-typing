@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Swords, Check, X, Shield, Zap, Flame, Crown } from 'lucide-react';
+import { Swords, Check, X, Zap } from 'lucide-react';
 
 export interface BattleInviteData {
   inviteId: string;
@@ -8,7 +8,7 @@ export interface BattleInviteData {
   inviterName: string;
   inviterAvatar?: string;
   inviterWpm?: number;
-  gameType?: 'speedway' | 'dino';
+  gameType?: 'speedway';
   timestamp: number;
 }
 
@@ -41,8 +41,6 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
 
   if (!invite) return null;
 
-  const isDino = invite.gameType === 'dino';
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75">
       {/* PUBG Mobile Style Card */}
@@ -53,15 +51,15 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
         {/* PUBG Lobby Badge Title Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-md">
-              {isDino ? <span className="text-lg">🦖</span> : <Swords className="w-5 h-5 text-white" />}
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-cyan-500 via-indigo-600 to-amber-500 flex items-center justify-center shadow-md">
+              <Swords className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-base font-black tracking-wider text-amber-400 font-mono uppercase flex items-center gap-1.5">
-                BATTLE TAKLIFI <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40">1v1 DUEL</span>
+                BATTLE TAKLIFI <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40">1v1 SPEEDWAY</span>
               </h2>
               <p className="text-[11px] text-slate-400">
-                {isDino ? 'T-Rex Dino Runner Dueli' : 'Speedway Tez Yozish Dueli'}
+                Speedway Tez Yozish Dueli
               </p>
             </div>
           </div>
@@ -89,27 +87,25 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
           <div className="flex-1 overflow-hidden space-y-1">
             <div className="flex items-center justify-between">
               <h3 className="font-black text-base text-white truncate">{invite.inviterName}</h3>
-              <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-bold border border-amber-500/30">
-                {isDino ? '🦖 DINO ARENA' : '🏎️ SPEEDWAY'}
+              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full font-bold border border-cyan-500/30">
+                🏎️ SPEEDWAY
               </span>
             </div>
             <p className="text-xs text-slate-300 flex items-center gap-1 font-semibold">
               <Zap className="w-3.5 h-3.5 text-cyan-400" /> Shaxsiy Rekord: <span className="text-amber-400 font-mono font-bold">{invite.inviterWpm || 85} WPM</span>
             </p>
             <p className="text-[11px] text-slate-400 italic">
-              {isDino
-                ? '"Siz bilan T-Rex Dino Runner duelini o\'ynamoqchi!"'
-                : '"Siz bilan tezkor yozish duelini o\'ynamoqchi!"'}
+              "Siz bilan tezkor yozish duelini o'ynamoqchi!"
             </p>
           </div>
         </div>
 
-        {/* PUBG Action Buttons: HA / YO'Q */}
+        {/* Action Buttons: HA / YO'Q */}
         <div className="grid grid-cols-2 gap-3 pt-2">
           {/* Decline Button (YO'Q) */}
           <button
             onClick={() => onDecline(invite)}
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-slate-900 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 border-2 border-rose-500/40 font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md"
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-slate-900 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 border-2 border-rose-500/40 font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md cursor-pointer"
           >
             <X className="w-4 h-4" />
             <span>RAD ETISH (Yo'q)</span>
@@ -118,7 +114,7 @@ export const PubgInviteModal: React.FC<PubgInviteModalProps> = ({ invite, onAcce
           {/* Accept Button (HA) */}
           <button
             onClick={() => onAccept(invite)}
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-black text-xs uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/30 border border-emerald-400"
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-black text-xs uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/30 border border-emerald-400 cursor-pointer"
           >
             <Check className="w-4 h-4" />
             <span>QABUL QILISH (Ha)</span>
