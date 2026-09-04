@@ -84,22 +84,54 @@ export default async function handler(req, res) {
     `🌐 <b>Til:</b> ${langLabel}\n` +
     (consistency ? `📊 <b>Izchillik:</b> ${Math.round(consistency)}%\n` : '') +
     `\n🌟 <i>Yolnoma platformasida yangi cho'qqi zabt etildi!</i>\n` +
-    `🚀 Siz ham o'z tezligingizni sinab ko'ring: https://yolnoma.uz`;
+    `🚀 Siz ham o'z tezligingizni sinab ko'ring: https://www.yolnoma.uz/leaderboard`;
+
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        { text: '🚀 Saytga kirish: yolnoma.uz', url: 'https://www.yolnoma.uz' },
+        { text: '🏆 Milliy Reyting', url: 'https://www.yolnoma.uz/leaderboard' }
+      ]
+    ]
+  };
 
   try {
-    const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    const response = await fetch(telegramUrl, {
+    // 1. Try sending as high-res Photo banner card
+    let telegramResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: CHAT_ID,
-        text: messageText,
+        photo: 'https://www.yolnoma.uz/og-banner.png',
+        caption: messageText,
         parse_mode: 'HTML',
-        disable_web_page_preview: false
+        reply_markup: replyMarkup
       })
     });
 
-    const data = await response.json();
+    let data = await telegramResponse.json();
+
+    // 2. Fallback to sendMessage with rich link preview if photo fails
+    if (!data.ok) {
+      telegramResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: messageText,
+          parse_mode: 'HTML',
+          link_preview_options: {
+            is_disabled: false,
+            url: 'https://www.yolnoma.uz/leaderboard',
+            prefer_large_media: true,
+            show_above_text: false
+          },
+          reply_markup: replyMarkup
+        })
+      });
+      data = await telegramResponse.json();
+    }
+
     if (!data.ok) {
       throw new Error(data.description || 'Telegram API rad etdi');
     }

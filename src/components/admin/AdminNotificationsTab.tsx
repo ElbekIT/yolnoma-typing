@@ -244,6 +244,24 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 <span>•</span>
                 <span>Himoya: <span className="text-emerald-400">Anti-DDoS & Spam Proof</span></span>
               </div>
+
+              {/* Rich Link Preview Status */}
+              <div className="mt-2.5 p-2.5 rounded-xl bg-black/40 border border-cyan-500/20 flex items-center gap-3">
+                <img
+                  src="/og-banner.png"
+                  alt="Yolnoma OG Banner"
+                  className="w-16 h-9 object-cover rounded-lg border border-cyan-500/30 shrink-0"
+                />
+                <div className="text-[11px] leading-snug">
+                  <div className="font-bold text-[var(--text-color)] flex items-center gap-1.5">
+                    <span>Telegram Rich Preview & Banner Faol</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">1200x630</span>
+                  </div>
+                  <div className="text-[var(--sub-color)] truncate max-w-md">
+                    Telegramda <code>https://www.yolnoma.uz/leaderboard</code> yuborilganda rasm, sarlavha va tugmalar bilan to'liq ochiladi.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

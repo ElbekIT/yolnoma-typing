@@ -17,20 +17,49 @@ export default async function handler(req, res) {
     `🛡 <b>Himoya:</b> Token Cloak + Anti-Cheat Armored\n\n` +
     `<i>Bu xabar Yolnoma platformasidan sinov tariqasida yuborildi.</i>`;
 
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        { text: '🚀 Saytga kirish: yolnoma.uz', url: 'https://www.yolnoma.uz' },
+        { text: '🏆 Milliy Reyting', url: 'https://www.yolnoma.uz/leaderboard' }
+      ]
+    ]
+  };
+
   try {
-    const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    const response = await fetch(telegramUrl, {
+    let telegramResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: CHAT_ID,
-        text: testMessage,
+        photo: 'https://www.yolnoma.uz/og-banner.png',
+        caption: testMessage,
         parse_mode: 'HTML',
-        disable_web_page_preview: false
+        reply_markup: replyMarkup
       })
     });
 
-    const data = await response.json();
+    let data = await telegramResponse.json();
+
+    if (!data.ok) {
+      telegramResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: testMessage,
+          parse_mode: 'HTML',
+          link_preview_options: {
+            is_disabled: false,
+            url: 'https://www.yolnoma.uz/leaderboard',
+            prefer_large_media: true
+          },
+          reply_markup: replyMarkup
+        })
+      });
+      data = await telegramResponse.json();
+    }
+
     if (!data.ok) {
       throw new Error(data.description || 'Telegram xatosi');
     }

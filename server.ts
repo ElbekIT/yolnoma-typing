@@ -902,10 +902,45 @@ const TELEGRAM_MIN_COOLDOWN_MS = 90 * 1000; // 90 seconds minimum cooldown
 let currentServerAllTimeRecordWpm = 110;
 const announcedRecordKeys = new Set<string>();
 
-async function sendTelegramMessage(text: string): Promise<{ ok: boolean; description?: string; messageId?: number }> {
+async function sendTelegramMessage(
+  text: string,
+  options?: { photoUrl?: string; buttonText?: string; buttonUrl?: string }
+): Promise<{ ok: boolean; description?: string; messageId?: number }> {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     return { ok: false, description: 'Telegram bot token yoki Chat ID sozlanmagan' };
   }
+
+  const photo = options?.photoUrl || 'https://www.yolnoma.uz/og-banner.png';
+  const reply_markup = {
+    inline_keyboard: [
+      [
+        { text: options?.buttonText || '🚀 Saytga kirish: yolnoma.uz', url: options?.buttonUrl || 'https://www.yolnoma.uz' },
+        { text: '🏆 Milliy Reyting', url: 'https://www.yolnoma.uz/leaderboard' }
+      ]
+    ]
+  };
+
+  // 1. Send as high-res Photo banner card (matches Telegram rich preview)
+  try {
+    const photoApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
+    const photoRes = await fetch(photoApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        photo,
+        caption: text,
+        parse_mode: 'HTML',
+        reply_markup
+      })
+    });
+    const photoData = (await photoRes.json()) as any;
+    if (photoData.ok) {
+      return { ok: true, messageId: photoData.result?.message_id };
+    }
+  } catch {}
+
+  // 2. Fallback to sendMessage with rich link preview enabled
   try {
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     const response = await fetch(url, {
@@ -915,7 +950,13 @@ async function sendTelegramMessage(text: string): Promise<{ ok: boolean; descrip
         chat_id: TELEGRAM_CHAT_ID,
         text,
         parse_mode: 'HTML',
-        disable_web_page_preview: false
+        link_preview_options: {
+          is_disabled: false,
+          url: 'https://www.yolnoma.uz/leaderboard',
+          prefer_large_media: true,
+          show_above_text: false
+        },
+        reply_markup
       })
     });
     const data = (await response.json()) as any;
@@ -1021,9 +1062,13 @@ app.post('/api/announce-winner', async (req, res) => {
     `🌐 <b>Til:</b> ${langLabel}\n` +
     (consistency ? `📊 <b>Izchillik:</b> ${Math.round(consistency)}%\n` : '') +
     `\n🌟 <i>Yolnoma platformasida yangi cho'qqi zabt etildi!</i>\n` +
-    `🚀 Siz ham o'z tezligingizni sinab ko'ring: <a href="https://yolnoma.uz">yolnoma.uz</a>`;
+    `🚀 Siz ham o'z tezligingizni sinab ko'ring: <a href="https://www.yolnoma.uz/leaderboard">yolnoma.uz/leaderboard</a>`;
 
-  const result = await sendTelegramMessage(messageText);
+  const result = await sendTelegramMessage(messageText, {
+    photoUrl: 'https://www.yolnoma.uz/og-banner.png',
+    buttonText: '🚀 Saytga kirish (yolnoma.uz)',
+    buttonUrl: 'https://www.yolnoma.uz'
+  });
   if (!result.ok) {
     return res.status(500).json({ success: false, error: result.description || "Telegramga yuborishda xatolik yuz berdi" });
   }
@@ -1055,7 +1100,11 @@ app.post('/api/telegram/test', async (req, res) => {
     `🛡 <b>Himoya holati:</b> Serverless Token Cloak + Anti-Cheat Active\n\n` +
     `<i>Bu xabar Yolnoma platformasidan sinov tariqasida yuborildi.</i>`;
 
-  const result = await sendTelegramMessage(testMessage);
+  const result = await sendTelegramMessage(testMessage, {
+    photoUrl: 'https://www.yolnoma.uz/og-banner.png',
+    buttonText: '🚀 Saytga kirish (yolnoma.uz)',
+    buttonUrl: 'https://www.yolnoma.uz'
+  });
   if (!result.ok) {
     return res.status(500).json({ success: false, error: result.description });
   }
