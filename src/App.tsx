@@ -16,6 +16,11 @@ import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
 import { DevToolsBlockedScreen } from './components/DevToolsBlockedScreen';
+import { IpBlockedScreen } from './components/security/IpBlockedScreen';
+import { VpnBlockedScreen } from './components/security/VpnBlockedScreen';
+import { MaintenanceScreen } from './components/security/MaintenanceScreen';
+import { fetchIpSecurityStatus } from './utils/securityShield';
+import { Wrench } from 'lucide-react';
 import { antiCheatManager } from './utils/antiCheat';
 
 // Lazy-loaded secondary views for high performance & fast initial loading
@@ -186,6 +191,108 @@ function MainAppContent() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Security Shields: IP Ban, VPN, Maintenance
+  const [ipBanInfo, setIpBanInfo] = useState<{
+    banned: boolean;
+    ip?: string;
+    reason?: string;
+    attackType?: string;
+    bannedAt?: number;
+    unbanAt?: number;
+  } | null>(null);
+
+  const [vpnInfo, setVpnInfo] = useState<{
+    isVpn: boolean;
+    ip?: string;
+    reason?: string;
+  } | null>(null);
+
+  const [maintenanceInfo, setMaintenanceInfo] = useState<{
+    active: boolean;
+    title: string;
+    message: string;
+    estimatedTime: string;
+    whitelistEmails: string[];
+    updatedAt: number;
+  }>({
+    active: false,
+    title: 'Saytda Katta Yangilanish Ketmoqda! 🛠️',
+    message: 'Hurmatli foydalanuvchilar, platformada muhim yangilanish olib borilmoqda. Tez orada barcha xizmatlar toʻliq qayta ishga tushadi.',
+    estimatedTime: '15 daqiqa',
+    whitelistEmails: ['yuldashivagavharoy@gmail.com'],
+    updatedAt: Date.now()
+  });
+
+  // Listen for Realtime DB Maintenance Mode for instant live push across all active browser tabs!
+  useEffect(() => {
+    try {
+      const maintRef = ref(rtdb, 'system/maintenance');
+      const unsub = onValue(maintRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          if (val && typeof val.active === 'boolean') {
+            setMaintenanceInfo(val);
+          }
+        }
+      });
+      return () => unsub();
+    } catch {}
+  }, []);
+
+  // Periodic security verify with backend (IP ban, VPN, Maintenance)
+  useEffect(() => {
+    let isMounted = true;
+    const verifySecurity = async () => {
+      try {
+        const res = await fetchIpSecurityStatus();
+        if (!isMounted) return;
+
+        if (res.banned) {
+          setIpBanInfo({
+            banned: true,
+            ip: res.ip,
+            reason: res.banReason || "Saytga ruxsatsiz soʻrovlar yoki DDoS/DRDoS hujumlari aniqlandi",
+            attackType: res.attackType || 'DDoS/DRDoS Hujumi',
+            bannedAt: res.bannedAt,
+            unbanAt: res.unbanAt
+          });
+        } else {
+          setIpBanInfo(null);
+        }
+
+        if (res.isVpn) {
+          setVpnInfo({
+            isVpn: true,
+            ip: res.ip,
+            reason: res.vpnReason || 'Anonimlashtiruvchi VPN yoki Proksi server aniqlandi'
+          });
+        } else {
+          setVpnInfo(null);
+        }
+
+        if (res.maintenance && typeof res.maintenance.active === 'boolean') {
+          setMaintenanceInfo(res.maintenance);
+        }
+      } catch {}
+    };
+
+    verifySecurity();
+    const interval = setInterval(verifySecurity, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const isOwnerWhitelisted = Boolean(
+    user?.email &&
+    (user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+     user.email.toLowerCase() === 'elbek@yolnoma.uz' ||
+     (maintenanceInfo.whitelistEmails || []).some(
+       (e) => e.toLowerCase() === (user?.email || '').toLowerCase()
+     ))
+  );
 
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -594,13 +701,58 @@ function MainAppContent() {
 
   const currentTargetChar = targetText[typedInput.length] || '';
 
-  // DevTools inspection block
+  // 1. IP Ban check (Malicious DDoS/DRDoS attack IP blocked)
+  if (ipBanInfo?.banned) {
+    return (
+      <IpBlockedScreen
+        ip={ipBanInfo.ip}
+        reason={ipBanInfo.reason}
+        attackType={ipBanInfo.attackType}
+        bannedAt={ipBanInfo.bannedAt}
+        unbanAt={ipBanInfo.unbanAt}
+      />
+    );
+  }
+
+  // 2. Anti-VPN check (VPN detected)
+  if (vpnInfo?.isVpn && !isOwnerWhitelisted) {
+    return (
+      <VpnBlockedScreen
+        detectedIp={vpnInfo.ip}
+        detectedReason={vpnInfo.reason}
+      />
+    );
+  }
+
+  // 3. Maintenance check (Site under maintenance, push to all users except owner)
+  if (maintenanceInfo.active && !isOwnerWhitelisted) {
+    return (
+      <MaintenanceScreen
+        title={maintenanceInfo.title}
+        message={maintenanceInfo.message}
+        estimatedTime={maintenanceInfo.estimatedTime}
+        updatedAt={maintenanceInfo.updatedAt}
+      />
+    );
+  }
+
+  // 4. DevTools inspection block
   if (isDevToolsBlocked) {
     return <DevToolsBlockedScreen />;
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
+      {/* Whitelisted Owner Notice during Active Maintenance */}
+      {maintenanceInfo.active && isOwnerWhitelisted && (
+        <div className="bg-rose-600 text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-lg border-b border-rose-700">
+          <Wrench className="w-4 h-4 animate-spin shrink-0" />
+          <span>
+            🛠️ Sayt yangilanish rejimida (Barcha oddiy foydalanuvchilarga yopilgan). Siz Bosh Administrator (<strong>{user?.email}</strong>) sifatida ishlamoqdasiz.
+          </span>
+        </div>
+      )}
+
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}

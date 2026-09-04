@@ -35,7 +35,43 @@ const activeSocketsPerIp = new Map<string, number>();
 const payloadHashCache = new Map<string, number>();
 
 // 4. Temporary / Permanent Blacklist with auto-expiry
-const bannedIps = new Map<string, { unbanAt: number; reason: string }>(); // ip -> info
+export interface BannedIpRecord {
+  ip: string;
+  unbanAt: number;
+  bannedAt: number;
+  reason: string;
+  attackType?: string;
+  violationsCount?: number;
+  userAgent?: string;
+}
+
+export interface AttackLogEntry {
+  id: string;
+  ip: string;
+  timestamp: number;
+  type: string;
+  details: string;
+  userAgent: string;
+  blocked: boolean;
+}
+
+const bannedIps = new Map<string, BannedIpRecord>(); // ip -> info
+const serverAttackLogs: AttackLogEntry[] = [];
+
+let serverSettings = {
+  antiVpnStrict: true,
+  ddosShieldActive: true
+};
+
+let serverMaintenanceState = {
+  active: false,
+  title: "Saytda Katta Yangilanish Ketmoqda! 🛠️",
+  message: "Hurmatli foydalanuvchilar, platformada yangi imkoniyatlar va xavfsizlik yangilanishi o'rnatilmoqda. Tez orada barcha xizmatlar qayta ishga tushadi.",
+  estimatedTime: "15 daqiqa",
+  whitelistEmails: ["yuldashivagavharoy@gmail.com"],
+  updatedAt: Date.now(),
+  enabledBy: "yuldashivagavharoy@gmail.com"
+};
 
 const serverStats = {
   serverStartTime: Date.now(),
@@ -137,14 +173,134 @@ const getSubnet = (ip: string): string => {
   return ip;
 };
 
-// Auto-ban an offending IP and immediately destroy TCP socket to preserve server CPU & RAM
-function triggerSecurityBan(req: express.Request, ip: string, reason: string, durationMs: number = 3600000) {
-  bannedIps.set(ip, { unbanAt: Date.now() + durationMs, reason });
+// Render full Cyber Security Lockdown HTML page for blocked attackers
+function renderBannedIpHtml(ip: string, reason: string, bannedAt: number, unbanAt: number, attackType: string = 'DDoS / DRDoS Hujumi'): string {
+  const dateStr = new Date(bannedAt).toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' });
+  return `<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiber Xavfsizlik Filtri: IP Bloklandi - Yolnoma</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    body { background:#06080f; color:#e2e8f0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .card { max-width:580px; width:100%; background:#0f172a; border:2px solid rgba(244,63,94,0.45); border-radius:24px; padding:32px; text-align:center; box-shadow:0 25px 50px -12px rgba(225,29,72,0.3); }
+    .badge { display:inline-block; padding:6px 14px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.4); border-radius:999px; color:#fb7185; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; margin-bottom:20px; }
+    .icon { width:80px; height:80px; margin:0 auto 20px; background:rgba(244,63,94,0.15); border:2px solid rgba(244,63,94,0.5); border-radius:22px; display:flex; align-items:center; justify-content:center; color:#f43f5e; font-size:36px; }
+    h1 { font-size:24px; font-weight:900; color:#fff; margin-bottom:12px; }
+    p.desc { font-size:13px; color:#cbd5e1; line-height:1.6; margin-bottom:24px; }
+    .details { background:#030712; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:16px; text-align:left; font-size:12px; font-family:monospace; margin-bottom:24px; }
+    .row { display:flex; justify-content:space-between; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .row:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+    .label { color:#94a3b8; }
+    .val { color:#f43f5e; font-weight:700; }
+    .reason-box { background:rgba(225,29,72,0.1); border:1px solid rgba(244,63,94,0.2); padding:10px; border-radius:10px; color:#fda4af; font-family:sans-serif; margin-top:10px; font-size:12px; }
+    .btn { display:block; width:100%; padding:14px; background:linear-gradient(135deg, #e11d48, #be123c); color:#fff; border:none; border-radius:14px; font-weight:800; font-size:13px; letter-spacing:0.5px; cursor:pointer; text-transform:uppercase; text-decoration:none; }
+    .support { font-size:11px; color:#64748b; margin-top:16px; }
+    .support a { color:#f43f5e; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">🛡️ Kiber Xavfsizlik Filtri • IP Bloklandi</div>
+    <div class="icon">🛑</div>
+    <h1>Sizning IP Manzilingiz Bloklandi!</h1>
+    <p class="desc">Ushbu IP manzildan Yolnoma tizimiga ruxsatsiz noqonuniy soʻrovlar (DDoS / DRDoS hujumi, sekin soʻrovlar toshqini yoki xavfli skanerlash) aniqlangani sababli saytga kirish butunlay toʻxtatildi.</p>
+    <div class="details">
+      <div class="row"><span class="label">Bloklangan IP:</span><span class="val">${ip}</span></div>
+      <div class="row"><span class="label">Hujum turi:</span><span style="color:#fbbf24; font-weight:bold;">${attackType}</span></div>
+      <div class="row"><span class="label">Qayd etilgan vaqt:</span><span style="color:#e2e8f0;">${dateStr}</span></div>
+      <div class="row"><span class="label">Hodisa kodi:</span><span style="color:#fbbf24;">SEC-DRDOS-BAN-403</span></div>
+      <div class="reason-box"><strong>Bloklanish sababi:</strong> ${reason}</div>
+    </div>
+    <button class="btn" onclick="window.location.reload()">Qayta Tekshirish (Reload)</button>
+    <div class="support">Agar ushbu cheklov xatolik bilan o'rnatilgan bo'lsa: <a href="mailto:support@yolnoma.uz">support@yolnoma.uz</a></div>
+  </div>
+</body>
+</html>`;
+}
+
+// Known Hosting / Datacenter / Proxy Subnet prefixes used for VPN & proxies
+const VPN_DATACENTER_IP_PATTERNS = [
+  /^185\.(220|107|190|232)\./,
+  /^194\.(26|135|87|156)\./,
+  /^45\.(154|155|95|142|134|129)\./,
+  /^193\.(32|176|106|36)\./,
+  /^89\.(248|238|147|187)\./,
+  /^195\.(181|206|154)\./,
+  /^104\.(244|200|238)\./,
+  /^198\.(98|252|144)\./
+];
+
+function detectVpn(req: express.Request, ip: string): { isVpn: boolean; reason?: string } {
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost') {
+    return { isVpn: false };
+  }
+
+  const via = req.headers['via'];
+  const proxyConn = req.headers['proxy-connection'];
+  const xProxyId = req.headers['x-proxy-id'];
+  const xTor = req.headers['x-tor-exit-node'];
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  const cfWorker = req.headers['cf-worker'];
+
+  if (via || proxyConn || xProxyId || xTor || cfWorker) {
+    return { isVpn: true, reason: 'Proksi yoki Anonimlashtiruvchi shlyuz sarlavhalari aniqlandi' };
+  }
+
+  if (typeof xForwardedFor === 'string') {
+    const hops = xForwardedFor.split(',').map(s => s.trim());
+    if (hops.length >= 3) {
+      return { isVpn: true, reason: 'Ko\'p zanjirli Proksi marshruti aniqlandi' };
+    }
+  }
+
+  for (const pat of VPN_DATACENTER_IP_PATTERNS) {
+    if (pat.test(ip)) {
+      return { isVpn: true, reason: 'VPN / Hosting Ma\'lumotlar Markazi (Datacenter) IP diapazoni' };
+    }
+  }
+
+  return { isVpn: false };
+}
+
+// Auto-ban an offending IP, log the incident, and register in memory
+function triggerSecurityBan(
+  req: express.Request,
+  ip: string,
+  reason: string,
+  durationMs: number = 86400000 * 30, // 30 days default
+  attackType: string = 'DDoS / DRDoS Hujumi'
+) {
+  const existing = bannedIps.get(ip);
+  const violationsCount = (existing?.violationsCount || 0) + 1;
+  const userAgent = (req.headers['user-agent'] || '').slice(0, 150);
+
+  const record: BannedIpRecord = {
+    ip,
+    bannedAt: Date.now(),
+    unbanAt: Date.now() + durationMs,
+    reason,
+    attackType,
+    violationsCount,
+    userAgent
+  };
+
+  bannedIps.set(ip, record);
   serverStats.securityEventsBlocked += 1;
   serverStats.ddosFloodsBlocked += 1;
-  try {
-    req.socket.destroy();
-  } catch {}
+
+  serverAttackLogs.unshift({
+    id: `atk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    ip,
+    timestamp: Date.now(),
+    type: attackType,
+    details: reason,
+    userAgent,
+    blocked: true
+  });
+  if (serverAttackLogs.length > 200) serverAttackLogs.pop();
 }
 
 // -------------------------------------------------------------
@@ -181,6 +337,7 @@ app.use((req, res, next) => {
   if (currentSockets > 35) {
     serverStats.ddosFloodsBlocked += 1;
     serverStats.securityEventsBlocked += 1;
+    triggerSecurityBan(req, clientIp, 'Slowloris Concurrent Connection Flood', 86400000, 'Slowloris Flood');
     try {
       req.socket.destroy();
     } catch {}
@@ -191,10 +348,20 @@ app.use((req, res, next) => {
   const banInfo = bannedIps.get(clientIp);
   if (banInfo && now < banInfo.unbanAt) {
     serverStats.ddosFloodsBlocked += 1;
-    try {
-      req.socket.destroy();
-    } catch {}
-    return res.status(403).json({ error: 'Access restricted' });
+    if (req.path.startsWith('/api/')) {
+      return res.status(403).json({
+        banned: true,
+        error: 'IP_BANNED',
+        ip: clientIp,
+        reason: banInfo.reason,
+        bannedAt: banInfo.bannedAt,
+        unbanAt: banInfo.unbanAt,
+        attackType: banInfo.attackType || 'DDoS / DRDoS Hujumi'
+      });
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(403).send(renderBannedIpHtml(clientIp, banInfo.reason, banInfo.bannedAt, banInfo.unbanAt, banInfo.attackType));
   }
 
   const userAgent = req.headers['user-agent'] || '';
@@ -541,7 +708,7 @@ const serverInboxMessages: StoredInboxMessage[] = [
 const serverAnnouncements: StoredAnnouncement[] = [
   {
     id: 'ann-init-1',
-    title: 'Yolnoma Typing v3.0 Backend Xavfsizlik Yangilanishi! ������',
+    title: 'Yolnoma Typing v3.0 Backend Xavfsizlik Yangilanishi! 🚀',
     message: 'Barcha autentifikatsiya va natijalarni tekshirish backend server himoyasiga o\'tkazildi. Anti-Cheat va kriptografik tekshiruv faol.',
     type: 'success',
     sender: 'Bosh Admin (Yolnoma)',
@@ -1497,16 +1664,20 @@ app.get('/api/security/drdos-shield', (req, res) => {
   });
 });
 
-// Admin IP Ban Management: List Banned IPs
+// Admin IP Ban Management: List Banned IPs with full incident forensics
 app.get('/api/admin/banned-ips', requireAdminAuth, (req, res) => {
   const list = Array.from(bannedIps.entries()).map(([ip, data]) => ({
     ip,
+    bannedAt: data.bannedAt || (Date.now() - 3600000),
     unbanAt: data.unbanAt,
     remainingSeconds: Math.max(0, Math.floor((data.unbanAt - Date.now()) / 1000)),
-    reason: data.reason
+    reason: data.reason,
+    attackType: data.attackType || 'DDoS / DRDoS Hujumi',
+    violationsCount: data.violationsCount || 1,
+    userAgent: data.userAgent || 'Noma\'lum'
   }));
 
-  res.json({ success: true, bannedIps: list });
+  res.json({ success: true, bannedIps: list, count: list.length });
 });
 
 // Admin Inbox: List Messages
@@ -1596,29 +1767,169 @@ app.delete('/api/admin/announcements/:id', requireAdminAuth, (req, res) => {
   res.json({ success: true, message: 'E\'lon o\'chirildi' });
 });
 
-// Admin IP Ban Management
-app.post('/api/admin/ban-ip', requireAdminAuth, (req, res) => {
-  const { ip, reason } = req.body;
-  if (!ip) return res.status(400).json({ success: false, error: 'IP talab qilinadi' });
+// -------------------------------------------------------------
+// PUBLIC SECURITY & MAINTENANCE STATUS ENDPOINTS
+// -------------------------------------------------------------
 
-  const targetIp = String(ip).trim();
-  bannedIps.set(targetIp, {
-    unbanAt: Date.now() + 30 * 24 * 3600000, // 30 days ban
-    reason: reason ? String(reason).trim() : 'Admin tomonidan qo\'lda bloklandi'
+// Client calls this to know its real IP, ban state, VPN state, and maintenance status
+app.get('/api/security/my-ip-status', (req, res) => {
+  const clientIp = getClientIp(req);
+  const banInfo = bannedIps.get(clientIp);
+  const isBanned = Boolean(banInfo && Date.now() < banInfo.unbanAt);
+  const vpnCheck = detectVpn(req, clientIp);
+
+  res.json({
+    ip: clientIp,
+    banned: isBanned,
+    banInfo: isBanned ? banInfo : null,
+    isVpn: vpnCheck.isVpn,
+    vpnReason: vpnCheck.reason,
+    antiVpnEnabled: serverSettings.antiVpnStrict,
+    maintenance: serverMaintenanceState
   });
-
-  const list = Array.from(bannedIps.entries()).map(([k, v]) => ({ ip: k, ...v }));
-  res.json({ success: true, message: `${targetIp} manzili muvaffaqiyatli bloklandi`, bannedIps: list });
 });
 
+// Public Maintenance Status (Quick Poller)
+app.get('/api/maintenance/status', (req, res) => {
+  res.json(serverMaintenanceState);
+});
+
+// -------------------------------------------------------------
+// SECURE ADMIN SECURITY & MAINTENANCE CONTROL ENDPOINTS
+// -------------------------------------------------------------
+
+// Admin Maintenance Mode Controller (Site Lockdown / Overlay)
+app.post('/api/admin/maintenance', requireAdminAuth, (req, res) => {
+  const { active, title, message, estimatedTime, whitelistEmails } = req.body;
+
+  serverMaintenanceState = {
+    active: Boolean(active),
+    title: title ? String(title).trim() : serverMaintenanceState.title,
+    message: message ? String(message).trim() : serverMaintenanceState.message,
+    estimatedTime: estimatedTime ? String(estimatedTime).trim() : serverMaintenanceState.estimatedTime,
+    whitelistEmails: Array.isArray(whitelistEmails) && whitelistEmails.length > 0 
+      ? whitelistEmails 
+      : ["yuldashivagavharoy@gmail.com"],
+    updatedAt: Date.now(),
+    enabledBy: (req as any).adminUser?.email || (req as any).adminUser?.sub || "yuldashivagavharoy@gmail.com"
+  };
+
+  res.json({
+    success: true,
+    message: serverMaintenanceState.active 
+      ? "Sayt yangilanish (Maintenance) rejimiga o'tkazildi. Barcha oddiy foydalanuvchilar uchun sayt yopildi."
+      : "Yangilanish rejimi o'chirildi. Sayt barcha foydalanuvchilar uchun qayta ochildi.",
+    maintenance: serverMaintenanceState
+  });
+});
+
+// Security Settings: Get & Toggle Anti-VPN Strict Shield
+app.get('/api/admin/security-settings', requireAdminAuth, (req, res) => {
+  res.json({
+    success: true,
+    settings: serverSettings
+  });
+});
+
+app.post('/api/admin/security-settings', requireAdminAuth, (req, res) => {
+  const { antiVpnStrict, ddosShieldActive } = req.body;
+  if (typeof antiVpnStrict === 'boolean') {
+    serverSettings.antiVpnStrict = antiVpnStrict;
+  }
+  if (typeof ddosShieldActive === 'boolean') {
+    serverSettings.ddosShieldActive = ddosShieldActive;
+  }
+  res.json({
+    success: true,
+    message: "Xavfsizlik sozlamalari yangilandi",
+    settings: serverSettings
+  });
+});
+
+// Real-Time Attack Logs
+app.get('/api/admin/attack-logs', requireAdminAuth, (req, res) => {
+  res.json({
+    success: true,
+    attackLogs: serverAttackLogs
+  });
+});
+
+// Admin IP Ban Management: Manual Ban
+app.post('/api/admin/ban-ip', requireAdminAuth, (req, res) => {
+  const { ip, reason, durationHours, attackType } = req.body;
+  if (!ip) return res.status(400).json({ success: false, error: 'IP manzili talab qilinadi' });
+
+  const targetIp = String(ip).trim();
+  const hours = Number(durationHours) || (30 * 24); // default 30 days
+  const unbanAt = Date.now() + hours * 3600000;
+
+  const banRecord: BannedIpRecord = {
+    ip: targetIp,
+    bannedAt: Date.now(),
+    unbanAt,
+    reason: reason ? String(reason).trim() : 'Admin tomonidan qoʻlda bloklandi',
+    attackType: attackType || 'Admin Qoʻlda Blokladi',
+    violationsCount: 1,
+    userAgent: 'Admin Panel Action'
+  };
+
+  bannedIps.set(targetIp, banRecord);
+  serverStats.securityEventsBlocked += 1;
+
+  // Record in logs
+  serverAttackLogs.unshift({
+    id: `atk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    ip: targetIp,
+    timestamp: Date.now(),
+    type: banRecord.attackType || 'Manual Ban',
+    details: banRecord.reason,
+    userAgent: 'Admin Panel',
+    blocked: true
+  });
+  if (serverAttackLogs.length > 200) serverAttackLogs.pop();
+
+  const list = Array.from(bannedIps.entries()).map(([k, v]) => ({
+    ip: k,
+    ...v,
+    remainingSeconds: Math.max(0, Math.floor((v.unbanAt - Date.now()) / 1000))
+  }));
+
+  res.json({
+    success: true,
+    message: `${targetIp} manzili muvaffaqiyatli bloklandi`,
+    bannedIps: list
+  });
+});
+
+// Admin IP Ban Management: Unban specific IP
 app.post('/api/admin/unban-ip', requireAdminAuth, (req, res) => {
   const { ip } = req.body;
   if (!ip) return res.status(400).json({ success: false, error: 'IP talab qilinadi' });
 
   const targetIp = String(ip).trim();
   bannedIps.delete(targetIp);
-  const list = Array.from(bannedIps.entries()).map(([k, v]) => ({ ip: k, ...v }));
-  res.json({ success: true, message: `${targetIp} blokdan chiqarildi`, bannedIps: list });
+
+  const list = Array.from(bannedIps.entries()).map(([k, v]) => ({
+    ip: k,
+    ...v,
+    remainingSeconds: Math.max(0, Math.floor((v.unbanAt - Date.now()) / 1000))
+  }));
+
+  res.json({
+    success: true,
+    message: `${targetIp} manzili blokdan chiqarildi`,
+    bannedIps: list
+  });
+});
+
+// Admin IP Ban Management: Unban ALL IPs
+app.post('/api/admin/unban-all', requireAdminAuth, (req, res) => {
+  bannedIps.clear();
+  res.json({
+    success: true,
+    message: 'Barcha IP manzillar blokdan chiqarildi',
+    bannedIps: []
+  });
 });
 
 // Global Error Masking Middleware (Prevent 500/503/403 leakage & stack traces)

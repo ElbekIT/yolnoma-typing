@@ -20,7 +20,8 @@ import {
   Check,
   Radar,
   Network,
-  Waves
+  Waves,
+  Globe2
 } from 'lucide-react';
 import { getAdminToken } from '../../utils/ownerAuth';
 
@@ -57,6 +58,19 @@ interface BannedIpItem {
   unbanAt: number;
   remainingSeconds: number;
   reason?: string;
+  attackType?: string;
+  violationsCount?: number;
+  userAgent?: string;
+}
+
+interface AttackLogItem {
+  id: string;
+  ip: string;
+  timestamp: number;
+  type: string;
+  details: string;
+  userAgent: string;
+  blocked: boolean;
 }
 
 export const AdminServerTab: React.FC = () => {
@@ -89,10 +103,14 @@ export const AdminServerTab: React.FC = () => {
   });
 
   const [bannedIpsList, setBannedIpsList] = useState<BannedIpItem[]>([]);
+  const [attackLogsList, setAttackLogsList] = useState<AttackLogItem[]>([]);
+  const [antiVpnStrict, setAntiVpnStrict] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manualIpToBan, setManualIpToBan] = useState('');
-  const [banReason, setBanReason] = useState('DRDoS / Reflector Flood Hujumi');
+  const [banReason, setBanReason] = useState('DDoS / DRDoS noqonuniy soʻrovlar toshqini');
+  const [banDurationHours, setBanDurationHours] = useState('720'); // 30 days default
+  const [banAttackType, setBanAttackType] = useState('DRDoS Reflector Loop');
   const [isBanning, setIsBanning] = useState(false);
   const [banFeedback, setBanFeedback] = useState<string | null>(null);
   const [shieldTestResult, setShieldTestResult] = useState<string | null>(null);
@@ -102,11 +120,17 @@ export const AdminServerTab: React.FC = () => {
 
     try {
       if (token) {
-        const [statsRes, bansRes] = await Promise.all([
+        const [statsRes, bansRes, secRes, logsRes] = await Promise.all([
           fetch('/api/admin/stats', {
             headers: { Authorization: `Bearer ${token}` }
           }),
           fetch('/api/admin/banned-ips', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch('/api/admin/security-settings', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch('/api/admin/attack-logs', {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -123,6 +147,20 @@ export const AdminServerTab: React.FC = () => {
           const bansData = await bansRes.json();
           if (bansData && bansData.bannedIps) {
             setBannedIpsList(bansData.bannedIps);
+          }
+        }
+
+        if (secRes.ok) {
+          const secData = await secRes.json();
+          if (secData && secData.settings && typeof secData.settings.antiVpnStrict === 'boolean') {
+            setAntiVpnStrict(secData.settings.antiVpnStrict);
+          }
+        }
+
+        if (logsRes.ok) {
+          const logsData = await logsRes.json();
+          if (logsData && logsData.attackLogs) {
+            setAttackLogsList(logsData.attackLogs);
           }
         }
         return;
@@ -195,7 +233,9 @@ export const AdminServerTab: React.FC = () => {
         },
         body: JSON.stringify({
           ip: manualIpToBan.trim(),
-          reason: banReason.trim()
+          reason: banReason.trim(),
+          durationHours: Number(banDurationHours),
+          attackType: banAttackType
         })
       });
       const data = await res.json();
@@ -234,6 +274,45 @@ export const AdminServerTab: React.FC = () => {
     } catch (err) {
       setBanFeedback('❌ Blokdan chiqarishda xatolik');
     }
+  };
+
+  const handleUnbanAll = async () => {
+    if (!window.confirm("Barcha bloklangan IP manzillarni blokdan chiqarmoqchimisiz?")) return;
+    const token = getAdminToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/admin/unban-all', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBanFeedback("✅ Barcha IP manzillar blokdan chiqarildi");
+        fetchServerStats();
+      }
+    } catch {
+      setBanFeedback("❌ Xatolik yuz berdi");
+    }
+  };
+
+  const handleToggleAntiVpn = async () => {
+    const token = getAdminToken();
+    if (!token) return;
+    const nextVal = !antiVpnStrict;
+    setAntiVpnStrict(nextVal);
+
+    try {
+      await fetch('/api/admin/security-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ antiVpnStrict: nextVal })
+      });
+      setBanFeedback(nextVal ? "🛡️ Anti-VPN Filtri Yoqildi (Barcha VPN bloklanadi)" : "⚪ Anti-VPN Filtri Vaqtincha Oʻchirildi");
+    } catch {}
   };
 
   const formatUptime = (seconds: number) => {
@@ -500,17 +579,50 @@ export const AdminServerTab: React.FC = () => {
                 Max 4 Urinish / 15 daqiqa
               </span>
             </div>
+
+            {/* Anti-VPN Strict Shield Controller */}
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/40 flex items-center justify-between mt-2">
+              <div>
+                <div className="text-white font-bold flex items-center gap-1.5">
+                  <Globe2 className="w-4 h-4 text-amber-400" />
+                  <span>Anti-VPN & Proksi Himoya Filtri:</span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  VPN yoki anonim proksi orqali kiruvchi foydalanuvchilarni toʻxtatish
+                </p>
+              </div>
+              <button
+                onClick={handleToggleAntiVpn}
+                className={`px-3 py-1.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
+                  antiVpnStrict
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30'
+                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                {antiVpnStrict ? '🟢 FAOL (BLOKLANADI)' : '⚪ OʻCHIRILGAN'}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* IP Ban & Firewall Management */}
         <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-4">
-          <div className="flex items-center gap-2 text-white font-black text-sm">
-            <Ban className="w-5 h-5 text-rose-400" />
-            <span>Server IP Firewall & Qora Ro'yxat Boshqaruvi</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-white font-black text-sm">
+              <Ban className="w-5 h-5 text-rose-400" />
+              <span>Server IP Firewall & Qora Roʻyxat</span>
+            </div>
+            {bannedIpsList.length > 0 && (
+              <button
+                onClick={handleUnbanAll}
+                className="text-[10px] text-rose-400 hover:text-rose-300 underline font-bold cursor-pointer"
+              >
+                Barchasini Ochish ({bannedIpsList.length})
+              </button>
+            )}
           </div>
           <p className="text-xs text-[var(--sub-color)]">
-            Hujum qiluvchi yoki shubhali IP manzillarni to'g'ridan-to'g'ri backend server darajasida darhol bloklash va boshqarish.
+            DDoS, DRDoS yoki shubhali IP manzillarni darhol qora roʻyxatga olish va blokdan chiqarish.
           </p>
 
           <form onSubmit={handleBanIp} className="space-y-3">
@@ -538,15 +650,48 @@ export const AdminServerTab: React.FC = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 block">Hujum / Blok turi:</label>
+                <select
+                  value={banAttackType}
+                  onChange={(e) => setBanAttackType(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-300 focus:outline-none focus:border-rose-500 cursor-pointer"
+                >
+                  <option value="DRDoS Reflector Loop">DRDoS Reflector Loop</option>
+                  <option value="DDoS Flood">DDoS Flood</option>
+                  <option value="Slowloris Flood">Slowloris Flood</option>
+                  <option value="Range Amplification">Range Amplification Bomb</option>
+                  <option value="Malicious Attack Tool">Malicious Attack Tool</option>
+                  <option value="Admin Qoʻlda Blokladi">Admin Qoʻlda Blokladi</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 block">Muddat:</label>
+                <select
+                  value={banDurationHours}
+                  onChange={(e) => setBanDurationHours(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-300 focus:outline-none focus:border-rose-500 cursor-pointer"
+                >
+                  <option value="1">1 soat</option>
+                  <option value="24">24 soat (1 kun)</option>
+                  <option value="168">7 kun</option>
+                  <option value="720">30 kun (Standart)</option>
+                  <option value="8760">1 yil / Doimiy</option>
+                </select>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-300 block">
-                Bloklash Sababi:
+                Bloklash Sababi (Foydalanuvchi koʻradi):
               </label>
               <input
                 type="text"
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
-                placeholder="Sabab"
+                placeholder="Sabab..."
                 className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -565,25 +710,33 @@ export const AdminServerTab: React.FC = () => {
             </div>
 
             {bannedIpsList.length === 0 ? (
-              <div className="p-3 rounded-xl bg-slate-950/40 text-center text-xs text-slate-500 font-mono">
-                Hozirda bloklangan IP manzillar yo'q (Barcha oqim xavfsiz)
+              <div className="p-4 rounded-xl bg-slate-950/40 text-center text-xs text-slate-500 font-mono">
+                Hozirda bloklangan IP manzillar yoʻq (Barcha oqim xavfsiz)
               </div>
             ) : (
-              <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+              <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
                 {bannedIpsList.map((item) => (
                   <div
                     key={item.ip}
-                    className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2 text-xs"
+                    className="p-3 rounded-xl bg-slate-950 border border-rose-500/30 flex items-center justify-between gap-2 text-xs"
                   >
-                    <div className="font-mono text-rose-400">
-                      <div>{item.ip}</div>
-                      <div className="text-[10px] text-slate-500">
-                        {item.reason || 'DRDoS/Spam'} • {Math.ceil(item.remainingSeconds / 60)} daq qoldi
+                    <div className="font-mono text-rose-400 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white text-xs">{item.ip}</span>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                          {item.attackType || 'DDoS/DRDoS'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-sans line-clamp-1">
+                        {item.reason}
+                      </div>
+                      <div className="text-[9px] text-slate-500">
+                        Qolgan vaqt: {Math.ceil(item.remainingSeconds / 60)} daqiqa
                       </div>
                     </div>
                     <button
                       onClick={() => handleUnbanIp(item.ip)}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-black font-bold text-[10px] transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-black font-bold text-xs transition-all cursor-pointer shrink-0"
                     >
                       Ochish
                     </button>
@@ -594,6 +747,39 @@ export const AdminServerTab: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Real-Time Attack Forensics Feed */}
+      {attackLogsList.length > 0 && (
+        <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
+          <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-2.5">
+            <div className="flex items-center gap-2 text-white font-bold text-xs">
+              <ShieldAlert className="w-4 h-4 text-rose-400" />
+              <span>Oxirgi Aniqlangan Hujumlar & Bloklangan Hodisalar ({attackLogsList.length})</span>
+            </div>
+            <span className="text-[10px] font-mono text-slate-400">Avto-yozuv</span>
+          </div>
+
+          <div className="max-h-48 overflow-y-auto space-y-1.5 font-mono text-[11px]">
+            {attackLogsList.slice(0, 10).map((log) => (
+              <div
+                key={log.id}
+                className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-slate-300"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-rose-400 font-bold">{log.ip}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[10px]">
+                    {log.type}
+                  </span>
+                  <span className="text-slate-400 text-[10px] hidden sm:inline">{log.details}</span>
+                </div>
+                <span className="text-[10px] text-slate-500">
+                  {new Date(log.timestamp).toLocaleTimeString('uz-UZ')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
