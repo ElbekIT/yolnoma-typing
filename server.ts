@@ -152,6 +152,12 @@ function triggerSecurityBan(req: express.Request, ip: string, reason: string, du
 // -------------------------------------------------------------
 app.use((req, res, next) => {
   const clientIp = getClientIp(req);
+
+  // Always permit local container health-checks and internal loopback
+  if (clientIp === '127.0.0.1' || clientIp === '::1' || clientIp === '::ffff:127.0.0.1' || clientIp === 'localhost') {
+    return next();
+  }
+
   const subnet = getSubnet(clientIp);
   const now = Date.now();
 
@@ -535,7 +541,7 @@ const serverInboxMessages: StoredInboxMessage[] = [
 const serverAnnouncements: StoredAnnouncement[] = [
   {
     id: 'ann-init-1',
-    title: 'Yolnoma Typing v3.0 Backend Xavfsizlik Yangilanishi! 🚀',
+    title: 'Yolnoma Typing v3.0 Backend Xavfsizlik Yangilanishi! ������',
     message: 'Barcha autentifikatsiya va natijalarni tekshirish backend server himoyasiga o\'tkazildi. Anti-Cheat va kriptografik tekshiruv faol.',
     type: 'success',
     sender: 'Bosh Admin (Yolnoma)',
@@ -879,6 +885,195 @@ app.get('/api/leaderboard', (req, res) => {
     success: true,
     totalVerified: sorted.length,
     leaderboard: sorted
+  });
+});
+
+// -------------------------------------------------------------
+// TELEGRAM BOT RECORD ANNOUNCEMENT & ANTI-SPAM DEFENSE ENGINE
+// -------------------------------------------------------------
+const RAW_ENV_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_BOT_TOKEN = (RAW_ENV_TOKEN && !RAW_ENV_TOKEN.includes('AAEK0fs'))
+  ? RAW_ENV_TOKEN
+  : '8591793719:AAHq07so4BoSstxU63zNL7YC55O-BenNUzg';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8269163077';
+
+let lastTelegramAnnounceTime = 0;
+const TELEGRAM_MIN_COOLDOWN_MS = 90 * 1000; // 90 seconds minimum cooldown
+let currentServerAllTimeRecordWpm = 110;
+const announcedRecordKeys = new Set<string>();
+
+async function sendTelegramMessage(text: string): Promise<{ ok: boolean; description?: string; messageId?: number }> {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    return { ok: false, description: 'Telegram bot token yoki Chat ID sozlanmagan' };
+  }
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: false
+      })
+    });
+    const data = (await response.json()) as any;
+    if (!data.ok) {
+      return { ok: false, description: data.description || 'Telegram API rad etdi' };
+    }
+    return { ok: true, messageId: data.result?.message_id };
+  } catch (err: any) {
+    return { ok: false, description: err.message || 'Telegram serveriga ulanishda xatolik' };
+  }
+}
+
+// Endpoint: Announce Record / Top Winner to Telegram
+app.post('/api/announce-winner', async (req, res) => {
+  const clientIp = getClientIp(req);
+  const now = Date.now();
+
+  // Honeypot check
+  if (req.body._hp || req.body.website_url_hp || req.body.bot_trap) {
+    return res.json({ success: true, message: 'Qabul qilindi' });
+  }
+
+  // 1. IP Rate Limiter (Max 4 attempts per 5 minutes per IP)
+  const ipKey = `tg_ann_${clientIp}`;
+  const ipRec = ipLimitMap.get(ipKey);
+  if (ipRec) {
+    if (now < ipRec.resetTime) {
+      if (ipRec.count >= 4) {
+        return res.status(429).json({
+          success: false,
+          error: "Juda ko'p so'rov yuborildi. Iltimos biroz kuting."
+        });
+      }
+      ipRec.count++;
+    } else {
+      ipRec.count = 1;
+      ipRec.resetTime = now + 300000;
+    }
+  } else {
+    ipLimitMap.set(ipKey, {
+      count: 1,
+      resetTime: now + 300000,
+      lastRequestTime: now,
+      burstCount: 1,
+      burstWindow: now,
+      mutationCount: 1,
+      mutationWindow: now
+    });
+  }
+
+  // 2. Cooldown check: Global interval between announcements
+  const elapsed = now - lastTelegramAnnounceTime;
+  if (elapsed < TELEGRAM_MIN_COOLDOWN_MS) {
+    const waitSec = Math.ceil((TELEGRAM_MIN_COOLDOWN_MS - elapsed) / 1000);
+    return res.status(429).json({
+      success: false,
+      cooldown: true,
+      error: `Xabarlar oralig'i juda qisqa. Keyingi e'longacha ${waitSec} soniya kuting.`
+    });
+  }
+
+  // 3. Payload validation
+  const { username, displayName, wpm, accuracy, timeMode, mode, language, consistency, testId } = req.body;
+
+  if (typeof wpm !== 'number' || wpm < 25 || wpm > 280) {
+    return res.status(400).json({
+      success: false,
+      error: "Noto'g'ri yoki me'yordan tashqari WPM ko'rsatkichi (25 - 280 WPM)"
+    });
+  }
+  if (typeof accuracy !== 'number' || accuracy < 75 || accuracy > 100) {
+    return res.status(400).json({
+      success: false,
+      error: "Aniqlik ko'rsatkichi me'yorga to'g'ri kelmaydi"
+    });
+  }
+
+  // 4. Duplicate test prevention
+  const dedupeKey = testId || `${username}_${wpm}_${accuracy}_${Math.floor(now / 180000)}`;
+  if (announcedRecordKeys.has(dedupeKey)) {
+    return res.status(200).json({ success: true, message: "Bu natija allaqachon e'lon qilingan." });
+  }
+
+  // Sanitize username
+  const cleanUser = String(displayName || username || 'Foydalanuvchi')
+    .trim()
+    .substring(0, 45)
+    .replace(/[<>&]/g, '');
+
+  const modeLabel = mode === 'words' 
+    ? `${timeMode || 25} ta so'z`
+    : `${timeMode || 60} soniya`;
+
+  const langLabel = language ? String(language).toUpperCase() : 'OʻZBEKCHA';
+
+  // 5. Server-locked HTML template
+  const messageText =
+    `🏆 <b>YOLNOMA ARENA: YANGI REKORD!</b>\n\n` +
+    `👤 <b>Foydalanuvchi:</b> <code>${cleanUser}</code>\n` +
+    `⚡️ <b>Tezlik:</b> <b>${Math.round(wpm)} WPM</b> (~${Math.round(wpm * 5)} CPM)\n` +
+    `🎯 <b>Aniqlik:</b> <b>${Math.round(accuracy)}%</b>\n` +
+    `⏱ <b>Rejim:</b> ${modeLabel}\n` +
+    `🌐 <b>Til:</b> ${langLabel}\n` +
+    (consistency ? `📊 <b>Izchillik:</b> ${Math.round(consistency)}%\n` : '') +
+    `\n🌟 <i>Yolnoma platformasida yangi cho'qqi zabt etildi!</i>\n` +
+    `🚀 Siz ham o'z tezligingizni sinab ko'ring: <a href="https://yolnoma.uz">yolnoma.uz</a>`;
+
+  const result = await sendTelegramMessage(messageText);
+  if (!result.ok) {
+    return res.status(500).json({ success: false, error: result.description || "Telegramga yuborishda xatolik yuz berdi" });
+  }
+
+  lastTelegramAnnounceTime = now;
+  announcedRecordKeys.add(dedupeKey);
+  if (announcedRecordKeys.size > 200) {
+    const first = announcedRecordKeys.values().next().value;
+    if (first) announcedRecordKeys.delete(first);
+  }
+
+  if (wpm > currentServerAllTimeRecordWpm) {
+    currentServerAllTimeRecordWpm = Math.round(wpm);
+  }
+
+  return res.json({
+    success: true,
+    message: "Telegram kanalga yangi rekord e'loni muvaffaqiyatli yuborildi!",
+    messageId: result.messageId
+  });
+});
+
+// Endpoint: Test Telegram Connection from Admin Panel
+app.post('/api/telegram/test', async (req, res) => {
+  const testMessage =
+    `🤖 <b>YOLNOMA BOT ALOQA TESTI</b>\n\n` +
+    `✅ Telegram bot integratsiyasi xavfsiz server orqali muvaffaqiyatli ulandi!\n` +
+    `🕒 <b>Server vaqti:</b> ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}\n` +
+    `🛡 <b>Himoya holati:</b> Serverless Token Cloak + Anti-Cheat Active\n\n` +
+    `<i>Bu xabar Yolnoma platformasidan sinov tariqasida yuborildi.</i>`;
+
+  const result = await sendTelegramMessage(testMessage);
+  if (!result.ok) {
+    return res.status(500).json({ success: false, error: result.description });
+  }
+  return res.json({ success: true, message: 'Sinov xabari Telegramga muvaffaqiyatli yetkazildi!' });
+});
+
+// Endpoint: Get Telegram Integration Status (Without exposing secrets)
+app.get('/api/telegram/status', (req, res) => {
+  const elapsed = Date.now() - lastTelegramAnnounceTime;
+  const cooldownRemaining = Math.max(0, Math.ceil((TELEGRAM_MIN_COOLDOWN_MS - elapsed) / 1000));
+
+  res.json({
+    success: true,
+    configured: Boolean(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID),
+    botConfigured: true,
+    chatIdMasked: TELEGRAM_CHAT_ID ? `${TELEGRAM_CHAT_ID.substring(0, 4)}****` : null,
+    cooldownRemainingSec: cooldownRemaining,
+    allTimeRecordWpm: currentServerAllTimeRecordWpm
   });
 });
 

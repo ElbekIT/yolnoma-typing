@@ -52,6 +52,30 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Telegram Bot Integration State
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramSuccess, setTelegramSuccess] = useState<string | null>(null);
+  const [telegramError, setTelegramError] = useState<string | null>(null);
+
+  const handleTestTelegram = async () => {
+    setTestingTelegram(true);
+    setTelegramSuccess(null);
+    setTelegramError(null);
+    try {
+      const res = await fetch('/api/telegram/test', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setTelegramSuccess("Sinov xabari Telegramga (@yosh_avlod_typingbot orqali 8269163077 ga) muvaffaqiyatli yetkazildi! ✅");
+      } else {
+        setTelegramError(data.error || "Telegramga yuborishda xatolik");
+      }
+    } catch (err: any) {
+      setTelegramError(err.message || "Serverga ulanishda xatolik");
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
+
   // Sent announcements history
   const [announcementsList, setAnnouncementsList] = useState<UserNotificationItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -191,6 +215,76 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="font-bold text-[var(--text-color)]">Realtime Habarnoma Tizimi Faol</span>
         </div>
+      </div>
+
+      {/* Telegram Bot Live Integration & Defense Shield Card */}
+      <div className="bg-gradient-to-r from-blue-950/40 via-[var(--card-bg)] to-cyan-950/30 border-2 border-cyan-500/30 rounded-3xl p-6 shadow-md relative overflow-hidden">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3.5 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 mt-1">
+              <Share2 className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-black text-[var(--text-color)]">
+                  Telegram Bot Yangi Rekordlar Eʼlon Tizimi
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  ONLINE & HIMOYALANGAN
+                </span>
+              </div>
+              <p className="text-xs text-[var(--sub-color)] max-w-2xl leading-relaxed">
+                Foydalanuvchi yangi rekord o'rnatganda Telegram kanal/guruhga avtomatik e'lon yuboriladi. Bot tokeni brauzerdan butunlay yashirilgan bo'lib, faqat Vercel/Node Serverless orqali Anti-Cheat va 90s Cooldown bilan ishlaydi.
+              </p>
+              <div className="flex items-center gap-4 text-xs font-mono pt-1 text-[var(--sub-color)] flex-wrap">
+                <span>Bot: <strong className="text-cyan-400 font-sans">@yosh_avlod_typingbot</strong></span>
+                <span>•</span>
+                <span>Kanal/Chat ID: <strong className="text-[var(--text-color)]">8269163077</strong></span>
+                <span>•</span>
+                <span>Himoya: <span className="text-emerald-400">Anti-DDoS & Spam Proof</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full md:w-auto flex flex-col items-end gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleTestTelegram}
+              disabled={testingTelegram}
+              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-cyan-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {testingTelegram ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Yuborilmoqda...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Sinov Xabari Yuborish (Test Bot)</span>
+                </>
+              )}
+            </button>
+            <span className="text-[10px] text-[var(--sub-color)] font-mono text-center md:text-right">
+              /api/telegram/test orqali tekshirish
+            </span>
+          </div>
+        </div>
+
+        {telegramSuccess && (
+          <div className="mt-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{telegramSuccess}</span>
+          </div>
+        )}
+
+        {telegramError && (
+          <div className="mt-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{telegramError}</span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

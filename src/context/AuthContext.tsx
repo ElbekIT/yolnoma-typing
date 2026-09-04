@@ -885,6 +885,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             errorCount: fullResult.errors || 0
           })
         }).catch(() => {});
+
+        // Announce new record to Telegram Channel/Group securely via Server API
+        if (isPersonalBest && fullResult.wpm >= 60 && fullResult.accuracy >= 80) {
+          fetch('/api/announce-winner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username,
+              displayName: profile.displayName || username,
+              wpm: fullResult.wpm,
+              accuracy: fullResult.accuracy,
+              consistency: fullResult.consistency || 95,
+              timeMode: fullResult.timeMode,
+              mode: fullResult.mode,
+              language: fullResult.language,
+              testId: fullResult.id || `res_${Date.now()}`
+            })
+          }).catch(() => {});
+        }
       } catch {}
     } else {
       // Guest User - Push live score to RTDB Leaderboard
@@ -909,6 +928,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             errorCount: rawResult.errors || 0
           })
         }).catch(() => {});
+
+        // Announce high guest record if exceptional
+        if (rawResult.wpm >= 80 && rawResult.accuracy >= 85) {
+          fetch('/api/announce-winner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: `guest_${guestId.replace('guest_', '')}`,
+              displayName: `Mehmon (${guestId.replace('guest_', '')})`,
+              wpm: rawResult.wpm,
+              accuracy: rawResult.accuracy,
+              consistency: rawResult.consistency || 90,
+              timeMode: rawResult.timeMode,
+              mode: rawResult.mode,
+              language: rawResult.language,
+              testId: `guest_${Date.now()}`
+            })
+          }).catch(() => {});
+        }
       } catch {}
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));
