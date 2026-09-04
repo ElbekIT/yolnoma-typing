@@ -63,7 +63,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (localStorage.getItem('yolnoma_tape_mode') as TapeMode) || 'off';
   });
   const [typingAnimation, setTypingAnimationState] = useState<TypingAnimation>(() => {
-    return (localStorage.getItem('yolnoma_typing_animation') as TypingAnimation) || 'jump';
+    const saved = localStorage.getItem('yolnoma_typing_animation');
+    if (saved && saved !== 'jump') {
+      return saved as TypingAnimation;
+    }
+    return 'none';
   });
   const [typingAnimationSpeed, setTypingAnimationSpeedState] = useState<TypingAnimationSpeed>(() => {
     return (localStorage.getItem('yolnoma_typing_anim_speed') as TypingAnimationSpeed) || 'normal';

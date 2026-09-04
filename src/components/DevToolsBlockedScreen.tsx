@@ -27,12 +27,12 @@ export const DevToolsBlockedScreen: React.FC = () => {
   return (
     <div
       id="devtools-security-overlay"
-      className="fixed inset-0 z-[999999] bg-[#070a12]/95 backdrop-blur-xl text-white flex flex-col items-center justify-center p-4 selection:bg-amber-500 selection:text-black overflow-y-auto"
+      className="fixed inset-0 z-[999999] bg-[#070a12]/98 text-white flex flex-col items-center justify-center p-4 selection:bg-amber-500 selection:text-black overflow-y-auto"
     >
-      <div className="max-w-lg w-full bg-slate-900/95 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center relative overflow-hidden my-auto">
-        {/* Ambient Glows */}
-        <div className="absolute -top-24 -left-24 w-56 h-56 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-56 h-56 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="max-w-lg w-full bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center relative overflow-hidden my-auto">
+        {/* Ambient Accents */}
+        <div className="absolute -top-24 -left-24 w-56 h-56 bg-amber-500/5 rounded-full pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-56 h-56 bg-rose-500/5 rounded-full pointer-events-none" />
 
         {/* Warning Icon Badge */}
         <div className="relative mx-auto w-20 h-20 rounded-3xl bg-amber-500/15 border-2 border-amber-500/50 p-4 text-amber-400 flex items-center justify-center shadow-xl shadow-amber-500/20">

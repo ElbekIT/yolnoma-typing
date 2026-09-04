@@ -334,15 +334,29 @@ export const LanguageSelectView: React.FC<LanguageSelectViewProps> = ({ onConfir
                       </div>
                     </div>
 
-                    {/* Selection Indicator Checkbox */}
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border transition-all ${
-                        isSelected
-                          ? 'bg-[var(--main-color)] border-[var(--main-color)] text-[var(--bg-color)] scale-105'
-                          : 'border-[var(--sub-alt)] bg-[var(--sub-alt)]/50 text-transparent'
-                      }`}
-                    >
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    {/* Selection Indicator Checkbox / Quick Start */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isSelected ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLanguage(l.code);
+                            onConfirm();
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-xs cursor-pointer"
+                          title="Ushbu tilni tanlash va yozishni boshlash"
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Boshlash</span>
+                        </button>
+                      ) : (
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center border border-[var(--sub-alt)] bg-[var(--sub-alt)]/40 text-transparent hover:border-[var(--main-color)] transition-colors"
+                        >
+                          <Check className="w-3 h-3 stroke-[2.5]" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

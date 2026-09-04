@@ -5,9 +5,9 @@ export const PartnersView: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-4 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/60 border-2 border-amber-500/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/60 border-2 border-amber-500/40 rounded-3xl p-8 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/5 rounded-full pointer-events-none" />
 
         <div className="relative z-10 space-y-4 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-extrabold text-xs uppercase tracking-wider">

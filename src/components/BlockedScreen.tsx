@@ -14,9 +14,9 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
   return (
     <div className="min-h-screen bg-[#070a12] text-white flex flex-col items-center justify-center p-4 selection:bg-rose-500 selection:text-white">
       <div className="max-w-md w-full bg-slate-900/90 border border-rose-500/30 rounded-3xl p-8 shadow-2xl space-y-6 text-center relative overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute -top-20 -left-20 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Background Accents */}
+        <div className="absolute -top-20 -left-20 w-48 h-48 bg-rose-500/5 rounded-full pointer-events-none" />
+        <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-rose-500/5 rounded-full pointer-events-none" />
 
         {/* Lock Shield Icon */}
         <div className="mx-auto w-20 h-20 rounded-3xl bg-rose-500/15 border border-rose-500/40 p-4 text-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/20">

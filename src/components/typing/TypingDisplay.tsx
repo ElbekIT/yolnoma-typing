@@ -37,6 +37,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
+  const isTestActive = typedInput.length > 0 && !isTestFinished;
 
   // Initialize global anti-cheat listeners with user ID
   useEffect(() => {
@@ -469,7 +470,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   const isTyped = typedChar !== undefined;
                   const isCorrect = isTyped && typedChar === char;
 
-                  let charClass = 'relative inline-block font-normal transition-colors duration-75 ';
+                  let charClass = 'relative inline-block font-normal ';
 
                   if (!isTyped) {
                     charClass += 'text-[var(--sub-color)] opacity-85 ';
@@ -490,21 +491,21 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                       caretElement = (
                         <span
                           className={`absolute -left-[1px] top-0 bottom-0 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-                            smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
+                            smoothCaret ? 'transition-all duration-75' : isTestActive ? '' : 'animate-pulse'
                           }`}
                         />
                       );
                     } else if (caretStyle === 'block') {
                       caretElement = (
-                        <span className="absolute inset-0 bg-[var(--main-color)]/35 rounded-[2px] animate-pulse" />
+                        <span className={`absolute inset-0 bg-[var(--main-color)]/35 rounded-[2px] ${isTestActive ? '' : 'animate-pulse'}`} />
                       );
                     } else if (caretStyle === 'underline') {
                       caretElement = (
-                        <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full animate-pulse" />
+                        <span className={`absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full ${isTestActive ? '' : 'animate-pulse'}`} />
                       );
                     } else if (caretStyle === 'outline') {
                       caretElement = (
-                        <span className="absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] animate-pulse" />
+                        <span className={`absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] ${isTestActive ? '' : 'animate-pulse'}`} />
                       );
                     }
                   }
@@ -549,7 +550,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                     spaceCaret = (
                       <span
                         className={`absolute -left-[1px] top-0 bottom-0 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-                          smoothCaret ? 'transition-all duration-75' : 'animate-pulse'
+                          smoothCaret ? 'transition-all duration-75' : isTestActive ? '' : 'animate-pulse'
                         }`}
                       />
                     );

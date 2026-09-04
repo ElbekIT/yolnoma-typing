@@ -58,9 +58,9 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
   return (
     <div className="min-h-screen bg-[#090d16] text-[#f1f5f9] flex flex-col justify-between relative overflow-hidden font-sans select-none">
-      {/* Dynamic Background Glowing Orbs */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+      {/* Dynamic Background */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/5 rounded-full pointer-events-none" />
 
       {/* Top Brand Header */}
       <header className="max-w-7xl w-full mx-auto p-4 sm:p-6 flex items-center justify-between z-10">

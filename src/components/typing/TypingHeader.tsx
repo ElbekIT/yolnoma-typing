@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Clock, Type, Layers, Globe, Sparkles, Search, X, Film } from 'lucide-react';
-import { TextMode, TimeMode, WordCountMode, DifficultyMode, LanguageCode } from '../../types';
+import React, { useMemo } from 'react';
+import { Clock, Type, Layers, Globe, Sparkles, Film } from 'lucide-react';
+import { TextMode, TimeMode, WordCountMode, DifficultyMode } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
 import { getAllLanguages } from '../../utils/customContentStore';
 
@@ -31,12 +31,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   isTestActive = false,
   onOpenLanguagePage
 }) => {
-  const { language, setLanguage, modeBarWidth, modeBarScale, tapeMode, setTapeMode } = useSettings();
-  const [showLangModal, setShowLangModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const listContainerRef = useRef<HTMLDivElement>(null);
+  const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode } = useSettings();
 
   const timeOptions: TimeMode[] = [15, 30, 60, 120];
   const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
@@ -49,83 +44,12 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   // Fast memoized languages list
   const languagesList = useMemo(() => {
     return getAllLanguages();
-  }, [showLangModal]);
+  }, []);
 
   const currentLang = useMemo(
     () => languagesList.find((l) => l.code.toLowerCase() === language.toLowerCase()) || languagesList[0],
     [languagesList, language]
   );
-
-  const filteredLanguages = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return languagesList;
-    return languagesList.filter(
-      (l) =>
-        l.nativeName.toLowerCase().includes(q) ||
-        l.name.toLowerCase().includes(q) ||
-        l.code.toLowerCase().includes(q)
-    );
-  }, [languagesList, searchQuery]);
-
-  // When modal opens, set highlighted index and focus search input instantly
-  useEffect(() => {
-    if (showLangModal) {
-      const idx = filteredLanguages.findIndex((l) => l.code.toLowerCase() === language.toLowerCase());
-      setHighlightedIndex(idx >= 0 ? idx : 0);
-      requestAnimationFrame(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
-      });
-    } else {
-      setSearchQuery('');
-    }
-  }, [showLangModal]);
-
-  // Reset highlighted index on query change
-  useEffect(() => {
-    setHighlightedIndex(0);
-  }, [searchQuery]);
-
-  const handleSelectLanguage = (code: string) => {
-    setLanguage(code as LanguageCode);
-    setShowLangModal(false);
-    onReset();
-  };
-
-  const scrollIndexIntoView = (index: number) => {
-    if (!listContainerRef.current) return;
-    const items = listContainerRef.current.querySelectorAll('[data-lang-item]');
-    if (items[index]) {
-      (items[index] as HTMLElement).scrollIntoView({ block: 'nearest' });
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      setShowLangModal(false);
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setHighlightedIndex((prev) => {
-        const next = prev < filteredLanguages.length - 1 ? prev + 1 : 0;
-        scrollIndexIntoView(next);
-        return next;
-      });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setHighlightedIndex((prev) => {
-        const next = prev > 0 ? prev - 1 : filteredLanguages.length - 1;
-        scrollIndexIntoView(next);
-        return next;
-      });
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filteredLanguages[highlightedIndex]) {
-        handleSelectLanguage(filteredLanguages[highlightedIndex].code);
-      }
-    }
-  };
 
   const widthClass = {
     compact: 'max-w-xl',
@@ -156,9 +80,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   }[modeBarScale || 'medium'];
 
   return (
-    <>
-      <div
-        className={`w-full ${widthClass} mx-auto mb-4 sm:mb-6 px-2 transition-all duration-150 ${
+    <div
+      className={`w-full ${widthClass} mx-auto mb-4 sm:mb-6 px-2 transition-all duration-150 ${
           isTestActive
             ? 'opacity-0 pointer-events-none h-0 overflow-hidden mb-0'
             : 'opacity-100'
@@ -269,14 +192,15 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3">
           <button
             onClick={() => {
-              setSearchQuery('');
-              setShowLangModal(true);
+              if (onOpenLanguagePage) {
+                onOpenLanguagePage();
+              }
             }}
-            className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-80 hover:opacity-100 py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40"
-            title="Tilni tezkor almashtirish (125+ jahon tillari)"
+            className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-85 hover:opacity-100 py-0.5 px-2.5 rounded-lg hover:bg-[var(--sub-alt)]/40 border border-transparent hover:border-[var(--sub-alt)]"
+            title="125+ Jahon Tillari katalogiga o'tish"
           >
-            <Globe className="w-3.5 h-3.5" />
-            <span>{currentLang.flag} {currentLang.nativeName}</span>
+            <Globe className="w-3.5 h-3.5 text-[var(--main-color)]" />
+            <span className="font-semibold">{currentLang.flag} {currentLang.nativeName}</span>
           </button>
 
           <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
@@ -287,7 +211,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
               setTapeMode(nextMode);
               onReset();
             }}
-            className={`flex items-center gap-1.5 text-xs transition-all cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+            className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
               tapeMode !== 'off'
                 ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
                 : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
@@ -299,120 +223,5 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Monkeytype Style Super-Fast Instant Language Command Palette Modal */}
-      {showLangModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-[2px]"
-          onClick={() => setShowLangModal(false)}
-        >
-          {/* Modal Box */}
-          <div
-            className="relative w-full max-w-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Search Input Bar */}
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[var(--sub-alt)] bg-[var(--card-bg)] shrink-0">
-              <Search className="w-4 h-4 text-[var(--sub-color)] opacity-70" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Tilni qidirish / search language..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="w-full bg-transparent text-[var(--text-color)] placeholder-[var(--sub-color)]/50 focus:outline-none font-mono text-xs sm:text-sm"
-              />
-              <button
-                onClick={() => setShowLangModal(false)}
-                className="p-1 rounded-md text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
-                title="Yopish (Esc)"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Language List */}
-            <div
-              ref={listContainerRef}
-              className="overflow-y-auto p-1.5 space-y-0.5 flex-1 select-none custom-scrollbar"
-            >
-              {filteredLanguages.length > 0 ? (
-                filteredLanguages.map((l, idx) => {
-                  const isSelected = language.toLowerCase() === l.code.toLowerCase();
-                  const isHighlighted = highlightedIndex === idx;
-                  return (
-                    <button
-                      key={l.code}
-                      data-lang-item
-                      onClick={() => handleSelectLanguage(l.code)}
-                      className={`w-full flex items-center px-3.5 py-2 rounded-lg text-left font-mono text-xs transition-colors cursor-pointer ${
-                        isHighlighted
-                          ? 'bg-[var(--text-color)] text-[var(--bg-color)] font-bold'
-                          : isSelected
-                          ? 'bg-[var(--sub-alt)] text-[var(--text-color)] font-semibold'
-                          : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/60'
-                      }`}
-                    >
-                      <span className="w-6 shrink-0 text-sm">
-                        {l.flag || '🌐'}
-                      </span>
-                      <span className="w-5 shrink-0 text-xs font-mono font-bold">
-                        {isSelected ? '✓' : ''}
-                      </span>
-                      <span className="truncate flex-1 font-medium">
-                        {l.nativeName}
-                        {l.name && l.name !== l.nativeName ? (
-                          <span className="ml-1.5 opacity-60 text-[11px] font-normal">({l.name})</span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={`text-[10px] font-mono ml-2 uppercase px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 ${
-                          isHighlighted
-                            ? 'text-[var(--bg-color)]/90'
-                            : 'text-[var(--sub-color)]'
-                        }`}
-                      >
-                        {l.code}
-                      </span>
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="text-center text-[var(--sub-color)] py-8 font-mono text-xs opacity-60">
-                  Bunday til topilmadi
-                </div>
-              )}
-            </div>
-
-            {/* Footer Prompt */}
-            <div className="px-4 py-2.5 border-t border-[var(--sub-alt)]/60 bg-[var(--card-bg)]/80 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-[var(--sub-color)] opacity-80 shrink-0">
-              <div className="flex items-center gap-2">
-                <span>{filteredLanguages.length} ta jahon tili</span>
-                {onOpenLanguagePage && (
-                  <>
-                    <span>•</span>
-                    <button
-                      onClick={() => {
-                        setShowLangModal(false);
-                        onOpenLanguagePage();
-                      }}
-                      className="text-[var(--main-color)] hover:underline font-bold cursor-pointer"
-                    >
-                      Barcha 125+ tillar sahifasi →
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-[9px] opacity-70">
-                <span>↑↓ - harakat</span>
-                <span>enter - tanlash</span>
-                <span>esc - yopish</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
   );
 };
