@@ -92,12 +92,9 @@ export const AdminMaintenanceTab: React.FC = () => {
     };
 
     try {
-      // 1. Sync to Firebase Realtime Database (for 100% instant push to all open client browser tabs)
-      await rtdbSet(ref(rtdb, 'system/maintenance'), payload);
-
-      // 2. Sync to Express backend API
+      // 1. Sync to Express backend API (Authoritative server)
       if (token) {
-        await fetch('/api/admin/maintenance', {
+        const res = await fetch('/api/admin/maintenance', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -105,6 +102,17 @@ export const AdminMaintenanceTab: React.FC = () => {
           },
           body: JSON.stringify(payload)
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Server xatosi (${res.status})`);
+        }
+      }
+
+      // 2. Also sync to Firebase RTDB if permitted (safe fallback)
+      try {
+        await rtdbSet(ref(rtdb, 'system/maintenance'), payload);
+      } catch {
+        // Ignored: Server API already holds the authoritative state
       }
 
       setMaintenance(payload);

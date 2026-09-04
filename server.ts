@@ -1065,7 +1065,7 @@ const TELEGRAM_BOT_TOKEN = (RAW_ENV_TOKEN && !RAW_ENV_TOKEN.includes('AAEK0fs'))
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8269163077';
 
 let lastTelegramAnnounceTime = 0;
-const TELEGRAM_MIN_COOLDOWN_MS = 90 * 1000; // 90 seconds minimum cooldown
+const TELEGRAM_MIN_COOLDOWN_MS = 5 * 1000; // 5 seconds cooldown between record announcements
 let currentServerAllTimeRecordWpm = 110;
 const announcedRecordKeys = new Set<string>();
 
@@ -1081,8 +1081,8 @@ async function sendTelegramMessage(
   const reply_markup = {
     inline_keyboard: [
       [
-        { text: options?.buttonText || '🚀 Saytga kirish: yolnoma.uz', url: options?.buttonUrl || 'https://www.yolnoma.uz' },
-        { text: '🏆 Milliy Reyting', url: 'https://www.yolnoma.uz/leaderboard' }
+        { text: '🏆 Milliy Reytingni Koʻrish', url: 'https://www.yolnoma.uz/leaderboard' },
+        { text: '⚡️ Rekordni Sinash', url: options?.buttonUrl || 'https://www.yolnoma.uz' }
       ]
     ]
   };
@@ -1146,12 +1146,12 @@ app.post('/api/announce-winner', async (req, res) => {
     return res.json({ success: true, message: 'Qabul qilindi' });
   }
 
-  // 1. IP Rate Limiter (Max 4 attempts per 5 minutes per IP)
+  // 1. IP Rate Limiter (Max 15 attempts per 5 minutes per IP)
   const ipKey = `tg_ann_${clientIp}`;
   const ipRec = ipLimitMap.get(ipKey);
   if (ipRec) {
     if (now < ipRec.resetTime) {
-      if (ipRec.count >= 4) {
+      if (ipRec.count >= 15) {
         return res.status(429).json({
           success: false,
           error: "Juda ko'p so'rov yuborildi. Iltimos biroz kuting."
@@ -1174,7 +1174,7 @@ app.post('/api/announce-winner', async (req, res) => {
     });
   }
 
-  // 2. Cooldown check: Global interval between announcements
+  // 2. Cooldown check: Brief anti-burst interval between announcements
   const elapsed = now - lastTelegramAnnounceTime;
   if (elapsed < TELEGRAM_MIN_COOLDOWN_MS) {
     const waitSec = Math.ceil((TELEGRAM_MIN_COOLDOWN_MS - elapsed) / 1000);
@@ -1186,15 +1186,31 @@ app.post('/api/announce-winner', async (req, res) => {
   }
 
   // 3. Payload validation
-  const { username, displayName, wpm, accuracy, timeMode, mode, language, consistency, testId } = req.body;
+  const {
+    username,
+    displayName,
+    wpm,
+    oldWpm,
+    accuracy,
+    timeMode,
+    mode,
+    language,
+    consistency,
+    testId,
+    level,
+    rankTitle,
+    rank,
+    xp,
+    totalTests
+  } = req.body;
 
-  if (typeof wpm !== 'number' || wpm < 25 || wpm > 280) {
+  if (typeof wpm !== 'number' || wpm < 20 || wpm > 300) {
     return res.status(400).json({
       success: false,
-      error: "Noto'g'ri yoki me'yordan tashqari WPM ko'rsatkichi (25 - 280 WPM)"
+      error: "Noto'g'ri yoki me'yordan tashqari WPM ko'rsatkichi (20 - 300 WPM)"
     });
   }
-  if (typeof accuracy !== 'number' || accuracy < 75 || accuracy > 100) {
+  if (typeof accuracy !== 'number' || accuracy < 60 || accuracy > 100) {
     return res.status(400).json({
       success: false,
       error: "Aniqlik ko'rsatkichi me'yorga to'g'ri kelmaydi"
@@ -1202,38 +1218,83 @@ app.post('/api/announce-winner', async (req, res) => {
   }
 
   // 4. Duplicate test prevention
-  const dedupeKey = testId || `${username}_${wpm}_${accuracy}_${Math.floor(now / 180000)}`;
+  const dedupeKey = testId || `${username}_${Math.round(wpm)}_${Math.round(accuracy)}_${Math.floor(now / 180000)}`;
   if (announcedRecordKeys.has(dedupeKey)) {
     return res.status(200).json({ success: true, message: "Bu natija allaqachon e'lon qilingan." });
   }
 
-  // Sanitize username
+  // Sanitize username & attributes
   const cleanUser = String(displayName || username || 'Foydalanuvchi')
     .trim()
     .substring(0, 45)
     .replace(/[<>&]/g, '');
 
+  const userLevel = Number(level) || 1;
+  const userRankTitle = String(rankTitle || 'Keyboard Warrior').replace(/[<>&]/g, '');
+  const userRankNum = Number(rank) || undefined;
+
+  let rankBadge = '';
+  if (userRankNum === 1) {
+    rankBadge = '👑 <b>#1-OʻRIN (MUTLAQ LIDER!)</b>';
+  } else if (userRankNum === 2) {
+    rankBadge = '🥈 <b>#2-OʻRIN (KUMUSH SOVRINDOR)</b>';
+  } else if (userRankNum === 3) {
+    rankBadge = '🥉 <b>#3-OʻRIN (BRONZA SOVRINDOR)</b>';
+  } else if (userRankNum && userRankNum <= 10) {
+    rankBadge = `⭐️ <b>#${userRankNum}-OʻRIN (TOP-10)</b>`;
+  } else if (userRankNum) {
+    rankBadge = `🎖 <b>#${userRankNum}-oʻrin</b>`;
+  } else {
+    rankBadge = `🎖 <b>Peshqadamlar Jadvalida</b>`;
+  }
+
   const modeLabel = mode === 'words' 
-    ? `${timeMode || 25} ta so'z`
+    ? `${timeMode || 25} ta soʻz`
     : `${timeMode || 60} soniya`;
 
   const langLabel = language ? String(language).toUpperCase() : 'OʻZBEKCHA';
 
-  // 5. Server-locked HTML template
+  // Difference and Old record growth
+  const numOldWpm = Number(oldWpm) || 0;
+  const numNewWpm = Math.round(wpm);
+  let growthText = '';
+  if (numOldWpm > 0 && numNewWpm > numOldWpm) {
+    const diff = numNewWpm - Math.round(numOldWpm);
+    growthText = `📈 <b>Oʻsish dinamikasi:</b> <code>${Math.round(numOldWpm)} WPM</code> ➡️ <b>${numNewWpm} WPM</b> (🔥 <b>+${diff} WPM oʻsish!</b>)\n`;
+  } else if (numOldWpm > 0) {
+    growthText = `📈 <b>Eski natija:</b> <code>${Math.round(numOldWpm)} WPM</code>\n`;
+  } else {
+    growthText = `✨ <b>Shaxsiy Rekord Oʻrnatildi!</b>\n`;
+  }
+
+  // Header Title
+  let headerTitle = '🏆 <b>YOLNOMA ARENA: SHAXSIY REKORD YANGILANDI!</b> 🔥';
+  if (userRankNum === 1) {
+    headerTitle = '👑 <b>YOLNOMA ARENA: YANGI MUTLAQ CHEMPION!</b> 👑';
+  } else if (userRankNum && userRankNum <= 3) {
+    headerTitle = '🥇 <b>YOLNOMA ARENA: TOP-3 GʻALABA VA YANGI REKORD!</b> 🔥';
+  }
+
+  // 5. Server-locked rich HTML template
+  const accText = typeof accuracy === 'number' ? accuracy.toFixed(1) : String(accuracy);
   const messageText =
-    `🏆 <b>YOLNOMA ARENA: YANGI REKORD!</b>\n\n` +
+    `${headerTitle}\n\n` +
     `👤 <b>Foydalanuvchi:</b> <code>${cleanUser}</code>\n` +
-    `⚡️ <b>Tezlik:</b> <b>${Math.round(wpm)} WPM</b> (~${Math.round(wpm * 5)} CPM)\n` +
-    `🎯 <b>Aniqlik:</b> <b>${Math.round(accuracy)}%</b>\n` +
+    `🎖 <b>Daraja:</b> <b>Level ${userLevel}</b> • <i>${userRankTitle}</i>\n` +
+    `🏆 <b>Reytingdagi oʻrni:</b> ${rankBadge}\n\n` +
+    `⚡️ <b>Yangi Tezlik:</b> <b>${numNewWpm} WPM</b> (~${Math.round(wpm * 5)} CPM)\n` +
+    growthText +
+    `🎯 <b>Aniqlik:</b> <b>${accText}%</b>\n` +
+    (consistency ? `📊 <b>Izchillik:</b> <b>${Math.round(consistency)}%</b>\n` : '') +
     `⏱ <b>Rejim:</b> ${modeLabel}\n` +
     `🌐 <b>Til:</b> ${langLabel}\n` +
-    (consistency ? `📊 <b>Izchillik:</b> ${Math.round(consistency)}%\n` : '') +
-    `\n🌟 <i>Yolnoma platformasida yangi cho'qqi zabt etildi!</i>\n` +
-    `🚀 Siz ham o'z tezligingizni sinab ko'ring: <a href="https://www.yolnoma.uz/leaderboard">yolnoma.uz/leaderboard</a>`;
+    (xp ? `💎 <b>Umumiy Tajriba:</b> ${Number(xp).toLocaleString()} XP` + (totalTests ? ` • <b>${totalTests} ta test</b>\n` : '\n') : '') +
+    `\n🌟 <i>Foydalanuvchi eski natijasini muvaffaqiyatli yangiladi va milliy reytingda yuqoriladi!</i>\n` +
+    `🚀 Siz ham oʻz tezligingizni sinab koʻring: <a href="https://www.yolnoma.uz/leaderboard">yolnoma.uz/leaderboard</a>`;
 
   const result = await sendTelegramMessage(messageText, {
     photoUrl: 'https://www.yolnoma.uz/og-banner.png',
-    buttonText: '🚀 Saytga kirish (yolnoma.uz)',
+    buttonText: '🚀 Saytga kirish: yolnoma.uz',
     buttonUrl: 'https://www.yolnoma.uz'
   });
   if (!result.ok) {
