@@ -437,10 +437,25 @@ export const AdminView: React.FC = () => {
 
       // Add to bannedUsers node
       await set(ref(rtdb, `bannedUsers/${selectedUser.uid}`), {
-        email: selectedUser.email,
+        uid: selectedUser.uid,
+        email: selectedUser.email || '',
+        username: selectedUser.username || '',
+        displayName: selectedUser.displayName || '',
         reason: banReason.trim(),
-        bannedAt: Date.now()
+        bannedAt: Date.now(),
+        bannedBy: user?.displayName || user?.email || 'Admin'
       });
+
+      // Add to bannedEmails node if email exists
+      if (selectedUser.email) {
+        const emailKey = selectedUser.email.replace(/\./g, '_').toLowerCase();
+        await set(ref(rtdb, `bannedEmails/${emailKey}`), {
+          uid: selectedUser.uid,
+          email: selectedUser.email,
+          reason: banReason.trim(),
+          bannedAt: Date.now()
+        }).catch(() => {});
+      }
 
       // Immediately REMOVE from leaderboard in RTDB
       await remove(ref(rtdb, `leaderboard/${selectedUser.uid}`));
@@ -450,7 +465,8 @@ export const AdminView: React.FC = () => {
         const userDocRef = doc(db, 'users', selectedUser.uid);
         await updateDoc(userDocRef, {
           isBanned: true,
-          blockReason: banReason.trim()
+          blockReason: banReason.trim(),
+          bannedAt: Date.now()
         });
       } catch (err) {
         // Fallback
@@ -459,13 +475,14 @@ export const AdminView: React.FC = () => {
       // Realtime Server-side Ban Broadcast (Instant Ban & Kick across all tabs)
       try {
         const token = getAdminToken();
-        await fetch('/api/admin/block-user', {
+        const res = await fetch('/api/admin/block-user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             'x-user-email': user?.email || 'yuldashivagavharoy@gmail.com'
           },
+          credentials: 'include',
           body: JSON.stringify({
             uid: selectedUser.uid,
             email: selectedUser.email,
@@ -475,6 +492,8 @@ export const AdminView: React.FC = () => {
             bannedBy: user?.displayName || user?.email || 'Admin'
           })
         });
+        const resText = await res.text();
+        try { if (resText) JSON.parse(resText); } catch {}
       } catch (err) {
         // Non-blocking
       }
@@ -504,13 +523,21 @@ export const AdminView: React.FC = () => {
       // Remove from bannedUsers node
       await remove(ref(rtdb, `bannedUsers/${u.uid}`));
 
+      // Remove from bannedEmails node if email exists
+      if (u.email) {
+        const emailKey = u.email.replace(/\./g, '_').toLowerCase();
+        await remove(ref(rtdb, `bannedEmails/${emailKey}`)).catch(() => {});
+      }
+
       // If unbanning current device/user, clear local storage device ban
       antiCheatManager.clearDeviceBan();
 
       // Update in users node
       await update(ref(rtdb, `users/${u.uid}`), {
         isBanned: false,
-        blockReason: null
+        blockReason: null,
+        bannedAt: null,
+        bannedBy: null
       });
 
       // Update Firestore if available
@@ -518,7 +545,9 @@ export const AdminView: React.FC = () => {
         const userDocRef = doc(db, 'users', u.uid);
         await updateDoc(userDocRef, {
           isBanned: false,
-          blockReason: null
+          blockReason: null,
+          bannedAt: null,
+          bannedBy: null
         });
       } catch (err) {
         // Fallback
@@ -527,18 +556,22 @@ export const AdminView: React.FC = () => {
       // Notify Server-side Unblock
       try {
         const token = getAdminToken();
-        await fetch('/api/admin/unblock-user', {
+        const res = await fetch('/api/admin/unblock-user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             'x-user-email': user?.email || 'yuldashivagavharoy@gmail.com'
           },
+          credentials: 'include',
           body: JSON.stringify({
             uid: u.uid,
-            email: u.email
+            email: u.email,
+            username: u.username
           })
         });
+        const resText = await res.text();
+        try { if (resText) JSON.parse(resText); } catch {}
       } catch (err) {
         // Non-blocking
       }

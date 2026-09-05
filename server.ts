@@ -2002,13 +2002,15 @@ app.get('/api/admin/list-admins', requireAdminAuth, (req, res) => {
 
 // Promote User to Admin or Update Admin Permissions
 app.post('/api/admin/promote-admin', requireAdminAuth, (req, res) => {
-  const { uid, email, username, displayName, customTitle, permissions, promotedBy } = req.body;
+  res.setHeader('Content-Type', 'application/json');
+  const { uid, email, username, displayName, customTitle, permissions, promotedBy } = req.body || {};
 
-  if (!email) {
-    return res.status(400).json({ success: false, error: 'Email manzili talab qilinadi' });
+  const effectiveEmail = String(email || (username ? `${username}@yolnoma.uz` : '')).trim().toLowerCase();
+  if (!effectiveEmail) {
+    return res.status(400).json({ success: false, error: 'Email yoki username manzili talab qilinadi' });
   }
 
-  const targetEmail = String(email).trim().toLowerCase();
+  const targetEmail = effectiveEmail;
 
   // IMMUNITY CHECK: Root Owner cannot be modified by sub-admins!
   if (targetEmail === ROOT_OWNER_EMAIL || targetEmail.startsWith('yuldashivagavharoy')) {
@@ -2058,13 +2060,15 @@ app.post('/api/admin/promote-admin', requireAdminAuth, (req, res) => {
 
 // Demote / Remove Admin
 app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
-  const { email } = req.body;
+  res.setHeader('Content-Type', 'application/json');
+  const { email, username } = req.body || {};
 
-  if (!email) {
-    return res.status(400).json({ success: false, error: 'Email talab qilinadi' });
+  const effectiveEmail = String(email || (username ? `${username}@yolnoma.uz` : '')).trim().toLowerCase();
+  if (!effectiveEmail) {
+    return res.status(400).json({ success: false, error: 'Email yoki username talab qilinadi' });
   }
 
-  const targetEmail = String(email).trim().toLowerCase();
+  const targetEmail = effectiveEmail;
 
   // STRICT IMMUNITY CHECK: Nobody can EVER demote the Root Owner!
   if (targetEmail === ROOT_OWNER_EMAIL || targetEmail.startsWith('yuldashivagavharoy')) {
@@ -2098,16 +2102,23 @@ app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
 
 // Admin Block User Account (Live Instant Kick)
 app.post('/api/admin/block-user', requireAdminAuth, (req, res) => {
-  const { uid, email, username, displayName, reason, bannedBy } = req.body;
+  res.setHeader('Content-Type', 'application/json');
+  const { uid, email, username, displayName, reason, bannedBy } = req.body || {};
 
-  if (!uid && !email) {
-    return res.status(400).json({ success: false, error: 'Foydalanuvchi UID yoki emaili talab qilinadi' });
+  if (!uid && !email && !username) {
+    return res.status(400).json({ success: false, error: 'Foydalanuvchi UID, email yoki username talab qilinadi' });
   }
 
   const targetEmail = String(email || '').trim().toLowerCase();
+  const targetUsername = String(username || '').trim().toLowerCase();
 
   // STRICT IMMUNITY: Root Owner can NEVER be banned!
-  if (targetEmail === ROOT_OWNER_EMAIL || targetEmail.startsWith('yuldashivagavharoy')) {
+  if (
+    targetEmail === ROOT_OWNER_EMAIL ||
+    targetEmail.startsWith('yuldashivagavharoy') ||
+    targetUsername === 'gavharoy' ||
+    targetUsername === 'yuldashivagavharoy'
+  ) {
     return res.status(403).json({
       success: false,
       error: "Asosiy Bosh Administrator (yuldashivagavharoy@gmail.com) daxlsiz shaxs! Uni bloklash qatʼiyan taqiqlanadi!"
@@ -2117,8 +2128,8 @@ app.post('/api/admin/block-user', requireAdminAuth, (req, res) => {
   const banRecord: BannedUserAccountRecord = {
     uid: uid || '',
     email: targetEmail,
-    username: username || '',
-    displayName: displayName || '',
+    username: targetUsername,
+    displayName: displayName || username || '',
     reason: reason ? String(reason).trim() : 'Qoidabuzarlik yoki shubhali faoliyat aniqlandi',
     bannedAt: Date.now(),
     bannedBy: bannedBy || (req as any).adminUser?.sub || 'Boshqaruv Administratsiyasi'
@@ -2126,6 +2137,7 @@ app.post('/api/admin/block-user', requireAdminAuth, (req, res) => {
 
   if (uid) bannedUserAccounts.set(uid, banRecord);
   if (targetEmail) bannedUserAccounts.set(targetEmail, banRecord);
+  if (targetUsername) bannedUserAccounts.set(targetUsername, banRecord);
 
   saveSecurityStateToDisk();
 
@@ -2138,10 +2150,12 @@ app.post('/api/admin/block-user', requireAdminAuth, (req, res) => {
 
 // Admin Unblock User Account
 app.post('/api/admin/unblock-user', requireAdminAuth, (req, res) => {
-  const { uid, email } = req.body;
+  res.setHeader('Content-Type', 'application/json');
+  const { uid, email, username } = req.body || {};
 
   if (uid) bannedUserAccounts.delete(uid);
   if (email) bannedUserAccounts.delete(String(email).trim().toLowerCase());
+  if (username) bannedUserAccounts.delete(String(username).trim().toLowerCase());
 
   saveSecurityStateToDisk();
 
@@ -2153,8 +2167,14 @@ app.post('/api/admin/unblock-user', requireAdminAuth, (req, res) => {
 
 // Public User Ban Status Poller (Live-Kick Check for Client App.tsx)
 app.get('/api/user/ban-status', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   const uid = String(req.query.uid || '').trim();
   const email = String(req.query.email || '').trim().toLowerCase();
+  const username = String(req.query.username || '').trim().toLowerCase();
   const clientIp = getClientIp(req);
 
   // Check user account ban
@@ -2163,6 +2183,8 @@ app.get('/api/user/ban-status', (req, res) => {
     banInfo = bannedUserAccounts.get(uid);
   } else if (email && bannedUserAccounts.has(email)) {
     banInfo = bannedUserAccounts.get(email);
+  } else if (username && bannedUserAccounts.has(username)) {
+    banInfo = bannedUserAccounts.get(username);
   }
 
   // Check IP ban

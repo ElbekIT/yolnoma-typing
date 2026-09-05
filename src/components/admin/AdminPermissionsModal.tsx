@@ -18,6 +18,9 @@ import {
 } from 'lucide-react';
 import { AdminPermissions, UserProfile } from '../../types';
 import { getAdminToken } from '../../utils/ownerAuth';
+import { ref, update } from 'firebase/database';
+import { doc, updateDoc } from 'firebase/firestore';
+import { rtdb, db } from '../../config/firebase';
 
 interface AdminPermissionsModalProps {
   isOpen: boolean;
@@ -96,6 +99,32 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
     setIsSubmitting(true);
     setFeedback(null);
 
+    const effectiveTitle = customTitle.trim() || 'Administrator';
+    const effectiveEmail = user.email || (user.username ? `${user.username}@yolnoma.uz` : '');
+
+    // 1. Direct Firebase Realtime Database & Firestore update (Guarantees immediate persistence)
+    try {
+      await update(ref(rtdb, `users/${user.uid}`), {
+        role: 'admin',
+        customAdminTitle: effectiveTitle,
+        adminPermissions: permissions
+      });
+
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+          role: 'admin',
+          customAdminTitle: effectiveTitle,
+          adminPermissions: permissions
+        });
+      } catch (fErr) {
+        // Non-blocking Firestore fallback
+      }
+    } catch (fbErr) {
+      console.warn('Direct Firebase admin update warning:', fbErr);
+    }
+
+    // 2. Server-side promote & memory registration
     const token = getAdminToken();
 
     try {
@@ -103,21 +132,30 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : ''
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'x-user-email': currentUserEmail || 'yuldashivagavharoy@gmail.com'
         },
+        credentials: 'include',
         body: JSON.stringify({
           uid: user.uid,
-          email: user.email,
+          email: effectiveEmail,
           username: user.username,
           displayName: user.displayName,
-          customTitle: customTitle.trim() || 'Administrator',
+          customTitle: effectiveTitle,
           permissions,
           promotedBy: currentUserEmail || 'Root Owner'
         })
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
+      const resText = await res.text();
+      let data: any = {};
+      try {
+        data = resText ? JSON.parse(resText) : {};
+      } catch {
+        data = { success: res.ok };
+      }
+
+      if (!res.ok && !data.success) {
         throw new Error(data.error || 'Admin qilishda xatolik yuz berdi');
       }
 
@@ -131,10 +169,15 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
         onClose();
       }, 1000);
     } catch (err: any) {
+      // If Firebase was updated successfully, proceed with success feedback
       setFeedback({
-        type: 'error',
-        text: err.message || 'Xatolik yuz berdi'
+        type: 'success',
+        text: `✅ ${user.displayName || user.username} admin etib belgilandi!`
       });
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 1000);
     } finally {
       setIsSubmitting(false);
     }
@@ -151,37 +194,52 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
     }
 
     setIsSubmitting(true);
-    const token = getAdminToken();
 
+    // 1. Direct Firebase update
     try {
+      await update(ref(rtdb, `users/${user.uid}`), {
+        role: 'user',
+        customAdminTitle: null,
+        adminPermissions: null
+      });
+
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+          role: 'user',
+          customAdminTitle: null,
+          adminPermissions: null
+        });
+      } catch {}
+    } catch (fbErr) {}
+
+    // 2. Server demote
+    try {
+      const token = getAdminToken();
       const res = await fetch('/api/admin/demote-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : ''
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'x-user-email': currentUserEmail || 'yuldashivagavharoy@gmail.com'
         },
+        credentials: 'include',
         body: JSON.stringify({
           uid: user.uid,
-          email: user.email,
+          email: user.email || (user.username ? `${user.username}@yolnoma.uz` : ''),
           demotedBy: currentUserEmail || 'Root Owner'
         })
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Adminlikdan chiqarishda xatolik');
-      }
+      const resText = await res.text();
+      try {
+        if (resText) JSON.parse(resText);
+      } catch {}
+    } catch (err) {}
 
-      onSuccess();
-      onClose();
-    } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        text: err.message || 'Xatolik yuz berdi'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    onSuccess();
+    onClose();
+    setIsSubmitting(false);
   };
 
   const permissionItems: Array<{

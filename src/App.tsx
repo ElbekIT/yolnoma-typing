@@ -322,7 +322,31 @@ function MainAppContent() {
           setUserBanInfo(null);
         }
       });
-      return () => unsub();
+
+      // Also listen on bannedEmails if user has email
+      let emailUnsub: (() => void) | undefined;
+      if (user.email) {
+        const emailKey = user.email.replace(/\./g, '_').toLowerCase();
+        const emailBanRef = ref(rtdb, `bannedEmails/${emailKey}`);
+        emailUnsub = onValue(emailBanRef, (eSnap) => {
+          if (eSnap.exists()) {
+            const eVal = eSnap.val();
+            setUserBanInfo({
+              banned: true,
+              reason: eVal?.reason || 'Administrator tomonidan hisob toʻxtatilgan',
+              bannedAt: eVal?.bannedAt || Date.now(),
+              displayName: profile?.displayName || user.displayName || '',
+              username: profile?.username || '',
+              email: user.email || ''
+            });
+          }
+        });
+      }
+
+      return () => {
+        unsub();
+        if (emailUnsub) emailUnsub();
+      };
     } catch {}
   }, [user?.uid, user?.email, user?.displayName, profile?.isBanned, profile?.blockReason, profile?.displayName, profile?.username]);
 
@@ -343,6 +367,7 @@ function MainAppContent() {
         const query = new URLSearchParams();
         if (user.uid) query.set('uid', user.uid);
         if (user.email) query.set('email', user.email);
+        if (profile?.username) query.set('username', profile.username);
 
         const res = await fetch(`/api/user/ban-status?${query.toString()}`, { cache: 'no-store' });
         if (res.ok) {
@@ -832,15 +857,25 @@ function MainAppContent() {
 
   const currentTargetChar = targetText[typedInput.length] || '';
 
-  // 0. Account Ban check (Live-Kick for banned user account)
-  if (userBanInfo?.banned && !isOwnerWhitelisted) {
+  // 0. Account Ban check (Live-Kick for banned user account - Online or Offline)
+  const isAccountBanned = Boolean(userBanInfo?.banned || profile?.isBanned);
+  if (isAccountBanned && !isOwnerWhitelisted) {
+    const effectiveReason =
+      userBanInfo?.reason ||
+      profile?.blockReason ||
+      'Qoidabuzarlik yoki shubhali faoliyat sababli hisob toʻxtatilgan.';
+    const effectiveBannedAt =
+      userBanInfo?.bannedAt ||
+      profile?.bannedAt ||
+      Date.now();
+
     return (
       <UserBlockedScreen
-        reason={userBanInfo.reason}
-        bannedAt={userBanInfo.bannedAt}
-        displayName={userBanInfo.displayName}
-        username={userBanInfo.username}
-        email={userBanInfo.email}
+        reason={effectiveReason}
+        bannedAt={effectiveBannedAt}
+        displayName={userBanInfo?.displayName || profile?.displayName || user.displayName || 'Foydalanuvchi'}
+        username={userBanInfo?.username || profile?.username || ''}
+        email={userBanInfo?.email || profile?.email || user.email || ''}
       />
     );
   }
