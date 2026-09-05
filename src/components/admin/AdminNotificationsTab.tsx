@@ -15,8 +15,7 @@ import {
   Search,
   CheckCircle2,
   AlertTriangle,
-  RefreshCw,
-  Share2
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile, UserNotificationItem } from '../../types';
@@ -52,28 +51,13 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Telegram Bot Integration State
-  const [testingTelegram, setTestingTelegram] = useState(false);
-  const [telegramSuccess, setTelegramSuccess] = useState<string | null>(null);
-  const [telegramError, setTelegramError] = useState<string | null>(null);
-
-  const handleTestTelegram = async () => {
-    setTestingTelegram(true);
-    setTelegramSuccess(null);
-    setTelegramError(null);
-    try {
-      const res = await fetch('/api/telegram/test', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setTelegramSuccess("Sinov xabari Telegramga (@yosh_avlod_typingbot orqali 8269163077 ga) muvaffaqiyatli yetkazildi! ✅");
-      } else {
-        setTelegramError(data.error || "Telegramga yuborishda xatolik");
-      }
-    } catch (err: any) {
-      setTelegramError(err.message || "Serverga ulanishda xatolik");
-    } finally {
-      setTestingTelegram(false);
-    }
+  // Quick preset template loader
+  const applyPreset = (presetTitle: string, presetMsg: string, presetType: UserNotificationItem['type']) => {
+    setTitle(presetTitle);
+    setMessage(presetMsg);
+    setNotifType(presetType);
+    setSuccessMsg('Shablon xabar maydoniga yuklandi! Yuborish tugmasi orqali tarqating.');
+    setTimeout(() => setSuccessMsg(''), 3000);
   };
 
   // Sent announcements history
@@ -217,92 +201,112 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
         </div>
       </div>
 
-      {/* Telegram Bot Live Integration & Defense Shield Card */}
-      <div className="bg-gradient-to-r from-blue-950/40 via-[var(--card-bg)] to-cyan-950/30 border-2 border-cyan-500/30 rounded-3xl p-6 shadow-md relative overflow-hidden">
+      {/* In-Platform Instant Broadcast & Notification Templates Card */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-[var(--card-bg)] to-sky-500/10 border-2 border-[var(--main-color)]/30 rounded-3xl p-6 shadow-md relative overflow-hidden space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-3.5 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 mt-1">
-              <Share2 className="w-6 h-6" />
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-2xl bg-[var(--main-color)]/15 border border-[var(--main-color)]/30 text-[var(--main-color)] mt-0.5">
+              <Sparkles className="w-6 h-6" />
             </div>
-            <div className="space-y-1">
+            <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-black text-[var(--text-color)]">
-                  Telegram Bot Yangi Rekordlar Eʼlon Tizimi
+                  Tezkor Eʼlonlar & Xabarnoma Shablonlari
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  ONLINE & HIMOYALANGAN
+                  PLATFORMA ICHKI REALTIME PUSH
                 </span>
               </div>
-              <p className="text-xs text-[var(--sub-color)] max-w-2xl leading-relaxed">
-                Foydalanuvchi yangi rekord o'rnatganda Telegram kanal/guruhga avtomatik e'lon yuboriladi. Bot tokeni brauzerdan butunlay yashirilgan bo'lib, faqat Vercel/Node Serverless orqali Anti-Cheat va 90s Cooldown bilan ishlaydi.
+              <p className="text-xs text-[var(--sub-color)] max-w-2xl leading-relaxed mt-0.5">
+                Bir marta bosish orqali eng muhim hodisalar (musobaqalar, rekordlar, yangilanishlar) boʻyicha tayyor professional xabarlarni barcha foydalanuvchilar ekraniga tarqating.
               </p>
-              <div className="flex items-center gap-4 text-xs font-mono pt-1 text-[var(--sub-color)] flex-wrap">
-                <span>Bot: <strong className="text-cyan-400 font-sans">@yosh_avlod_typingbot</strong></span>
-                <span>•</span>
-                <span>Kanal/Chat ID: <strong className="text-[var(--text-color)]">8269163077</strong></span>
-                <span>•</span>
-                <span>Himoya: <span className="text-emerald-400">Anti-DDoS & Spam Proof</span></span>
-              </div>
-
-              {/* Rich Link Preview Status */}
-              <div className="mt-2.5 p-2.5 rounded-xl bg-black/40 border border-cyan-500/20 flex items-center gap-3">
-                <img
-                  src="/og-banner.png"
-                  alt="Yolnoma OG Banner"
-                  className="w-16 h-9 object-cover rounded-lg border border-cyan-500/30 shrink-0"
-                />
-                <div className="text-[11px] leading-snug">
-                  <div className="font-bold text-[var(--text-color)] flex items-center gap-1.5">
-                    <span>Telegram Rich Preview & Banner Faol</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">1200x630</span>
-                  </div>
-                  <div className="text-[var(--sub-color)] truncate max-w-md">
-                    Telegramda <code>https://www.yolnoma.uz/leaderboard</code> yuborilganda rasm, sarlavha va tugmalar bilan to'liq ochiladi.
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
-
-          <div className="w-full md:w-auto flex flex-col items-end gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleTestTelegram}
-              disabled={testingTelegram}
-              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-cyan-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-              {testingTelegram ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Yuborilmoqda...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  <span>Sinov Xabari Yuborish (Test Bot)</span>
-                </>
-              )}
-            </button>
-            <span className="text-[10px] text-[var(--sub-color)] font-mono text-center md:text-right">
-              /api/telegram/test orqali tekshirish
-            </span>
           </div>
         </div>
 
-        {telegramSuccess && (
-          <div className="mt-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{telegramSuccess}</span>
-          </div>
-        )}
+        {/* Quick Clickable Presets */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() =>
+              applyPreset(
+                '⚡️ Tezkor Yozish Musobaqasi Boshlandi!',
+                'Assalomu alaykum aziz foydalanuvchilar! Yolnoma platformasida yangi musobaqa start oldi. Oʻz mahoratingizni koʻrsating va reyting choʻqqisini zabt eting!',
+                'success'
+              )
+            }
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-[var(--main-color)]/40 text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-[var(--main-color)] transition-colors">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>Yangi Musobaqa</span>
+            </div>
+            <p className="text-[11px] text-[var(--sub-color)] mt-1 line-clamp-2">
+              Barcha foydalanuvchilarni yangi musobaqaga chorlovchi xabar
+            </p>
+          </button>
 
-        {telegramError && (
-          <div className="mt-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 animate-in fade-in">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{telegramError}</span>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() =>
+              applyPreset(
+                '🏆 Milliy Reytingda Yangi Rekord Oʻrnatildi!',
+                'Platformamizda navbatdagi yuqori natija qayd etildi! Yangi peshqadamlarni tabriklaymiz va barcha qatnashchilarga omad tilaymiz.',
+                'achievement'
+              )
+            }
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-amber-500/40 text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-amber-400 transition-colors">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Rekord Yangilanishi</span>
+            </div>
+            <p className="text-[11px] text-[var(--sub-color)] mt-1 line-clamp-2">
+              Top oʻrinlar va yangi rekordlar haqida eʼlon
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              applyPreset(
+                '🚀 Platformada Katta Yangilanish Taqdim Etildi',
+                'Saytimiz tezligi oshirildi, yangi tillar va qoʻshimcha rejimlar qoʻshildi. Sinab koʻring va qulayliklardan bahramand boʻling!',
+                'info'
+              )
+            }
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-cyan-500/40 text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-cyan-400 transition-colors">
+              <Radio className="w-4 h-4 text-cyan-400" />
+              <span>Yangi Imkoniyatlar</span>
+            </div>
+            <p className="text-[11px] text-[var(--sub-color)] mt-1 line-clamp-2">
+              Yangi funksiyalar va yaxshilanishlar eʼloni
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              applyPreset(
+                '🛠 Qisqa Profilaktika & Server Texnik Xizmati',
+                'Sayt tizimlarini yanada tezlashtirish va xavfsizlikni kuchaytirish maqsadida qisqa muddatli yangilanish oʻtkazilishi rejalashtirilgan.',
+                'warning'
+              )
+            }
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-rose-500/40 text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-rose-400 transition-colors">
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <span>Profilaktika Eslatmasi</span>
+            </div>
+            <p className="text-[11px] text-[var(--sub-color)] mt-1 line-clamp-2">
+              Texnik xizmat yoki yangilanish haqida ogohlantirish
+            </p>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -138,11 +138,32 @@ export async function checkOwnerBackend(userEmail?: string | null): Promise<bool
       body: JSON.stringify({ email: cleanEmail })
     });
     const data = await res.json().catch(() => null);
-    const isOwner = Boolean(data?.isOwner || data?.role === 'owner');
-    cachedOwnerStatus[cleanEmail] = isOwner;
-    return isOwner;
+    const isAllowed = Boolean(data?.isOwner || data?.isAdmin || data?.role === 'owner' || data?.role === 'admin');
+    cachedOwnerStatus[cleanEmail] = isAllowed;
+    return isAllowed;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Automatically authenticates an appointed admin or root owner without needing manual login
+ */
+export async function autoAuthAdminSession(email: string): Promise<{ success: boolean; token?: string; error?: string }> {
+  try {
+    const res = await fetch('/api/admin/auth-subadmin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() })
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success && data?.token) {
+      persistAdminSession(data.token, data.expiresAt || (Date.now() + 6 * 3600000), data.sessionId);
+      return { success: true, token: data.token };
+    }
+    return { success: false, error: data?.error || 'Kirish rad etildi' };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }
 

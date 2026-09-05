@@ -19,6 +19,7 @@ import { DevToolsBlockedScreen } from './components/DevToolsBlockedScreen';
 import { IpBlockedScreen } from './components/security/IpBlockedScreen';
 import { VpnBlockedScreen } from './components/security/VpnBlockedScreen';
 import { MaintenanceScreen } from './components/security/MaintenanceScreen';
+import { UserBlockedScreen } from './components/security/UserBlockedScreen';
 import { fetchIpSecurityStatus } from './utils/securityShield';
 import { Wrench } from 'lucide-react';
 import { antiCheatManager } from './utils/antiCheat';
@@ -208,6 +209,16 @@ function MainAppContent() {
     reason?: string;
   } | null>(null);
 
+  // Real-time Account-level Ban state
+  const [userBanInfo, setUserBanInfo] = useState<{
+    banned: boolean;
+    reason?: string;
+    bannedAt?: number;
+    displayName?: string;
+    username?: string;
+    email?: string;
+  } | null>(null);
+
   const [maintenanceInfo, setMaintenanceInfo] = useState<{
     active: boolean;
     title: string;
@@ -239,6 +250,126 @@ function MainAppContent() {
       return () => unsub();
     } catch {}
   }, []);
+
+  // Fast 3-second poller for Maintenance Mode propagation to all clients worldwide
+  useEffect(() => {
+    let isMounted = true;
+    const pollMaintenance = async () => {
+      try {
+        const res = await fetch('/api/maintenance/status', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data && typeof data.active === 'boolean') {
+            setMaintenanceInfo((prev) => {
+              if (prev.active !== data.active || prev.updatedAt !== data.updatedAt) {
+                return data;
+              }
+              return prev;
+            });
+          }
+        }
+      } catch {}
+    };
+
+    pollMaintenance();
+    const maintInterval = setInterval(pollMaintenance, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(maintInterval);
+    };
+  }, []);
+
+  // Listen for Account-level Ban in Firebase RTDB & Profile
+  useEffect(() => {
+    if (!user?.uid) {
+      setUserBanInfo(null);
+      return;
+    }
+
+    // Root Owner Immunity: Cannot ever be banned
+    const isRootOwner = user.email && (
+      user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+      user.email.toLowerCase().startsWith('yuldashivagavharoy')
+    );
+    if (isRootOwner) {
+      setUserBanInfo(null);
+      return;
+    }
+
+    try {
+      const banRef = ref(rtdb, `bannedUsers/${user.uid}`);
+      const unsub = onValue(banRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          setUserBanInfo({
+            banned: true,
+            reason: val?.reason || profile?.blockReason || 'Administrator tomonidan hisob toʻxtatilgan',
+            bannedAt: val?.bannedAt || Date.now(),
+            displayName: profile?.displayName || user.displayName || '',
+            username: profile?.username || '',
+            email: user.email || ''
+          });
+        } else if (profile?.isBanned) {
+          setUserBanInfo({
+            banned: true,
+            reason: profile?.blockReason || 'Administrator tomonidan hisob toʻxtatilgan',
+            bannedAt: profile?.bannedAt || Date.now(),
+            displayName: profile?.displayName || user.displayName || '',
+            username: profile?.username || '',
+            email: user.email || ''
+          });
+        } else {
+          setUserBanInfo(null);
+        }
+      });
+      return () => unsub();
+    } catch {}
+  }, [user?.uid, user?.email, user?.displayName, profile?.isBanned, profile?.blockReason, profile?.displayName, profile?.username]);
+
+  // Fast 3-second poller for live account ban / kick from server-side database
+  useEffect(() => {
+    if (!user?.uid && !user?.email) return;
+
+    // Root Owner Immunity
+    const isRootOwner = user.email && (
+      user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+      user.email.toLowerCase().startsWith('yuldashivagavharoy')
+    );
+    if (isRootOwner) return;
+
+    let isMounted = true;
+    const checkUserBanStatus = async () => {
+      try {
+        const query = new URLSearchParams();
+        if (user.uid) query.set('uid', user.uid);
+        if (user.email) query.set('email', user.email);
+
+        const res = await fetch(`/api/user/ban-status?${query.toString()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            if (data?.isBanned) {
+              setUserBanInfo({
+                banned: true,
+                reason: data.banInfo?.reason || 'Administrator tomonidan akkaunt bloklandi',
+                bannedAt: data.banInfo?.bannedAt || Date.now(),
+                displayName: profile?.displayName || user.displayName || '',
+                username: profile?.username || '',
+                email: user.email || ''
+              });
+            }
+          }
+        }
+      } catch {}
+    };
+
+    checkUserBanStatus();
+    const banInterval = setInterval(checkUserBanStatus, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(banInterval);
+    };
+  }, [user?.uid, user?.email, profile?.displayName, profile?.username]);
 
   // Periodic security verify with backend (IP ban, VPN, Maintenance)
   useEffect(() => {
@@ -700,6 +831,19 @@ function MainAppContent() {
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';
+
+  // 0. Account Ban check (Live-Kick for banned user account)
+  if (userBanInfo?.banned && !isOwnerWhitelisted) {
+    return (
+      <UserBlockedScreen
+        reason={userBanInfo.reason}
+        bannedAt={userBanInfo.bannedAt}
+        displayName={userBanInfo.displayName}
+        username={userBanInfo.username}
+        email={userBanInfo.email}
+      />
+    );
+  }
 
   // 1. IP Ban check (Malicious DDoS/DRDoS attack IP blocked)
   if (ipBanInfo?.banned) {

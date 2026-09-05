@@ -906,35 +906,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userRank = 1;
           }
         } catch {}
-
-        // Announce new record / improved record to Telegram Channel/Group securely via Server API
-        if (isPersonalBest && fullResult.wpm >= 25 && fullResult.accuracy >= 65) {
-          fetch('/api/announce-winner', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId,
-              username,
-              displayName: profile.displayName || username,
-              wpm: fullResult.wpm,
-              oldWpm: existingPBest,
-              wpmDiff: Math.max(0, fullResult.wpm - (existingPBest || 0)),
-              accuracy: fullResult.accuracy,
-              consistency: fullResult.consistency || 95,
-              level: newLevel,
-              rankTitle,
-              rank: userRank,
-              xp: newXp,
-              totalTests: newTotalTests,
-              timeMode: fullResult.timeMode,
-              mode: fullResult.mode,
-              language: fullResult.language,
-              correctChars: fullResult.correctChars,
-              errorCount: fullResult.errors || 0,
-              testId: fullResult.id || `res_${Date.now()}`
-            })
-          }).catch(() => {});
-        }
       } catch {}
     } else {
       // Guest User - Push live score to RTDB Leaderboard
@@ -980,35 +951,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             guestRank = 1;
           }
         } catch {}
-
-        // Announce guest personal record to Telegram if valid
-        if (isPersonalBest && rawResult.wpm >= 35 && rawResult.accuracy >= 70) {
-          fetch('/api/announce-winner', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: guestId,
-              username: `guest_${guestId.replace('guest_', '')}`,
-              displayName: `Mehmon (${guestId.replace('guest_', '')})`,
-              wpm: rawResult.wpm,
-              oldWpm: existingPBest,
-              wpmDiff: Math.max(0, rawResult.wpm - (existingPBest || 0)),
-              accuracy: rawResult.accuracy,
-              consistency: rawResult.consistency || 90,
-              level: 1,
-              rankTitle: 'Mehmon Yozuvchi',
-              rank: guestRank,
-              xp: Math.round(rawResult.wpm * 10),
-              totalTests: Number(localStorage.getItem('yolnoma_guest_tests') || 1),
-              timeMode: rawResult.timeMode,
-              mode: rawResult.mode,
-              language: rawResult.language,
-              correctChars: rawResult.correctChars,
-              errorCount: rawResult.errors || 0,
-              testId: `guest_${Date.now()}`
-            })
-          }).catch(() => {});
-        }
       } catch {}
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));

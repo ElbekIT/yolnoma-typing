@@ -32,7 +32,9 @@ import {
   Check,
   Gamepad2,
   Laptop,
-  Wrench
+  Wrench,
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 import { rtdb, db } from '../../config/firebase';
 import { ref, onValue, update, set, remove } from 'firebase/database';
@@ -46,10 +48,14 @@ import { AdminInboxTab } from './AdminInboxTab';
 import { AdminServerTab } from './AdminServerTab';
 import { AdminSessionsTab } from './AdminSessionsTab';
 import { AdminMaintenanceTab } from './AdminMaintenanceTab';
+import { AdminTeamTab } from './AdminTeamTab';
+import { AdminPermissionsModal } from './AdminPermissionsModal';
 import { maskEmail } from '../../utils/maskEmail';
 import {
   isOwnerUser,
-  checkOwnerBackend
+  checkOwnerBackend,
+  getAdminToken,
+  autoAuthAdminSession
 } from '../../utils/ownerAuth';
 
 export const AdminView: React.FC = () => {
@@ -81,6 +87,9 @@ export const AdminView: React.FC = () => {
         if (isMounted) {
           setIsBackendOwner(res);
           setIsCheckingRole(false);
+          if (res && user?.email) {
+            autoAuthAdminSession(user.email);
+          }
         }
       });
     } else if (!authLoading) {
@@ -91,6 +100,13 @@ export const AdminView: React.FC = () => {
       isMounted = false;
     };
   }, [user?.email, isDirectOwner, authLoading]);
+
+  // Ensure token is established if direct owner
+  useEffect(() => {
+    if (isDirectOwner && user?.email) {
+      autoAuthAdminSession(user.email);
+    }
+  }, [isDirectOwner, user?.email]);
 
   const isSuperOwner = Boolean(
     isDirectOwner ||
@@ -107,9 +123,12 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'team' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
+
+  // Admin Permissions Modal for direct user promotion
+  const [selectedUserForAdminPerms, setSelectedUserForAdminPerms] = useState<UserProfile | null>(null);
 
   // Ban Modal
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -130,6 +149,8 @@ export const AdminView: React.FC = () => {
   const [showContentModal, setShowContentModal] = useState(false);
 
   const [leaderboardList, setLeaderboardList] = useState<UserProfile[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const fetchData = () => setRefreshKey((k) => k + 1);
 
   // Fetch users & leaderboard from Firebase Realtime DB with exact LeaderboardView synchronization
   useEffect(() => {
@@ -306,7 +327,7 @@ export const AdminView: React.FC = () => {
       console.error('Error fetching admin data:', e);
       setLoading(false);
     }
-  }, [isSuperOwner]);
+  }, [isSuperOwner, refreshKey]);
 
   const openEditModal = (u: UserProfile) => {
     setEditingUser(u);
@@ -397,6 +418,15 @@ export const AdminView: React.FC = () => {
 
   const handleBlockUser = async () => {
     if (!selectedUser) return;
+
+    // Strict Immunity Check: Root Owner can NEVER be banned
+    const targetEmail = selectedUser.email ? selectedUser.email.toLowerCase().trim() : '';
+    if (targetEmail === 'yuldashivagavharoy@gmail.com' || targetEmail.startsWith('yuldashivagavharoy')) {
+      alert("❌ XAVFSIZLIK: Asosiy Bosh Administrator (yuldashivagavharoy@gmail.com) daxlsizdir! Uni bloklash qatʼiyan taqiqlanadi!");
+      setSelectedUser(null);
+      return;
+    }
+
     try {
       // Update in users node
       await update(ref(rtdb, `users/${selectedUser.uid}`), {
@@ -424,6 +454,29 @@ export const AdminView: React.FC = () => {
         });
       } catch (err) {
         // Fallback
+      }
+
+      // Realtime Server-side Ban Broadcast (Instant Ban & Kick across all tabs)
+      try {
+        const token = getAdminToken();
+        await fetch('/api/admin/block-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'x-user-email': user?.email || 'yuldashivagavharoy@gmail.com'
+          },
+          body: JSON.stringify({
+            uid: selectedUser.uid,
+            email: selectedUser.email,
+            username: selectedUser.username,
+            displayName: selectedUser.displayName,
+            reason: banReason.trim(),
+            bannedBy: user?.displayName || user?.email || 'Admin'
+          })
+        });
+      } catch (err) {
+        // Non-blocking
       }
 
       // Update local state
@@ -469,6 +522,25 @@ export const AdminView: React.FC = () => {
         });
       } catch (err) {
         // Fallback
+      }
+
+      // Notify Server-side Unblock
+      try {
+        const token = getAdminToken();
+        await fetch('/api/admin/unblock-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'x-user-email': user?.email || 'yuldashivagavharoy@gmail.com'
+          },
+          body: JSON.stringify({
+            uid: u.uid,
+            email: u.email
+          })
+        });
+      } catch (err) {
+        // Non-blocking
       }
 
       setUsersList((prev) =>
@@ -615,6 +687,18 @@ export const AdminView: React.FC = () => {
         >
           <Users className="w-4 h-4" />
           <span>👥 Barcha Foydalanuvchilar ({usersList.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('team')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'team'
+              ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-400/50'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-cyan-300 border border-cyan-500/30'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-cyan-400" />
+          <span>🛡️ Adminlar & Nozik Vakolatlar</span>
         </button>
 
         <button
@@ -918,54 +1002,89 @@ export const AdminView: React.FC = () => {
 
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setTargetUserForMessage(u);
-                              setActiveTab('notifications');
-                            }}
-                            className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-white font-bold text-[11px] border border-sky-500/40 transition-all flex items-center gap-1 cursor-pointer"
-                            title="Foydalanuvchiga shaxsiy habar yuborish"
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                            <span>Habar</span>
-                          </button>
+                          {(() => {
+                            const isTargetRootOwner = Boolean(
+                              u.email && (
+                                u.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+                                u.email.toLowerCase().startsWith('yuldashivagavharoy')
+                              )
+                            );
 
-                          <button
-                            onClick={() => openEditModal(u)}
-                            className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
-                            title="Tahrirlash"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Tahrirlash</span>
-                          </button>
+                            if (isTargetRootOwner) {
+                              return (
+                                <span className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center gap-1.5 shadow-sm">
+                                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                                  DAXLSIZ BOSH OWNER
+                                </span>
+                              );
+                            }
 
-                          {u.highestWpm > 0 && (
-                            <button
-                              onClick={() => handleRemoveFromLeaderboard(u)}
-                              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500 text-slate-300 hover:text-white font-bold text-[11px] border border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
-                              title="Reytingdan olib tashlash"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                            return (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setTargetUserForMessage(u);
+                                    setActiveTab('notifications');
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-white font-bold text-[11px] border border-sky-500/40 transition-all flex items-center gap-1 cursor-pointer"
+                                  title="Foydalanuvchiga shaxsiy habar yuborish"
+                                >
+                                  <Mail className="w-3.5 h-3.5" />
+                                  <span>Habar</span>
+                                </button>
 
-                          {u.isBanned ? (
-                            <button
-                              onClick={() => handleUnblockUser(u)}
-                              className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <UserCheck className="w-3.5 h-3.5" />
-                              <span>Unban</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => setSelectedUser(u)}
-                              className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] border border-rose-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <UserX className="w-3.5 h-3.5" />
-                              <span>Bloklash</span>
-                            </button>
-                          )}
+                                <button
+                                  onClick={() => openEditModal(u)}
+                                  className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
+                                  title="Tahrirlash"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <span>Tahrirlash</span>
+                                </button>
+
+                                <button
+                                  onClick={() => setSelectedUserForAdminPerms(u)}
+                                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
+                                    u.role === 'admin'
+                                      ? 'bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border-cyan-500/40'
+                                      : 'bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white border-indigo-500/40'
+                                  }`}
+                                  title={u.role === 'admin' ? "Admin huquqlari va vakolatlarini boshqarish" : "Foydalanuvchini admin qilish va ruxsatlarni belgilash"}
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  <span>{u.role === 'admin' ? 'Vakolatlar' : 'Admin Qilish'}</span>
+                                </button>
+
+                                {u.highestWpm > 0 && (
+                                  <button
+                                    onClick={() => handleRemoveFromLeaderboard(u)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500 text-slate-300 hover:text-white font-bold text-[11px] border border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
+                                    title="Reytingdan olib tashlash"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+
+                                {u.isBanned ? (
+                                  <button
+                                    onClick={() => handleUnblockUser(u)}
+                                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <UserCheck className="w-3.5 h-3.5" />
+                                    <span>Unban</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => setSelectedUser(u)}
+                                    className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] border border-rose-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <UserX className="w-3.5 h-3.5" />
+                                    <span>Bloklash</span>
+                                  </button>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
                     </tr>
@@ -975,6 +1094,15 @@ export const AdminView: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB: ADMINLAR VA NOZIK VAKOLATLAR BOSHQARUVI */}
+      {activeTab === 'team' && (
+        <AdminTeamTab
+          usersList={usersList}
+          currentUserEmail={user?.email}
+          onRefresh={fetchData}
+        />
       )}
 
       {/* TAB 3: KELGAN MUROJAATLAR / INBOX */}
@@ -1182,6 +1310,18 @@ export const AdminView: React.FC = () => {
         isOpen={showContentModal}
         onClose={() => setShowContentModal(false)}
         onContentUpdated={() => window.dispatchEvent(new Event('storage'))}
+      />
+
+      {/* Admin Permissions Assignment Modal */}
+      <AdminPermissionsModal
+        isOpen={Boolean(selectedUserForAdminPerms)}
+        onClose={() => setSelectedUserForAdminPerms(null)}
+        user={selectedUserForAdminPerms}
+        onSuccess={() => {
+          setSelectedUserForAdminPerms(null);
+          fetchData();
+        }}
+        currentUserEmail={user?.email}
       />
     </div>
   );

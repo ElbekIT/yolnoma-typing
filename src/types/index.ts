@@ -49,6 +49,16 @@ export interface UserNotificationItem {
   targetName?: string;
 }
 
+export interface AdminPermissions {
+  canManageLeaderboard: boolean;
+  canBlockUsers: boolean;
+  canSendNotifications: boolean;
+  canManageInbox: boolean;
+  canViewServer: boolean;
+  canManageMaintenance: boolean;
+  canManageAdmins: boolean;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -71,8 +81,14 @@ export interface UserProfile {
   isBanned?: boolean;
   isBlocked?: boolean;
   blockReason?: string;
+  bannedAt?: number;
+  bannedBy?: string;
   isSuspended?: boolean;
   role: 'user' | 'admin' | 'owner';
+  adminPermissions?: AdminPermissions;
+  customAdminTitle?: string;
+  promotedBy?: string;
+  promotedAt?: number;
 
   // Username changes
   usernameChangesLeft: number;
