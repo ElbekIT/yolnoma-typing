@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Shield, HelpCircle, FileText, Zap, ShieldAlert, Users, UserX, Crown, Clock } from 'lucide-react';
+import { X, Shield, HelpCircle, FileText, Zap, ShieldAlert, Users, UserX, Crown, Clock, Wrench, Sparkles, AlertTriangle } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
             }`}
           >
             <Zap className="w-4 h-4 text-amber-400" />
-            <span>Yangilanishlar (v2.6)</span>
+            <span>Yangilanishlar (v2.7)</span>
             <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-black font-black text-[9px]">
               Yangi
             </span>
@@ -92,16 +92,16 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
           </button>
         </div>
 
-        {/* Tab Content: UPDATES (v2.6 Changelog) */}
+        {/* Tab Content: UPDATES (v2.7 Changelog) */}
         {activeTab === 'updates' && (
           <div className="space-y-4 text-xs">
-            {/* Version 2.6 */}
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--main-color)]/30 space-y-3">
+            {/* Version 2.7 - LATEST */}
+            <div className="p-4.5 rounded-2xl bg-[var(--sub-alt)] border border-amber-500/40 space-y-3 shadow-lg shadow-amber-500/5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-black text-sm text-[var(--text-color)]">v2.6</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-[10px]">
-                    Eng Soʻnggi Reliz
+                  <span className="font-mono font-black text-sm text-[var(--text-color)]">v2.7</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Eng Soʻnggi Reliz
                   </span>
                 </div>
                 <div className="text-[11px] font-mono text-[var(--sub-color)] flex items-center gap-1">
@@ -110,39 +110,57 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
                 </div>
               </div>
 
-              <h4 className="font-bold text-[var(--text-color)] text-xs">
-                Kiber-Xavfsizlik, Real-time Bloklash & Yangilangan Administratorlar Boshqaruvi
+              <h4 className="font-bold text-[var(--text-color)] text-xs sm:text-sm">
+                Sababli Bloklash Tizimi, Toʻliq Admin Nazorati & Yangilanish Rejimi
               </h4>
 
-              <div className="space-y-2 pt-1">
-                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-start gap-2.5 text-[var(--sub-color)]">
                   <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[var(--text-color)]">Foydalanuvchini Real-time Bloklash:</strong> Admin tomonidan foydalanuvchi bloklanganda, tizim uning saytdagi seansini darhol toʻxtatadi va ekranda bloklanish sababini batafsil koʻrsatadi.
+                    <strong className="text-[var(--text-color)]">Foydalanuvchini Sababi Bilan Bloklash:</strong> Admin foydalanuvchini bloklaganda kiritilgan aniq sabab darhol foydalanuvchi ekranida qizil kiber-kartochkada koʻrinadi. Barcha seanslar uziladi va saytga kirish toʻxtatiladi.
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+                <div className="flex items-start gap-2.5 text-[var(--sub-color)]">
                   <Users className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[var(--text-color)]">Administratorlar Roʻyxati:</strong> Tayinlangan barcha adminlar, ularning roli va 7 xil nozik ruxsatlari admin panelda toʻliq koʻrinadi.
+                    <strong className="text-[var(--text-color)]">Adminlar Roʻyxati & Tezkor Filtr:</strong> Barcha tayinlangan administratorlar alohida "Adminlar" filtrida koʻrinadi. Ularning roli, maxsus lavozimi va ruxsatnomalari toʻliq sinxronlashadi.
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 text-[var(--sub-color)]">
-                  <UserX className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2.5 text-[var(--sub-color)]">
+                  <UserX className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[var(--text-color)]">Admindan Chiqarish (Demote):</strong> Sub-admin adminlikdan chiqarilishi bilanoq uning barcha admin huquqlari bekor qilinadi va Admin Panelga kirishi man etiladi.
+                    <strong className="text-[var(--text-color)]">Admindan Chiqarish (Demote) Mexanizmi:</strong> Har bir admin roʻyxatida va boshqaruv panelida "Admindan Chiqarish" tugmasi mavjud. Chiqarilgan shaxsning Admin Panelga kirishi darhol bekor qilinadi.
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+                <div className="flex items-start gap-2.5 text-[var(--sub-color)]">
+                  <Wrench className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[var(--text-color)]">Sayt Yangilanishi (Maintenance Mode):</strong> Saytda texnik yangilanish ketayotganda bir tugma orqali barcha oddiy foydalanuvchilarga sayt yopiladi va yangilanish haqida jonli xabarnoma koʻrsatiladi. Bosh Administrator uchun sayt ochiq qoladi.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-[var(--sub-color)]">
                   <Crown className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[var(--text-color)]">Bosh Administrator Daxlsizligi:</strong> Asosiy Bosh Administrator (yuldashivagavharoy@gmail.com) tizim darajasida mutlaq himoyalangan.
+                    <strong className="text-[var(--text-color)]">Bosh Administrator Mutlaq Daxlsizligi:</strong> Asosiy Bosh Administrator (<code className="text-amber-400 font-mono">yuldashivagavharoy@gmail.com</code>) server va maʼlumotlar bazasi darajasida bloklanish va kamsitilishdan himoyalangan.
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Version 2.6 */}
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-xs text-[var(--text-color)]">v2.6</span>
+                <span className="text-[10px] font-mono text-[var(--sub-color)]">2026-yil Fevral</span>
+              </div>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                <strong className="text-[var(--text-color)]">Kiber-Xavfsizlik & Anti-Cheat:</strong> Avto-kliker va sunʼiy botlarga qarshi apparat darajasidagi klaviatura dinamikasi tekshiruvi va avtomatik himoya filtrlari.
+              </p>
             </div>
 
             {/* Version 2.5 */}

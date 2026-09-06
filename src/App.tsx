@@ -752,8 +752,32 @@ function MainAppContent() {
     antiCheatManager.clearDeviceBan();
   }
 
-  if (profile?.role !== 'admin' && (profile?.isBanned || antiCheatManager.isDeviceBanned().banned)) {
-    return <BlockedScreen reason={profile?.blockReason || antiCheatManager.isDeviceBanned().reason || undefined} />;
+  const isAccountBanned = Boolean(
+    userBanInfo?.banned ||
+    profile?.isBanned ||
+    deviceBan.banned
+  );
+
+  if (isAccountBanned && !isOwnerWhitelisted) {
+    const effectiveReason =
+      userBanInfo?.reason ||
+      profile?.blockReason ||
+      deviceBan.reason ||
+      'Qoidabuzarlik, sunʼiy avto-kliker dasturlaridan foydalanish yoki ruxsatsiz xatti-harakatlar aniqlangani sababli hisob toʻxtatildi.';
+    const effectiveBannedAt =
+      userBanInfo?.bannedAt ||
+      profile?.bannedAt ||
+      Date.now();
+
+    return (
+      <UserBlockedScreen
+        reason={effectiveReason}
+        bannedAt={effectiveBannedAt}
+        displayName={userBanInfo?.displayName || profile?.displayName || user.displayName || 'Foydalanuvchi'}
+        username={userBanInfo?.username || profile?.username || ''}
+        email={userBanInfo?.email || profile?.email || user.email || ''}
+      />
+    );
   }
 
   // Input change handler
@@ -857,29 +881,6 @@ function MainAppContent() {
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';
-
-  // 0. Account Ban check (Live-Kick for banned user account - Online or Offline)
-  const isAccountBanned = Boolean(userBanInfo?.banned || profile?.isBanned);
-  if (isAccountBanned && !isOwnerWhitelisted) {
-    const effectiveReason =
-      userBanInfo?.reason ||
-      profile?.blockReason ||
-      'Qoidabuzarlik yoki shubhali faoliyat sababli hisob toʻxtatilgan.';
-    const effectiveBannedAt =
-      userBanInfo?.bannedAt ||
-      profile?.bannedAt ||
-      Date.now();
-
-    return (
-      <UserBlockedScreen
-        reason={effectiveReason}
-        bannedAt={effectiveBannedAt}
-        displayName={userBanInfo?.displayName || profile?.displayName || user.displayName || 'Foydalanuvchi'}
-        username={userBanInfo?.username || profile?.username || ''}
-        email={userBanInfo?.email || profile?.email || user.email || ''}
-      />
-    );
-  }
 
   // 1. IP Ban check (Malicious DDoS/DRDoS attack IP blocked)
   if (ipBanInfo?.banned) {

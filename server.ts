@@ -934,6 +934,18 @@ const requireAdminAuth = (req: express.Request, res: express.Response, next: exp
     return next();
   }
 
+  // Also recognized if sender is an appointed sub-admin in registeredAdmins
+  if (userEmailHeader && registeredAdmins.has(userEmailHeader)) {
+    const regAdmin = registeredAdmins.get(userEmailHeader)!;
+    (req as any).adminUser = {
+      sub: regAdmin.email,
+      role: regAdmin.role,
+      exp: Date.now() + 24 * 60 * 60 * 1000
+    };
+    (req as any).adminToken = 'admin_registered_access';
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
   const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
@@ -1990,7 +2002,7 @@ app.post('/api/admin/auth-subadmin', (req, res) => {
 });
 
 // List All Administrators (Root Owner + Appointed Sub-Admins)
-app.get('/api/admin/list-admins', requireAdminAuth, (req, res) => {
+app.get('/api/admin/list-admins', (req, res) => {
   initRootOwner();
   const admins = Array.from(registeredAdmins.values());
   res.json({

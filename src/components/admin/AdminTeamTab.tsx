@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Check,
-  ShieldAlert
+  ShieldAlert,
+  RefreshCw
 } from 'lucide-react';
 import { AdminPermissions, UserProfile } from '../../types';
 import { AdminPermissionsModal } from './AdminPermissionsModal';
@@ -49,6 +50,33 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
   const [demoteTargetUser, setDemoteTargetUser] = useState<UserProfile | null>(null);
   const [isDemoting, setIsDemoting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [serverAdmins, setServerAdmins] = useState<any[]>([]);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+
+  const fetchServerAdmins = async () => {
+    setIsLoadingAdmins(true);
+    try {
+      const res = await fetch('/api/admin/list-admins', {
+        headers: {
+          'x-user-email': currentUserEmail || ROOT_OWNER_EMAIL
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.admins)) {
+          setServerAdmins(data.admins);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch server admins:', e);
+    } finally {
+      setIsLoadingAdmins(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServerAdmins();
+  }, [currentUserEmail]);
 
   // Find Root Owner in list or build virtual root owner
   const rootOwnerUser = usersList.find(
@@ -88,13 +116,100 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
     }
   };
 
-  // Filter appointed sub-admins
-  const subAdmins = usersList.filter(
-    (u) =>
+  // Combine usersList with serverAdmins to guarantee no admin is ever omitted!
+  const combinedAdminsMap = new Map<string, UserProfile>();
+
+  // 1. First add from usersList where role is admin
+  usersList.forEach((u) => {
+    if (
       u.role === 'admin' &&
       u.email.toLowerCase() !== ROOT_OWNER_EMAIL &&
       !u.email.toLowerCase().startsWith('yuldashivagavharoy')
-  );
+    ) {
+      const key = (u.email || u.username || u.uid).toLowerCase();
+      combinedAdminsMap.set(key, { ...u });
+    }
+  });
+
+  // 2. Then merge serverAdmins
+  serverAdmins.forEach((adm) => {
+    if (!adm || !adm.email) return;
+    const admEmail = adm.email.toLowerCase();
+    if (
+      admEmail === ROOT_OWNER_EMAIL ||
+      admEmail.startsWith('yuldashivagavharoy')
+    ) {
+      return;
+    }
+
+    const existing = combinedAdminsMap.get(admEmail);
+    if (existing) {
+      existing.role = 'admin';
+      existing.customAdminTitle = adm.customTitle || existing.customAdminTitle;
+      existing.adminPermissions = adm.permissions || existing.adminPermissions;
+    } else {
+      // Find if present in usersList by uid or username
+      const foundInUsers = usersList.find(
+        (u) =>
+          u.uid === adm.uid ||
+          (u.email && u.email.toLowerCase() === admEmail) ||
+          (u.username && u.username.toLowerCase() === (adm.username || '').toLowerCase())
+      );
+      if (foundInUsers) {
+        combinedAdminsMap.set(admEmail, {
+          ...foundInUsers,
+          role: 'admin',
+          customAdminTitle: adm.customTitle || foundInUsers.customAdminTitle,
+          adminPermissions: adm.permissions || foundInUsers.adminPermissions
+        });
+      } else {
+        combinedAdminsMap.set(admEmail, {
+          uid: adm.uid || `adm_${Date.now()}`,
+          email: adm.email,
+          username: adm.username || adm.email.split('@')[0],
+          displayName: adm.displayName || adm.username || 'Administrator',
+          role: 'admin',
+          customAdminTitle: adm.customTitle || 'Administrator',
+          adminPermissions: adm.permissions || {
+            canManageLeaderboard: true,
+            canBlockUsers: true,
+            canSendNotifications: true,
+            canManageInbox: true,
+            canViewServer: true,
+            canManageMaintenance: false,
+            canManageAdmins: false
+          },
+          highestWpm: 0,
+          highestAccuracy: 100,
+          level: 1,
+          rankTitle: adm.customTitle || 'Admin',
+          xp: 500,
+          isBanned: false,
+          blockReason: '',
+          createdAt: adm.promotedAt || Date.now(),
+          lastActive: Date.now(),
+          followers: [],
+          following: [],
+          followersCount: 0,
+          followingCount: 0,
+          pinnedAchievements: [],
+          unlockedAchievements: [],
+          totalTests: 0,
+          totalTimeTypedSeconds: 0,
+          totalWordsTyped: 0,
+          totalCharsTyped: 0,
+          averageWpm: 0,
+          currentStreak: 1,
+          longestStreak: 1,
+          isPublic: true,
+          usernameChangesLeft: 2,
+          privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true }
+        });
+      }
+    }
+  });
+
+  const subAdmins = Array.from(combinedAdminsMap.values());
 
   // Candidates for promotion (regular users)
   const candidateUsers = usersList.filter(
@@ -168,12 +283,22 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         });
       } catch {}
 
+      // Optimistically update local serverAdmins
+      setServerAdmins((prev) =>
+        prev.filter((adm) => {
+          const emailMatches = adm.email && demoteTargetUser.email && adm.email.toLowerCase() === demoteTargetUser.email.toLowerCase();
+          const uidMatches = adm.uid && demoteTargetUser.uid && adm.uid === demoteTargetUser.uid;
+          return !emailMatches && !uidMatches;
+        })
+      );
+
       setFeedback({
         type: 'success',
         text: `✅ ${demoteTargetUser.displayName || demoteTargetUser.username} adminlikdan chiqarildi! U endi Admin Panelga kira olmaydi.`
       });
 
       setDemoteTargetUser(null);
+      fetchServerAdmins();
       onRefresh();
 
       setTimeout(() => {
@@ -234,15 +359,31 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          id="btn-open-promote-modal"
-          onClick={() => setIsPromoteModalOpen(true)}
-          className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Yangi Admin Tayinlash</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              fetchServerAdmins();
+              onRefresh();
+            }}
+            disabled={isLoadingAdmins}
+            className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
+            title="Adminlar roʻyxatini yangilash"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoadingAdmins ? 'animate-spin text-amber-400' : ''}`} />
+            <span>Yangilash</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-open-promote-modal"
+            onClick={() => setIsPromoteModalOpen(true)}
+            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Yangi Admin Tayinlash</span>
+          </button>
+        </div>
       </div>
 
       {/* Roster Grid */}
@@ -636,6 +777,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         user={selectedUserForPerms}
         onSuccess={() => {
           setSelectedUserForPerms(null);
+          fetchServerAdmins();
           onRefresh();
         }}
         currentUserEmail={currentUserEmail}
