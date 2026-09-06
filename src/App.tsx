@@ -521,6 +521,7 @@ function MainAppContent() {
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number; rawWpm: number; errors: number }[]>([]);
   const [finalResult, setFinalResult] = useState<TypingResult | null>(null);
+  const [liveCombo, setLiveCombo] = useState<number>(0);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -558,6 +559,7 @@ function MainAppContent() {
     setIsTestActive(false);
     setIsTestFinished(false);
     setFinalResult(null);
+    setLiveCombo(0);
     setWpmHistory([]);
     setElapsedSeconds(0);
     startTimeRef.current = 0;
@@ -647,6 +649,71 @@ function MainAppContent() {
     const accuracy = totalAttempts > 0 ? calculateAccuracy(correctCount, totalAttempts) : 0;
     const finalErrors = Math.max(wrongCount, totalMistakesCountRef.current);
 
+    // Extract key mistakes frequency and keyboard heat
+    const keyMistakes: Record<string, number> = {};
+    typedChars.forEach((ch, idx) => {
+      if (idx < targetChars.length && ch !== targetChars[idx]) {
+        const expected = targetChars[idx];
+        const nextChar = idx + 1 < targetChars.length ? targetChars[idx + 1] : '';
+        const prevChar = idx > 0 ? targetChars[idx - 1] : '';
+        let keyLabel = expected;
+        if (expected === "'" || expected === "ʻ" || expected === "’" || expected === "`") {
+          if (prevChar.toLowerCase() === 'o') keyLabel = "o'";
+          else if (prevChar.toLowerCase() === 'g') keyLabel = "g'";
+          else keyLabel = "'";
+        } else if (expected.toLowerCase() === 's' && nextChar.toLowerCase() === 'h') {
+          keyLabel = "sh";
+        } else if (expected.toLowerCase() === 'c' && nextChar.toLowerCase() === 'h') {
+          keyLabel = "ch";
+        } else if (expected === ' ') {
+          keyLabel = "space";
+        }
+        keyMistakes[keyLabel] = (keyMistakes[keyLabel] || 0) + 1;
+      }
+    });
+
+    // Calculate Consistency % based on variance of wpmHistory
+    let consistency = 100;
+    if (wpmHistory.length > 2) {
+      const wpms = wpmHistory.map((h) => h.wpm);
+      const avg = wpms.reduce((a, b) => a + b, 0) / wpms.length;
+      if (avg > 0) {
+        const variance = wpms.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / wpms.length;
+        const stdDev = Math.sqrt(variance);
+        const cv = (stdDev / avg) * 100;
+        consistency = Math.max(25, Math.min(100, Math.round(100 - cv)));
+      }
+    }
+
+    // Generate intelligent weak spots
+    const weakSpots: string[] = [];
+    const sortedMistakes = Object.entries(keyMistakes).sort((a, b) => b[1] - a[1]);
+    
+    if (sortedMistakes.some(([k]) => k.includes("'") || k === "o'" || k === "g'")) {
+      weakSpots.push("O'zbek tilidagi apostrofli harflar (o', g') va tutuq belgisi");
+    }
+    if (sortedMistakes.some(([k]) => k.toLowerCase() === 'sh' || k.toLowerCase() === 'ch')) {
+      weakSpots.push("O'zbek tilidagi CH va SH harf birikmalari");
+    }
+    if (sortedMistakes.some(([k]) => k.includes("space"))) {
+      weakSpots.push("So'zlar orasidagi bo'sh joy (Space) va ritm uzilishi");
+    }
+    if (accuracy < 94) {
+      weakSpots.push("Tezlikka intilish sababli aniqlik pasayishi");
+    }
+    if (consistency < 78) {
+      weakSpots.push("Yozish tempining notekisligi (Ritm va tezlik o'zgarishi)");
+    }
+    if (weakSpots.length === 0) {
+      if (finalErrors === 0) {
+        weakSpots.push("Mukammal aniqlik! Barcha harflar 100% toʻgʻri terildi.");
+        weakSpots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezlikni oshiring.");
+      } else {
+        const topKey = sortedMistakes[0]?.[0] || 'harflar';
+        weakSpots.push(`Eng ko'p xato: "${topKey}" tugmasida ehtiyotkorlik talab etiladi`);
+      }
+    }
+
     const resultObj: Omit<TypingResult, 'userId' | 'username'> = {
       wpm,
       cpm,
@@ -665,7 +732,10 @@ function MainAppContent() {
       difficulty,
       language,
       timestamp: Date.now(),
-      wpmHistory
+      wpmHistory,
+      consistency,
+      keyMistakes,
+      weakSpots
     };
 
     const saved = await saveTestResult(resultObj);
@@ -825,15 +895,25 @@ function MainAppContent() {
       const addedCount = newInput.length - typedInput.length;
       totalKeystrokesRef.current += addedCount;
 
-      // Track errors on newly typed characters
+      // Track errors on newly typed characters & calculate live combo
       const startIndex = typedInput.length;
+      let hasError = false;
       for (let i = startIndex; i < newInput.length; i++) {
         const charTyped = newInput[i];
         const targetChar = targetText[i];
         if (targetChar === undefined || charTyped !== targetChar) {
           totalMistakesCountRef.current += 1;
+          hasError = true;
         }
       }
+      if (hasError) {
+        setLiveCombo(0);
+      } else {
+        setLiveCombo((prev) => prev + addedCount);
+      }
+    } else if (newInput.length < typedInput.length) {
+      // User erased characters
+      setLiveCombo((prev) => Math.max(0, prev - (typedInput.length - newInput.length)));
     }
 
     setTypedInput(newInput);
@@ -966,6 +1046,7 @@ function MainAppContent() {
               timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
               progressPercent={progressPercent}
               isTestActive={isTestActive}
+              combo={liveCombo}
             />
 
             <TypingDisplay
@@ -985,6 +1066,10 @@ function MainAppContent() {
               onGoToLeaderboard={() => {
                 setIsTestFinished(false);
                 setActiveTab('leaderboard');
+              }}
+              onJoinBattle={() => {
+                setIsTestFinished(false);
+                setActiveTab('battle');
               }}
             />
           </div>
