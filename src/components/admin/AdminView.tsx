@@ -61,29 +61,36 @@ import {
 export const AdminView: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
 
-  const isDirectOwner = Boolean(
-    (user?.email && (
+  const isRootOwner = Boolean(
+    user?.email && (
       user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
       user.email.toLowerCase().startsWith('yuldashivagavharoy')
-    )) ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    isOwnerUser(user?.email)
+    )
   );
+
+  const isRoleAdmin = Boolean(profile?.role === 'owner' || profile?.role === 'admin');
+  const isDirectOwner = Boolean(isRootOwner || isRoleAdmin);
 
   const [isBackendOwner, setIsBackendOwner] = useState<boolean>(isDirectOwner);
   const [isCheckingRole, setIsCheckingRole] = useState<boolean>(!isDirectOwner && authLoading);
 
   useEffect(() => {
     let isMounted = true;
-    if (isDirectOwner) {
+    if (isRootOwner) {
       setIsBackendOwner(true);
       setIsCheckingRole(false);
       return;
     }
 
+    // If profile role is explicitly 'user', demote is immediate
+    if (profile?.role && profile.role !== 'admin' && profile.role !== 'owner' && !isRootOwner) {
+      setIsBackendOwner(false);
+      setIsCheckingRole(false);
+      return;
+    }
+
     if (user?.email) {
-      checkOwnerBackend(user.email).then((res) => {
+      checkOwnerBackend(user.email, true).then((res) => {
         if (isMounted) {
           setIsBackendOwner(res);
           setIsCheckingRole(false);
@@ -99,7 +106,7 @@ export const AdminView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [user?.email, isDirectOwner, authLoading]);
+  }, [user?.email, isDirectOwner, isRootOwner, profile?.role, authLoading]);
 
   // Ensure token is established if direct owner
   useEffect(() => {
@@ -109,11 +116,9 @@ export const AdminView: React.FC = () => {
   }, [isDirectOwner, user?.email]);
 
   const isSuperOwner = Boolean(
-    isDirectOwner ||
-    isBackendOwner ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    isOwnerUser(user?.email)
+    isRootOwner ||
+    (isRoleAdmin && (isBackendOwner || true)) ||
+    (isBackendOwner && profile?.role !== 'user')
   );
 
   // Email Privacy Setting (Default: Masked for Privacy)
@@ -1300,9 +1305,32 @@ export const AdminView: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 block">
-                Bloklash Sababini Yozing:
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-300 block">
+                  Bloklash Sababini Yozing:
+                </label>
+                <span className="text-[10px] text-slate-400">Foydalanuvchiga koʻrinadi</span>
+              </div>
+
+              {/* Quick Presets */}
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {[
+                  '🤖 Avto-kliker / Bot dasturdan foydalanish',
+                  '⚠️ Soxta natijalar va testlarni aldashga urinish',
+                  '🚫 Spam / Haqoratomuz xatti-harakat va qoidabuzarlik',
+                  '🛡️ Sayt xavfsizlik qoidalarini qoʻpol buzish'
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setBanReason(preset)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-rose-500/40 text-[11px] text-slate-300 hover:text-rose-300 transition-colors text-left cursor-pointer"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+
               <textarea
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}

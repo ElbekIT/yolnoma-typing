@@ -453,6 +453,7 @@ function MainAppContent() {
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [aboutModalTab, setAboutModalTab] = useState<'faq' | 'privacy' | 'terms' | 'updates'>('faq');
   const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
   const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
 
@@ -1039,7 +1040,14 @@ function MainAppContent() {
       </main>
 
       <Footer
-        onOpenAbout={() => setIsAboutOpen(true)}
+        onOpenAbout={() => {
+          setAboutModalTab('faq');
+          setIsAboutOpen(true);
+        }}
+        onOpenUpdates={() => {
+          setAboutModalTab('updates');
+          setIsAboutOpen(true);
+        }}
         onOpenOwner={() => setActiveTab('owner')}
         onOpenAdmin={() => setActiveTab('admin')}
       />
@@ -1050,7 +1058,11 @@ function MainAppContent() {
         onDecline={handleDeclineInvite}
       />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+      <AboutModal
+        isOpen={isAboutOpen}
+        initialTab={aboutModalTab}
+        onClose={() => setIsAboutOpen(false)}
+      />
     </div>
   );
 }

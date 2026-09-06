@@ -2061,11 +2061,11 @@ app.post('/api/admin/promote-admin', requireAdminAuth, (req, res) => {
 // Demote / Remove Admin
 app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  const { email, username } = req.body || {};
+  const { uid, email, username } = req.body || {};
 
   const effectiveEmail = String(email || (username ? `${username}@yolnoma.uz` : '')).trim().toLowerCase();
-  if (!effectiveEmail) {
-    return res.status(400).json({ success: false, error: 'Email yoki username talab qilinadi' });
+  if (!effectiveEmail && !uid) {
+    return res.status(400).json({ success: false, error: 'Email, username yoki UID talab qilinadi' });
   }
 
   const targetEmail = effectiveEmail;
@@ -2078,11 +2078,24 @@ app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
     });
   }
 
-  registeredAdmins.delete(targetEmail);
+  if (targetEmail) {
+    registeredAdmins.delete(targetEmail);
+  }
 
-  // Invalidate any active sessions belonging to this demoted admin
+  if (uid) {
+    for (const [admEmail, admRec] of registeredAdmins.entries()) {
+      if (admRec.uid === uid) {
+        registeredAdmins.delete(admEmail);
+      }
+    }
+  }
+
+  // Invalidate all active sessions belonging to this demoted admin
   for (const [sessId, sess] of activeAdminSessions.entries()) {
-    if (sess.email && sess.email.toLowerCase() === targetEmail) {
+    if (
+      (sess.email && targetEmail && sess.email.toLowerCase() === targetEmail) ||
+      (uid && (sess as any).uid === uid)
+    ) {
       if (sess.token) invalidatedTokens.add(sess.token);
       activeAdminSessions.delete(sessId);
     }
@@ -2092,7 +2105,7 @@ app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
 
   res.json({
     success: true,
-    message: 'Admin huquqlari muvaffaqiyatli bekor qilindi.'
+    message: 'Admin huquqlari muvaffaqiyatli bekor qilindi va barcha faol seanslari toʻxtatildi.'
   });
 });
 

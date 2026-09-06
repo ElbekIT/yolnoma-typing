@@ -1,119 +1,220 @@
-import React, { useState } from 'react';
-import { X, Info, Shield, HelpCircle, FileText, Keyboard } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Shield, HelpCircle, FileText, Zap, ShieldAlert, Users, UserX, Crown, Clock } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'faq' | 'privacy' | 'terms' | 'updates';
 }
 
-export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'faq' | 'privacy' | 'terms'>('faq');
+export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initialTab = 'faq' }) => {
+  const [activeTab, setActiveTab] = useState<'faq' | 'privacy' | 'terms' | 'updates'>(initialTab);
+
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 shadow-2xl text-[var(--text-color)] max-h-[85vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[var(--main-color)] text-white flex items-center justify-center font-bold text-lg">
+          <div className="w-10 h-10 rounded-xl bg-[var(--main-color)] text-white flex items-center justify-center font-bold text-lg shadow-md">
             Y
           </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight">Yolnoma Typing Platform</h2>
-            <p className="text-xs text-[var(--sub-color)]">Multi-Language Touch Typing Ecosystem</p>
+            <p className="text-xs text-[var(--sub-color)]">Multi-Language Touch Typing & Fair Competition Ecosystem</p>
           </div>
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex gap-2 border-b border-[var(--sub-alt)] mb-6 text-xs font-semibold">
+        <div className="flex flex-wrap gap-2 border-b border-[var(--sub-alt)] mb-6 text-xs font-semibold">
+          <button
+            onClick={() => setActiveTab('updates')}
+            className={`pb-2.5 px-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
+              activeTab === 'updates'
+                ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
+                : 'text-[var(--sub-color)]'
+            }`}
+          >
+            <Zap className="w-4 h-4 text-amber-400" />
+            <span>Yangilanishlar (v2.6)</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-black font-black text-[9px]">
+              Yangi
+            </span>
+          </button>
+
           <button
             onClick={() => setActiveTab('faq')}
-            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors ${
+            className={`pb-2.5 px-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeTab === 'faq'
                 ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
                 : 'text-[var(--sub-color)]'
             }`}
           >
             <HelpCircle className="w-4 h-4" />
-            <span>FAQ & Guides</span>
+            <span>Savol-Javoblar (FAQ)</span>
           </button>
 
           <button
             onClick={() => setActiveTab('privacy')}
-            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors ${
+            className={`pb-2.5 px-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeTab === 'privacy'
                 ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
                 : 'text-[var(--sub-color)]'
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Privacy Policy</span>
+            <span>Maxfiylik Siyosati</span>
           </button>
 
           <button
             onClick={() => setActiveTab('terms')}
-            className={`pb-2.5 px-1 flex items-center gap-1.5 transition-colors ${
+            className={`pb-2.5 px-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeTab === 'terms'
                 ? 'border-b-2 border-[var(--main-color)] text-[var(--main-color)] font-bold'
                 : 'text-[var(--sub-color)]'
             }`}
           >
             <FileText className="w-4 h-4" />
-            <span>Terms of Service</span>
+            <span>Qoidalar & Shartlar</span>
           </button>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab Content: UPDATES (v2.6 Changelog) */}
+        {activeTab === 'updates' && (
+          <div className="space-y-4 text-xs">
+            {/* Version 2.6 */}
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--main-color)]/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-black text-sm text-[var(--text-color)]">v2.6</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-[10px]">
+                    Eng Soʻnggi Reliz
+                  </span>
+                </div>
+                <div className="text-[11px] font-mono text-[var(--sub-color)] flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>2026-yil Mart</span>
+                </div>
+              </div>
+
+              <h4 className="font-bold text-[var(--text-color)] text-xs">
+                Kiber-Xavfsizlik, Real-time Bloklash & Yangilangan Administratorlar Boshqaruvi
+              </h4>
+
+              <div className="space-y-2 pt-1">
+                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[var(--text-color)]">Foydalanuvchini Real-time Bloklash:</strong> Admin tomonidan foydalanuvchi bloklanganda, tizim uning saytdagi seansini darhol toʻxtatadi va ekranda bloklanish sababini batafsil koʻrsatadi.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+                  <Users className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[var(--text-color)]">Administratorlar Roʻyxati:</strong> Tayinlangan barcha adminlar, ularning roli va 7 xil nozik ruxsatlari admin panelda toʻliq koʻrinadi.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+                  <UserX className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[var(--text-color)]">Admindan Chiqarish (Demote):</strong> Sub-admin adminlikdan chiqarilishi bilanoq uning barcha admin huquqlari bekor qilinadi va Admin Panelga kirishi man etiladi.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 text-[var(--sub-color)]">
+                  <Crown className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[var(--text-color)]">Bosh Administrator Daxlsizligi:</strong> Asosiy Bosh Administrator (yuldashivagavharoy@gmail.com) tizim darajasida mutlaq himoyalangan.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Version 2.5 */}
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-xs text-[var(--text-color)]">v2.5</span>
+                <span className="text-[10px] font-mono text-[var(--sub-color)]">2026-yil Fevral</span>
+              </div>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                <strong className="text-[var(--text-color)]">Battle Arena & PUBG Taklifnomalari:</strong> Koʻp ishtirokchili real-vaqt klaviatura poygalari va onlayn doʻstlarga bir bosishda jang taklifnomasi yuborish imkoniyati.
+              </p>
+            </div>
+
+            {/* Version 2.0 */}
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-xs text-[var(--text-color)]">v2.0</span>
+                <span className="text-[10px] font-mono text-[var(--sub-color)]">2026-yil Yanvar</span>
+              </div>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                <strong className="text-[var(--text-color)]">10 Barmoq Saboqlari & Mexanik Audio:</strong> Touch typing oʻrganish metodikasi va haqiqiy mexanik klaviatura (Cherry MX) tovushlari.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: FAQ */}
         {activeTab === 'faq' && (
           <div className="space-y-4 text-xs">
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
-              <h4 className="font-bold text-sm text-[var(--text-color)]">How is WPM calculated?</h4>
+              <h4 className="font-bold text-sm text-[var(--text-color)]">WPM qanday hisoblanadi?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
-                Words Per Minute (WPM) is calculated by dividing total correct characters typed by 5, then dividing by elapsed test time in minutes: <code className="font-mono bg-black/20 px-1 py-0.5 rounded text-[var(--main-color)]">((Correct Chars / 5) / TimeInMinutes)</code>.
+                Words Per Minute (WPM) toʻgʻri kiritilgan barcha belgilarni 5 ga boʻlish va sarflangan daqiqaga boʻlish orqali aniqlanadi: <code className="font-mono bg-black/20 px-1 py-0.5 rounded text-[var(--main-color)]">((Toʻgʻri Belgilar / 5) / Daqiqa)</code>.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
-              <h4 className="font-bold text-sm text-[var(--text-color)]">Does Yolnoma Typing support RTL languages?</h4>
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Oʻngdan chapga yoziladigan (RTL) tillar bormi?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
-                Yes! Arabic, Persian, Hebrew, and Urdu scripts are rendered with full RTL (Right-To-Left) direction, aligned cursors, and accurate character metrics.
+                Ha! Arab, Fors, Ibroniy va Urdu tillari toʻliq RTL yoʻnalishida, toʻgʻri harakatlanuvchi kursor va maxsus shriftlar bilan ishlaydi.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
-              <h4 className="font-bold text-sm text-[var(--text-color)]">What keyboard shortcuts can I use?</h4>
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Qanday tezkor tugmalar mavjud?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
-                Press <span className="font-bold text-[var(--text-color)]">Tab + Enter</span> to quickly restart any test. Press <span className="font-bold text-[var(--text-color)]">Esc</span> to defocus the typing area.
+                Testni qayta boshlash uchun <span className="font-bold text-[var(--text-color)]">Tab + Enter</span> tugmalarini bosing. Kursor yoki matndan chiqish uchun <span className="font-bold text-[var(--text-color)]">Esc</span> tugmasidan foydalaning.
               </p>
             </div>
           </div>
         )}
 
+        {/* Tab Content: PRIVACY */}
         {activeTab === 'privacy' && (
           <div className="space-y-3 text-xs text-[var(--sub-color)] leading-relaxed">
             <p>
-              Your privacy is paramount. Yolnoma Typing stores user accounts and test results securely in Firebase Firestore under strict access rules.
+              Sizning maxfiyligingiz biz uchun muhim. Yolnoma Typing platformasi barcha foydalanuvchi hisoblarini va test natijalarini xavfsiz shifrlangan maʼlumotlar bazasida saqlaydi.
             </p>
             <p>
-              We do not collect or sell personal identification information. All passwords are encrypted by Firebase Authentication using industry-standard protocols.
+              Parollar Firebase Authentication xizmati orqali xavfsiz himoyalanadi va hech kim, hatto tizim maʼmurlari ham parolingizni ochiq koʻra olmaydi.
             </p>
           </div>
         )}
 
+        {/* Tab Content: TERMS */}
         {activeTab === 'terms' && (
           <div className="space-y-3 text-xs text-[var(--sub-color)] leading-relaxed">
             <p>
-              By using Yolnoma Typing, you agree to engage in fair typing tests without automating or injecting client-side cheat scripts.
+              Yolnoma Typing platformasidan foydalanish orqali siz halol musobaqa qoidalariga rioya qilishga, brauzer orqali cheat skriptlar yoki avto-kliker bot dasturlarini ishlatmaslikka rozilik bildirasiz.
             </p>
             <p>
-              Leaderboard records created through dishonest means or automated macros are subject to automated removal.
+              Noloyiq usullar orqali qoʻlga kiritilgan reyting natijalari avtomatik tarzda yoki adminlar tomonidan oʻchirib tashlanadi va hisob darhol bloklanadi.
             </p>
           </div>
         )}
