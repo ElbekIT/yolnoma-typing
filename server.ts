@@ -934,18 +934,6 @@ const requireAdminAuth = (req: express.Request, res: express.Response, next: exp
     return next();
   }
 
-  // Also recognized if sender is an appointed sub-admin in registeredAdmins
-  if (userEmailHeader && registeredAdmins.has(userEmailHeader)) {
-    const regAdmin = registeredAdmins.get(userEmailHeader)!;
-    (req as any).adminUser = {
-      sub: regAdmin.email,
-      role: regAdmin.role,
-      exp: Date.now() + 24 * 60 * 60 * 1000
-    };
-    (req as any).adminToken = 'admin_registered_access';
-    return next();
-  }
-
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
   const tokenFromCookie = req.cookies?.['yolnoma_admin_token'];
@@ -2002,7 +1990,7 @@ app.post('/api/admin/auth-subadmin', (req, res) => {
 });
 
 // List All Administrators (Root Owner + Appointed Sub-Admins)
-app.get('/api/admin/list-admins', (req, res) => {
+app.get('/api/admin/list-admins', requireAdminAuth, (req, res) => {
   initRootOwner();
   const admins = Array.from(registeredAdmins.values());
   res.json({
@@ -2073,11 +2061,11 @@ app.post('/api/admin/promote-admin', requireAdminAuth, (req, res) => {
 // Demote / Remove Admin
 app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  const { uid, email, username } = req.body || {};
+  const { email, username } = req.body || {};
 
   const effectiveEmail = String(email || (username ? `${username}@yolnoma.uz` : '')).trim().toLowerCase();
-  if (!effectiveEmail && !uid) {
-    return res.status(400).json({ success: false, error: 'Email, username yoki UID talab qilinadi' });
+  if (!effectiveEmail) {
+    return res.status(400).json({ success: false, error: 'Email yoki username talab qilinadi' });
   }
 
   const targetEmail = effectiveEmail;
@@ -2090,24 +2078,11 @@ app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
     });
   }
 
-  if (targetEmail) {
-    registeredAdmins.delete(targetEmail);
-  }
+  registeredAdmins.delete(targetEmail);
 
-  if (uid) {
-    for (const [admEmail, admRec] of registeredAdmins.entries()) {
-      if (admRec.uid === uid) {
-        registeredAdmins.delete(admEmail);
-      }
-    }
-  }
-
-  // Invalidate all active sessions belonging to this demoted admin
+  // Invalidate any active sessions belonging to this demoted admin
   for (const [sessId, sess] of activeAdminSessions.entries()) {
-    if (
-      (sess.email && targetEmail && sess.email.toLowerCase() === targetEmail) ||
-      (uid && (sess as any).uid === uid)
-    ) {
+    if (sess.email && sess.email.toLowerCase() === targetEmail) {
       if (sess.token) invalidatedTokens.add(sess.token);
       activeAdminSessions.delete(sessId);
     }
@@ -2117,7 +2092,7 @@ app.post('/api/admin/demote-admin', requireAdminAuth, (req, res) => {
 
   res.json({
     success: true,
-    message: 'Admin huquqlari muvaffaqiyatli bekor qilindi va barcha faol seanslari toʻxtatildi.'
+    message: 'Admin huquqlari muvaffaqiyatli bekor qilindi.'
   });
 });
 
