@@ -3,21 +3,12 @@ import {
   Trophy,
   RotateCcw,
   ArrowRight,
-  Share2,
-  CheckCircle2,
-  TrendingUp,
   AlertTriangle,
-  Sparkles,
-  Zap,
   Target,
-  Swords,
-  ChevronRight,
-  Award,
   Crown
 } from 'lucide-react';
-import { TypingResult, UserProfile } from '../../types';
+import { TypingResult } from '../../types';
 import { useAuth } from '../../context/AuthContext';
-import { useSettings } from '../../context/SettingsContext';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 
@@ -29,7 +20,7 @@ interface TestResultViewProps {
   onJoinBattle?: () => void;
 }
 
-// Generate smooth cubic bezier SVG curve
+// Generate smooth cubic bezier SVG curve (Monkeytype spline style)
 function createSmoothSplinePath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
@@ -56,24 +47,21 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
   result,
   onRestart,
   onNextTest,
-  onGoToLeaderboard,
-  onJoinBattle
+  onGoToLeaderboard
 }) => {
   const { user, profile } = useAuth();
-  const { themeConfig } = useSettings();
-  const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'oson' | 'orta' | 'qiyin'>('oson');
   const [periodTab, setPeriodTab] = useState<'hafta' | 'oy'>('hafta');
   const [hoverPoint, setHoverPoint] = useState<{ time: number; wpm: number; rawWpm: number; errors: number; x: number; y: number } | null>(null);
   const [liveTopTypists, setLiveTopTypists] = useState<any[]>([]);
 
-  // Default seed leaderboard matching screenshot (Zynexjon Uz, Www.jahongir.one, etc.)
+  // Default seed leaderboard matching live community
   const defaultTypists = useMemo(() => [
-    { rank: 1, name: 'Zynexjon Uz', wpm: 121, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Zynexjon' },
-    { rank: 2, name: 'Www.jahongir.one <', wpm: 109, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Jahongir' },
-    { rank: 3, name: 'Mrjasur Mc', wpm: 105, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Mrjasur' },
-    { rank: 4, name: '2-legends _so_ezz', wpm: 95, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=2legends' },
-    { rank: 5, name: 'Dark77x .', wpm: 91, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Dark77x' },
+    { rank: 1, name: 'Abdulboriy', wpm: 94, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Abdulboriy' },
+    { rank: 2, name: 'polatov', wpm: 92, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=polatov' },
+    { rank: 3, name: 'Sui', wpm: 89.1, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Sui' },
+    { rank: 4, name: 'Hex:Jasur', wpm: 81, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=HexJasur' },
+    { rank: 5, name: 'Islom Murodov', wpm: 80, avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=IslomMurodov' },
   ], []);
 
   // Subscribe to live leaderboard in RTDB
@@ -115,7 +103,7 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
     };
   }, [defaultTypists]);
 
-  // Global hotkeys: Tab + Enter to restart, Esc to restart
+  // Global hotkeys: Tab + Enter or Enter to restart / next test instantly
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
@@ -140,27 +128,19 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
     ? (result.accuracy === 100 ? '100%' : `${result.accuracy.toFixed(1)}%`)
     : '100%';
   const safeRawWpm = Number.isFinite(result.rawWpm) ? Math.max(0, Math.round(result.rawWpm)) : safeWpm;
-  const safeTime = Number.isFinite(result.testTimeSeconds) ? result.testTimeSeconds : 10;
-  const safeConsistency = Number.isFinite(result.consistency) ? Math.max(10, Math.min(100, Math.round(result.consistency!))) : 69;
+  const safeTime = Number.isFinite(result.testTimeSeconds) ? result.testTimeSeconds : 15;
+  const safeConsistency = Number.isFinite(result.consistency) ? Math.max(10, Math.min(100, Math.round(result.consistency!))) : 85;
   
-  const correctChars = Number.isFinite(result.correctChars) ? result.correctChars : Math.round(safeWpm * 4.5);
+  const correctChars = Number.isFinite(result.correctChars) ? result.correctChars : Math.round(safeWpm * 5);
   const wrongChars = Number.isFinite(result.errors) ? result.errors : 0;
   const extraChars = Number.isFinite(result.extraChars) ? result.extraChars : 0;
 
-  // Format difficulty label matching screenshot e.g. "Oson"
+  // Format difficulty label
   const difficultyLabel = useMemo(() => {
-    if (result.difficulty === 'hard') return 'Qiyin';
-    if (result.difficulty === 'medium') return "O'rta";
-    return 'Oson';
+    if (result.difficulty === 'hard') return 'qiyin';
+    if (result.difficulty === 'medium') return "o'rta";
+    return 'oson';
   }, [result.difficulty]);
-
-  // Share functionality
-  const handleShare = () => {
-    const text = `⚡ UzbekType / Yolnoma Natijasi ⚡\nTezlik: ${safeWpm} WPM (Raw: ${safeRawWpm})\nAniqlik: ${safeAccuracy}\nBelgilar: ${correctChars}/${wrongChars}/${extraChars}\nBarqarorlik: ${safeConsistency}%\nVaqt: ${safeTime}s`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   // Build timeline chart data points
   const timelineData = useMemo(() => {
@@ -172,14 +152,13 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
         errors: Number.isFinite(d.errors) ? Math.max(0, d.errors) : 0,
       }));
     }
-    // Synthetic smooth decline and stabilization curve like in the user's screenshot
+    // Synthetic smooth decline and stabilization curve like in Monkeytype
     const points = [];
     const dur = Math.max(5, safeTime);
     for (let s = 1; s <= dur; s++) {
       const progress = s / dur;
-      // Start higher (boost at start), decline to steady pace
-      const curveWpm = Math.round(safeWpm * (1.6 - 0.7 * Math.min(1, progress * 1.8) + 0.1 * Math.sin(progress * Math.PI)));
-      const curveRaw = Math.round(curveWpm * 1.05);
+      const curveWpm = Math.round(safeWpm * (1.35 - 0.45 * Math.min(1, progress * 1.5) + 0.05 * Math.sin(progress * Math.PI)));
+      const curveRaw = Math.round(curveWpm * 1.04);
       points.push({
         time: s,
         wpm: Math.max(10, curveWpm),
@@ -191,17 +170,16 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
   }, [result.wpmHistory, safeTime, safeWpm, wrongChars]);
 
   // Chart dimensions and coordinates calculation
-  const chartWidth = 520;
-  const chartHeight = 190;
-  const padLeft = 32;
+  const chartWidth = 540;
+  const chartHeight = 200;
+  const padLeft = 34;
   const padRight = 18;
-  const padTop = 20;
-  const padBottom = 26;
+  const padTop = 22;
+  const padBottom = 28;
   const innerW = chartWidth - padLeft - padRight;
   const innerH = chartHeight - padTop - padBottom;
 
   const maxVal = Math.max(60, ...timelineData.map((d) => Math.max(d.wpm, d.rawWpm)));
-  // Y-axis tick values: 0, 15, 30, 45, 60 (or scaled)
   const yTicks = [0, 15, 30, 45, 60];
   const dynamicMaxY = Math.max(60, Math.ceil(maxVal / 15) * 15);
   const actualYTicks = dynamicMaxY === 60 ? yTicks : [0, Math.round(dynamicMaxY * 0.25), Math.round(dynamicMaxY * 0.5), Math.round(dynamicMaxY * 0.75), dynamicMaxY];
@@ -221,9 +199,9 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
   const wpmSpline = createSmoothSplinePath(wpmPoints);
   const rawSpline = createSmoothSplinePath(rawPoints);
 
-  // User's current standing comparison
+  // User's current standing
   const displayTypists = liveTopTypists.length > 0 ? liveTopTypists : defaultTypists;
-  const currentUsername = profile?.displayName || profile?.username || (user?.displayName || 'Mehmon');
+  const currentUsername = profile?.displayName || profile?.username || (user?.displayName || 'JONIYa');
   const currentUserAvatar = profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${user?.uid || 'guest'}`;
 
   // Key mistakes heatmap
@@ -245,33 +223,36 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
   }, [result.keyMistakes, wrongChars]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-2 sm:px-4 select-none animate-in fade-in duration-300">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-2 sm:px-4 select-none animate-in fade-in duration-200 font-mono">
       
-      {/* 3-Column Panoramic Dashboard Grid (Matching Screenshot) */}
+      {/* 3-Column Panoramic Monkeytype Dashboard */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         
         {/* ========================================================================= */}
-        {/* COLUMN 1: LEFT HERO STATS & CONTROLS (cols 1 to 4)                        */}
+        {/* COLUMN 1: LEFT HERO STATS & MONKEYTYPE ACTION CONTROLS                    */}
         {/* ========================================================================= */}
         <div className="lg:col-span-4 flex flex-col justify-between space-y-6">
           
           {/* Big WPM & Accuracy Hero Section */}
           <div className="space-y-4">
             <div>
-              <div className="text-6xl sm:text-7xl font-black tracking-tight text-white font-mono leading-none">
+              <div className="text-[12px] font-bold tracking-widest text-[var(--sub-color)] uppercase">
+                wpm
+              </div>
+              <div className="text-6xl sm:text-7xl font-black tracking-tight text-[var(--main-color)] leading-none mt-0.5">
                 {safeWpm}
               </div>
-              <div className="text-xs sm:text-sm font-mono text-slate-400 font-semibold tracking-wider mt-1 uppercase">
-                WPM · {safeTime}S · {difficultyLabel}
+              <div className="text-xs font-semibold text-[var(--sub-color)] tracking-wider mt-1.5 uppercase">
+                wpm · {safeTime}s · {difficultyLabel}
               </div>
             </div>
 
             <div className="pt-2">
-              <div className="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono leading-none">
-                {safeAccuracy}
+              <div className="text-[12px] font-bold tracking-widest text-[var(--sub-color)] uppercase">
+                acc
               </div>
-              <div className="text-xs sm:text-sm font-mono text-slate-400 font-bold tracking-widest mt-1 uppercase">
-                ANIQLIK
+              <div className="text-5xl sm:text-6xl font-black tracking-tight text-[var(--text-color)] leading-none mt-0.5">
+                {safeAccuracy}
               </div>
             </div>
           </div>
@@ -280,87 +261,101 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
             
             {/* Box 1: Raw WPM */}
-            <div className="bg-[#10141d]/80 border border-slate-800/90 rounded-2xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center shadow-sm">
-              <span className="text-xl sm:text-2xl font-black font-mono text-white">
+            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center">
+              <span className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
                 {safeRawWpm}
               </span>
-              <span className="text-[11px] font-medium text-slate-400 mt-0.5">
-                Raw WPM
+              <span className="text-[11px] font-medium text-[var(--sub-color)] mt-0.5 lowercase">
+                raw wpm
               </span>
             </div>
 
             {/* Box 2: Belgilar (Correct / Wrong / Extra) */}
-            <div className="bg-[#10141d]/80 border border-slate-800/90 rounded-2xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center shadow-sm">
-              <div className="text-xl sm:text-2xl font-black font-mono">
-                <span className="text-emerald-400">{correctChars}</span>
-                <span className="text-slate-600 mx-0.5">/</span>
-                <span className="text-amber-400">{wrongChars}</span>
-                <span className="text-slate-600 mx-0.5">/</span>
-                <span className="text-rose-400">{extraChars}</span>
+            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center">
+              <div className="text-xl sm:text-2xl font-black">
+                <span className="text-[var(--text-color)]">{correctChars}</span>
+                <span className="text-[var(--sub-color)] mx-0.5">/</span>
+                <span className="text-[var(--error-color)]">{wrongChars}</span>
+                <span className="text-[var(--sub-color)] mx-0.5">/</span>
+                <span className="text-[var(--sub-color)]">{extraChars}</span>
               </div>
-              <span className="text-[11px] font-medium text-slate-400 mt-0.5">
-                Belgilar
+              <span className="text-[11px] font-medium text-[var(--sub-color)] mt-0.5 lowercase">
+                characters
               </span>
             </div>
 
             {/* Box 3: Barqarorlik (Consistency) */}
-            <div className="bg-[#10141d]/80 border border-slate-800/90 rounded-2xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center shadow-sm">
-              <span className="text-xl sm:text-2xl font-black font-mono text-white">
+            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center">
+              <span className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
                 {safeConsistency}%
               </span>
-              <span className="text-[11px] font-medium text-slate-400 mt-0.5">
-                Barqarorlik
+              <span className="text-[11px] font-medium text-[var(--sub-color)] mt-0.5 lowercase">
+                consistency
               </span>
             </div>
 
             {/* Box 4: Vaqt (Time) */}
-            <div className="bg-[#10141d]/80 border border-slate-800/90 rounded-2xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center shadow-sm">
-              <span className="text-xl sm:text-2xl font-black font-mono text-white">
+            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl p-3 sm:p-3.5 flex flex-col items-center justify-center text-center">
+              <span className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
                 {safeTime}s
               </span>
-              <span className="text-[11px] font-medium text-slate-400 mt-0.5">
-                Vaqt
+              <span className="text-[11px] font-medium text-[var(--sub-color)] mt-0.5 lowercase">
+                time
               </span>
             </div>
 
           </div>
 
-          {/* Action Buttons: Ulashish and Qaytadan */}
-          <div className="flex items-center gap-3 pt-1">
+          {/* Authentic Monkeytype Action Buttons (No Ulashish) */}
+          <div className="flex items-center gap-2.5 pt-1">
             <button
               type="button"
-              onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#10141d] hover:bg-slate-800/80 border border-slate-800 text-slate-200 text-xs sm:text-sm font-semibold transition-all cursor-pointer active:scale-95"
+              onClick={onNextTest}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--main-color)] hover:brightness-110 text-[#323437] font-bold text-xs sm:text-sm transition-all cursor-pointer active:scale-95 shadow-sm"
+              title="Keyingi test (Tab)"
             >
-              {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
-              <span>{copied ? 'Nusxalandi!' : 'Ulashish'}</span>
+              <ArrowRight className="w-4 h-4" />
+              <span>Keyingi test</span>
             </button>
 
             <button
               type="button"
               onClick={onRestart}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-950 text-xs sm:text-sm font-bold transition-all cursor-pointer active:scale-95 shadow-md shadow-white/10"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-[var(--text-color)] font-semibold text-xs sm:text-sm transition-all cursor-pointer active:scale-95"
+              title="Qayta boshlash (Enter)"
             >
-              <RotateCcw className="w-4 h-4 text-slate-900" />
+              <RotateCcw className="w-4 h-4 text-[var(--sub-color)]" />
               <span>Qaytadan</span>
             </button>
           </div>
 
-          {/* Keyboard tip */}
-          <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1.5 justify-center">
-            <span>Keyingi test:</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 font-bold text-[10px]">Tab</kbd>
-            <span>yoki</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 font-bold text-[10px]">Enter</kbd>
+          {/* Quick Practice mistakes if errors occurred */}
+          {wrongChars > 0 && (
+            <button
+              type="button"
+              onClick={onRestart}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--main-color)] text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <Target className="w-3.5 h-3.5 text-[var(--error-color)]" />
+              <span>Xatolarni takrorlash ({wrongChars} ta)</span>
+            </button>
+          )}
+
+          {/* Keyboard shortcuts cue */}
+          <div className="text-[11px] text-[var(--sub-color)] flex items-center gap-1.5 justify-center opacity-80">
+            <span>Keyingi:</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/30 text-[var(--text-color)] font-bold text-[10px]">Tab</kbd>
+            <span>· Qaytadan:</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/30 text-[var(--text-color)] font-bold text-[10px]">Enter</kbd>
           </div>
 
         </div>
 
 
         {/* ========================================================================= */}
-        {/* COLUMN 2: CENTER SPEED TIMELINE GRAPH (cols 5 to 8)                       */}
+        {/* COLUMN 2: CENTER MONKEYTYPE SPEED GRAPH (cols 5 to 8)                     */}
         {/* ========================================================================= */}
-        <div className="lg:col-span-5 bg-[#10141d]/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5 flex flex-col justify-between relative shadow-sm">
+        <div className="lg:col-span-5 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl p-4 sm:p-5 flex flex-col justify-between relative shadow-sm">
           
           <div className="w-full relative h-[210px] sm:h-[230px]">
             <svg
@@ -379,16 +374,17 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                       y1={yPos}
                       x2={chartWidth - padRight}
                       y2={yPos}
-                      stroke="#334155"
+                      stroke="currentColor"
+                      className="text-[var(--sub-alt)]"
                       strokeWidth="1"
                       strokeDasharray="3 3"
-                      opacity={0.4}
                     />
                     <text
                       x={padLeft - 6}
                       y={yPos + 4}
                       textAnchor="end"
-                      fill="#64748b"
+                      fill="currentColor"
+                      className="text-[var(--sub-color)]"
                       fontSize="10"
                       fontFamily="monospace"
                     >
@@ -405,9 +401,10 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                   <text
                     key={`time-${i}`}
                     x={xPos}
-                    y={chartHeight - 6}
+                    y={chartHeight - 8}
                     textAnchor="middle"
-                    fill="#64748b"
+                    fill="currentColor"
+                    className="text-[var(--sub-color)]"
                     fontSize="10"
                     fontFamily="monospace"
                   >
@@ -416,25 +413,44 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                 );
               })}
 
-              {/* Raw WPM dashed line */}
+              {/* Raw WPM dashed gray curve (Monkeytype style) */}
               <path
                 d={rawSpline}
                 fill="none"
-                stroke="#cbd5e1"
+                stroke="currentColor"
+                className="text-[var(--sub-color)]"
                 strokeWidth="1.5"
                 strokeDasharray="4 4"
-                opacity={0.7}
+                opacity={0.8}
               />
 
-              {/* Real WPM solid white line */}
+              {/* Real WPM solid yellow curve (Monkeytype signature main color) */}
               <path
                 d={wpmSpline}
                 fill="none"
-                stroke="#ffffff"
+                stroke="currentColor"
+                className="text-[var(--main-color)]"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
+
+              {/* Error marks on curve */}
+              {timelineData.map((d, i) => {
+                if (d.errors <= 0) return null;
+                const xPos = getX(i);
+                const yPos = getY(d.wpm);
+                return (
+                  <circle
+                    key={`err-${i}`}
+                    cx={xPos}
+                    cy={yPos}
+                    r="3.5"
+                    fill="currentColor"
+                    className="text-[var(--error-color)]"
+                  />
+                );
+              })}
 
               {/* Hover guide line & dot */}
               {hoverPoint && (
@@ -444,7 +460,8 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                     y1={padTop}
                     x2={hoverPoint.x}
                     y2={chartHeight - padBottom}
-                    stroke="#38bdf8"
+                    stroke="currentColor"
+                    className="text-[var(--main-color)]"
                     strokeWidth="1.5"
                     strokeDasharray="2 2"
                   />
@@ -452,9 +469,8 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                     cx={hoverPoint.x}
                     cy={hoverPoint.y}
                     r="4.5"
-                    fill="#38bdf8"
-                    stroke="#0f172a"
-                    strokeWidth="2"
+                    fill="currentColor"
+                    className="text-[var(--main-color)]"
                   />
                 </g>
               )}
@@ -490,28 +506,28 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
             {/* Hover Tooltip Popup */}
             {hoverPoint && (
               <div
-                className="absolute z-20 px-2.5 py-1.5 rounded-lg bg-slate-900/95 border border-slate-700 text-[11px] font-mono shadow-xl pointer-events-none text-slate-200"
+                className="absolute z-20 px-2.5 py-1.5 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-[11px] font-mono shadow-xl pointer-events-none text-[var(--text-color)]"
                 style={{
                   left: `${Math.min(chartWidth - 110, Math.max(10, hoverPoint.x - 40))}px`,
                   top: `${Math.max(10, hoverPoint.y - 45)}px`
                 }}
               >
-                <div>Vaqt: <b className="text-white">{hoverPoint.time}s</b></div>
-                <div>WPM: <b className="text-cyan-400">{hoverPoint.wpm}</b> | Raw: <b className="text-slate-300">{hoverPoint.rawWpm}</b></div>
-                {hoverPoint.errors > 0 && <div className="text-rose-400 font-bold">{hoverPoint.errors} xato</div>}
+                <div>Vaqt: <b className="text-[var(--text-color)]">{hoverPoint.time}s</b></div>
+                <div>WPM: <b className="text-[var(--main-color)]">{hoverPoint.wpm}</b> · Raw: <b className="text-[var(--sub-color)]">{hoverPoint.rawWpm}</b></div>
+                {hoverPoint.errors > 0 && <div className="text-[var(--error-color)] font-bold">{hoverPoint.errors} xato</div>}
               </div>
             )}
           </div>
 
           {/* Graph Legend below (Solid WPM vs Dashed Raw WPM) */}
-          <div className="flex items-center justify-center gap-6 mt-3 pt-2 border-t border-slate-800/80 text-xs font-mono text-slate-400">
+          <div className="flex items-center justify-center gap-6 mt-3 pt-2 border-t border-[var(--sub-alt)] text-xs text-[var(--sub-color)]">
             <div className="flex items-center gap-2">
-              <span className="w-4 h-0.5 bg-white rounded-full inline-block" />
-              <span className="text-slate-200 font-medium">WPM</span>
+              <span className="w-4 h-0.5 bg-[var(--main-color)] rounded-full inline-block" />
+              <span className="text-[var(--text-color)] font-medium">wpm</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-0.5 border-b-2 border-dashed border-slate-400 inline-block" />
-              <span className="text-slate-400">Raw WPM</span>
+              <span className="w-4 h-0.5 border-b-2 border-dashed border-[var(--sub-color)] inline-block" />
+              <span className="text-[var(--sub-color)]">raw wpm</span>
             </div>
           </div>
 
@@ -519,27 +535,27 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
 
 
         {/* ========================================================================= */}
-        {/* COLUMN 3: RIGHT "ENG KUCHLILAR" LEADERBOARD WIDGET (cols 9 to 12)          */}
+        {/* COLUMN 3: RIGHT "ENG KUCHLILAR" LEADERBOARD WIDGET                        */}
         {/* ========================================================================= */}
-        <div className="lg:col-span-3 bg-[#10141d]/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
+        <div className="lg:col-span-3 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
           
           <div>
             {/* Header Title */}
             <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-              <h3 className="text-sm font-bold text-white tracking-wide">
+              <Trophy className="w-4 h-4 text-[var(--main-color)] shrink-0" />
+              <h3 className="text-sm font-bold text-[var(--text-color)] tracking-wide">
                 Eng kuchlilar
               </h3>
             </div>
 
             {/* Filter Pills: Oson / O'rta / Qiyin and Hafta / Oy */}
             <div className="flex items-center justify-between gap-1 mb-3 text-[11px] font-semibold">
-              <div className="flex items-center bg-slate-900/90 rounded-lg p-0.5 border border-slate-800">
+              <div className="flex items-center bg-[var(--sub-alt)] rounded-lg p-0.5 border border-[var(--sub-alt)]">
                 <button
                   type="button"
                   onClick={() => setActiveTab('oson')}
                   className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    activeTab === 'oson' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    activeTab === 'oson' ? 'bg-[var(--bg-color)] text-[var(--main-color)] font-bold' : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
                   Oson
@@ -548,7 +564,7 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                   type="button"
                   onClick={() => setActiveTab('orta')}
                   className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    activeTab === 'orta' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    activeTab === 'orta' ? 'bg-[var(--bg-color)] text-[var(--main-color)] font-bold' : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
                   O'rta
@@ -557,19 +573,19 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                   type="button"
                   onClick={() => setActiveTab('qiyin')}
                   className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    activeTab === 'qiyin' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    activeTab === 'qiyin' ? 'bg-[var(--bg-color)] text-[var(--main-color)] font-bold' : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
                   Qiyin
                 </button>
               </div>
 
-              <div className="flex items-center bg-slate-900/90 rounded-lg p-0.5 border border-slate-800">
+              <div className="flex items-center bg-[var(--sub-alt)] rounded-lg p-0.5 border border-[var(--sub-alt)]">
                 <button
                   type="button"
                   onClick={() => setPeriodTab('hafta')}
                   className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    periodTab === 'hafta' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    periodTab === 'hafta' ? 'bg-[var(--bg-color)] text-[var(--main-color)] font-bold' : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
                   Hafta
@@ -578,7 +594,7 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
                   type="button"
                   onClick={() => setPeriodTab('oy')}
                   className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    periodTab === 'oy' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    periodTab === 'oy' ? 'bg-[var(--bg-color)] text-[var(--main-color)] font-bold' : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
                   Oy
@@ -591,47 +607,47 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
               {displayTypists.map((u, i) => (
                 <div
                   key={u.uid || u.name || i}
-                  className="flex items-center justify-between py-1 px-1.5 rounded-lg hover:bg-slate-800/40 transition-colors text-xs"
+                  className="flex items-center justify-between py-1 px-1.5 rounded-lg hover:bg-[var(--sub-alt)]/50 transition-colors text-xs"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-4 text-center font-bold text-slate-400 text-xs shrink-0">
+                    <span className="w-4 text-center font-bold text-[var(--sub-color)] text-xs shrink-0">
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
                     </span>
                     <img
                       src={u.avatar}
                       alt={u.name}
-                      className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-700"
+                      className="w-5 h-5 rounded-full object-cover shrink-0 border border-[var(--sub-alt)]"
                     />
-                    <span className="text-slate-200 font-medium truncate text-xs">
+                    <span className="text-[var(--text-color)] font-medium truncate text-xs">
                       {u.name}
                     </span>
                   </div>
-                  <div className="font-mono font-bold text-white shrink-0 ml-2">
-                    {u.wpm} <span className="text-[10px] text-slate-500 font-normal">WPM</span>
+                  <div className="font-mono font-bold text-[var(--main-color)] shrink-0 ml-2">
+                    {u.wpm} <span className="text-[10px] text-[var(--sub-color)] font-normal">wpm</span>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Separator: SIZNING O'RNINGIZ */}
-            <div className="my-3 flex items-center justify-center gap-2 text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-              <span className="h-px flex-1 bg-slate-800 border-dashed border-t border-slate-700" />
+            <div className="my-3 flex items-center justify-center gap-2 text-[10px] text-[var(--sub-color)] uppercase tracking-wider">
+              <span className="h-px flex-1 border-dashed border-t border-[var(--sub-alt)]" />
               <span>SIZNING O'RNINGIZ</span>
-              <span className="h-px flex-1 bg-slate-800 border-dashed border-t border-slate-700" />
+              <span className="h-px flex-1 border-dashed border-t border-[var(--sub-alt)]" />
             </div>
 
             {/* Current user's standing banner */}
-            <div className="p-2 rounded-xl bg-slate-900/90 border border-slate-800/90 flex items-center justify-between text-xs">
+            <div className="p-2 rounded-xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-slate-400 font-bold font-mono text-xs">-</span>
+                <span className="text-[var(--sub-color)] font-bold text-xs">-</span>
                 <img
                   src={currentUserAvatar}
                   alt={currentUsername}
-                  className="w-6 h-6 rounded-full border border-cyan-500/40 shrink-0"
+                  className="w-6 h-6 rounded-full border border-[var(--main-color)]/60 shrink-0"
                 />
                 <div className="truncate">
-                  <div className="text-slate-200 font-bold truncate text-[11px]">{currentUsername}</div>
-                  <div className="text-[10px] text-emerald-400 font-mono">
+                  <div className="text-[var(--text-color)] font-bold truncate text-[11px]">{currentUsername}</div>
+                  <div className="text-[10px] text-[var(--main-color)] font-semibold">
                     Ushbu test: {safeWpm} WPM ({safeAccuracy})
                   </div>
                 </div>
@@ -644,7 +660,7 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
             <button
               type="button"
               onClick={onGoToLeaderboard}
-              className="mt-3 text-xs font-semibold text-slate-400 hover:text-white flex items-center justify-center gap-1 transition-colors cursor-pointer py-1"
+              className="mt-3 text-xs font-semibold text-[var(--sub-color)] hover:text-[var(--main-color)] flex items-center justify-center gap-1 transition-colors cursor-pointer py-1"
             >
               <span>Barchasini ko'rish</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -656,14 +672,14 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* BONUS PRO ANALYTICS (HEATMAP & DIAGNOSTICS)                               */}
+      {/* KEY MISTAKES HEATMAP                                                      */}
       {/* ========================================================================= */}
       {keyMistakesList.length > 0 && (
-        <div className="mt-5 p-4 rounded-2xl bg-[#10141d]/70 border border-slate-800/80">
-          <div className="flex items-center justify-between mb-3 text-xs font-mono">
-            <span className="font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              <span>Xato Qilingan Tugmalar & Maslahatlar</span>
+        <div className="mt-5 p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
+          <div className="flex items-center justify-between mb-3 text-xs">
+            <span className="font-bold text-[var(--text-color)] flex items-center gap-1.5 uppercase tracking-wider">
+              <AlertTriangle className="w-3.5 h-3.5 text-[var(--error-color)]" />
+              <span>Xato qilingan harflar</span>
             </span>
           </div>
 
@@ -671,10 +687,10 @@ export const TestResultView: React.FC<TestResultViewProps> = ({
             {keyMistakesList.map(([keyName, count], idx) => (
               <div
                 key={idx}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-rose-500/30 text-rose-300 text-xs font-mono font-bold flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-[var(--sub-alt)] border border-[var(--error-color)]/30 text-[var(--error-color)] text-xs font-bold flex items-center gap-1.5"
               >
                 <span>"{keyName}"</span>
-                <span className="text-[10px] text-slate-400">({count} marta)</span>
+                <span className="text-[10px] text-[var(--sub-color)]">({count}x)</span>
               </div>
             ))}
           </div>
