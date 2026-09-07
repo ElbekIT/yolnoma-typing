@@ -13,7 +13,6 @@ interface TypingDisplayProps {
   onInputChange: (newInput: string) => void;
   onRestart: () => void;
   isTestFinished: boolean;
-  isTestActive?: boolean;
 }
 
 export const TypingDisplay: React.FC<TypingDisplayProps> = ({
@@ -21,8 +20,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   typedInput,
   onInputChange,
   onRestart,
-  isTestFinished,
-  isTestActive: propIsTestActive
+  isTestFinished
 }) => {
   const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
@@ -39,9 +37,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
-  const isTestActive = propIsTestActive !== undefined
-    ? (propIsTestActive && typedInput.length > 0 && !isTestFinished)
-    : (typedInput.length > 0 && !isTestFinished);
+  const isTestActive = typedInput.length > 0 && !isTestFinished;
 
   // Initialize global anti-cheat listeners with user ID
   useEffect(() => {
@@ -84,17 +80,6 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       setIsFocused(true);
     }
   }, [targetText]);
-
-  // Ensure focus on initial mount / view entrance
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        setIsFocused(true);
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Hide mouse cursor during active typing (Monkeytype style)
   useEffect(() => {
@@ -275,20 +260,6 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
 
-  // Current consecutive correct characters streak for typing animation
-  const currentStreak = useMemo(() => {
-    if (!isTestActive || typedChars.length === 0) return 0;
-    let streak = 0;
-    for (let i = typedChars.length - 1; i >= 0; i--) {
-      if (typedChars[i] === targetText[i]) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    return streak;
-  }, [isTestActive, typedChars, targetText]);
-
   // All parsed words rendered directly for rock-solid ref retention & smooth scrolling
   const visibleWords = parsedWords;
 
@@ -427,14 +398,6 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         disabled={isTestFinished}
         className="absolute top-0 left-0 w-full h-[80%] opacity-0 z-0 cursor-text focus:outline-none"
       />
-
-      {/* Dynamic Typing Streak Pop (Shows when typing fast without errors) */}
-      {isTestActive && currentStreak >= 15 && (
-        <div className="absolute -top-7 right-2 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/90 border border-[var(--main-color)]/40 text-[11px] font-mono font-bold text-[var(--main-color)] shadow-sm animate-bounce select-none pointer-events-none z-10">
-          <span>{currentStreak >= 50 ? '🔥' : '⚡'}</span>
-          <span>{currentStreak} streak!</span>
-        </div>
-      )}
 
       {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (

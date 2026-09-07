@@ -11,7 +11,6 @@ import { TypingHeader } from './components/typing/TypingHeader';
 import { LiveStats } from './components/typing/LiveStats';
 import { TypingDisplay } from './components/typing/TypingDisplay';
 import { ResultModal } from './components/typing/ResultModal';
-import { TestResultView } from './components/typing/TestResultView';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
@@ -574,40 +573,6 @@ function MainAppContent() {
     if (timerRef.current) clearInterval(timerRef.current);
   }, [mode, language, difficulty, wordCountMode, customText, timeMode]);
 
-  // Unified tab navigation handler with automatic test reset protection
-  const handleSelectTab = useCallback((newTab: string) => {
-    if (newTab === 'typing') {
-      // If switching to 'typing' or clicking 'Asosiy' again:
-      // Always reset to a fresh test so no stale result or stuck timer remains
-      initTestText();
-    } else {
-      // When leaving 'typing' for another tab (leaderboard, battle, lessons, etc.):
-      // If test is finished or was in progress, reset so returning will always be clean!
-      if (isTestFinished || finalResult !== null || isTestActive || typedInput.length > 0) {
-        initTestText();
-      }
-    }
-    setActiveTab(newTab);
-  }, [isTestFinished, finalResult, isTestActive, typedInput.length, initTestText]);
-
-  // Reactive tab watcher: Guarantees that whenever activeTab changes to 'typing',
-  // if the test was finished or has dirty stopped input or 0s time, instantly reset!
-  const prevTabRef = useRef<string>(activeTab);
-  useEffect(() => {
-    if (prevTabRef.current !== activeTab) {
-      if (activeTab === 'typing') {
-        if (isTestFinished || finalResult !== null || (!isTestActive && typedInput.length > 0) || (timeMode > 0 && timeLeft <= 0)) {
-          initTestText();
-        }
-      } else if (prevTabRef.current === 'typing') {
-        if (isTestFinished || finalResult !== null || isTestActive || typedInput.length > 0) {
-          initTestText();
-        }
-      }
-      prevTabRef.current = activeTab;
-    }
-  }, [activeTab, isTestFinished, finalResult, isTestActive, typedInput.length, timeMode, timeLeft, initTestText]);
-
   useEffect(() => {
     initTestText();
 
@@ -637,7 +602,7 @@ function MainAppContent() {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
       if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'a' || e.key === 'A'))) {
         e.preventDefault();
-        handleSelectTab('admin');
+        setActiveTab('admin');
       }
     };
     window.addEventListener('keydown', handleGlobalShortcuts);
@@ -649,7 +614,7 @@ function MainAppContent() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('keydown', handleGlobalShortcuts);
     };
-  }, [initTestText, handleSelectTab]);
+  }, [initTestText]);
 
   // Handle finish test
   const finishTest = useCallback(async () => {
@@ -1071,67 +1036,62 @@ function MainAppContent() {
 
       <Header
         activeTab={activeTab}
-        setActiveTab={handleSelectTab}
+        setActiveTab={setActiveTab}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
         {activeTab === 'typing' && (
           <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
-            {isTestFinished && finalResult ? (
-              <TestResultView
-                result={finalResult}
-                onRestart={initTestText}
-                onNextTest={initTestText}
-                onGoToLeaderboard={() => {
-                  initTestText();
-                  handleSelectTab('leaderboard');
-                }}
-                onJoinBattle={() => {
-                  initTestText();
-                  handleSelectTab('battle');
-                }}
-              />
-            ) : (
-              <>
-                <TypingHeader
-                  mode={mode}
-                  setMode={setMode}
-                  timeMode={timeMode}
-                  setTimeMode={setTimeMode}
-                  wordCountMode={wordCountMode}
-                  setWordCountMode={setWordCountMode}
-                  difficulty={difficulty}
-                  setDifficulty={setDifficulty}
-                  customText={customText}
-                  setCustomText={setCustomText}
-                  onReset={initTestText}
-                  isTestActive={isTestActive}
-                  onOpenLanguagePage={() => handleSelectTab('languages')}
-                />
+            <TypingHeader
+              mode={mode}
+              setMode={setMode}
+              timeMode={timeMode}
+              setTimeMode={setTimeMode}
+              wordCountMode={wordCountMode}
+              setWordCountMode={setWordCountMode}
+              difficulty={difficulty}
+              setDifficulty={setDifficulty}
+              customText={customText}
+              setCustomText={setCustomText}
+              onReset={initTestText}
+              isTestActive={isTestActive}
+              onOpenLanguagePage={() => setActiveTab('languages')}
+            />
 
-                <LiveStats
-                  wpm={liveWpm}
-                  cpm={liveCpm}
-                  accuracy={liveAcc}
-                  timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
-                  progressPercent={progressPercent}
-                  isTestActive={isTestActive}
-                  combo={liveCombo}
-                />
+            <LiveStats
+              wpm={liveWpm}
+              cpm={liveCpm}
+              accuracy={liveAcc}
+              timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
+              progressPercent={progressPercent}
+              isTestActive={isTestActive}
+              combo={liveCombo}
+            />
 
-                <TypingDisplay
-                  targetText={targetText}
-                  typedInput={typedInput}
-                  onInputChange={handleInputChange}
-                  onRestart={initTestText}
-                  isTestFinished={isTestFinished}
-                  isTestActive={isTestActive}
-                />
+            <TypingDisplay
+              targetText={targetText}
+              typedInput={typedInput}
+              onInputChange={handleInputChange}
+              onRestart={initTestText}
+              isTestFinished={isTestFinished}
+            />
 
-                <VirtualKeyboard activeChar={currentTargetChar} />
-              </>
-            )}
+            <VirtualKeyboard activeChar={currentTargetChar} />
+
+            <ResultModal
+              result={finalResult}
+              onRestart={initTestText}
+              onNextTest={initTestText}
+              onGoToLeaderboard={() => {
+                setIsTestFinished(false);
+                setActiveTab('leaderboard');
+              }}
+              onJoinBattle={() => {
+                setIsTestFinished(false);
+                setActiveTab('battle');
+              }}
+            />
           </div>
         )}
 
@@ -1140,9 +1100,9 @@ function MainAppContent() {
             <LanguageSelectView
               onConfirm={() => {
                 initTestText();
-                handleSelectTab('typing');
+                setActiveTab('typing');
               }}
-              onCancel={() => handleSelectTab('typing')}
+              onCancel={() => setActiveTab('typing')}
             />
           )}
 
@@ -1157,28 +1117,28 @@ function MainAppContent() {
           {activeTab === 'leaderboard' && <LeaderboardView />}
           {activeTab === 'statistics' && <StatisticsView />}
           {activeTab === 'achievements' && <AchievementsView />}
-          {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => handleSelectTab('typing')} />}
+          {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
           {activeTab === 'partners' && <PartnersView />}
           {activeTab === 'owner' && (
             <OwnerAboutView
-              onStartTyping={() => handleSelectTab('typing')}
-              onGoToBattle={() => handleSelectTab('battle')}
-              onGoToLessons={() => handleSelectTab('lessons')}
-              onGoToLeaderboard={() => handleSelectTab('leaderboard')}
+              onStartTyping={() => setActiveTab('typing')}
+              onGoToBattle={() => setActiveTab('battle')}
+              onGoToLessons={() => setActiveTab('lessons')}
+              onGoToLeaderboard={() => setActiveTab('leaderboard')}
             />
           )}
           {activeTab === 'admin' && <AdminView />}
           {activeTab === 'profile' && (
             <ProfileView
               onOpenAuth={() => setIsAuthOpen(true)}
-              onSavedHome={() => handleSelectTab('typing')}
+              onSavedHome={() => setActiveTab('typing')}
             />
           )}
           {activeTab === 'settings' && <SettingsView />}
           {activeTab === 'not_found' && (
             <NotFoundView
-              onGoHome={() => handleSelectTab('typing')}
-              onNavigate={(tab) => handleSelectTab(tab)}
+              onGoHome={() => setActiveTab('typing')}
+              onNavigate={(tab) => setActiveTab(tab)}
               attemptedPath={window.location.pathname}
             />
           )}
@@ -1194,8 +1154,8 @@ function MainAppContent() {
           setAboutModalTab('updates');
           setIsAboutOpen(true);
         }}
-        onOpenOwner={() => handleSelectTab('owner')}
-        onOpenAdmin={() => handleSelectTab('admin')}
+        onOpenOwner={() => setActiveTab('owner')}
+        onOpenAdmin={() => setActiveTab('admin')}
       />
 
       <PubgInviteModal

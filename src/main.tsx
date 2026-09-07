@@ -60,16 +60,6 @@ class SafeAppWrapper extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               Qayta Urinish
             </button>
           </div>
-          {this.state.error && (
-            <details className="mt-6 text-left max-w-lg w-full bg-slate-900/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 font-mono">
-              <summary className="cursor-pointer text-slate-300 font-semibold hover:text-cyan-400">
-                Xatolik tafsilotlari
-              </summary>
-              <pre className="mt-2 p-2 bg-slate-950 rounded text-rose-400 text-[11px] overflow-x-auto whitespace-pre-wrap">
-                {this.state.error.message || String(this.state.error)}
-              </pre>
-            </details>
-          )}
         </div>
       );
     }

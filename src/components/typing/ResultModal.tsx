@@ -84,18 +84,8 @@ const ProTimelineChart: React.FC<{
   const maxWpm = Math.max(50, ...sanitizedData.map((d) => Math.max(d.wpm, d.rawWpm)));
   const minWpm = 0;
 
-  const getX = (index: number) => {
-    const denom = Math.max(1, sanitizedData.length - 1);
-    const pos = padding.left + (index / denom) * chartW;
-    return Number.isFinite(pos) ? pos : padding.left;
-  };
-
-  const getY = (val: number) => {
-    const num = Number.isFinite(val) ? Math.max(0, val) : 0;
-    const denom = Math.max(1, maxWpm - minWpm);
-    const pos = padding.top + chartH - ((num - minWpm) / denom) * chartH;
-    return Number.isFinite(pos) ? pos : padding.top + chartH;
-  };
+  const getX = (index: number) => padding.left + (index / Math.max(1, sanitizedData.length - 1)) * chartW;
+  const getY = (val: number) => padding.top + chartH - ((Math.max(0, val) - minWpm) / Math.max(1, maxWpm - minWpm)) * chartH;
 
   const wpmPoints = sanitizedData.map((d, i) => ({ x: getX(i), y: getY(d.wpm) }));
   const rawPoints = sanitizedData.map((d, i) => ({ x: getX(i), y: getY(d.rawWpm) }));
@@ -103,24 +93,16 @@ const ProTimelineChart: React.FC<{
   const smoothWpmPath = createSmoothSplinePath(wpmPoints);
   const smoothRawPath = createSmoothSplinePath(rawPoints);
 
-  const lastWpmX = wpmPoints.length > 0 && Number.isFinite(wpmPoints[wpmPoints.length - 1].x)
-    ? wpmPoints[wpmPoints.length - 1].x.toFixed(1)
-    : '0';
-  const firstWpmX = wpmPoints.length > 0 && Number.isFinite(wpmPoints[0].x)
-    ? wpmPoints[0].x.toFixed(1)
-    : '0';
-
   const areaPath = wpmPoints.length > 0
-    ? `${smoothWpmPath} L ${lastWpmX},${(padding.top + chartH).toFixed(1)} L ${firstWpmX},${(padding.top + chartH).toFixed(1)} Z`
+    ? `${smoothWpmPath} L ${wpmPoints[wpmPoints.length - 1].x.toFixed(1)},${(padding.top + chartH).toFixed(1)} L ${wpmPoints[0].x.toFixed(1)},${(padding.top + chartH).toFixed(1)} Z`
     : '';
 
   const activePoint = hoverIndex !== null && sanitizedData[hoverIndex] ? sanitizedData[hoverIndex] : null;
 
   // Format seconds into MM:SS
   const formatTime = (secs: number) => {
-    const sVal = Number.isFinite(secs) ? Math.max(0, Math.floor(secs)) : 0;
-    const m = Math.floor(sVal / 60);
-    const s = sVal % 60;
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
@@ -225,7 +207,7 @@ const ProTimelineChart: React.FC<{
           />
 
           {/* Error collision dots */}
-          {sanitizedData.map((d, i) => {
+          {data.map((d, i) => {
             if (d.errors > 0) {
               return (
                 <g key={`err-${i}`}>
@@ -254,9 +236,9 @@ const ProTimelineChart: React.FC<{
           })}
 
           {/* Time axis labels */}
-          {sanitizedData.map((d, i) => {
-            const step = Math.max(1, Math.floor(sanitizedData.length / 6));
-            if (i % step === 0 || i === sanitizedData.length - 1) {
+          {data.map((d, i) => {
+            const step = Math.max(1, Math.floor(data.length / 6));
+            if (i % step === 0 || i === data.length - 1) {
               return (
                 <text
                   key={`time-${i}`}
@@ -276,8 +258,8 @@ const ProTimelineChart: React.FC<{
           })}
 
           {/* Interactive Hover columns */}
-          {sanitizedData.map((d, i) => {
-            const colW = chartW / Math.max(1, sanitizedData.length - 1);
+          {data.map((d, i) => {
+            const colW = chartW / Math.max(1, data.length - 1);
             return (
               <rect
                 key={`col-${i}`}
@@ -293,7 +275,7 @@ const ProTimelineChart: React.FC<{
           })}
 
           {/* Active Hover line and point */}
-          {hoverIndex !== null && sanitizedData[hoverIndex] && (
+          {hoverIndex !== null && data[hoverIndex] && (
             <g>
               <line
                 x1={getX(hoverIndex)}
@@ -307,7 +289,7 @@ const ProTimelineChart: React.FC<{
               />
               <circle
                 cx={getX(hoverIndex)}
-                cy={getY(sanitizedData[hoverIndex].wpm)}
+                cy={getY(data[hoverIndex].wpm)}
                 r="5"
                 fill="#22d3ee"
                 stroke="#020617"
@@ -331,47 +313,6 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   const { themeConfig } = useSettings();
   const [copied, setCopied] = useState(false);
   const [selectedMistakeKey, setSelectedMistakeKey] = useState<string | null>(null);
-
-  // Extract or synthesize key mistakes for the heatmap matrix
-  const keyMistakesList = useMemo(() => {
-    if (!result) return [];
-    const safeErrors = Number.isFinite(result.errors) ? Math.max(0, result.errors) : 0;
-    if (result.keyMistakes && typeof result.keyMistakes === 'object' && Object.keys(result.keyMistakes).length > 0) {
-      return (Object.entries(result.keyMistakes) as [string, number][])
-        .filter(([k, v]) => Boolean(k) && Number.isFinite(v))
-        .sort((a, b) => Number(b[1]) - Number(a[1]))
-        .slice(0, 12);
-    }
-    // Fallback if no specific mistakes recorded but errors > 0
-    if (safeErrors > 0) {
-      return [
-        ['CH', 2],
-        ['SH', 1],
-        ["o'", 1],
-        ["g'", 1],
-        ['`', 1]
-      ] as [string, number][];
-    }
-    return [];
-  }, [result]);
-
-  // Intelligent Weak Spots list
-  const weakSpotsList = useMemo(() => {
-    if (!result) return [];
-    const safeErrors = Number.isFinite(result.errors) ? Math.max(0, result.errors) : 0;
-    if (result.weakSpots && Array.isArray(result.weakSpots) && result.weakSpots.length > 0) {
-      return result.weakSpots;
-    }
-    const spots: string[] = [];
-    if (safeErrors > 0) {
-      spots.push("O'zbek tilidagi CH va SH harflari");
-      spots.push("Murakkab o'zaro birikmalar va tutuq belgilari");
-    } else {
-      spots.push("Mukammal aniqlik! Barcha harflar 100% toʻgʻri terildi.");
-      spots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezroq harakatlaning.");
-    }
-    return spots;
-  }, [result]);
 
   // Global shortcut listeners: Tab + Enter or Enter to restart or next test instantly
   useEffect(() => {
@@ -425,7 +366,46 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   };
 
   const speedTier = getSpeedTier(safeWpm);
+
+  // Extract or synthesize key mistakes for the heatmap matrix
+  const keyMistakesList = useMemo(() => {
+    if (result.keyMistakes && typeof result.keyMistakes === 'object' && Object.keys(result.keyMistakes).length > 0) {
+      return (Object.entries(result.keyMistakes) as [string, number][])
+        .filter(([k, v]) => Boolean(k) && Number.isFinite(v))
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
+        .slice(0, 12);
+    }
+    // Fallback if no specific mistakes recorded but errors > 0
+    if (safeErrors > 0) {
+      return [
+        ['CH', 2],
+        ['SH', 1],
+        ["o'", 1],
+        ["g'", 1],
+        ['`', 1]
+      ] as [string, number][];
+    }
+    return [];
+  }, [result.keyMistakes, safeErrors]);
+
+  // Max mistake count for color normalization
   const maxMistakeCount = Math.max(1, ...(keyMistakesList.map((k) => k[1]).filter(Number.isFinite)));
+
+  // Intelligent Weak Spots list
+  const weakSpotsList = useMemo(() => {
+    if (result.weakSpots && Array.isArray(result.weakSpots) && result.weakSpots.length > 0) {
+      return result.weakSpots;
+    }
+    const spots: string[] = [];
+    if (safeErrors > 0) {
+      spots.push("O'zbek tilidagi CH va SH harflari");
+      spots.push("Murakkab o'zaro birikmalar va tutuq belgilari");
+    } else {
+      spots.push("Mukammal aniqlik! Barcha harflar 100% toʻgʻri terildi.");
+      spots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezroq harakatlaning.");
+    }
+    return spots;
+  }, [result.weakSpots, safeErrors]);
 
   const handleShare = () => {
     const text = `⚡ Yolnoma Typing Pro Natijasi ⚡\nTezlik: ${safeWpm} WPM (${safeCpm} CPM)\nAniqlik: ${safeAccuracy}%\nXatolar: ${safeErrors}\nVaqt: ${safeTime}s\nTil: ${safeLanguage}\nSayt: https://yolnoma.uz`;
@@ -651,8 +631,8 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           <div className="mb-6">
             <ProTimelineChart
               data={result.wpmHistory}
-              mainColor={themeConfig?.mainColor || '#06b6d4'}
-              subColor={themeConfig?.subColor || '#64748b'}
+              mainColor={themeConfig.mainColor}
+              subColor={themeConfig.subColor}
             />
           </div>
         )}
