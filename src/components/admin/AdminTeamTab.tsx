@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield,
   Crown,
@@ -17,10 +17,18 @@ import {
   Server,
   Wrench,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  AlertTriangle,
+  Check,
+  ShieldAlert,
+  RefreshCw
 } from 'lucide-react';
 import { AdminPermissions, UserProfile } from '../../types';
 import { AdminPermissionsModal } from './AdminPermissionsModal';
+import { getAdminToken } from '../../utils/ownerAuth';
+import { ref, update } from 'firebase/database';
+import { doc, updateDoc } from 'firebase/firestore';
+import { rtdb, db } from '../../config/firebase';
 
 interface AdminTeamTabProps {
   usersList: UserProfile[];
@@ -39,6 +47,36 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
   const [selectedUserForPerms, setSelectedUserForPerms] = useState<UserProfile | null>(null);
   const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
   const [userToPromoteSearch, setUserToPromoteSearch] = useState('');
+  const [demoteTargetUser, setDemoteTargetUser] = useState<UserProfile | null>(null);
+  const [isDemoting, setIsDemoting] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [serverAdmins, setServerAdmins] = useState<any[]>([]);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+
+  const fetchServerAdmins = async () => {
+    setIsLoadingAdmins(true);
+    try {
+      const res = await fetch('/api/admin/list-admins', {
+        headers: {
+          'x-user-email': currentUserEmail || ROOT_OWNER_EMAIL
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.admins)) {
+          setServerAdmins(data.admins);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch server admins:', e);
+    } finally {
+      setIsLoadingAdmins(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServerAdmins();
+  }, [currentUserEmail]);
 
   // Find Root Owner in list or build virtual root owner
   const rootOwnerUser = usersList.find(
@@ -78,13 +116,100 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
     }
   };
 
-  // Filter appointed sub-admins
-  const subAdmins = usersList.filter(
-    (u) =>
+  // Combine usersList with serverAdmins to guarantee no admin is ever omitted!
+  const combinedAdminsMap = new Map<string, UserProfile>();
+
+  // 1. First add from usersList where role is admin
+  usersList.forEach((u) => {
+    if (
       u.role === 'admin' &&
       u.email.toLowerCase() !== ROOT_OWNER_EMAIL &&
       !u.email.toLowerCase().startsWith('yuldashivagavharoy')
-  );
+    ) {
+      const key = (u.email || u.username || u.uid).toLowerCase();
+      combinedAdminsMap.set(key, { ...u });
+    }
+  });
+
+  // 2. Then merge serverAdmins
+  serverAdmins.forEach((adm) => {
+    if (!adm || !adm.email) return;
+    const admEmail = adm.email.toLowerCase();
+    if (
+      admEmail === ROOT_OWNER_EMAIL ||
+      admEmail.startsWith('yuldashivagavharoy')
+    ) {
+      return;
+    }
+
+    const existing = combinedAdminsMap.get(admEmail);
+    if (existing) {
+      existing.role = 'admin';
+      existing.customAdminTitle = adm.customTitle || existing.customAdminTitle;
+      existing.adminPermissions = adm.permissions || existing.adminPermissions;
+    } else {
+      // Find if present in usersList by uid or username
+      const foundInUsers = usersList.find(
+        (u) =>
+          u.uid === adm.uid ||
+          (u.email && u.email.toLowerCase() === admEmail) ||
+          (u.username && u.username.toLowerCase() === (adm.username || '').toLowerCase())
+      );
+      if (foundInUsers) {
+        combinedAdminsMap.set(admEmail, {
+          ...foundInUsers,
+          role: 'admin',
+          customAdminTitle: adm.customTitle || foundInUsers.customAdminTitle,
+          adminPermissions: adm.permissions || foundInUsers.adminPermissions
+        });
+      } else {
+        combinedAdminsMap.set(admEmail, {
+          uid: adm.uid || `adm_${Date.now()}`,
+          email: adm.email,
+          username: adm.username || adm.email.split('@')[0],
+          displayName: adm.displayName || adm.username || 'Administrator',
+          role: 'admin',
+          customAdminTitle: adm.customTitle || 'Administrator',
+          adminPermissions: adm.permissions || {
+            canManageLeaderboard: true,
+            canBlockUsers: true,
+            canSendNotifications: true,
+            canManageInbox: true,
+            canViewServer: true,
+            canManageMaintenance: false,
+            canManageAdmins: false
+          },
+          highestWpm: 0,
+          highestAccuracy: 100,
+          level: 1,
+          rankTitle: adm.customTitle || 'Admin',
+          xp: 500,
+          isBanned: false,
+          blockReason: '',
+          createdAt: adm.promotedAt || Date.now(),
+          lastActive: Date.now(),
+          followers: [],
+          following: [],
+          followersCount: 0,
+          followingCount: 0,
+          pinnedAchievements: [],
+          unlockedAchievements: [],
+          totalTests: 0,
+          totalTimeTypedSeconds: 0,
+          totalWordsTyped: 0,
+          totalCharsTyped: 0,
+          averageWpm: 0,
+          currentStreak: 1,
+          longestStreak: 1,
+          isPublic: true,
+          usernameChangesLeft: 2,
+          privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true }
+        });
+      }
+    }
+  });
+
+  const subAdmins = Array.from(combinedAdminsMap.values());
 
   // Candidates for promotion (regular users)
   const candidateUsers = usersList.filter(
@@ -108,8 +233,114 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
     canManageAdmins: { label: 'Adminlar', icon: Users }
   };
 
+  const handleExecuteDemote = async () => {
+    if (!demoteTargetUser) return;
+    if (
+      demoteTargetUser.email.toLowerCase() === ROOT_OWNER_EMAIL ||
+      demoteTargetUser.email.toLowerCase().startsWith('yuldashivagavharoy')
+    ) {
+      alert('Asosiy Bosh Administrator daxlsiz! Uni chiqarib boʻlmaydi.');
+      setDemoteTargetUser(null);
+      return;
+    }
+
+    setIsDemoting(true);
+    try {
+      // 1. Direct Firebase Realtime Database Demote
+      await update(ref(rtdb, `users/${demoteTargetUser.uid}`), {
+        role: 'user',
+        customAdminTitle: null,
+        adminPermissions: null
+      });
+
+      // 2. Direct Firestore Demote
+      try {
+        const userDocRef = doc(db, 'users', demoteTargetUser.uid);
+        await updateDoc(userDocRef, {
+          role: 'user',
+          customAdminTitle: null,
+          adminPermissions: null
+        });
+      } catch {}
+
+      // 3. Server-side session invalidation & memory deletion
+      try {
+        const token = getAdminToken();
+        await fetch('/api/admin/demote-admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'x-user-email': currentUserEmail || ROOT_OWNER_EMAIL
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            uid: demoteTargetUser.uid,
+            email: demoteTargetUser.email || (demoteTargetUser.username ? `${demoteTargetUser.username}@yolnoma.uz` : ''),
+            username: demoteTargetUser.username,
+            demotedBy: currentUserEmail || 'Root Owner'
+          })
+        });
+      } catch {}
+
+      // Optimistically update local serverAdmins
+      setServerAdmins((prev) =>
+        prev.filter((adm) => {
+          const emailMatches = adm.email && demoteTargetUser.email && adm.email.toLowerCase() === demoteTargetUser.email.toLowerCase();
+          const uidMatches = adm.uid && demoteTargetUser.uid && adm.uid === demoteTargetUser.uid;
+          return !emailMatches && !uidMatches;
+        })
+      );
+
+      setFeedback({
+        type: 'success',
+        text: `✅ ${demoteTargetUser.displayName || demoteTargetUser.username} adminlikdan chiqarildi! U endi Admin Panelga kira olmaydi.`
+      });
+
+      setDemoteTargetUser(null);
+      fetchServerAdmins();
+      onRefresh();
+
+      setTimeout(() => {
+        setFeedback(null);
+      }, 5000);
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        text: `Xatolik yuz berdi: ${err?.message || 'Qayta urinib koʻring'}`
+      });
+    } finally {
+      setIsDemoting(false);
+    }
+  };
+
   return (
     <div id="admin-team-tab" className="space-y-6 animate-in fade-in">
+      {/* Feedback Notification */}
+      {feedback && (
+        <div
+          id="admin-team-feedback"
+          className={`p-4 rounded-2xl flex items-center gap-3 border text-xs font-bold animate-in fade-in ${
+            feedback.type === 'success'
+              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+          }`}
+        >
+          {feedback.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+          )}
+          <span>{feedback.text}</span>
+          <button
+            onClick={() => setFeedback(null)}
+            className="ml-auto text-slate-400 hover:text-white p-1 rounded-lg"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top Banner Card */}
       <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-cyan-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -122,21 +353,37 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 <span>Administratorlar va Vakolatlar Boshqaruvi</span>
               </h2>
               <p className="text-xs text-[var(--sub-color)] mt-0.5">
-                Moslashuvchan nozik ruxsatlar bilan adminlar tayinlash va ularning huquqlarini nazorat qilish
+                Barcha tayinlangan adminlarni koʻrish, ruxsatlarini boshqarish va kerak boʻlganda adminlikdan chiqarish
               </p>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          id="btn-open-promote-modal"
-          onClick={() => setIsPromoteModalOpen(true)}
-          className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Yangi Admin Tayinlash</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              fetchServerAdmins();
+              onRefresh();
+            }}
+            disabled={isLoadingAdmins}
+            className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
+            title="Adminlar roʻyxatini yangilash"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoadingAdmins ? 'animate-spin text-amber-400' : ''}`} />
+            <span>Yangilash</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-open-promote-modal"
+            onClick={() => setIsPromoteModalOpen(true)}
+            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Yangi Admin Tayinlash</span>
+          </button>
+        </div>
       </div>
 
       {/* Roster Grid */}
@@ -292,15 +539,29 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          id={`btn-edit-perms-${admin.uid}`}
-                          onClick={() => setSelectedUserForPerms(admin)}
-                          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 border border-slate-700 transition-colors cursor-pointer"
-                          title="Ruxsatlarni Tahrirlash"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            id={`btn-edit-perms-${admin.uid}`}
+                            onClick={() => setSelectedUserForPerms(admin)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                            title="Ruxsatlarni Tahrirlash"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>Ruxsatlar</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            id={`btn-demote-admin-${admin.uid}`}
+                            onClick={() => setDemoteTargetUser(admin)}
+                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                            title="Admindan Chiqarish"
+                          >
+                            <UserX className="w-3.5 h-3.5 text-rose-400" />
+                            <span>Admindan Chiqarish</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Enabled Permissions Badges */}
@@ -421,6 +682,94 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         </div>
       )}
 
+      {/* DEMOTE CONFIRMATION MODAL */}
+      {demoteTargetUser && (
+        <div
+          id="modal-confirm-demote-backdrop"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+        >
+          <div
+            id="modal-confirm-demote-card"
+            className="max-w-md w-full bg-slate-900 border-2 border-rose-500/50 rounded-3xl p-6 shadow-2xl shadow-rose-950/60 relative text-slate-100 space-y-5"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5 text-rose-400 font-extrabold text-sm">
+                <ShieldAlert className="w-5 h-5" />
+                <span>Adminlikdan Chiqarish</span>
+              </div>
+              <button
+                type="button"
+                id="btn-close-demote-modal"
+                disabled={isDemoting}
+                onClick={() => setDemoteTargetUser(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+              <div className="text-white font-bold text-sm">
+                {demoteTargetUser.displayName || demoteTargetUser.username}
+              </div>
+              <div className="text-cyan-400 font-mono">
+                @{demoteTargetUser.username}
+              </div>
+              <div className="text-slate-400 font-mono text-[11px]">
+                {demoteTargetUser.email}
+              </div>
+              {demoteTargetUser.customAdminTitle && (
+                <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[11px] font-mono font-bold">
+                  {demoteTargetUser.customAdminTitle}
+                </div>
+              )}
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs space-y-1.5">
+              <div className="font-bold flex items-center gap-1.5 text-rose-300">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Muhim Ogohlantirish:</span>
+              </div>
+              <p className="leading-relaxed">
+                Ushbu foydalanuvchi barcha maʼmuriy huquqlardan va Admin Paneldan butunlay mahrum etiladi. Uning roli oddiy foydalanuvchiga qaytariladi va seansi darhol toʻxtatiladi.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                id="btn-cancel-demote"
+                disabled={isDemoting}
+                onClick={() => setDemoteTargetUser(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                Bekor Qilish
+              </button>
+
+              <button
+                type="button"
+                id="btn-confirm-demote"
+                disabled={isDemoting}
+                onClick={handleExecuteDemote}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-rose-600/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDemoting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Chiqarilmoqda...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserX className="w-4 h-4" />
+                    <span>Ha, Admindan Chiqarilsin</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PERMISSIONS MODAL */}
       <AdminPermissionsModal
         isOpen={Boolean(selectedUserForPerms)}
@@ -428,6 +777,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         user={selectedUserForPerms}
         onSuccess={() => {
           setSelectedUserForPerms(null);
+          fetchServerAdmins();
           onRefresh();
         }}
         currentUserEmail={currentUserEmail}

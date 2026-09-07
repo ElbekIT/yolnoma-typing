@@ -11,6 +11,7 @@ import { TypingHeader } from './components/typing/TypingHeader';
 import { LiveStats } from './components/typing/LiveStats';
 import { TypingDisplay } from './components/typing/TypingDisplay';
 import { ResultModal } from './components/typing/ResultModal';
+import { TestResultView } from './components/typing/TestResultView';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
@@ -453,6 +454,7 @@ function MainAppContent() {
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [aboutModalTab, setAboutModalTab] = useState<'faq' | 'privacy' | 'terms' | 'updates'>('faq');
   const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
   const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
 
@@ -520,6 +522,7 @@ function MainAppContent() {
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number; rawWpm: number; errors: number }[]>([]);
   const [finalResult, setFinalResult] = useState<TypingResult | null>(null);
+  const [liveCombo, setLiveCombo] = useState<number>(0);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -557,6 +560,7 @@ function MainAppContent() {
     setIsTestActive(false);
     setIsTestFinished(false);
     setFinalResult(null);
+    setLiveCombo(0);
     setWpmHistory([]);
     setElapsedSeconds(0);
     startTimeRef.current = 0;
@@ -569,6 +573,53 @@ function MainAppContent() {
 
     if (timerRef.current) clearInterval(timerRef.current);
   }, [mode, language, difficulty, wordCountMode, customText, timeMode]);
+
+  // Keep refs for active typing states so navigation handler never re-creates on every keystroke
+  const isTestFinishedRef = useRef(isTestFinished);
+  isTestFinishedRef.current = isTestFinished;
+  const finalResultRef = useRef(finalResult);
+  finalResultRef.current = finalResult;
+  const isTestActiveRef = useRef(isTestActive);
+  isTestActiveRef.current = isTestActive;
+  const timeLeftRef = useRef(timeLeft);
+  timeLeftRef.current = timeLeft;
+
+  // Unified tab navigation handler with automatic test reset protection
+  const handleSelectTab = useCallback((newTab: string) => {
+    if (newTab === 'typing') {
+      // If switching to 'typing' or clicking 'Asosiy' again:
+      // Always reset to a fresh test so no stale result or stuck timer remains
+      initTestText();
+    } else {
+      // When leaving 'typing' for another tab (leaderboard, battle, lessons, etc.):
+      // If test is finished or was in progress, reset so returning will always be clean!
+      if (isTestFinishedRef.current || finalResultRef.current !== null || isTestActiveRef.current || typedInputRef.current.length > 0) {
+        initTestText();
+      }
+    }
+    setActiveTab(newTab);
+  }, [initTestText]);
+
+  const handleSelectTabRef = useRef(handleSelectTab);
+  handleSelectTabRef.current = handleSelectTab;
+
+  // Reactive tab watcher: Guarantees that whenever activeTab changes to 'typing',
+  // if the test was finished or has dirty stopped input or 0s time, instantly reset!
+  const prevTabRef = useRef<string>(activeTab);
+  useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      if (activeTab === 'typing') {
+        if (isTestFinishedRef.current || finalResultRef.current !== null || (!isTestActiveRef.current && typedInputRef.current.length > 0) || (timeMode > 0 && timeLeftRef.current <= 0)) {
+          initTestText();
+        }
+      } else if (prevTabRef.current === 'typing') {
+        if (isTestFinishedRef.current || finalResultRef.current !== null || isTestActiveRef.current || typedInputRef.current.length > 0) {
+          initTestText();
+        }
+      }
+      prevTabRef.current = activeTab;
+    }
+  }, [activeTab, initTestText, timeMode]);
 
   useEffect(() => {
     initTestText();
@@ -599,7 +650,7 @@ function MainAppContent() {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
       if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'a' || e.key === 'A'))) {
         e.preventDefault();
-        setActiveTab('admin');
+        handleSelectTabRef.current('admin');
       }
     };
     window.addEventListener('keydown', handleGlobalShortcuts);
@@ -646,6 +697,71 @@ function MainAppContent() {
     const accuracy = totalAttempts > 0 ? calculateAccuracy(correctCount, totalAttempts) : 0;
     const finalErrors = Math.max(wrongCount, totalMistakesCountRef.current);
 
+    // Extract key mistakes frequency and keyboard heat
+    const keyMistakes: Record<string, number> = {};
+    typedChars.forEach((ch, idx) => {
+      if (idx < targetChars.length && ch !== targetChars[idx]) {
+        const expected = targetChars[idx];
+        const nextChar = idx + 1 < targetChars.length ? targetChars[idx + 1] : '';
+        const prevChar = idx > 0 ? targetChars[idx - 1] : '';
+        let keyLabel = expected;
+        if (expected === "'" || expected === "ʻ" || expected === "’" || expected === "`") {
+          if (prevChar.toLowerCase() === 'o') keyLabel = "o'";
+          else if (prevChar.toLowerCase() === 'g') keyLabel = "g'";
+          else keyLabel = "'";
+        } else if (expected.toLowerCase() === 's' && nextChar.toLowerCase() === 'h') {
+          keyLabel = "sh";
+        } else if (expected.toLowerCase() === 'c' && nextChar.toLowerCase() === 'h') {
+          keyLabel = "ch";
+        } else if (expected === ' ') {
+          keyLabel = "space";
+        }
+        keyMistakes[keyLabel] = (keyMistakes[keyLabel] || 0) + 1;
+      }
+    });
+
+    // Calculate Consistency % based on variance of wpmHistory
+    let consistency = 100;
+    if (wpmHistory.length > 2) {
+      const wpms = wpmHistory.map((h) => h.wpm);
+      const avg = wpms.reduce((a, b) => a + b, 0) / wpms.length;
+      if (avg > 0) {
+        const variance = wpms.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / wpms.length;
+        const stdDev = Math.sqrt(variance);
+        const cv = (stdDev / avg) * 100;
+        consistency = Math.max(25, Math.min(100, Math.round(100 - cv)));
+      }
+    }
+
+    // Generate intelligent weak spots
+    const weakSpots: string[] = [];
+    const sortedMistakes = Object.entries(keyMistakes).sort((a, b) => b[1] - a[1]);
+    
+    if (sortedMistakes.some(([k]) => k.includes("'") || k === "o'" || k === "g'")) {
+      weakSpots.push("O'zbek tilidagi apostrofli harflar (o', g') va tutuq belgisi");
+    }
+    if (sortedMistakes.some(([k]) => k.toLowerCase() === 'sh' || k.toLowerCase() === 'ch')) {
+      weakSpots.push("O'zbek tilidagi CH va SH harf birikmalari");
+    }
+    if (sortedMistakes.some(([k]) => k.includes("space"))) {
+      weakSpots.push("So'zlar orasidagi bo'sh joy (Space) va ritm uzilishi");
+    }
+    if (accuracy < 94) {
+      weakSpots.push("Tezlikka intilish sababli aniqlik pasayishi");
+    }
+    if (consistency < 78) {
+      weakSpots.push("Yozish tempining notekisligi (Ritm va tezlik o'zgarishi)");
+    }
+    if (weakSpots.length === 0) {
+      if (finalErrors === 0) {
+        weakSpots.push("Mukammal aniqlik! Barcha harflar 100% toʻgʻri terildi.");
+        weakSpots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezlikni oshiring.");
+      } else {
+        const topKey = sortedMistakes[0]?.[0] || 'harflar';
+        weakSpots.push(`Eng ko'p xato: "${topKey}" tugmasida ehtiyotkorlik talab etiladi`);
+      }
+    }
+
     const resultObj: Omit<TypingResult, 'userId' | 'username'> = {
       wpm,
       cpm,
@@ -664,12 +780,31 @@ function MainAppContent() {
       difficulty,
       language,
       timestamp: Date.now(),
-      wpmHistory
+      wpmHistory,
+      consistency,
+      keyMistakes,
+      weakSpots
     };
 
-    const saved = await saveTestResult(resultObj);
-    setFinalResult(saved);
-  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult]);
+    // Immediate display object so modal opens with zero lag
+    const immediateResult: TypingResult = {
+      ...resultObj,
+      userId: user ? user.uid : 'guest',
+      username: profile ? profile.username : (user?.displayName || 'Foydalanuvchi'),
+      isPersonalBest: profile ? wpm > (profile.highestWpm || 0) : false,
+      timestamp: Date.now()
+    };
+    setFinalResult(immediateResult);
+
+    try {
+      const saved = await saveTestResult(resultObj);
+      if (saved) {
+        setFinalResult(saved);
+      }
+    } catch (err) {
+      console.warn('Background saveTestResult non-blocking notice:', err);
+    }
+  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult, user, profile]);
 
   // Timer loop (depends ONLY on isTestActive and timeMode)
   useEffect(() => {
@@ -751,8 +886,32 @@ function MainAppContent() {
     antiCheatManager.clearDeviceBan();
   }
 
-  if (profile?.role !== 'admin' && (profile?.isBanned || antiCheatManager.isDeviceBanned().banned)) {
-    return <BlockedScreen reason={profile?.blockReason || antiCheatManager.isDeviceBanned().reason || undefined} />;
+  const isAccountBanned = Boolean(
+    userBanInfo?.banned ||
+    profile?.isBanned ||
+    deviceBan.banned
+  );
+
+  if (isAccountBanned && !isOwnerWhitelisted) {
+    const effectiveReason =
+      userBanInfo?.reason ||
+      profile?.blockReason ||
+      deviceBan.reason ||
+      'Qoidabuzarlik, sunʼiy avto-kliker dasturlaridan foydalanish yoki ruxsatsiz xatti-harakatlar aniqlangani sababli hisob toʻxtatildi.';
+    const effectiveBannedAt =
+      userBanInfo?.bannedAt ||
+      profile?.bannedAt ||
+      Date.now();
+
+    return (
+      <UserBlockedScreen
+        reason={effectiveReason}
+        bannedAt={effectiveBannedAt}
+        displayName={userBanInfo?.displayName || profile?.displayName || user.displayName || 'Foydalanuvchi'}
+        username={userBanInfo?.username || profile?.username || ''}
+        email={userBanInfo?.email || profile?.email || user.email || ''}
+      />
+    );
   }
 
   // Input change handler
@@ -773,11 +932,15 @@ function MainAppContent() {
       const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
       const variance = intervals.reduce((a, b) => a + Math.pow(b - avgInterval, 2), 0) / intervals.length;
 
-      // Bot rules:
-      // 1. Average interval < 12ms (unrealistically fast > 1000 WPM)
-      // 2. Variance == 0 (robotic constant timer)
-      // 3. Impossibly high WPM (> 320 WPM)
-      if (avgInterval < 12 || (variance === 0 && intervals.length > 10) || liveWpm > 320) {
+      // Bot rules (active only after sufficient test time to prevent early-burst false positives):
+      // 1. Average interval < 12ms (unrealistically fast > 1000 WPM across 20 keys)
+      // 2. Variance == 0 (robotic synthetic timer with identical intervals)
+      // 3. Impossibly sustained high WPM (> 320 WPM after 4+ seconds)
+      const isSustainedImpossibleWpm = elapsedSeconds > 4 && typedInput.length > 30 && liveWpm > 320;
+      const isMachinePrecision = variance === 0 && intervals.length >= 15 && avgInterval < 80;
+      const isSuperhumanSpeed = avgInterval < 12;
+
+      if (!isOwnerWhitelisted && (isSuperhumanSpeed || isMachinePrecision || isSustainedImpossibleWpm)) {
         if (user) {
           const reason = 'Anti-Cheat: Avto-kliker yoki robot/bot dasturi ishlatilgani sababli akkauntingiz bloklandi.';
           try {
@@ -800,15 +963,25 @@ function MainAppContent() {
       const addedCount = newInput.length - typedInput.length;
       totalKeystrokesRef.current += addedCount;
 
-      // Track errors on newly typed characters
+      // Track errors on newly typed characters & calculate live combo
       const startIndex = typedInput.length;
+      let hasError = false;
       for (let i = startIndex; i < newInput.length; i++) {
         const charTyped = newInput[i];
         const targetChar = targetText[i];
         if (targetChar === undefined || charTyped !== targetChar) {
           totalMistakesCountRef.current += 1;
+          hasError = true;
         }
       }
+      if (hasError) {
+        setLiveCombo(0);
+      } else {
+        setLiveCombo((prev) => prev + addedCount);
+      }
+    } else if (newInput.length < typedInput.length) {
+      // User erased characters
+      setLiveCombo((prev) => Math.max(0, prev - (typedInput.length - newInput.length)));
     }
 
     setTypedInput(newInput);
@@ -856,29 +1029,6 @@ function MainAppContent() {
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';
-
-  // 0. Account Ban check (Live-Kick for banned user account - Online or Offline)
-  const isAccountBanned = Boolean(userBanInfo?.banned || profile?.isBanned);
-  if (isAccountBanned && !isOwnerWhitelisted) {
-    const effectiveReason =
-      userBanInfo?.reason ||
-      profile?.blockReason ||
-      'Qoidabuzarlik yoki shubhali faoliyat sababli hisob toʻxtatilgan.';
-    const effectiveBannedAt =
-      userBanInfo?.bannedAt ||
-      profile?.bannedAt ||
-      Date.now();
-
-    return (
-      <UserBlockedScreen
-        reason={effectiveReason}
-        bannedAt={effectiveBannedAt}
-        displayName={userBanInfo?.displayName || profile?.displayName || user.displayName || 'Foydalanuvchi'}
-        username={userBanInfo?.username || profile?.username || ''}
-        email={userBanInfo?.email || profile?.email || user.email || ''}
-      />
-    );
-  }
 
   // 1. IP Ban check (Malicious DDoS/DRDoS attack IP blocked)
   if (ipBanInfo?.banned) {
@@ -934,57 +1084,67 @@ function MainAppContent() {
 
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSelectTab}
         onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
         {activeTab === 'typing' && (
           <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
-            <TypingHeader
-              mode={mode}
-              setMode={setMode}
-              timeMode={timeMode}
-              setTimeMode={setTimeMode}
-              wordCountMode={wordCountMode}
-              setWordCountMode={setWordCountMode}
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-              customText={customText}
-              setCustomText={setCustomText}
-              onReset={initTestText}
-              isTestActive={isTestActive}
-              onOpenLanguagePage={() => setActiveTab('languages')}
-            />
+            {isTestFinished && finalResult ? (
+              <TestResultView
+                result={finalResult}
+                onRestart={initTestText}
+                onNextTest={initTestText}
+                onGoToLeaderboard={() => {
+                  initTestText();
+                  handleSelectTab('leaderboard');
+                }}
+                onJoinBattle={() => {
+                  initTestText();
+                  handleSelectTab('battle');
+                }}
+              />
+            ) : (
+              <>
+                <TypingHeader
+                  mode={mode}
+                  setMode={setMode}
+                  timeMode={timeMode}
+                  setTimeMode={setTimeMode}
+                  wordCountMode={wordCountMode}
+                  setWordCountMode={setWordCountMode}
+                  difficulty={difficulty}
+                  setDifficulty={setDifficulty}
+                  customText={customText}
+                  setCustomText={setCustomText}
+                  onReset={initTestText}
+                  isTestActive={isTestActive}
+                  onOpenLanguagePage={() => handleSelectTab('languages')}
+                />
 
-            <LiveStats
-              wpm={liveWpm}
-              cpm={liveCpm}
-              accuracy={liveAcc}
-              timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
-              progressPercent={progressPercent}
-              isTestActive={isTestActive}
-            />
+                <LiveStats
+                  wpm={liveWpm}
+                  cpm={liveCpm}
+                  accuracy={liveAcc}
+                  timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
+                  progressPercent={progressPercent}
+                  isTestActive={isTestActive}
+                  combo={liveCombo}
+                />
 
-            <TypingDisplay
-              targetText={targetText}
-              typedInput={typedInput}
-              onInputChange={handleInputChange}
-              onRestart={initTestText}
-              isTestFinished={isTestFinished}
-            />
+                <TypingDisplay
+                  targetText={targetText}
+                  typedInput={typedInput}
+                  onInputChange={handleInputChange}
+                  onRestart={initTestText}
+                  isTestFinished={isTestFinished}
+                  isTestActive={isTestActive}
+                />
 
-            <VirtualKeyboard activeChar={currentTargetChar} />
-
-            <ResultModal
-              result={finalResult}
-              onRestart={initTestText}
-              onNextTest={initTestText}
-              onGoToLeaderboard={() => {
-                setIsTestFinished(false);
-                setActiveTab('leaderboard');
-              }}
-            />
+                <VirtualKeyboard activeChar={currentTargetChar} />
+              </>
+            )}
           </div>
         )}
 
@@ -993,9 +1153,9 @@ function MainAppContent() {
             <LanguageSelectView
               onConfirm={() => {
                 initTestText();
-                setActiveTab('typing');
+                handleSelectTab('typing');
               }}
-              onCancel={() => setActiveTab('typing')}
+              onCancel={() => handleSelectTab('typing')}
             />
           )}
 
@@ -1010,28 +1170,28 @@ function MainAppContent() {
           {activeTab === 'leaderboard' && <LeaderboardView />}
           {activeTab === 'statistics' && <StatisticsView />}
           {activeTab === 'achievements' && <AchievementsView />}
-          {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
+          {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => handleSelectTab('typing')} />}
           {activeTab === 'partners' && <PartnersView />}
           {activeTab === 'owner' && (
             <OwnerAboutView
-              onStartTyping={() => setActiveTab('typing')}
-              onGoToBattle={() => setActiveTab('battle')}
-              onGoToLessons={() => setActiveTab('lessons')}
-              onGoToLeaderboard={() => setActiveTab('leaderboard')}
+              onStartTyping={() => handleSelectTab('typing')}
+              onGoToBattle={() => handleSelectTab('battle')}
+              onGoToLessons={() => handleSelectTab('lessons')}
+              onGoToLeaderboard={() => handleSelectTab('leaderboard')}
             />
           )}
           {activeTab === 'admin' && <AdminView />}
           {activeTab === 'profile' && (
             <ProfileView
               onOpenAuth={() => setIsAuthOpen(true)}
-              onSavedHome={() => setActiveTab('typing')}
+              onSavedHome={() => handleSelectTab('typing')}
             />
           )}
           {activeTab === 'settings' && <SettingsView />}
           {activeTab === 'not_found' && (
             <NotFoundView
-              onGoHome={() => setActiveTab('typing')}
-              onNavigate={(tab) => setActiveTab(tab)}
+              onGoHome={() => handleSelectTab('typing')}
+              onNavigate={(tab) => handleSelectTab(tab)}
               attemptedPath={window.location.pathname}
             />
           )}
@@ -1039,9 +1199,16 @@ function MainAppContent() {
       </main>
 
       <Footer
-        onOpenAbout={() => setIsAboutOpen(true)}
-        onOpenOwner={() => setActiveTab('owner')}
-        onOpenAdmin={() => setActiveTab('admin')}
+        onOpenAbout={() => {
+          setAboutModalTab('faq');
+          setIsAboutOpen(true);
+        }}
+        onOpenUpdates={() => {
+          setAboutModalTab('updates');
+          setIsAboutOpen(true);
+        }}
+        onOpenOwner={() => handleSelectTab('owner')}
+        onOpenAdmin={() => handleSelectTab('admin')}
       />
 
       <PubgInviteModal
@@ -1050,7 +1217,11 @@ function MainAppContent() {
         onDecline={handleDeclineInvite}
       />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+      <AboutModal
+        isOpen={isAboutOpen}
+        initialTab={aboutModalTab}
+        onClose={() => setIsAboutOpen(false)}
+      />
     </div>
   );
 }

@@ -199,6 +199,75 @@ export const AdminMaintenanceTab: React.FC = () => {
             <span>Foydalanuvchilarga Yuboriladigan Ogohlantirish Sozlamalari</span>
           </div>
 
+          {/* Quick Presets */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Tezkor Tayyor Shablonlar (Bir bosishda toʻldirish):</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleInput('Saytda Katta Versiya Yangilanishi Ketmoqda! 🚀');
+                  setMessageInput('Hurmatli foydalanuvchilar, platformada eng yangi qulayliklar va tezlik yangilanishi oʻrnatilmoqda. Tez orada barcha xizmatlar toʻliq qayta ishga tushadi.');
+                  setTimeInput('20-30 daqiqa');
+                }}
+                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition-all text-xs group cursor-pointer"
+              >
+                <div className="font-bold text-slate-200 group-hover:text-cyan-400 flex items-center gap-1.5">
+                  <span>🚀 Katta Versiya Yangilanishi</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5 font-mono">Taxminiy: 20-30 daqiqa</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleInput('Tezkor Texnik Profilaktika Ishlari 🛠️');
+                  setMessageInput('Serverlarimiz samaradorligini oshirish va bazani optimallashtirish boʻyicha qisqa muddatli profilaktika ishlari olib borilmoqda.');
+                  setTimeInput('10-15 daqiqa');
+                }}
+                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-left transition-all text-xs group cursor-pointer"
+              >
+                <div className="font-bold text-slate-200 group-hover:text-amber-400 flex items-center gap-1.5">
+                  <span>🛠️ Tezkor Profilaktika</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5 font-mono">Taxminiy: 10-15 daqiqa</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleInput('Xavfsizlik & Anti-Cheat Tizimlari Yangilanmoqda 🛡️');
+                  setMessageInput('Adolatli raqobatni taʼminlash va platforma xavfsizligini kuchaytirish boʻyicha rejaviy xavfsizlik yangilanishi amalga oshirilmoqda.');
+                  setTimeInput('5-10 daqiqa');
+                }}
+                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition-all text-xs group cursor-pointer"
+              >
+                <div className="font-bold text-slate-200 group-hover:text-emerald-400 flex items-center gap-1.5">
+                  <span>🛡️ Xavfsizlik & Anti-Cheat Patchi</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5 font-mono">Taxminiy: 5-10 daqiqa</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleInput('Server & Maʼlumotlar Bazasi Tezlashtirilmoqda ⚡');
+                  setMessageInput('Musobaqalar va yozish tezligi hisoblagichlarini yanada barqaror qilish uchun yangi server konfiguratsiyasi oʻrnatilmoqda.');
+                  setTimeInput('15 daqiqa');
+                }}
+                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition-all text-xs group cursor-pointer"
+              >
+                <div className="font-bold text-slate-200 group-hover:text-purple-400 flex items-center gap-1.5">
+                  <span>⚡ Server Tezlashtirish</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5 font-mono">Taxminiy: 15 daqiqa</div>
+              </button>
+            </div>
+          </div>
+
           {/* Title */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">

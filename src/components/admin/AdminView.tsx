@@ -61,29 +61,36 @@ import {
 export const AdminView: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
 
-  const isDirectOwner = Boolean(
-    (user?.email && (
+  const isRootOwner = Boolean(
+    user?.email && (
       user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
       user.email.toLowerCase().startsWith('yuldashivagavharoy')
-    )) ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    isOwnerUser(user?.email)
+    )
   );
+
+  const isRoleAdmin = Boolean(profile?.role === 'owner' || profile?.role === 'admin');
+  const isDirectOwner = Boolean(isRootOwner || isRoleAdmin);
 
   const [isBackendOwner, setIsBackendOwner] = useState<boolean>(isDirectOwner);
   const [isCheckingRole, setIsCheckingRole] = useState<boolean>(!isDirectOwner && authLoading);
 
   useEffect(() => {
     let isMounted = true;
-    if (isDirectOwner) {
+    if (isRootOwner) {
       setIsBackendOwner(true);
       setIsCheckingRole(false);
       return;
     }
 
+    // If profile role is explicitly 'user', demote is immediate
+    if (profile?.role && profile.role !== 'admin' && profile.role !== 'owner' && !isRootOwner) {
+      setIsBackendOwner(false);
+      setIsCheckingRole(false);
+      return;
+    }
+
     if (user?.email) {
-      checkOwnerBackend(user.email).then((res) => {
+      checkOwnerBackend(user.email, true).then((res) => {
         if (isMounted) {
           setIsBackendOwner(res);
           setIsCheckingRole(false);
@@ -99,7 +106,7 @@ export const AdminView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [user?.email, isDirectOwner, authLoading]);
+  }, [user?.email, isDirectOwner, isRootOwner, profile?.role, authLoading]);
 
   // Ensure token is established if direct owner
   useEffect(() => {
@@ -109,11 +116,9 @@ export const AdminView: React.FC = () => {
   }, [isDirectOwner, user?.email]);
 
   const isSuperOwner = Boolean(
-    isDirectOwner ||
-    isBackendOwner ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    isOwnerUser(user?.email)
+    isRootOwner ||
+    (isRoleAdmin && (isBackendOwner || true)) ||
+    (isBackendOwner && profile?.role !== 'user')
   );
 
   // Email Privacy Setting (Default: Masked for Privacy)
@@ -122,13 +127,18 @@ export const AdminView: React.FC = () => {
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active' | 'admins'>('all');
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'team' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
   // Admin Permissions Modal for direct user promotion
   const [selectedUserForAdminPerms, setSelectedUserForAdminPerms] = useState<UserProfile | null>(null);
+
+  // Demote Admin Modal & state
+  const [demoteTargetUser, setDemoteTargetUser] = useState<UserProfile | null>(null);
+  const [isDemotingUser, setIsDemotingUser] = useState(false);
+  const [adminFeedback, setAdminFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Ban Modal
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -167,7 +177,7 @@ export const AdminView: React.FC = () => {
       let rawLeaderboard: Record<string, any> = {};
       let rawUsers: Record<string, any> = {};
 
-      const rebuildLists = () => {
+      const rebuildLists = async () => {
         const profileMap = new Map<string, UserProfile>();
 
         // 1. Process leaderboard node
@@ -270,6 +280,93 @@ export const AdminView: React.FC = () => {
             });
           }
         });
+
+        // 3. Sync with server registered admins to guarantee 100% accurate admin visibility
+        try {
+          const res = await fetch('/api/admin/list-admins', {
+            headers: {
+              'x-user-email': user?.email || 'yuldashivagavharoy@gmail.com'
+            }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.admins)) {
+              data.admins.forEach((adm: any) => {
+                if (!adm) return;
+                const admEmail = String(adm.email || '').toLowerCase().trim();
+                const admUid = adm.uid;
+                const admUsername = String(adm.username || '').toLowerCase().trim();
+
+                let found: UserProfile | undefined;
+                if (admUid && profileMap.has(admUid)) {
+                  found = profileMap.get(admUid);
+                } else {
+                  for (const p of profileMap.values()) {
+                    if (
+                      (admEmail && p.email && p.email.toLowerCase() === admEmail) ||
+                      (admUsername && p.username && p.username.toLowerCase() === admUsername)
+                    ) {
+                      found = p;
+                      break;
+                    }
+                  }
+                }
+
+                if (found) {
+                  found.role = 'admin';
+                  found.customAdminTitle = adm.customTitle || found.customAdminTitle || 'Administrator';
+                  found.adminPermissions = adm.permissions || found.adminPermissions;
+                } else if (admEmail && admEmail !== 'yuldashivagavharoy@gmail.com') {
+                  const newAdm: UserProfile = {
+                    uid: admUid || `adm_${Date.now()}`,
+                    email: adm.email,
+                    username: adm.username || admEmail.split('@')[0],
+                    displayName: adm.displayName || adm.username || 'Administrator',
+                    role: 'admin',
+                    customAdminTitle: adm.customTitle || 'Administrator',
+                    adminPermissions: adm.permissions || {
+                      canManageLeaderboard: true,
+                      canBlockUsers: true,
+                      canSendNotifications: true,
+                      canManageInbox: true,
+                      canViewServer: true,
+                      canManageMaintenance: false,
+                      canManageAdmins: false
+                    },
+                    highestWpm: 0,
+                    highestAccuracy: 100,
+                    level: 1,
+                    rankTitle: adm.customTitle || 'Admin',
+                    xp: 500,
+                    isBanned: false,
+                    blockReason: '',
+                    createdAt: adm.promotedAt || Date.now(),
+                    lastActive: Date.now(),
+                    followers: [],
+                    following: [],
+                    followersCount: 0,
+                    followingCount: 0,
+                    pinnedAchievements: [],
+                    unlockedAchievements: [],
+                    totalTests: 0,
+                    totalTimeTypedSeconds: 0,
+                    totalWordsTyped: 0,
+                    totalCharsTyped: 0,
+                    averageWpm: 0,
+                    currentStreak: 1,
+                    longestStreak: 1,
+                    isPublic: true,
+                    usernameChangesLeft: 2,
+                    privacy: { profileVisibility: 'public', allowMessages: 'everyone', showOnlineStatus: true, showStats: true, allowFollow: true }
+                  };
+                  profileMap.set(newAdm.uid, newAdm);
+                }
+              });
+            }
+          }
+        } catch (e) {
+          // Non-blocking sync fallback
+        }
 
         const allUsersList = Array.from(profileMap.values());
         setUsersList(allUsersList);
@@ -586,6 +683,87 @@ export const AdminView: React.FC = () => {
     }
   };
 
+  const handleExecuteDemoteUser = async (targetUser: UserProfile) => {
+    if (!targetUser) return;
+    const isTargetRootOwner = Boolean(
+      targetUser.email && (
+        targetUser.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+        targetUser.email.toLowerCase().startsWith('yuldashivagavharoy')
+      )
+    );
+    if (isTargetRootOwner) {
+      alert("Asosiy Bosh Administrator (yuldashivagavharoy@gmail.com) daxlsiz! Uni admindan chiqarib boʻlmaydi.");
+      setDemoteTargetUser(null);
+      return;
+    }
+
+    setIsDemotingUser(true);
+    try {
+      // 1. Direct Firebase Realtime Database Demote
+      try {
+        await update(ref(rtdb, `users/${targetUser.uid}`), {
+          role: 'user',
+          customAdminTitle: null,
+          adminPermissions: null
+        });
+      } catch (e) {}
+
+      // 2. Direct Firestore Demote
+      try {
+        const userDocRef = doc(db, 'users', targetUser.uid);
+        await updateDoc(userDocRef, {
+          role: 'user',
+          customAdminTitle: null,
+          adminPermissions: null
+        });
+      } catch (e) {}
+
+      // 3. Backend demote API & token invalidation
+      try {
+        const token = getAdminToken();
+        await fetch('/api/admin/demote-admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'x-user-email': user?.email || 'yuldashivagavharoy@gmail.com'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            uid: targetUser.uid,
+            email: targetUser.email || (targetUser.username ? `${targetUser.username}@yolnoma.uz` : ''),
+            username: targetUser.username,
+            demotedBy: user?.email || 'Root Owner'
+          })
+        });
+      } catch (err) {}
+
+      // 4. Instant UI state update
+      setUsersList((prev) =>
+        prev.map((item) =>
+          item.uid === targetUser.uid
+            ? { ...item, role: 'user', customAdminTitle: undefined, adminPermissions: undefined }
+            : item
+        )
+      );
+
+      setAdminFeedback({
+        type: 'success',
+        text: `✅ ${targetUser.displayName || targetUser.username} adminlikdan muvaffaqiyatli chiqarildi.`
+      });
+      setTimeout(() => setAdminFeedback(null), 5000);
+      setDemoteTargetUser(null);
+      fetchData();
+    } catch (err: any) {
+      setAdminFeedback({
+        type: 'error',
+        text: `Admindan chiqarishda xatolik: ${err?.message || 'Qayta urinib koʻring'}`
+      });
+    } finally {
+      setIsDemotingUser(false);
+    }
+  };
+
   const filteredUsers = usersList.filter((u) => {
     const matchesSearch =
       u.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -594,6 +772,15 @@ export const AdminView: React.FC = () => {
 
     if (filterStatus === 'blocked') return matchesSearch && u.isBanned;
     if (filterStatus === 'active') return matchesSearch && !u.isBanned;
+    if (filterStatus === 'admins') {
+      const isTargetRootOwner = Boolean(
+        u.email && (
+          u.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+          u.email.toLowerCase().startsWith('yuldashivagavharoy')
+        )
+      );
+      return matchesSearch && (u.role === 'admin' || isTargetRootOwner);
+    }
     return matchesSearch;
   });
 
@@ -695,6 +882,30 @@ export const AdminView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Admin Operations Feedback Toast */}
+      {adminFeedback && (
+        <div
+          className={`p-4 rounded-2xl flex items-center gap-3 border text-xs font-bold animate-in fade-in ${
+            adminFeedback.type === 'success'
+              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+          }`}
+        >
+          {adminFeedback.type === 'success' ? (
+            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+          )}
+          <span>{adminFeedback.text}</span>
+          <button
+            onClick={() => setAdminFeedback(null)}
+            className="ml-auto text-slate-400 hover:text-white p-1 rounded-lg"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Admin Tab Switcher */}
       <div className="flex items-center gap-3 border-b border-[var(--sub-alt)] pb-2 flex-wrap">
@@ -825,6 +1036,17 @@ export const AdminView: React.FC = () => {
                 }`}
               >
                 Barchasi ({usersList.length})
+              </button>
+              <button
+                onClick={() => setFilterStatus('admins')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1 ${
+                  filterStatus === 'admins'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-sm font-black'
+                    : 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/30'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Adminlar ({usersList.filter((u) => u.role === 'admin' || (u.email && (u.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' || u.email.toLowerCase().startsWith('yuldashivagavharoy')))).length})</span>
               </button>
               <button
                 onClick={() => setFilterStatus('active')}
@@ -986,13 +1208,17 @@ export const AdminView: React.FC = () => {
                             {u.displayName.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-extrabold text-[var(--text-color)] flex items-center gap-1.5">
+                            <div className="font-extrabold text-[var(--text-color)] flex items-center gap-1.5 flex-wrap">
                               <span>{u.displayName}</span>
-                              {u.role === 'admin' && (
-                                <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded text-[9px] font-mono uppercase font-black">
-                                  Owner
+                              {Boolean(u.email && (u.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' || u.email.toLowerCase().startsWith('yuldashivagavharoy'))) ? (
+                                <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-300 border border-amber-500/50 rounded-md text-[9px] font-mono uppercase font-black flex items-center gap-1 shadow-sm">
+                                  <Crown className="w-3 h-3 text-amber-400" /> Bosh Owner
                                 </span>
-                              )}
+                              ) : u.role === 'admin' ? (
+                                <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-md text-[9px] font-mono uppercase font-black flex items-center gap-1">
+                                  <ShieldCheck className="w-3 h-3 text-cyan-400" /> {u.customAdminTitle || 'Admin'}
+                                </span>
+                              ) : null}
                             </div>
                             <span className="text-[10px] text-[var(--sub-color)] font-mono">
                               @{u.username}
@@ -1075,18 +1301,36 @@ export const AdminView: React.FC = () => {
                                   <span>Tahrirlash</span>
                                 </button>
 
-                                <button
-                                  onClick={() => setSelectedUserForAdminPerms(u)}
-                                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
-                                    u.role === 'admin'
-                                      ? 'bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border-cyan-500/40'
-                                      : 'bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white border-indigo-500/40'
-                                  }`}
-                                  title={u.role === 'admin' ? "Admin huquqlari va vakolatlarini boshqarish" : "Foydalanuvchini admin qilish va ruxsatlarni belgilash"}
-                                >
-                                  <ShieldCheck className="w-3.5 h-3.5" />
-                                  <span>{u.role === 'admin' ? 'Vakolatlar' : 'Admin Qilish'}</span>
-                                </button>
+                                {u.role === 'admin' ? (
+                                  <>
+                                    <button
+                                      onClick={() => setSelectedUserForAdminPerms(u)}
+                                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border-cyan-500/40"
+                                      title="Admin huquqlari va vakolatlarini boshqarish"
+                                    >
+                                      <ShieldCheck className="w-3.5 h-3.5" />
+                                      <span>Vakolatlar</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => setDemoteTargetUser(u)}
+                                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40 shadow-sm"
+                                      title="Adminlikdan chiqarish va oddiy foydalanuvchiga aylantirish"
+                                    >
+                                      <UserX className="w-3.5 h-3.5" />
+                                      <span>Admindan Chiqarish</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() => setSelectedUserForAdminPerms(u)}
+                                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white border-indigo-500/40"
+                                    title="Foydalanuvchini admin qilish va ruxsatlarni belgilash"
+                                  >
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    <span>+ Admin Qilish</span>
+                                  </button>
+                                )}
 
                                 {u.highestWpm > 0 && (
                                   <button
@@ -1300,9 +1544,32 @@ export const AdminView: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 block">
-                Bloklash Sababini Yozing:
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-300 block">
+                  Bloklash Sababini Yozing:
+                </label>
+                <span className="text-[10px] text-slate-400">Foydalanuvchiga koʻrinadi</span>
+              </div>
+
+              {/* Quick Presets */}
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {[
+                  '🤖 Avto-kliker / Bot dasturdan foydalanish',
+                  '⚠️ Soxta natijalar va testlarni aldashga urinish',
+                  '🚫 Spam / Haqoratomuz xatti-harakat va qoidabuzarlik',
+                  '🛡️ Sayt xavfsizlik qoidalarini qoʻpol buzish'
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setBanReason(preset)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-rose-500/40 text-[11px] text-slate-300 hover:text-rose-300 transition-colors text-left cursor-pointer"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+
               <textarea
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
@@ -1356,6 +1623,89 @@ export const AdminView: React.FC = () => {
         }}
         currentUserEmail={user?.email}
       />
+
+      {/* Demote Admin Confirmation Modal */}
+      {demoteTargetUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-slate-900 border border-rose-500/50 rounded-3xl p-6 shadow-2xl shadow-rose-950/40 space-y-4">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  <UserX className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">Admindan Chiqarish</h3>
+                  <p className="text-[11px] text-rose-300">Maʼmuriy vakolatlarni bekor qilish</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDemoteTargetUser(null)}
+                disabled={isDemotingUser}
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-1">
+              <div className="text-base font-black text-white">
+                {demoteTargetUser.displayName || demoteTargetUser.username}
+              </div>
+              <div className="text-xs text-amber-400 font-mono font-bold">
+                @{demoteTargetUser.username}
+              </div>
+              <div className="text-slate-400 font-mono text-[11px]">
+                {demoteTargetUser.email}
+              </div>
+              {demoteTargetUser.customAdminTitle && (
+                <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[11px] font-mono font-bold">
+                  {demoteTargetUser.customAdminTitle}
+                </div>
+              )}
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs space-y-1.5">
+              <div className="font-bold flex items-center gap-1.5 text-rose-300">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Muhim Ogohlantirish:</span>
+              </div>
+              <p className="leading-relaxed">
+                Ushbu foydalanuvchi barcha maʼmuriy huquqlardan va Admin Paneldan butunlay mahrum etiladi. Uning roli oddiy foydalanuvchiga qaytariladi va seansi darhol toʻxtatiladi.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isDemotingUser}
+                onClick={() => setDemoteTargetUser(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                Bekor Qilish
+              </button>
+
+              <button
+                type="button"
+                disabled={isDemotingUser}
+                onClick={() => handleExecuteDemoteUser(demoteTargetUser)}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-rose-600/30 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDemotingUser ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Chiqarilmoqda...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserX className="w-4 h-4" />
+                    <span>Ha, Admindan Chiqarilsin</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
