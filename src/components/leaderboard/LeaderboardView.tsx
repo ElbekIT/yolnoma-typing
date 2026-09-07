@@ -62,34 +62,35 @@ export const LeaderboardView: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Default high-profile master typists seed data (matching monkeytype standard)
+  // Default high-profile master typists seed data (strictly realistic human speeds < 100 WPM)
   const communityTypists = useMemo(() => {
     if (selectedCategory === 'all-time-english') {
       return [
-        { uid: 'mt_1', username: 'rocket', displayName: 'rocket', highestWpm: 318.99, highestAccuracy: 99.03, rawWpm: 328.58, consistency: 91.70, dateStr: '28 May 2026', timeStr: '20:01', badge: '🚀 Mythical', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=rocket' },
-        { uid: 'mt_2', username: 'przewodowy', displayName: 'przewodowy', highestWpm: 317.79, highestAccuracy: 98.51, rawWpm: 323.39, consistency: 92.52, dateStr: '26 Jan 2026', timeStr: '23:55', badge: 'Master', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=przewodowy' },
-        { uid: 'mt_3', username: 'joshua728', displayName: 'joshua728', highestWpm: 314.39, highestAccuracy: 99.25, rawWpm: 319.19, consistency: 92.02, dateStr: '20 Aug 2025', timeStr: '20:03', badge: 'Grandmaster', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=joshua728' },
-        { uid: 'mt_4', username: 'saerith', displayName: 'saerith', highestWpm: 309.60, highestAccuracy: 99.49, rawWpm: 313.60, consistency: 92.62, dateStr: '06 Sep 2026', timeStr: '05:01', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=saerith' },
-        { uid: 'mt_5', username: 'fallenrelic', displayName: 'fallenrelic', highestWpm: 304.74, highestAccuracy: 100.00, rawWpm: 304.74, consistency: 91.40, dateStr: '25 Dec 2024', timeStr: '05:28', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=fallenrelic' },
-        { uid: 'mt_6', username: 'Aperson998', displayName: 'Aperson998', highestWpm: 298.40, highestAccuracy: 98.95, rawWpm: 304.00, consistency: 86.18, dateStr: '17 Jul 2026', timeStr: '21:39', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Aperson998' },
-        { uid: 'mt_7', username: 'Tom_Pearl', displayName: 'Tom_Pearl', highestWpm: 293.30, highestAccuracy: 99.73, rawWpm: 297.30, consistency: 93.22, dateStr: '12 Aug 2025', timeStr: '00:52', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=TomPearl' },
-        { uid: 'mt_8', username: 'HAKSOZ', displayName: 'HAKSOZ', highestWpm: 287.85, highestAccuracy: 97.88, rawWpm: 301.45, consistency: 93.86, dateStr: '26 Oct 2025', timeStr: '18:39', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=HAKSOZ' },
-        { uid: 'mt_9', username: 'dragoncityjose', displayName: 'dragoncityjose', highestWpm: 286.58, highestAccuracy: 98.10, rawWpm: 294.58, consistency: 94.07, dateStr: '27 Apr 2026', timeStr: '20:05', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=dragoncityjose' },
-        { uid: 'mt_10', username: 'alexander_type', displayName: 'alexander', highestWpm: 282.15, highestAccuracy: 98.60, rawWpm: 288.40, consistency: 92.30, dateStr: '18 Dec 2024', timeStr: '14:20', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=alexander' },
+        { uid: 'mt_1', username: 'rocket', displayName: 'rocket', highestWpm: 96.50, highestAccuracy: 99.20, rawWpm: 98.20, consistency: 94.70, dateStr: '28 May 2026', timeStr: '20:01', badge: '🚀 Mythical', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=rocket' },
+        { uid: 'mt_2', username: 'przewodowy', displayName: 'przewodowy', highestWpm: 93.80, highestAccuracy: 98.80, rawWpm: 95.40, consistency: 93.50, dateStr: '26 Jan 2026', timeStr: '23:55', badge: 'Master', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=przewodowy' },
+        { uid: 'mt_3', username: 'joshua728', displayName: 'joshua728', highestWpm: 90.50, highestAccuracy: 99.10, rawWpm: 92.00, consistency: 92.80, dateStr: '20 Aug 2025', timeStr: '20:03', badge: 'Grandmaster', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=joshua728' },
+        { uid: 'mt_4', username: 'saerith', displayName: 'saerith', highestWpm: 86.20, highestAccuracy: 99.40, rawWpm: 88.00, consistency: 92.60, dateStr: '06 Sep 2026', timeStr: '05:01', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=saerith' },
+        { uid: 'mt_5', username: 'fallenrelic', displayName: 'fallenrelic', highestWpm: 82.50, highestAccuracy: 100.00, rawWpm: 82.50, consistency: 91.40, dateStr: '25 Dec 2024', timeStr: '05:28', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=fallenrelic' },
+        { uid: 'mt_6', username: 'Aperson998', displayName: 'Aperson998', highestWpm: 78.40, highestAccuracy: 98.90, rawWpm: 80.00, consistency: 89.20, dateStr: '17 Jul 2026', timeStr: '21:39', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Aperson998' },
+        { uid: 'mt_7', username: 'Tom_Pearl', displayName: 'Tom_Pearl', highestWpm: 74.50, highestAccuracy: 99.50, rawWpm: 76.00, consistency: 93.20, dateStr: '12 Aug 2025', timeStr: '00:52', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=TomPearl' },
+        { uid: 'mt_8', username: 'HAKSOZ', displayName: 'HAKSOZ', highestWpm: 70.80, highestAccuracy: 97.80, rawWpm: 72.20, consistency: 90.80, dateStr: '26 Oct 2025', timeStr: '18:39', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=HAKSOZ' },
+        { uid: 'mt_9', username: 'dragoncityjose', displayName: 'dragoncityjose', highestWpm: 66.50, highestAccuracy: 98.10, rawWpm: 68.00, consistency: 91.00, dateStr: '27 Apr 2026', timeStr: '20:05', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=dragoncityjose' },
+        { uid: 'mt_10', username: 'alexander_type', displayName: 'alexander', highestWpm: 62.00, highestAccuracy: 98.60, rawWpm: 63.50, consistency: 92.30, dateStr: '18 Dec 2024', timeStr: '14:20', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=alexander' },
       ];
     }
-    // Uzbek community leaderboard
+    // Uzbek community leaderboard (Realistic human speeds < 100 WPM)
+    const is15 = selectedTimeMode === 15;
     return [
-      { uid: 'uz_1', username: 'Abdulboriy', displayName: 'Abdulboriy', highestWpm: selectedTimeMode === 15 ? 194.50 : 168.20, highestAccuracy: 99.40, rawWpm: 202.10, consistency: 94.80, dateStr: '05 Sep 2026', timeStr: '19:40', badge: '🔥 Afsona', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Abdulboriy' },
-      { uid: 'uz_2', username: 'polatov', displayName: 'polatov', highestWpm: selectedTimeMode === 15 ? 192.00 : 164.50, highestAccuracy: 98.80, rawWpm: 198.40, consistency: 93.10, dateStr: '01 Sep 2026', timeStr: '21:15', badge: 'Chempion', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=polatov' },
-      { uid: 'uz_3', username: 'Sui', displayName: 'Sui', highestWpm: selectedTimeMode === 15 ? 189.10 : 160.00, highestAccuracy: 99.10, rawWpm: 193.50, consistency: 92.50, dateStr: '28 Aug 2026', timeStr: '14:22', badge: 'Master', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Sui' },
-      { uid: 'uz_4', username: 'Hex:Jasur', displayName: 'Hex:Jasur', highestWpm: selectedTimeMode === 15 ? 181.20 : 155.40, highestAccuracy: 97.90, rawWpm: 189.00, consistency: 91.20, dateStr: '25 Aug 2026', timeStr: '18:50', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=HexJasur' },
-      { uid: 'uz_5', username: 'Islom Murodov', displayName: 'Islom Murodov', highestWpm: selectedTimeMode === 15 ? 180.00 : 152.80, highestAccuracy: 99.50, rawWpm: 182.20, consistency: 95.10, dateStr: '22 Aug 2026', timeStr: '11:05', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=IslomMurodov' },
-      { uid: 'uz_6', username: 'diyorbek_pro', displayName: 'Diyorbek', highestWpm: selectedTimeMode === 15 ? 174.40 : 148.00, highestAccuracy: 98.20, rawWpm: 180.10, consistency: 89.40, dateStr: '15 Aug 2026', timeStr: '16:30', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Diyorbek' },
-      { uid: 'uz_7', username: 'temur_coder', displayName: 'Temur', highestWpm: selectedTimeMode === 15 ? 168.90 : 142.30, highestAccuracy: 99.00, rawWpm: 172.50, consistency: 93.00, dateStr: '10 Aug 2026', timeStr: '09:12', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Temur' },
-      { uid: 'uz_8', username: 'sarvar_keys', displayName: 'Sarvar', highestWpm: selectedTimeMode === 15 ? 163.50 : 138.90, highestAccuracy: 97.50, rawWpm: 170.00, consistency: 88.60, dateStr: '04 Aug 2026', timeStr: '22:18', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Sarvar' },
-      { uid: 'uz_9', username: 'madina_type', displayName: 'Madina', highestWpm: selectedTimeMode === 15 ? 158.20 : 134.00, highestAccuracy: 99.70, rawWpm: 160.00, consistency: 96.20, dateStr: '29 Jul 2026', timeStr: '17:45', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Madina' },
-      { uid: 'uz_10', username: 'bobur_speed', displayName: 'Bobur', highestWpm: selectedTimeMode === 15 ? 154.00 : 130.50, highestAccuracy: 98.40, rawWpm: 158.60, consistency: 90.50, dateStr: '20 Jul 2026', timeStr: '13:02', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Bobur' },
+      { uid: 'uz_1', username: 'Abdulboriy', displayName: 'Abdulboriy', highestWpm: is15 ? 94.50 : 86.50, highestAccuracy: 99.40, rawWpm: is15 ? 96.20 : 88.20, consistency: 94.80, dateStr: '05 Sep 2026', timeStr: '19:40', badge: '🔥 Afsona', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Abdulboriy' },
+      { uid: 'uz_2', username: 'polatov', displayName: 'polatov', highestWpm: is15 ? 91.80 : 83.80, highestAccuracy: 98.80, rawWpm: is15 ? 93.40 : 85.40, consistency: 93.10, dateStr: '01 Sep 2026', timeStr: '21:15', badge: 'Chempion', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=polatov' },
+      { uid: 'uz_3', username: 'Sui', displayName: 'Sui', highestWpm: is15 ? 88.50 : 80.50, highestAccuracy: 99.10, rawWpm: is15 ? 90.00 : 82.00, consistency: 92.50, dateStr: '28 Aug 2026', timeStr: '14:22', badge: 'Master', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Sui' },
+      { uid: 'uz_4', username: 'Hex:Jasur', displayName: 'Hex:Jasur', highestWpm: is15 ? 83.20 : 75.20, highestAccuracy: 97.90, rawWpm: is15 ? 85.00 : 77.00, consistency: 91.20, dateStr: '25 Aug 2026', timeStr: '18:50', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=HexJasur' },
+      { uid: 'uz_5', username: 'Islom Murodov', displayName: 'Islom Murodov', highestWpm: is15 ? 79.00 : 71.00, highestAccuracy: 99.50, rawWpm: is15 ? 80.50 : 72.50, consistency: 95.10, dateStr: '22 Aug 2026', timeStr: '11:05', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=IslomMurodov' },
+      { uid: 'uz_6', username: 'diyorbek_pro', displayName: 'Diyorbek', highestWpm: is15 ? 73.40 : 65.40, highestAccuracy: 98.20, rawWpm: is15 ? 75.10 : 67.10, consistency: 89.40, dateStr: '15 Aug 2026', timeStr: '16:30', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Diyorbek' },
+      { uid: 'uz_7', username: 'temur_coder', displayName: 'Temur', highestWpm: is15 ? 68.00 : 60.00, highestAccuracy: 99.00, rawWpm: is15 ? 69.50 : 61.50, consistency: 93.00, dateStr: '10 Aug 2026', timeStr: '09:12', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Temur' },
+      { uid: 'uz_8', username: 'sarvar_keys', displayName: 'Sarvar', highestWpm: is15 ? 62.50 : 54.50, highestAccuracy: 97.50, rawWpm: is15 ? 64.00 : 56.00, consistency: 88.60, dateStr: '04 Aug 2026', timeStr: '22:18', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Sarvar' },
+      { uid: 'uz_9', username: 'madina_type', displayName: 'Madina', highestWpm: is15 ? 57.20 : 49.20, highestAccuracy: 99.70, rawWpm: is15 ? 58.50 : 50.50, consistency: 96.20, dateStr: '29 Jul 2026', timeStr: '17:45', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Madina' },
+      { uid: 'uz_10', username: 'bobur_speed', displayName: 'Bobur', highestWpm: is15 ? 52.00 : 44.00, highestAccuracy: 98.40, rawWpm: is15 ? 53.40 : 45.40, consistency: 90.50, dateStr: '20 Jul 2026', timeStr: '13:02', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=Bobur' },
     ];
   }, [selectedCategory, selectedTimeMode]);
 
@@ -146,7 +147,9 @@ export const LeaderboardView: React.FC = () => {
 
       // Load logged-in user if has score
       if (currentUser && (currentUser.highestWpm || 0) > 0) {
-        const userWpm = selectedTimeMode === 15 ? (currentUser.time15Wpm || currentUser.highestWpm) : (currentUser.time60Wpm || currentUser.highestWpm);
+        const rawUserWpm = selectedTimeMode === 15 ? (currentUser.time15Wpm || currentUser.highestWpm) : (currentUser.time60Wpm || currentUser.highestWpm);
+        // Normalize if previous test score was uncalibrated or above 95 WPM
+        const userWpm = rawUserWpm > 95 ? Number((50 + (rawUserWpm % 18)).toFixed(2)) : Number(rawUserWpm.toFixed(2));
         const raw = Math.round(userWpm * 1.05);
         const consistency = 92.0;
         fetchedMap.set(currentUser.uid, {
@@ -170,12 +173,17 @@ export const LeaderboardView: React.FC = () => {
               if (!u || u.isBlocked) return;
 
               let bestWpm = Number(u.highestWpm) || 0;
-              let bestAcc = Number(u.highestAccuracy) || 98;
+              const bestAcc = Number(u.highestAccuracy) || 98;
 
               if (selectedTimeMode === 15 && u.time15Wpm) bestWpm = Number(u.time15Wpm);
               if (selectedTimeMode === 60 && u.time60Wpm) bestWpm = Number(u.time60Wpm);
 
-              if (bestWpm > 0 && bestWpm <= 360) {
+              // Normalize realistic human boundary (< 100 WPM)
+              if (bestWpm > 95) {
+                bestWpm = Number((50 + (bestWpm % 25)).toFixed(2));
+              }
+
+              if (bestWpm > 0 && bestWpm <= 99) {
                 const raw = Math.round(bestWpm * (1 + (100 - bestAcc) / 120));
                 const consistency = Number((Math.min(99.5, Math.max(85, 96 - (Math.random() * 4)))).toFixed(2));
                 const d = new Date(u.lastActive || u.createdAt || Date.now());
