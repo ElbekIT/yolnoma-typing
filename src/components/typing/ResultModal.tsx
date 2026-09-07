@@ -84,8 +84,18 @@ const ProTimelineChart: React.FC<{
   const maxWpm = Math.max(50, ...sanitizedData.map((d) => Math.max(d.wpm, d.rawWpm)));
   const minWpm = 0;
 
-  const getX = (index: number) => padding.left + (index / Math.max(1, sanitizedData.length - 1)) * chartW;
-  const getY = (val: number) => padding.top + chartH - ((Math.max(0, val) - minWpm) / Math.max(1, maxWpm - minWpm)) * chartH;
+  const getX = (index: number) => {
+    const denom = Math.max(1, sanitizedData.length - 1);
+    const pos = padding.left + (index / denom) * chartW;
+    return Number.isFinite(pos) ? pos : padding.left;
+  };
+
+  const getY = (val: number) => {
+    const num = Number.isFinite(val) ? Math.max(0, val) : 0;
+    const denom = Math.max(1, maxWpm - minWpm);
+    const pos = padding.top + chartH - ((num - minWpm) / denom) * chartH;
+    return Number.isFinite(pos) ? pos : padding.top + chartH;
+  };
 
   const wpmPoints = sanitizedData.map((d, i) => ({ x: getX(i), y: getY(d.wpm) }));
   const rawPoints = sanitizedData.map((d, i) => ({ x: getX(i), y: getY(d.rawWpm) }));
@@ -93,16 +103,24 @@ const ProTimelineChart: React.FC<{
   const smoothWpmPath = createSmoothSplinePath(wpmPoints);
   const smoothRawPath = createSmoothSplinePath(rawPoints);
 
+  const lastWpmX = wpmPoints.length > 0 && Number.isFinite(wpmPoints[wpmPoints.length - 1].x)
+    ? wpmPoints[wpmPoints.length - 1].x.toFixed(1)
+    : '0';
+  const firstWpmX = wpmPoints.length > 0 && Number.isFinite(wpmPoints[0].x)
+    ? wpmPoints[0].x.toFixed(1)
+    : '0';
+
   const areaPath = wpmPoints.length > 0
-    ? `${smoothWpmPath} L ${wpmPoints[wpmPoints.length - 1].x.toFixed(1)},${(padding.top + chartH).toFixed(1)} L ${wpmPoints[0].x.toFixed(1)},${(padding.top + chartH).toFixed(1)} Z`
+    ? `${smoothWpmPath} L ${lastWpmX},${(padding.top + chartH).toFixed(1)} L ${firstWpmX},${(padding.top + chartH).toFixed(1)} Z`
     : '';
 
   const activePoint = hoverIndex !== null && sanitizedData[hoverIndex] ? sanitizedData[hoverIndex] : null;
 
   // Format seconds into MM:SS
   const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
+    const sVal = Number.isFinite(secs) ? Math.max(0, Math.floor(secs)) : 0;
+    const m = Math.floor(sVal / 60);
+    const s = sVal % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
@@ -207,7 +225,7 @@ const ProTimelineChart: React.FC<{
           />
 
           {/* Error collision dots */}
-          {data.map((d, i) => {
+          {sanitizedData.map((d, i) => {
             if (d.errors > 0) {
               return (
                 <g key={`err-${i}`}>
@@ -236,9 +254,9 @@ const ProTimelineChart: React.FC<{
           })}
 
           {/* Time axis labels */}
-          {data.map((d, i) => {
-            const step = Math.max(1, Math.floor(data.length / 6));
-            if (i % step === 0 || i === data.length - 1) {
+          {sanitizedData.map((d, i) => {
+            const step = Math.max(1, Math.floor(sanitizedData.length / 6));
+            if (i % step === 0 || i === sanitizedData.length - 1) {
               return (
                 <text
                   key={`time-${i}`}
@@ -258,8 +276,8 @@ const ProTimelineChart: React.FC<{
           })}
 
           {/* Interactive Hover columns */}
-          {data.map((d, i) => {
-            const colW = chartW / Math.max(1, data.length - 1);
+          {sanitizedData.map((d, i) => {
+            const colW = chartW / Math.max(1, sanitizedData.length - 1);
             return (
               <rect
                 key={`col-${i}`}
@@ -275,7 +293,7 @@ const ProTimelineChart: React.FC<{
           })}
 
           {/* Active Hover line and point */}
-          {hoverIndex !== null && data[hoverIndex] && (
+          {hoverIndex !== null && sanitizedData[hoverIndex] && (
             <g>
               <line
                 x1={getX(hoverIndex)}
@@ -289,7 +307,7 @@ const ProTimelineChart: React.FC<{
               />
               <circle
                 cx={getX(hoverIndex)}
-                cy={getY(data[hoverIndex].wpm)}
+                cy={getY(sanitizedData[hoverIndex].wpm)}
                 r="5"
                 fill="#22d3ee"
                 stroke="#020617"
@@ -631,8 +649,8 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           <div className="mb-6">
             <ProTimelineChart
               data={result.wpmHistory}
-              mainColor={themeConfig.mainColor}
-              subColor={themeConfig.subColor}
+              mainColor={themeConfig?.mainColor || '#06b6d4'}
+              subColor={themeConfig?.subColor || '#64748b'}
             />
           </div>
         )}

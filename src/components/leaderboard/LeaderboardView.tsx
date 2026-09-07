@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Crown,
   ChevronLeft,
   ChevronRight,
   Search,
-  Users,
   CheckCircle2,
   Globe,
   Flame,
@@ -12,8 +11,14 @@ import {
   Trophy,
   Clock,
   Sparkles,
-  Award,
-  ArrowUpRight
+  ArrowUpRight,
+  Medal,
+  Target,
+  Activity,
+  X,
+  ShieldCheck,
+  TrendingUp,
+  User
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
@@ -31,7 +36,7 @@ interface LeaderboardEntry extends UserProfile {
 export const LeaderboardView: React.FC = () => {
   const { profile: currentUser, user } = useAuth();
 
-  // Typing Mode selections (Monkeytype style)
+  // Typing Mode selections
   const [selectedCategory, setSelectedCategory] = useState<'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily'>('all-time-uzbek');
   const [selectedTimeMode, setSelectedTimeMode] = useState<'all' | 15 | 30 | 60 | 120>('all');
 
@@ -180,11 +185,10 @@ export const LeaderboardView: React.FC = () => {
 
           const formattedList: LeaderboardEntry[] = rawList.map((entry, index) => {
             const raw = Math.round((entry.highestWpm || 0) * (1 + (100 - (entry.highestAccuracy || 98)) / 150));
-            const consistency = Math.min(99.8, Math.max(82.4, 100 - ((index * 3.7) % 15) - Math.random() * 2));
-            const testDateFormatted = new Date(entry.lastActive || entry.createdAt || Date.now()).toLocaleDateString('en-GB', {
+            const consistency = Math.min(99.8, Math.max(82.4, 100 - ((index * 3.7) % 15) - 2));
+            const testDateFormatted = new Date(entry.lastActive || entry.createdAt || Date.now()).toLocaleDateString('uz-UZ', {
               day: '2-digit',
-              month: 'short',
-              year: 'numeric'
+              month: 'short'
             });
 
             return {
@@ -212,115 +216,370 @@ export const LeaderboardView: React.FC = () => {
     };
   }, [selectedCategory, selectedTimeMode, currentUser]);
 
-  // Filter rankings
-  const filteredTyping = rankings.filter((r) => {
-    const uname = r.username || '';
-    const dname = r.displayName || '';
-    return (
-      uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dname.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+  // Filter rankings by search query
+  const filteredTyping = useMemo(() => {
+    if (!searchQuery.trim()) return rankings;
+    const q = searchQuery.toLowerCase().trim();
+    return rankings.filter((r) => {
+      const uname = (r.username || '').toLowerCase();
+      const dname = (r.displayName || '').toLowerCase();
+      return uname.includes(q) || dname.includes(q);
+    });
+  }, [rankings, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTyping.length / pageSize));
-  const pageRankings = filteredTyping.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pageRankings = useMemo(() => {
+    return filteredTyping.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredTyping, currentPage, pageSize]);
+
+  // Top 3 Podium Contestants
+  const top3 = useMemo(() => {
+    return rankings.slice(0, 3);
+  }, [rankings]);
+
+  // User's own standing in the current ranking
+  const userStanding = useMemo(() => {
+    const currentUid = currentUser?.uid || localStorage.getItem('yolnoma_guest_id');
+    if (!currentUid) return null;
+    return rankings.find((r) => r.uid === currentUid) || null;
+  }, [rankings, currentUser]);
+
+  // Leaderboard global statistics
+  const stats = useMemo(() => {
+    if (rankings.length === 0) return { totalUsers: 0, topWpm: 0, avgWpm: 0, avgAcc: 98 };
+    const totalUsers = rankings.length;
+    const topWpm = rankings[0]?.highestWpm || 0;
+    const avgWpm = Math.round(rankings.reduce((sum, r) => sum + (r.highestWpm || 0), 0) / totalUsers);
+    const avgAcc = (rankings.reduce((sum, r) => sum + (r.highestAccuracy || 98), 0) / totalUsers).toFixed(1);
+    return { totalUsers, topWpm, avgWpm, avgAcc };
+  }, [rankings]);
 
   const openUserProfile = (u: UserProfile) => {
     setSelectedUser(u);
     setIsModalOpen(true);
   };
 
-  const getHeaderTitle = () => {
-    const timeLabel = selectedTimeMode === 'all' ? 'All Times' : `Time ${selectedTimeMode}`;
-    if (selectedCategory === 'all-time-uzbek') return `All-time Uzbek ${timeLabel} Leaderboard`;
-    if (selectedCategory === 'all-time-english') return `All-time English ${timeLabel} Leaderboard`;
-    if (selectedCategory === 'weekly-xp') return `Weekly XP Leaderboard`;
-    return `Daily ${timeLabel} Leaderboard`;
+  const getCategoryTitle = () => {
+    if (selectedCategory === 'all-time-uzbek') return "O'zbek Tili • Global";
+    if (selectedCategory === 'all-time-english') return "Ingliz Tili • Global";
+    if (selectedCategory === 'weekly-xp') return "Haftalik XP Liderlari";
+    return "Kunlik Shiddat • Daily Sprint";
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-4 px-2 sm:px-4 font-mono select-none space-y-6 animate-in fade-in duration-200">
-      {/* Grid with Left Sidebar & Main Table */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-        {/* Left Sidebar Category & Time Selectors */}
-        <div className="md:col-span-1 space-y-4">
-          {/* Main Category Group */}
-          <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-            <button
-              onClick={() => {
-                setSelectedCategory('all-time-uzbek');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                selectedCategory === 'all-time-uzbek'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5" />
-                <span>all-time uzbek</span>
-              </span>
-            </button>
+    <div className="w-full max-w-6xl mx-auto py-3 sm:py-6 px-2 sm:px-4 font-sans select-none space-y-6 animate-in fade-in duration-300">
+      
+      {/* 1. Header HUD & Live Ticker */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-slate-900/90 via-[#0a0f1d]/90 to-slate-950/90 border border-slate-800/80 p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
-            <button
-              onClick={() => {
-                setSelectedCategory('all-time-english');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                selectedCategory === 'all-time-english'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5" />
-                <span>all-time english</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedCategory('weekly-xp');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                selectedCategory === 'weekly-xp'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Flame className="w-3.5 h-3.5 text-amber-400" />
-                <span>weekly xp</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedCategory('daily');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                selectedCategory === 'daily'
-                  ? 'bg-[var(--main-color)] text-white'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                <span>daily</span>
-              </span>
-            </button>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shadow-amber-500/20 flex items-center justify-center">
+                <div className="w-full h-full bg-[#0a0f1d] rounded-[14px] flex items-center justify-center">
+                  <Crown className="w-6 h-6 text-amber-400 fill-amber-400" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white font-mono">
+                    YOLNOMA ARENA REYTINGI
+                  </h1>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    Jonli
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-medium">
+                  {getCategoryTitle()} — Haqiqiy vaqt rejimida yangilanuvchi rasmiy natijalar
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Time Filter Group */}
-          {selectedCategory !== 'weekly-xp' && (
-            <div className="bg-[var(--card-bg)]/60 p-2 rounded-2xl border border-[var(--sub-alt)] space-y-1">
-              <span className="text-[10px] text-[var(--sub-color)] font-bold px-3 py-1 block uppercase tracking-wider">
-                Vaqt Bo'yicha Filtr
+          {/* Quick Stats Ticker Chips */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-2.5 px-3">
+              <div className="text-[10px] font-mono text-slate-400 font-bold uppercase flex items-center gap-1">
+                <Target className="w-3 h-3 text-cyan-400" />
+                <span>Ishtirokchilar</span>
+              </div>
+              <div className="text-lg font-black font-mono text-white mt-0.5">
+                {stats.totalUsers.toLocaleString()}
+              </div>
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-2.5 px-3">
+              <div className="text-[10px] font-mono text-slate-400 font-bold uppercase flex items-center gap-1">
+                <Trophy className="w-3 h-3 text-amber-400" />
+                <span>Top Tezlik</span>
+              </div>
+              <div className="text-lg font-black font-mono text-amber-400 mt-0.5">
+                {stats.topWpm} <span className="text-xs text-slate-400 font-normal">WPM</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-2.5 px-3">
+              <div className="text-[10px] font-mono text-slate-400 font-bold uppercase flex items-center gap-1">
+                <Activity className="w-3 h-3 text-purple-400" />
+                <span>O'rtacha Tezlik</span>
+              </div>
+              <div className="text-lg font-black font-mono text-purple-300 mt-0.5">
+                {stats.avgWpm} <span className="text-xs text-slate-400 font-normal">WPM</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-2.5 px-3">
+              <div className="text-[10px] font-mono text-slate-400 font-bold uppercase flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span>O'rtacha Aniqlik</span>
+              </div>
+              <div className="text-lg font-black font-mono text-emerald-400 mt-0.5">
+                {stats.avgAcc}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Top 3 Esports Podium Section (Only if we have contestants and not searching) */}
+      {!searchQuery && top3.length >= 3 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 items-end">
+          
+          {/* 2nd Place Silver Card (Left) */}
+          <div
+            onClick={() => openUserProfile(top3[1])}
+            className="group relative bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-700/60 rounded-3xl p-5 shadow-xl hover:border-slate-400/50 hover:shadow-slate-500/10 transition-all duration-300 cursor-pointer flex flex-col items-center text-center order-2 md:order-1 hover:-translate-y-1"
+          >
+            <div className="absolute -top-3.5 px-3 py-0.5 rounded-full bg-slate-700/80 border border-slate-500/50 text-slate-200 text-xs font-black font-mono flex items-center gap-1 shadow-md">
+              <Medal className="w-3.5 h-3.5 text-slate-300" />
+              <span>2-O'RIN</span>
+            </div>
+
+            <div className="relative mt-2 mb-3">
+              <img
+                src={top3[1].avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${top3[1].uid}`}
+                alt="2nd"
+                className="w-16 h-16 rounded-2xl border-2 border-slate-400/80 object-cover bg-slate-800 shadow-lg shadow-slate-500/10"
+              />
+              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-600 text-slate-300 text-[10px] font-mono font-black">
+                #2
               </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 max-w-full">
+              <h3 className="font-bold text-slate-100 text-sm truncate">{top3[1].displayName}</h3>
+              {top3[1].isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
+            </div>
+            <p className="text-[11px] font-mono text-slate-400">@{top3[1].username}</p>
+
+            <div className="w-full mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-around">
+              <div>
+                <div className="text-2xl font-black font-mono text-slate-200">{top3[1].highestWpm}</div>
+                <div className="text-[10px] font-mono text-slate-400 uppercase">WPM</div>
+              </div>
+              <div className="h-8 w-px bg-slate-800" />
+              <div>
+                <div className="text-sm font-bold font-mono text-slate-300">{(top3[1].highestAccuracy || 98).toFixed(1)}%</div>
+                <div className="text-[10px] font-mono text-slate-400 uppercase">Aniqlik</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 1st Place Gold Champion (Center - Elevated & Glowing) */}
+          <div
+            onClick={() => openUserProfile(top3[0])}
+            className="group relative bg-gradient-to-b from-amber-950/30 via-slate-900/90 to-slate-950/90 border-2 border-amber-400/50 rounded-3xl p-6 shadow-2xl hover:border-amber-400 hover:shadow-amber-500/20 transition-all duration-300 cursor-pointer flex flex-col items-center text-center order-1 md:order-2 md:-translate-y-3 hover:-translate-y-4"
+          >
+            <div className="absolute -top-4 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-black text-xs font-black font-mono flex items-center gap-1.5 shadow-xl shadow-amber-500/30 uppercase tracking-wider">
+              <Crown className="w-4 h-4 fill-black" />
+              <span>1-O'RIN CHEMPION</span>
+            </div>
+
+            <div className="relative mt-2 mb-3">
+              <div className="absolute -inset-1.5 rounded-3xl bg-amber-400/30 blur-sm group-hover:bg-amber-400/50 transition-all" />
+              <img
+                src={top3[0].avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${top3[0].uid}`}
+                alt="1st"
+                className="relative w-20 h-20 rounded-2xl border-2 border-amber-400 object-cover bg-slate-800 shadow-2xl shadow-amber-500/30"
+              />
+              <span className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-lg bg-amber-500 text-black text-xs font-mono font-black shadow">
+                #1
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 max-w-full">
+              <h3 className="font-extrabold text-amber-300 text-base sm:text-lg truncate">{top3[0].displayName}</h3>
+              {top3[0].isVerified && <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />}
+            </div>
+            <p className="text-xs font-mono text-amber-400/80">@{top3[0].username}</p>
+
+            <div className="w-full mt-4 pt-4 border-t border-amber-500/20 flex items-center justify-around">
+              <div>
+                <div className="text-3xl font-black font-mono text-amber-400 tracking-tight">{top3[0].highestWpm}</div>
+                <div className="text-[10px] font-mono text-amber-300/70 font-bold uppercase">TEZLIK (WPM)</div>
+              </div>
+              <div className="h-10 w-px bg-amber-500/20" />
+              <div>
+                <div className="text-base font-bold font-mono text-emerald-400">{(top3[0].highestAccuracy || 99).toFixed(1)}%</div>
+                <div className="text-[10px] font-mono text-slate-400 uppercase">Aniqlik</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3rd Place Bronze Card (Right) */}
+          <div
+            onClick={() => openUserProfile(top3[2])}
+            className="group relative bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-amber-900/50 rounded-3xl p-5 shadow-xl hover:border-amber-700/60 hover:shadow-amber-900/20 transition-all duration-300 cursor-pointer flex flex-col items-center text-center order-3 hover:-translate-y-1"
+          >
+            <div className="absolute -top-3.5 px-3 py-0.5 rounded-full bg-amber-950/80 border border-amber-800/60 text-amber-400 text-xs font-black font-mono flex items-center gap-1 shadow-md">
+              <Medal className="w-3.5 h-3.5 text-amber-600" />
+              <span>3-O'RIN</span>
+            </div>
+
+            <div className="relative mt-2 mb-3">
+              <img
+                src={top3[2].avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${top3[2].uid}`}
+                alt="3rd"
+                className="w-16 h-16 rounded-2xl border-2 border-amber-700/70 object-cover bg-slate-800 shadow-lg shadow-amber-900/20"
+              />
+              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-amber-900/80 border border-amber-700 text-amber-300 text-[10px] font-mono font-black">
+                #3
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 max-w-full">
+              <h3 className="font-bold text-slate-100 text-sm truncate">{top3[2].displayName}</h3>
+              {top3[2].isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
+            </div>
+            <p className="text-[11px] font-mono text-slate-400">@{top3[2].username}</p>
+
+            <div className="w-full mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-around">
+              <div>
+                <div className="text-2xl font-black font-mono text-amber-500/90">{top3[2].highestWpm}</div>
+                <div className="text-[10px] font-mono text-slate-400 uppercase">WPM</div>
+              </div>
+              <div className="h-8 w-px bg-slate-800" />
+              <div>
+                <div className="text-sm font-bold font-mono text-slate-300">{(top3[2].highestAccuracy || 98).toFixed(1)}%</div>
+                <div className="text-[10px] font-mono text-slate-400 uppercase">Aniqlik</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* 3. User's Own Standing Highlight Banner (If user has score) */}
+      {userStanding && (
+        <div className="overflow-hidden rounded-2xl bg-cyan-950/25 border border-cyan-500/30 p-3.5 sm:p-4 shadow-lg shadow-cyan-500/5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-black font-mono text-sm">
+              #{userStanding.rank}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase text-cyan-400">
+                  Sizning O'rningiz
+                </span>
+                <span className="text-slate-200 text-xs font-semibold">
+                  {userStanding.displayName}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-mono">
+                Tezlik: <b className="text-cyan-300">{userStanding.highestWpm} WPM</b> • Aniqlik: <b className="text-emerald-400">{(userStanding.highestAccuracy || 98).toFixed(1)}%</b>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {userStanding.rank > 1 && top3[0] && (
+              <span className="text-xs font-mono text-slate-400 hidden sm:inline">
+                Top 1 gacha: <b className="text-amber-400">+{Math.max(0, (top3[0].highestWpm || 0) - (userStanding.highestWpm || 0))} WPM</b>
+              </span>
+            )}
+            <button
+              onClick={() => openUserProfile(userStanding)}
+              className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold font-mono transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <span>Profilimni Ko'rish</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Filter Switchers & Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+        
+        {/* Category Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-2xl">
+          <button
+            onClick={() => {
+              setSelectedCategory('all-time-uzbek');
+              setCurrentPage(1);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategory === 'all-time-uzbek'
+                ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>O'zbek Tili</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedCategory('all-time-english');
+              setCurrentPage(1);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategory === 'all-time-english'
+                ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Ingliz Tili</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedCategory('weekly-xp');
+              setCurrentPage(1);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategory === 'weekly-xp'
+                ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>Haftalik XP</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedCategory('daily');
+              setCurrentPage(1);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategory === 'daily'
+                ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Kunlik Shiddat</span>
+          </button>
+        </div>
+
+        {/* Time Mode Pills & Search */}
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedCategory !== 'weekly-xp' && (
+            <div className="flex items-center gap-1 p-1 bg-slate-900/90 border border-slate-800 rounded-2xl">
               {(['all', 15, 30, 60, 120] as const).map((tm) => (
                 <button
                   key={tm}
@@ -328,22 +587,21 @@ export const LeaderboardView: React.FC = () => {
                     setSelectedTimeMode(tm);
                     setCurrentPage(1);
                   }}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                     selectedTimeMode === tm
-                      ? 'bg-[var(--main-color)] text-white'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]'
+                      ? 'bg-slate-700 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                   }`}
                 >
-                  <Trophy className="w-3.5 h-3.5 opacity-70" />
-                  <span>{tm === 'all' ? 'all' : `time ${tm}`}</span>
+                  {tm === 'all' ? 'Hammasi' : `${tm}s`}
                 </button>
               ))}
             </div>
           )}
 
           {/* Search Box */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[var(--sub-color)]" />
+          <div className="relative min-w-[200px] flex-1 sm:flex-initial">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
@@ -351,160 +609,265 @@ export const LeaderboardView: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Ism yoki username izlash..."
-              className="w-full pl-8 pr-3 py-2 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] outline-none focus:border-[var(--main-color)]"
+              placeholder="Ism yoki @username..."
+              className="w-full pl-9 pr-8 py-2 bg-slate-900/90 border border-slate-800 rounded-2xl text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-500 font-mono transition-all"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right Main Table Content */}
-        <div className="md:col-span-3 space-y-4">
-          {/* Header Title & Info Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--sub-alt)] pb-3">
-            <div>
-              <h1 className="text-xl font-black text-[var(--text-color)] tracking-tight">
-                {getHeaderTitle()}
-              </h1>
-              <p className="text-xs text-[var(--sub-color)] mt-0.5">
-                Jonli reyting jadvali • Jami {filteredTyping.length} ta ishtirokchi
-              </p>
-            </div>
+      </div>
 
-            {/* Pagination controls top right */}
-            <div className="flex items-center gap-2 text-xs text-[var(--sub-color)] self-end sm:self-auto">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <span className="font-bold text-[var(--main-color)]">
-                # {currentPage} / {totalPages}
-              </span>
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-[var(--sub-alt)] disabled:opacity-30 cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+      {/* 5. Main Cyber Leaderboard Table & Mobile Cards */}
+      <div className="bg-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
+        
+        {/* Table Top Toolbar */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-800/80 bg-slate-950/40">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold text-slate-300">
+              Natijalar: <b className="text-cyan-400">{filteredTyping.length}</b> ta ishtirokchi
+            </span>
           </div>
 
-          {/* Table View */}
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="text-[var(--sub-color)] opacity-70 border-b border-[var(--sub-alt)] text-[11px]">
-                  <th className="pb-2 px-2 w-10">#</th>
-                  <th className="pb-2 px-2">name</th>
-                  <th className="pb-2 px-2 text-center">mode</th>
-                  <th className="pb-2 px-2 text-right">wpm</th>
-                  <th className="pb-2 px-2 text-right">accuracy</th>
-                  <th className="pb-2 px-2 text-right hidden sm:table-cell">raw</th>
-                  <th className="pb-2 px-2 text-right hidden md:table-cell">consistency</th>
-                  <th className="pb-2 px-2 text-right">date</th>
+          {/* Pagination */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-30 transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-mono font-bold text-cyan-400">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-30 transition-all cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop View Table (hidden on small screens) */}
+        <div className="hidden sm:block w-full overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="text-slate-400 bg-slate-950/60 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider">
+                <th className="py-3 px-4 w-14 text-center"># O'rin</th>
+                <th className="py-3 px-4">Ishtirokchi</th>
+                <th className="py-3 px-4 text-center">Vaqt</th>
+                <th className="py-3 px-4 text-right">Tezlik</th>
+                <th className="py-3 px-4 text-right">Aniqlik</th>
+                <th className="py-3 px-4 text-right">Raw</th>
+                <th className="py-3 px-4 text-right">Ritm</th>
+                <th className="py-3 px-4 text-right">Sana</th>
+                <th className="py-3 px-4 w-10 text-center"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {pageRankings.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-14 text-center text-slate-400">
+                    <p className="font-bold text-sm text-slate-200 mb-1">Hech kim topilmadi</p>
+                    <p className="text-xs">Ushbu filtr bo'yicha hech qanday natija mavjud emas.</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--sub-alt)]/40">
-                {pageRankings.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-[var(--sub-color)]">
-                      <p className="font-bold text-sm text-[var(--text-color)] mb-1">Foydalanuvchilar topilmadi</p>
-                      <p className="text-xs">Ushbu rejimda reyting natijalari hali kiritilmagan.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  pageRankings.map((item: any) => {
-                    const isSelf = currentUser?.uid === item.uid;
+              ) : (
+                pageRankings.map((item) => {
+                  const isSelf = currentUser?.uid === item.uid || localStorage.getItem('yolnoma_guest_id') === item.uid;
 
-                    const activeTimeDisplay =
-                      selectedTimeMode === 'all'
-                        ? item.time15Wpm === item.highestWpm
-                          ? '15s'
-                          : item.time30Wpm === item.highestWpm
-                          ? '30s'
-                          : item.time120Wpm === item.highestWpm
-                          ? '120s'
-                          : '60s'
-                        : `${selectedTimeMode}s`;
+                  const activeTimeDisplay =
+                    selectedTimeMode === 'all'
+                      ? item.time15Wpm === item.highestWpm
+                        ? '15s'
+                        : item.time30Wpm === item.highestWpm
+                        ? '30s'
+                        : item.time120Wpm === item.highestWpm
+                        ? '120s'
+                        : '60s'
+                      : `${selectedTimeMode}s`;
 
-                    return (
-                      <tr
-                        key={item.uid}
-                        onClick={() => openUserProfile(item)}
-                        className={`cursor-pointer transition-all hover:bg-[var(--sub-alt)]/30 ${
-                          isSelf ? 'bg-[var(--main-color)]/10 font-bold' : ''
-                        }`}
-                      >
-                        <td className="py-2.5 px-2 font-bold text-[var(--sub-color)]">
-                          {item.rank === 1 ? (
-                            <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
-                          ) : item.rank === 2 ? (
-                            <span className="text-slate-300 font-bold">2</span>
-                          ) : item.rank === 3 ? (
-                            <span className="text-amber-700 font-bold">3</span>
-                          ) : (
-                            item.rank
-                          )}
-                        </td>
-
-                        <td className="py-2.5 px-2">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
-                              alt="avatar"
-                              className="w-5 h-5 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]"
-                            />
-                            <span className="text-[var(--text-color)] font-semibold truncate max-w-[120px] sm:max-w-[170px]">
-                              {item.displayName}
-                            </span>
-                            {item.isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
-                            {isSelf && (
-                              <span className="px-1 py-0.2 rounded bg-[var(--main-color)] text-white text-[8px] font-black uppercase">
-                                siz
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="py-2.5 px-2 text-center">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--sub-alt)] text-[var(--main-color)] font-mono text-[10px] font-black border border-[var(--sub-color)]/20 shadow-xs">
-                            <Clock className="w-3 h-3 text-[var(--main-color)] shrink-0" />
-                            <span>{activeTimeDisplay}</span>
+                  return (
+                    <tr
+                      key={item.uid}
+                      onClick={() => openUserProfile(item)}
+                      className={`group cursor-pointer transition-colors duration-150 ${
+                        isSelf
+                          ? 'bg-cyan-500/10 hover:bg-cyan-500/15'
+                          : item.rank === 1
+                          ? 'bg-amber-500/5 hover:bg-amber-500/10'
+                          : 'hover:bg-slate-800/40'
+                      }`}
+                    >
+                      {/* Rank # */}
+                      <td className="py-3.5 px-4 text-center font-black">
+                        {item.rank === 1 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-xs">
+                            <Crown className="w-4 h-4 fill-amber-400" />
                           </span>
-                        </td>
+                        ) : item.rank === 2 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-slate-700/40 text-slate-200 border border-slate-500/40">
+                            2
+                          </span>
+                        ) : item.rank === 3 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-amber-900/30 text-amber-500 border border-amber-700/40">
+                            3
+                          </span>
+                        ) : item.rank <= 10 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-cyan-950/40 text-cyan-400 font-bold border border-cyan-800/40">
+                            {item.rank}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 font-medium">
+                            {item.rank}
+                          </span>
+                        )}
+                      </td>
 
-                        <td className="py-2.5 px-2 text-right font-black text-sm text-[var(--main-color)]">
-                          {item.highestWpm}
-                        </td>
+                      {/* Participant Profile */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
+                            alt="avatar"
+                            className="w-8 h-8 rounded-xl object-cover shrink-0 bg-slate-800 border border-slate-700"
+                          />
+                          <div className="truncate max-w-[160px] md:max-w-[220px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-slate-100 font-bold text-xs truncate group-hover:text-cyan-300 transition-colors">
+                                {item.displayName}
+                              </span>
+                              {item.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
+                              {isSelf && (
+                                <span className="px-1.5 py-0.2 rounded bg-cyan-500 text-black text-[9px] font-black uppercase font-mono tracking-wider">
+                                  siz
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-500 font-mono block">
+                              @{item.username}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
 
-                        <td className="py-2.5 px-2 text-right text-[var(--text-color)]">
-                          {(item.highestAccuracy || 98).toFixed(2)}%
-                        </td>
+                      {/* Mode Badge */}
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-900 text-slate-300 font-mono text-[11px] font-bold border border-slate-800">
+                          <Clock className="w-3 h-3 text-cyan-400" />
+                          <span>{activeTimeDisplay}</span>
+                        </span>
+                      </td>
 
-                        <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden sm:table-cell">
-                          {item.rawWpm || Math.round((item.highestWpm || 0) * 1.05)}
-                        </td>
+                      {/* WPM Speed with Mini Meter */}
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex flex-col items-end">
+                          <span className="text-base font-black font-mono text-cyan-400">
+                            {item.highestWpm}
+                          </span>
+                          <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden mt-0.5">
+                            <div
+                              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
+                              style={{ width: `${Math.min(100, Math.max(10, (item.highestWpm / 150) * 100))}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
 
-                        <td className="py-2.5 px-2 text-right text-[var(--sub-color)] hidden md:table-cell">
-                          {(item.consistency || 92.5).toFixed(2)}%
-                        </td>
+                      {/* Accuracy */}
+                      <td className="py-3.5 px-4 text-right font-bold">
+                        <span className={(item.highestAccuracy || 98) >= 98 ? 'text-emerald-400' : 'text-slate-200'}>
+                          {(item.highestAccuracy || 98).toFixed(1)}%
+                        </span>
+                      </td>
 
-                        <td className="py-2.5 px-2 text-right text-[var(--sub-color)] text-[10px]">
-                          {item.testDateFormatted || 'Bugun'}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                      {/* Raw WPM */}
+                      <td className="py-3.5 px-4 text-right text-slate-400">
+                        {item.rawWpm || Math.round((item.highestWpm || 0) * 1.05)}
+                      </td>
+
+                      {/* Consistency */}
+                      <td className="py-3.5 px-4 text-right text-slate-400">
+                        {(item.consistency || 92.5).toFixed(1)}%
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-3.5 px-4 text-right text-slate-500 text-[11px]">
+                        {item.testDateFormatted || 'Bugun'}
+                      </td>
+
+                      {/* Hover Arrow Action */}
+                      <td className="py-3.5 px-4 text-center text-slate-600 group-hover:text-cyan-400 transition-colors">
+                        <ArrowUpRight className="w-4 h-4 inline-block" />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
+
+        {/* Mobile View Cards (Ultra-fast responsive list for phones & small tablets) */}
+        <div className="block sm:hidden divide-y divide-slate-800/60 font-mono">
+          {pageRankings.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 p-4">
+              <p className="font-bold text-sm text-slate-200 mb-1">Ishtirokchilar topilmadi</p>
+              <p className="text-xs">Ushbu filtr bo'yicha hech qanday natija yo'q.</p>
+            </div>
+          ) : (
+            pageRankings.map((item) => {
+              const isSelf = currentUser?.uid === item.uid || localStorage.getItem('yolnoma_guest_id') === item.uid;
+              return (
+                <div
+                  key={item.uid}
+                  onClick={() => openUserProfile(item)}
+                  className={`p-3.5 flex items-center justify-between gap-3 active:bg-slate-800/50 ${
+                    isSelf ? 'bg-cyan-500/10' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 text-center font-black text-sm text-slate-400">
+                      {item.rank === 1 ? '👑' : item.rank === 2 ? '🥈' : item.rank === 3 ? '🥉' : `#${item.rank}`}
+                    </span>
+                    <img
+                      src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
+                      alt="avatar"
+                      className="w-9 h-9 rounded-xl object-cover bg-slate-800 border border-slate-700"
+                    />
+                    <div className="max-w-[130px] truncate">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-100 truncate">
+                        <span>{item.displayName}</span>
+                        {item.isVerified && <CheckCircle2 className="w-3 h-3 text-sky-400 shrink-0" />}
+                      </div>
+                      <span className="text-[10px] text-slate-500">@{item.username}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-base font-black text-cyan-400 font-mono">
+                      {item.highestWpm} <span className="text-[10px] text-slate-400">WPM</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-400 font-mono">
+                      {(item.highestAccuracy || 98).toFixed(1)}% aniqlik
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
       </div>
 
       {/* Profile Modal */}

@@ -806,12 +806,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (user && profile) {
-      // Calculate updated stats
+      // Calculate updated stats defensively
+      const currentXp = Number(profile.xp) || 0;
+      const currentLevel = Number(profile.level) || 1;
       const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
-      const newXp = Math.min(250000, profile.xp + xpEarned);
+      const newXp = Math.min(250000, currentXp + (Number(xpEarned) || 25));
       const newLevel = Math.min(100, Math.floor(newXp / 500) + 1);
 
-      if (newLevel > profile.level) {
+      if (newLevel > currentLevel) {
         addNotification('YANGI DARAJA! 🎉', `Tabriklaymiz! ${newLevel}-darajaga erishdingiz!`, 'level_up');
       }
 
@@ -820,19 +822,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (newLevel >= 10) rankTitle = 'Speed Demon';
       if (newLevel >= 20) rankTitle = 'Cyber Legend';
 
-      const newTotalTests = profile.totalTests + 1;
-      const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
-      const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
-      const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-      const newHighestWpm = Math.min(260, Math.max(profile.highestWpm || 0, fullResult.wpm));
+      const currentTotalTests = Number(profile.totalTests) || 0;
+      const newTotalTests = currentTotalTests + 1;
+      const newTimeTyped = (Number(profile.totalTimeTypedSeconds) || 0) + (Number(fullResult.testTimeSeconds) || 0);
+      const newWordsTyped = (Number(profile.totalWordsTyped) || 0) + Math.round((Number(fullResult.correctChars) || 0) / 5);
+      const newCharsTyped = (Number(profile.totalCharsTyped) || 0) + (Number(fullResult.correctChars) || 0);
+      const newHighestWpm = Math.min(260, Math.max(Number(profile.highestWpm) || 0, fullResult.wpm));
 
-      const newTime15 = fullResult.timeMode === 15 ? Math.min(260, Math.max(profile.time15Wpm || 0, fullResult.wpm)) : (profile.time15Wpm || 0);
-      const newTime30 = fullResult.timeMode === 30 ? Math.min(260, Math.max(profile.time30Wpm || 0, fullResult.wpm)) : (profile.time30Wpm || 0);
-      const newTime60 = fullResult.timeMode === 60 ? Math.min(260, Math.max(profile.time60Wpm || 0, fullResult.wpm)) : (profile.time60Wpm || 0);
-      const newTime120 = fullResult.timeMode === 120 ? Math.min(260, Math.max(profile.time120Wpm || 0, fullResult.wpm)) : (profile.time120Wpm || 0);
+      const newTime15 = fullResult.timeMode === 15 ? Math.min(260, Math.max(Number(profile.time15Wpm) || 0, fullResult.wpm)) : (Number(profile.time15Wpm) || 0);
+      const newTime30 = fullResult.timeMode === 30 ? Math.min(260, Math.max(Number(profile.time30Wpm) || 0, fullResult.wpm)) : (Number(profile.time30Wpm) || 0);
+      const newTime60 = fullResult.timeMode === 60 ? Math.min(260, Math.max(Number(profile.time60Wpm) || 0, fullResult.wpm)) : (Number(profile.time60Wpm) || 0);
+      const newTime120 = fullResult.timeMode === 120 ? Math.min(260, Math.max(Number(profile.time120Wpm) || 0, fullResult.wpm)) : (Number(profile.time120Wpm) || 0);
 
-      const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
-      const newAvgWpm = Math.min(260, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
+      const currentAcc = Number(profile.highestAccuracy) || 0;
+      const newHighestAccuracy = isPersonalBest || currentAcc === 0 ? fullResult.accuracy : currentAcc;
+      const currentAvgWpm = Number(profile.averageWpm) || 0;
+      const newAvgWpm = Math.min(260, Math.round((currentAvgWpm * currentTotalTests + fullResult.wpm) / Math.max(1, newTotalTests)));
 
       const profileUpdates: Partial<UserProfile> = {
         totalTests: newTotalTests,
