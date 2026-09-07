@@ -11,6 +11,7 @@ import { TypingHeader } from './components/typing/TypingHeader';
 import { LiveStats } from './components/typing/LiveStats';
 import { TypingDisplay } from './components/typing/TypingDisplay';
 import { ResultModal } from './components/typing/ResultModal';
+import { TestResultView } from './components/typing/TestResultView';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
@@ -1043,55 +1044,59 @@ function MainAppContent() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
         {activeTab === 'typing' && (
           <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
-            <TypingHeader
-              mode={mode}
-              setMode={setMode}
-              timeMode={timeMode}
-              setTimeMode={setTimeMode}
-              wordCountMode={wordCountMode}
-              setWordCountMode={setWordCountMode}
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-              customText={customText}
-              setCustomText={setCustomText}
-              onReset={initTestText}
-              isTestActive={isTestActive}
-              onOpenLanguagePage={() => setActiveTab('languages')}
-            />
+            {isTestFinished && finalResult ? (
+              <TestResultView
+                result={finalResult}
+                onRestart={initTestText}
+                onNextTest={initTestText}
+                onGoToLeaderboard={() => {
+                  setIsTestFinished(false);
+                  setActiveTab('leaderboard');
+                }}
+                onJoinBattle={() => {
+                  setIsTestFinished(false);
+                  setActiveTab('battle');
+                }}
+              />
+            ) : (
+              <>
+                <TypingHeader
+                  mode={mode}
+                  setMode={setMode}
+                  timeMode={timeMode}
+                  setTimeMode={setTimeMode}
+                  wordCountMode={wordCountMode}
+                  setWordCountMode={setWordCountMode}
+                  difficulty={difficulty}
+                  setDifficulty={setDifficulty}
+                  customText={customText}
+                  setCustomText={setCustomText}
+                  onReset={initTestText}
+                  isTestActive={isTestActive}
+                  onOpenLanguagePage={() => setActiveTab('languages')}
+                />
 
-            <LiveStats
-              wpm={liveWpm}
-              cpm={liveCpm}
-              accuracy={liveAcc}
-              timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
-              progressPercent={progressPercent}
-              isTestActive={isTestActive}
-              combo={liveCombo}
-            />
+                <LiveStats
+                  wpm={liveWpm}
+                  cpm={liveCpm}
+                  accuracy={liveAcc}
+                  timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
+                  progressPercent={progressPercent}
+                  isTestActive={isTestActive}
+                  combo={liveCombo}
+                />
 
-            <TypingDisplay
-              targetText={targetText}
-              typedInput={typedInput}
-              onInputChange={handleInputChange}
-              onRestart={initTestText}
-              isTestFinished={isTestFinished}
-            />
+                <TypingDisplay
+                  targetText={targetText}
+                  typedInput={typedInput}
+                  onInputChange={handleInputChange}
+                  onRestart={initTestText}
+                  isTestFinished={isTestFinished}
+                />
 
-            <VirtualKeyboard activeChar={currentTargetChar} />
-
-            <ResultModal
-              result={finalResult}
-              onRestart={initTestText}
-              onNextTest={initTestText}
-              onGoToLeaderboard={() => {
-                setIsTestFinished(false);
-                setActiveTab('leaderboard');
-              }}
-              onJoinBattle={() => {
-                setIsTestFinished(false);
-                setActiveTab('battle');
-              }}
-            />
+                <VirtualKeyboard activeChar={currentTargetChar} />
+              </>
+            )}
           </div>
         )}
 

@@ -332,6 +332,47 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [selectedMistakeKey, setSelectedMistakeKey] = useState<string | null>(null);
 
+  // Extract or synthesize key mistakes for the heatmap matrix
+  const keyMistakesList = useMemo(() => {
+    if (!result) return [];
+    const safeErrors = Number.isFinite(result.errors) ? Math.max(0, result.errors) : 0;
+    if (result.keyMistakes && typeof result.keyMistakes === 'object' && Object.keys(result.keyMistakes).length > 0) {
+      return (Object.entries(result.keyMistakes) as [string, number][])
+        .filter(([k, v]) => Boolean(k) && Number.isFinite(v))
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
+        .slice(0, 12);
+    }
+    // Fallback if no specific mistakes recorded but errors > 0
+    if (safeErrors > 0) {
+      return [
+        ['CH', 2],
+        ['SH', 1],
+        ["o'", 1],
+        ["g'", 1],
+        ['`', 1]
+      ] as [string, number][];
+    }
+    return [];
+  }, [result]);
+
+  // Intelligent Weak Spots list
+  const weakSpotsList = useMemo(() => {
+    if (!result) return [];
+    const safeErrors = Number.isFinite(result.errors) ? Math.max(0, result.errors) : 0;
+    if (result.weakSpots && Array.isArray(result.weakSpots) && result.weakSpots.length > 0) {
+      return result.weakSpots;
+    }
+    const spots: string[] = [];
+    if (safeErrors > 0) {
+      spots.push("O'zbek tilidagi CH va SH harflari");
+      spots.push("Murakkab o'zaro birikmalar va tutuq belgilari");
+    } else {
+      spots.push("Mukammal aniqlik! Barcha harflar 100% toʻgʻri terildi.");
+      spots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezroq harakatlaning.");
+    }
+    return spots;
+  }, [result]);
+
   // Global shortcut listeners: Tab + Enter or Enter to restart or next test instantly
   useEffect(() => {
     if (!result) return;
@@ -384,46 +425,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   };
 
   const speedTier = getSpeedTier(safeWpm);
-
-  // Extract or synthesize key mistakes for the heatmap matrix
-  const keyMistakesList = useMemo(() => {
-    if (result.keyMistakes && typeof result.keyMistakes === 'object' && Object.keys(result.keyMistakes).length > 0) {
-      return (Object.entries(result.keyMistakes) as [string, number][])
-        .filter(([k, v]) => Boolean(k) && Number.isFinite(v))
-        .sort((a, b) => Number(b[1]) - Number(a[1]))
-        .slice(0, 12);
-    }
-    // Fallback if no specific mistakes recorded but errors > 0
-    if (safeErrors > 0) {
-      return [
-        ['CH', 2],
-        ['SH', 1],
-        ["o'", 1],
-        ["g'", 1],
-        ['`', 1]
-      ] as [string, number][];
-    }
-    return [];
-  }, [result.keyMistakes, safeErrors]);
-
-  // Max mistake count for color normalization
   const maxMistakeCount = Math.max(1, ...(keyMistakesList.map((k) => k[1]).filter(Number.isFinite)));
-
-  // Intelligent Weak Spots list
-  const weakSpotsList = useMemo(() => {
-    if (result.weakSpots && Array.isArray(result.weakSpots) && result.weakSpots.length > 0) {
-      return result.weakSpots;
-    }
-    const spots: string[] = [];
-    if (safeErrors > 0) {
-      spots.push("O'zbek tilidagi CH va SH harflari");
-      spots.push("Murakkab o'zaro birikmalar va tutuq belgilari");
-    } else {
-      spots.push("Mukammal aniqlik! Barcha harflar 100% toʻgʻri terildi.");
-      spots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezroq harakatlaning.");
-    }
-    return spots;
-  }, [result.weakSpots, safeErrors]);
 
   const handleShare = () => {
     const text = `⚡ Yolnoma Typing Pro Natijasi ⚡\nTezlik: ${safeWpm} WPM (${safeCpm} CPM)\nAniqlik: ${safeAccuracy}%\nXatolar: ${safeErrors}\nVaqt: ${safeTime}s\nTil: ${safeLanguage}\nSayt: https://yolnoma.uz`;
