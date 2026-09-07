@@ -13,6 +13,7 @@ interface TypingDisplayProps {
   onInputChange: (newInput: string) => void;
   onRestart: () => void;
   isTestFinished: boolean;
+  isTestActive?: boolean;
 }
 
 export const TypingDisplay: React.FC<TypingDisplayProps> = ({
@@ -20,7 +21,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   typedInput,
   onInputChange,
   onRestart,
-  isTestFinished
+  isTestFinished,
+  isTestActive: propIsTestActive
 }) => {
   const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
@@ -37,7 +39,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
-  const isTestActive = typedInput.length > 0 && !isTestFinished;
+  const isTestActive = propIsTestActive !== undefined
+    ? (propIsTestActive && typedInput.length > 0 && !isTestFinished)
+    : (typedInput.length > 0 && !isTestFinished);
 
   // Initialize global anti-cheat listeners with user ID
   useEffect(() => {
@@ -80,6 +84,17 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       setIsFocused(true);
     }
   }, [targetText]);
+
+  // Ensure focus on initial mount / view entrance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        setIsFocused(true);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Hide mouse cursor during active typing (Monkeytype style)
   useEffect(() => {
