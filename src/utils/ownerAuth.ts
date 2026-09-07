@@ -114,18 +114,27 @@ export async function loginAdminBackend(
   }
 }
 
-let cachedOwnerStatus: { [email: string]: boolean } = {};
+let cachedOwnerStatus: { [email: string]: { status: boolean; timestamp: number } } = {};
+
+export function clearOwnerStatusCache(email?: string) {
+  if (email) {
+    delete cachedOwnerStatus[email.trim().toLowerCase()];
+  } else {
+    cachedOwnerStatus = {};
+  }
+}
 
 /**
  * Verifies with backend server if the provided email has Owner/Admin privileges.
  */
-export async function checkOwnerBackend(userEmail?: string | null): Promise<boolean> {
+export async function checkOwnerBackend(userEmail?: string | null, forceRefresh = false): Promise<boolean> {
   if (!userEmail) return false;
   const cleanEmail = userEmail.trim().toLowerCase();
   if (!cleanEmail) return false;
 
-  if (typeof cachedOwnerStatus[cleanEmail] === 'boolean') {
-    return cachedOwnerStatus[cleanEmail];
+  const cached = cachedOwnerStatus[cleanEmail];
+  if (!forceRefresh && cached && Date.now() - cached.timestamp < 30000) {
+    return cached.status;
   }
 
   try {
@@ -139,7 +148,7 @@ export async function checkOwnerBackend(userEmail?: string | null): Promise<bool
     });
     const data = await res.json().catch(() => null);
     const isAllowed = Boolean(data?.isOwner || data?.isAdmin || data?.role === 'owner' || data?.role === 'admin');
-    cachedOwnerStatus[cleanEmail] = isAllowed;
+    cachedOwnerStatus[cleanEmail] = { status: isAllowed, timestamp: Date.now() };
     return isAllowed;
   } catch {
     return false;
@@ -343,8 +352,8 @@ export function isOwnerUser(userEmail?: string | null): boolean {
       if (parsed?.role === 'owner' || parsed?.role === 'admin' || parsed?.isOwner === true) {
         return true;
       }
-      if (parsed?.email && typeof cachedOwnerStatus[parsed.email.toLowerCase()] === 'boolean') {
-        return cachedOwnerStatus[parsed.email.toLowerCase()];
+      if (parsed?.email && cachedOwnerStatus[parsed.email.toLowerCase()]) {
+        return cachedOwnerStatus[parsed.email.toLowerCase()].status;
       }
     }
   } catch (e) {

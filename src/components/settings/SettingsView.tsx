@@ -68,9 +68,13 @@ export const SettingsView: React.FC = () => {
     desc: string;
     icon: string;
   }[] = [
+    { id: 'pop', label: 'Mexanik Pop', desc: 'Chaqqon va o\'ta yoqimli sakrash effekti', icon: '🎯' },
     { id: 'jump', label: 'Sakrash (Jump)', desc: 'Harf bosilganda tepaga sakrab tushadi', icon: '🚀' },
     { id: 'bounce', label: 'Koptokcha (Bounce)', desc: 'Harf kattalashib elastik tarzda joylashadi', icon: '⚡' },
+    { id: 'lightning', label: 'Chaqmoq (Lightning)', desc: 'Elektr chaqmoq nuri va yorqin zarba', icon: '⚡' },
+    { id: 'fire', label: "Olov (Fire)", desc: 'Olov alangasi va issiq ranglar bilan yonish', icon: '🔥' },
     { id: 'glow', label: 'Neon Nur (Glow)', desc: 'Harf bosilganda yorqin neon nur taratadi', icon: '✨' },
+    { id: 'matrix', label: 'Matrix Hacker', desc: 'Yashil kiber hacker kodlari chaqnashi', icon: '💻' },
     { id: 'wave', label: "To'lqin (Wave)", desc: "Harf bosilganda qiya to'lqinlanadi", icon: '🌊' },
     { id: 'slide', label: 'Pastdan Chiqish (Slide)', desc: 'Harf pastdan silliq ko‘tariladi', icon: '⬆️' },
     { id: 'pulse', label: 'Pulsatsiya (Pulse)', desc: 'Harf yengil puls berib mustahkamlanadi', icon: '💓' },

@@ -6,7 +6,7 @@ import { soundSynth } from '../utils/audio';
 export type HeaderIconSize = 'small' | 'medium' | 'large';
 export type ModeBarWidth = 'compact' | 'standard' | 'wide' | 'full';
 export type ModeBarScale = 'small' | 'medium' | 'large';
-export type TypingAnimation = 'none' | 'jump' | 'bounce' | 'glow' | 'wave' | 'slide' | 'pulse';
+export type TypingAnimation = 'none' | 'pop' | 'jump' | 'bounce' | 'glow' | 'wave' | 'slide' | 'pulse' | 'lightning' | 'fire' | 'matrix';
 export type TypingAnimationSpeed = 'ultra_fast' | 'fast' | 'normal' | 'slow' | 'very_slow' | 'super_slow';
 
 interface SettingsContextType {
@@ -64,10 +64,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [typingAnimation, setTypingAnimationState] = useState<TypingAnimation>(() => {
     const saved = localStorage.getItem('yolnoma_typing_animation');
-    if (saved && saved !== 'jump') {
+    if (saved) {
       return saved as TypingAnimation;
     }
-    return 'none';
+    return 'pop';
   });
   const [typingAnimationSpeed, setTypingAnimationSpeedState] = useState<TypingAnimationSpeed>(() => {
     return (localStorage.getItem('yolnoma_typing_anim_speed') as TypingAnimationSpeed) || 'normal';

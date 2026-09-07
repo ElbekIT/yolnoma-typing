@@ -78,6 +78,11 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
 
   if (!isOpen || !user) return null;
 
+  const isAlreadyAdmin =
+    user?.role === 'admin' ||
+    Boolean(user?.customAdminTitle) ||
+    Boolean(user?.adminPermissions);
+
   const togglePermission = (key: keyof AdminPermissions) => {
     if (isTargetRootOwner) return; // Root owner cannot be modified
     setPermissions((prev) => ({
@@ -469,13 +474,13 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
 
           {/* Footer Actions */}
           <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
-            {user.role === 'admin' && !isTargetRootOwner && (
+            {isAlreadyAdmin && !isTargetRootOwner && (
               <button
                 type="button"
                 id="btn-demote-admin"
                 disabled={isSubmitting}
                 onClick={handleDemote}
-                className="py-2.5 px-4 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="py-2.5 px-4 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <UserX className="w-4 h-4" />
                 <span>Adminlikdan Olish</span>

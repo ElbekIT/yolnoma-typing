@@ -13,6 +13,7 @@ interface TypingDisplayProps {
   onInputChange: (newInput: string) => void;
   onRestart: () => void;
   isTestFinished: boolean;
+  isTestActive?: boolean;
 }
 
 export const TypingDisplay: React.FC<TypingDisplayProps> = ({
@@ -20,7 +21,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   typedInput,
   onInputChange,
   onRestart,
-  isTestFinished
+  isTestFinished,
+  isTestActive: propIsTestActive
 }) => {
   const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
@@ -37,18 +39,16 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
-  const isTestActive = typedInput.length > 0 && !isTestFinished;
+  const isTestActive = propIsTestActive !== undefined
+    ? (propIsTestActive && typedInput.length > 0 && !isTestFinished)
+    : (typedInput.length > 0 && !isTestFinished);
 
-  // Initialize global anti-cheat listeners with user ID
+  // Initialize anti-cheat listeners
   useEffect(() => {
-    antiCheatManager.init((reason) => {
-      // Instantly trigger device & user ban
-      antiCheatManager.banDeviceAndUser(reason);
-      window.location.reload();
-    }, user?.uid);
+    antiCheatManager.init(undefined, user?.uid);
   }, [user]);
 
-  // Global shortcut to restart test (Tab key or Tab + Enter)
+  // Global shortcut to restart test (Tab) or auto-focus on any keystroke
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       // Don't trigger if user is inside a modal or typing in an input/textarea outside TypingDisplay
@@ -68,11 +68,26 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
           inputRef.current.focus();
           setIsFocused(true);
         }
+        return;
+      }
+
+      // Any typing key auto-focuses the input instantly (Monkeytype experience)
+      if (
+        !isTestFinished &&
+        inputRef.current &&
+        document.activeElement !== inputRef.current &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ')
+      ) {
+        inputRef.current.focus();
+        setIsFocused(true);
       }
     };
     window.addEventListener('keydown', handleGlobalKey);
     return () => window.removeEventListener('keydown', handleGlobalKey);
-  }, [onRestart]);
+  }, [onRestart, isTestFinished]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -80,6 +95,17 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       setIsFocused(true);
     }
   }, [targetText]);
+
+  // Ensure focus on initial mount / view entrance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        setIsFocused(true);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Hide mouse cursor during active typing (Monkeytype style)
   useEffect(() => {
@@ -161,13 +187,6 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       }
     }
 
-    // Anti-cheat keystroke check
-    const isValid = antiCheatManager.registerKeystroke(e, typedInput.length);
-    if (!isValid) {
-      e.preventDefault();
-      return;
-    }
-
     // Play sound asynchronously
     if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
       const charAtPress = typedInput.length;
@@ -190,21 +209,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (isTestFinished) return;
 
-      // Anti-Cheat: Detect untrusted synthetic input from extension scripts
-      if (e.nativeEvent && e.nativeEvent.isTrusted === false) {
-        antiCheatManager.banDeviceAndUser('Avto-Typer (Grom/Google Chrome) kengaytmasi aniqlandi va kirish bloklandi!');
-        window.location.reload();
-        return;
-      }
-
       const newValue = e.target.value;
-
-      // If text jump is abnormally large (>10 characters at once from injection script)
-      if (newValue.length - typedInput.length > 10) {
-        antiCheatManager.banDeviceAndUser('Robotik (Auto-Typer Bot) yozuv aniqlandi va kirish bloklandi!');
-        window.location.reload();
-        return;
-      }
 
       // Word Boundary Lock: Prevent backspacing into completed words
       const minLen = getLockedMinLength(targetText, typedInput);
@@ -259,6 +264,20 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
     return Math.max(0, parsedWords.length - 1);
   }, [parsedWords, currentTypedLen]);
+
+  // Current consecutive correct characters streak for typing animation
+  const currentStreak = useMemo(() => {
+    if (!isTestActive || typedChars.length === 0) return 0;
+    let streak = 0;
+    for (let i = typedChars.length - 1; i >= 0; i--) {
+      if (typedChars[i] === targetText[i]) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [isTestActive, typedChars, targetText]);
 
   // All parsed words rendered directly for rock-solid ref retention & smooth scrolling
   const visibleWords = parsedWords;
@@ -396,8 +415,16 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         autoComplete="off"
         spellCheck={false}
         disabled={isTestFinished}
-        className="absolute top-0 left-0 w-full h-[80%] opacity-0 z-0 cursor-text focus:outline-none"
+        className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-text focus:outline-none pointer-events-auto"
       />
+
+      {/* Dynamic Typing Streak Pop (Shows when typing fast without errors) */}
+      {isTestActive && currentStreak >= 15 && (
+        <div className="absolute -top-7 right-2 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/90 border border-[var(--main-color)]/40 text-[11px] font-mono font-bold text-[var(--main-color)] shadow-sm animate-bounce select-none pointer-events-none z-10">
+          <span>{currentStreak >= 50 ? '🔥' : '⚡'}</span>
+          <span>{currentStreak} streak!</span>
+        </div>
+      )}
 
       {/* Unfocused overlay with mouse click focus hint */}
       {!isFocused && !isTestFinished && (

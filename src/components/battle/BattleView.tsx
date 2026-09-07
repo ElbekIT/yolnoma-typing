@@ -80,8 +80,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
   initialRoomCode,
   onClearInitialRoomCode
 }) => {
-  const { user, profile, saveTestResult, addXp } = useAuth();
-  const { soundEnabled } = useSettings();
+  const { user, profile, saveTestResult } = useAuth();
+  const { soundProfile } = useSettings();
 
   // Active user data
   const currentUid = user?.uid || localStorage.getItem('yolnoma_guest_id') || 'guest_racer';
@@ -546,7 +546,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
       setGameState('finished');
 
       // Save user XP & result
-      if (addXp) addXp(150);
       if (saveTestResult) {
         saveTestResult({
           wpm: calculatedWpm,
@@ -554,10 +553,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
           accuracy: updatedMyState.accuracy,
           rawWpm: calculatedWpm,
           consistency: 95,
-          time: Math.round((Date.now() - (startTime || Date.now())) / 1000),
-          mode: 'time',
+          testTimeSeconds: Math.round((Date.now() - (startTime || Date.now())) / 1000),
+          mode: 'words',
           language: 'uzbek'
-        });
+        } as any);
       }
 
       if (!isBotMatch && activeRoomCode) {
