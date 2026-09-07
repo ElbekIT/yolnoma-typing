@@ -59,20 +59,7 @@ const ProTimelineChart: React.FC<{
 }> = ({ data, mainColor, subColor }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  // Sanitize data points against NaN or undefined
-  const sanitizedData = useMemo(() => {
-    if (!data || !Array.isArray(data)) return [];
-    return data
-      .filter((d) => d && typeof d === 'object')
-      .map((d, i) => ({
-        time: Number.isFinite(d.time) ? d.time : i + 1,
-        wpm: Number.isFinite(d.wpm) ? Math.max(0, d.wpm) : 0,
-        rawWpm: Number.isFinite(d.rawWpm) ? Math.max(0, d.rawWpm) : 0,
-        errors: Number.isFinite(d.errors) ? Math.max(0, d.errors) : 0
-      }));
-  }, [data]);
-
-  if (sanitizedData.length < 2) return null;
+  if (!data || data.length < 2) return null;
 
   const width = 640;
   const height = 160;
@@ -81,14 +68,14 @@ const ProTimelineChart: React.FC<{
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
 
-  const maxWpm = Math.max(50, ...sanitizedData.map((d) => Math.max(d.wpm, d.rawWpm)));
+  const maxWpm = Math.max(...data.map((d) => Math.max(d.wpm || 0, d.rawWpm || 0, 40)), 50);
   const minWpm = 0;
 
-  const getX = (index: number) => padding.left + (index / Math.max(1, sanitizedData.length - 1)) * chartW;
-  const getY = (val: number) => padding.top + chartH - ((Math.max(0, val) - minWpm) / Math.max(1, maxWpm - minWpm)) * chartH;
+  const getX = (index: number) => padding.left + (index / (data.length - 1)) * chartW;
+  const getY = (val: number) => padding.top + chartH - ((val - minWpm) / (maxWpm - minWpm || 1)) * chartH;
 
-  const wpmPoints = sanitizedData.map((d, i) => ({ x: getX(i), y: getY(d.wpm) }));
-  const rawPoints = sanitizedData.map((d, i) => ({ x: getX(i), y: getY(d.rawWpm) }));
+  const wpmPoints = data.map((d, i) => ({ x: getX(i), y: getY(d.wpm) }));
+  const rawPoints = data.map((d, i) => ({ x: getX(i), y: getY(d.rawWpm) }));
 
   const smoothWpmPath = createSmoothSplinePath(wpmPoints);
   const smoothRawPath = createSmoothSplinePath(rawPoints);
@@ -97,7 +84,7 @@ const ProTimelineChart: React.FC<{
     ? `${smoothWpmPath} L ${wpmPoints[wpmPoints.length - 1].x.toFixed(1)},${(padding.top + chartH).toFixed(1)} L ${wpmPoints[0].x.toFixed(1)},${(padding.top + chartH).toFixed(1)} Z`
     : '';
 
-  const activePoint = hoverIndex !== null && sanitizedData[hoverIndex] ? sanitizedData[hoverIndex] : null;
+  const activePoint = hoverIndex !== null && data[hoverIndex] ? data[hoverIndex] : null;
 
   // Format seconds into MM:SS
   const formatTime = (secs: number) => {
@@ -334,27 +321,16 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
   if (!result) return null;
 
-  // Safe sanitized numeric and string values
-  const safeWpm = Number.isFinite(result.wpm) ? Math.max(0, Math.round(result.wpm)) : 0;
-  const safeAccuracy = Number.isFinite(result.accuracy) ? Math.max(0, Math.min(100, Math.round(result.accuracy))) : 0;
-  const safeErrors = Number.isFinite(result.errors) ? Math.max(0, result.errors) : 0;
-  const safeCpm = Number.isFinite(result.cpm) ? Math.max(0, Math.round(result.cpm)) : Math.round(safeWpm * 5);
-  const safeRawWpm = Number.isFinite(result.rawWpm) ? Math.max(0, Math.round(result.rawWpm)) : safeWpm;
-  const safeConsistency = Number.isFinite(result.consistency) ? Math.max(20, Math.min(100, Math.round(result.consistency!))) : 95;
-  const safeLanguage = (result.language || 'uz').toUpperCase();
-  const safeTime = Number.isFinite(result.testTimeSeconds) ? result.testTimeSeconds : 15;
-  const safeMode = result.mode || 'time';
-
   // Speedometer Gauge Math (260 degree arc)
-  const maxDialWpm = Math.max(120, Math.ceil(safeWpm / 20) * 20 + 20);
-  const wpmPercent = Math.min(1, Math.max(0, safeWpm / maxDialWpm));
+  const maxDialWpm = Math.max(120, Math.ceil(result.wpm / 20) * 20 + 20);
+  const wpmPercent = Math.min(1, Math.max(0, result.wpm / maxDialWpm));
   const gaugeCircumference = 2 * Math.PI * 46; // ~289
   const gaugeArcLength = gaugeCircumference * 0.72; // ~208
   const strokeOffset = gaugeArcLength * (1 - wpmPercent);
 
   // Accuracy Gauge Math (360 degree full ring)
   const accCircumference = 2 * Math.PI * 38; // ~238.7
-  const accOffset = accCircumference * (1 - safeAccuracy / 100);
+  const accOffset = accCircumference * (1 - Math.min(100, Math.max(0, result.accuracy)) / 100);
 
   // Dynamic Tier status
   const getSpeedTier = (wpm: number) => {
@@ -365,18 +341,17 @@ export const ResultModal: React.FC<ResultModalProps> = ({
     return { label: 'HAVASKOR 🌱', color: 'text-slate-400 border-slate-600/40 bg-slate-800/40' };
   };
 
-  const speedTier = getSpeedTier(safeWpm);
+  const speedTier = getSpeedTier(result.wpm);
 
   // Extract or synthesize key mistakes for the heatmap matrix
   const keyMistakesList = useMemo(() => {
-    if (result.keyMistakes && typeof result.keyMistakes === 'object' && Object.keys(result.keyMistakes).length > 0) {
+    if (result.keyMistakes && Object.keys(result.keyMistakes).length > 0) {
       return (Object.entries(result.keyMistakes) as [string, number][])
-        .filter(([k, v]) => Boolean(k) && Number.isFinite(v))
         .sort((a, b) => Number(b[1]) - Number(a[1]))
         .slice(0, 12);
     }
     // Fallback if no specific mistakes recorded but errors > 0
-    if (safeErrors > 0) {
+    if (result.errors > 0) {
       return [
         ['CH', 2],
         ['SH', 1],
@@ -386,18 +361,18 @@ export const ResultModal: React.FC<ResultModalProps> = ({
       ] as [string, number][];
     }
     return [];
-  }, [result.keyMistakes, safeErrors]);
+  }, [result.keyMistakes, result.errors]);
 
   // Max mistake count for color normalization
-  const maxMistakeCount = Math.max(1, ...(keyMistakesList.map((k) => k[1]).filter(Number.isFinite)));
+  const maxMistakeCount = Math.max(1, ...keyMistakesList.map((k) => k[1]));
 
   // Intelligent Weak Spots list
   const weakSpotsList = useMemo(() => {
-    if (result.weakSpots && Array.isArray(result.weakSpots) && result.weakSpots.length > 0) {
+    if (result.weakSpots && result.weakSpots.length > 0) {
       return result.weakSpots;
     }
     const spots: string[] = [];
-    if (safeErrors > 0) {
+    if (result.errors > 0) {
       spots.push("O'zbek tilidagi CH va SH harflari");
       spots.push("Murakkab o'zaro birikmalar va tutuq belgilari");
     } else {
@@ -405,10 +380,10 @@ export const ResultModal: React.FC<ResultModalProps> = ({
       spots.push("Tavsiya: Ritm aʼlo darajada, keyingi testda tezroq harakatlaning.");
     }
     return spots;
-  }, [result.weakSpots, safeErrors]);
+  }, [result.weakSpots, result.errors]);
 
   const handleShare = () => {
-    const text = `⚡ Yolnoma Typing Pro Natijasi ⚡\nTezlik: ${safeWpm} WPM (${safeCpm} CPM)\nAniqlik: ${safeAccuracy}%\nXatolar: ${safeErrors}\nVaqt: ${safeTime}s\nTil: ${safeLanguage}\nSayt: https://yolnoma.uz`;
+    const text = `⚡ Yolnoma Typing Pro Natijasi ⚡\nTezlik: ${result.wpm} WPM (${result.cpm} CPM)\nAniqlik: ${result.accuracy}%\nXatolar: ${result.errors}\nVaqt: ${result.testTimeSeconds}s\nTil: ${result.language.toUpperCase()}\nSayt: https://yolnoma.uz`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -431,12 +406,12 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                   <span className="text-cyan-400 text-xs px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 font-sans font-bold">PRO ANALYTICS</span>
                 </h2>
               </div>
-              <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 font-mono">
-                <span>Til: <b className="text-slate-200">{safeLanguage}</b></span>
+              <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                <span>Til: <b className="text-slate-200">{result.language.toUpperCase()}</b></span>
                 <span>•</span>
-                <span>Vaqt: <b className="text-slate-200">{safeTime}s</b></span>
+                <span>Vaqt: <b className="text-slate-200">{result.testTimeSeconds}s</b></span>
                 <span>•</span>
-                <span>Rejim: <b className="text-slate-200">{safeMode}</b></span>
+                <span>Rejim: <b className="text-slate-200">{result.mode}</b></span>
               </p>
             </div>
           </div>
@@ -507,7 +482,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 <div className="absolute inset-0 flex flex-col items-center justify-center select-none text-center">
                   <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">WPM</span>
                   <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white my-0.5 text-glow">
-                    {safeWpm}
+                    {result.wpm}
                   </span>
                   <span className="text-[10px] font-mono font-semibold text-cyan-400 tracking-wider">WPM</span>
                 </div>
@@ -547,7 +522,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center select-none text-center">
                   <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
-                    {safeAccuracy}%
+                    {result.accuracy}%
                   </span>
                   <span className="text-[9px] font-mono font-bold text-slate-400 uppercase">ANIQLIK</span>
                 </div>
@@ -567,11 +542,11 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 TEZLIK (WPM)
               </span>
               <div className="my-1">
-                <span className="text-3xl font-black font-mono text-cyan-400">{safeWpm}</span>
-                <span className="text-[10px] text-slate-500 font-mono ml-1.5">raw: {safeRawWpm}</span>
+                <span className="text-3xl font-black font-mono text-cyan-400">{result.wpm}</span>
+                <span className="text-[10px] text-slate-500 font-mono ml-1.5">raw: {result.rawWpm}</span>
               </div>
               <div className="text-[10px] font-mono text-slate-400">
-                {result.correctChars ?? 0} toʻgʻri belgi
+                {result.correctChars} toʻgʻri belgi
               </div>
             </div>
 
@@ -581,17 +556,17 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 XATOLAR
               </span>
               <div className="my-1 flex items-center gap-2">
-                <span className={`text-3xl font-black font-mono ${safeErrors > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                  {safeErrors}
+                <span className={`text-3xl font-black font-mono ${result.errors > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {result.errors}
                 </span>
-                {safeErrors > 0 && (
+                {result.errors > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-mono font-bold">
-                    {safeErrors}
+                    {result.errors}
                   </span>
                 )}
               </div>
               <div className="text-[10px] font-mono text-slate-400">
-                {(result.extraChars ?? 0) > 0 ? `+${result.extraChars} ortiqcha` : 'Ortiqcha yoʻq'}
+                {result.extraChars > 0 ? `+${result.extraChars} ortiqcha` : 'Ortiqcha yoʻq'}
               </div>
             </div>
 
@@ -602,7 +577,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
               </span>
               <div className="my-1">
                 <span className="text-3xl font-black font-mono text-purple-400">
-                  {safeConsistency}%
+                  {result.consistency ?? 92}%
                 </span>
               </div>
               <div className="text-[10px] font-mono text-slate-400">
@@ -616,7 +591,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 CPM
               </span>
               <div className="my-1">
-                <span className="text-3xl font-black font-mono text-slate-100">{safeCpm}</span>
+                <span className="text-3xl font-black font-mono text-slate-100">{result.cpm}</span>
               </div>
               <div className="text-[10px] font-mono text-slate-400">
                 belgi/daqiqa

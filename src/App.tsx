@@ -738,25 +738,9 @@ function MainAppContent() {
       weakSpots
     };
 
-    // Immediate display object so modal opens with zero lag
-    const immediateResult: TypingResult = {
-      ...resultObj,
-      userId: user ? user.uid : 'guest',
-      username: profile ? profile.username : (user?.displayName || 'Foydalanuvchi'),
-      isPersonalBest: profile ? wpm > (profile.highestWpm || 0) : false,
-      timestamp: Date.now()
-    };
-    setFinalResult(immediateResult);
-
-    try {
-      const saved = await saveTestResult(resultObj);
-      if (saved) {
-        setFinalResult(saved);
-      }
-    } catch (err) {
-      console.warn('Background saveTestResult non-blocking notice:', err);
-    }
-  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult, user, profile]);
+    const saved = await saveTestResult(resultObj);
+    setFinalResult(saved);
+  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult]);
 
   // Timer loop (depends ONLY on isTestActive and timeMode)
   useEffect(() => {
@@ -884,15 +868,11 @@ function MainAppContent() {
       const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
       const variance = intervals.reduce((a, b) => a + Math.pow(b - avgInterval, 2), 0) / intervals.length;
 
-      // Bot rules (active only after sufficient test time to prevent early-burst false positives):
-      // 1. Average interval < 12ms (unrealistically fast > 1000 WPM across 20 keys)
-      // 2. Variance == 0 (robotic synthetic timer with identical intervals)
-      // 3. Impossibly sustained high WPM (> 320 WPM after 4+ seconds)
-      const isSustainedImpossibleWpm = elapsedSeconds > 4 && typedInput.length > 30 && liveWpm > 320;
-      const isMachinePrecision = variance === 0 && intervals.length >= 15 && avgInterval < 80;
-      const isSuperhumanSpeed = avgInterval < 12;
-
-      if (!isOwnerWhitelisted && (isSuperhumanSpeed || isMachinePrecision || isSustainedImpossibleWpm)) {
+      // Bot rules:
+      // 1. Average interval < 12ms (unrealistically fast > 1000 WPM)
+      // 2. Variance == 0 (robotic constant timer)
+      // 3. Impossibly high WPM (> 320 WPM)
+      if (avgInterval < 12 || (variance === 0 && intervals.length > 10) || liveWpm > 320) {
         if (user) {
           const reason = 'Anti-Cheat: Avto-kliker yoki robot/bot dasturi ishlatilgani sababli akkauntingiz bloklandi.';
           try {

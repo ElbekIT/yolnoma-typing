@@ -179,10 +179,10 @@ export const AdminInboxTab: React.FC<AdminInboxTabProps> = () => {
       if (targetUid) {
         // Send system notification to user
         await sendAdminNotification(
-          targetUid,
           replyTitle.trim(),
           replyText.trim(),
           'info',
+          targetUid,
           replyTarget.userContext?.displayName || replyTarget.name
         );
       }
