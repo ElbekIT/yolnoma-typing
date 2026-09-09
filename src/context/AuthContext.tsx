@@ -376,6 +376,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isVerified: isOwnerEmail ? true : (remoteData.isVerified ?? fallback.isVerified),
           lastActive: Date.now()
         };
+
+        // Real Data Integrity Guard: mode-specific best scores cannot exceed all-time highest record
+        if (merged.highestWpm > 0) {
+          if (merged.time15Wpm && merged.time15Wpm > merged.highestWpm) merged.time15Wpm = merged.highestWpm;
+          if (merged.time30Wpm && merged.time30Wpm > merged.highestWpm) merged.time30Wpm = merged.highestWpm;
+          if (merged.time60Wpm && merged.time60Wpm > merged.highestWpm) merged.time60Wpm = merged.highestWpm;
+          if (merged.time120Wpm && merged.time120Wpm > merged.highestWpm) merged.time120Wpm = merged.highestWpm;
+        }
+
         saveLocalProfile(firebaseUser.uid, merged);
         return merged;
       } else {
@@ -826,10 +835,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
       const newHighestWpm = Math.min(260, Math.max(profile.highestWpm || 0, fullResult.wpm));
 
-      const newTime15 = fullResult.timeMode === 15 ? Math.min(260, Math.max(profile.time15Wpm || 0, fullResult.wpm)) : (profile.time15Wpm || 0);
-      const newTime30 = fullResult.timeMode === 30 ? Math.min(260, Math.max(profile.time30Wpm || 0, fullResult.wpm)) : (profile.time30Wpm || 0);
-      const newTime60 = fullResult.timeMode === 60 ? Math.min(260, Math.max(profile.time60Wpm || 0, fullResult.wpm)) : (profile.time60Wpm || 0);
-      const newTime120 = fullResult.timeMode === 120 ? Math.min(260, Math.max(profile.time120Wpm || 0, fullResult.wpm)) : (profile.time120Wpm || 0);
+      const sanitizedCurrent15 = Math.min(profile.highestWpm || fullResult.wpm, profile.time15Wpm || 0);
+      const sanitizedCurrent30 = Math.min(profile.highestWpm || fullResult.wpm, profile.time30Wpm || 0);
+      const sanitizedCurrent60 = Math.min(profile.highestWpm || fullResult.wpm, profile.time60Wpm || 0);
+      const sanitizedCurrent120 = Math.min(profile.highestWpm || fullResult.wpm, profile.time120Wpm || 0);
+
+      const newTime15 = fullResult.timeMode === 15 ? Math.min(newHighestWpm, Math.max(sanitizedCurrent15, fullResult.wpm)) : sanitizedCurrent15;
+      const newTime30 = fullResult.timeMode === 30 ? Math.min(newHighestWpm, Math.max(sanitizedCurrent30, fullResult.wpm)) : sanitizedCurrent30;
+      const newTime60 = fullResult.timeMode === 60 ? Math.min(newHighestWpm, Math.max(sanitizedCurrent60, fullResult.wpm)) : sanitizedCurrent60;
+      const newTime120 = fullResult.timeMode === 120 ? Math.min(newHighestWpm, Math.max(sanitizedCurrent120, fullResult.wpm)) : sanitizedCurrent120;
 
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
       const newAvgWpm = Math.min(260, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));

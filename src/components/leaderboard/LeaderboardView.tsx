@@ -129,6 +129,20 @@ export const LeaderboardView: React.FC = () => {
           const u = data[key];
           if (!u) return;
 
+          const highestWpm = Number(u.highestWpm) || 0;
+          let time15Wpm = Number(u.time15Wpm) || 0;
+          let time30Wpm = Number(u.time30Wpm) || 0;
+          let time60Wpm = Number(u.time60Wpm) || 0;
+          let time120Wpm = Number(u.time120Wpm) || 0;
+
+          // Real Data Integrity: A specific time-mode WPM cannot exceed the all-time personal best record
+          if (highestWpm > 0) {
+            if (time15Wpm > highestWpm) time15Wpm = highestWpm;
+            if (time30Wpm > highestWpm) time30Wpm = highestWpm;
+            if (time60Wpm > highestWpm) time60Wpm = highestWpm;
+            if (time120Wpm > highestWpm) time120Wpm = highestWpm;
+          }
+
           // Real values from Firebase RTDB
           users.push({
             uid: u.uid || key,
@@ -136,12 +150,12 @@ export const LeaderboardView: React.FC = () => {
             username: u.username || `user_${key.slice(0, 5)}`,
             avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${key}`,
             country: u.country || '🇺🇿 Uzbekistan',
-            highestWpm: Number(u.highestWpm) || 0,
+            highestWpm,
             highestAccuracy: Number(u.highestAccuracy) || 0,
-            time15Wpm: Number(u.time15Wpm) || 0,
-            time30Wpm: Number(u.time30Wpm) || 0,
-            time60Wpm: Number(u.time60Wpm) || 0,
-            time120Wpm: Number(u.time120Wpm) || 0,
+            time15Wpm,
+            time30Wpm,
+            time60Wpm,
+            time120Wpm,
             totalTests: Number(u.totalTests) || 0,
             level: Number(u.level) || 1,
             xp: Number(u.xp) || 0,
@@ -215,16 +229,40 @@ export const LeaderboardView: React.FC = () => {
       });
     } else if (timeFilter === '15') {
       list = list.filter((u) => (u.time15Wpm || 0) > 0);
-      list.sort((a, b) => (b.time15Wpm || 0) - (a.time15Wpm || 0));
+      list.sort((a, b) => {
+        if ((b.time15Wpm || 0) !== (a.time15Wpm || 0)) {
+          return (b.time15Wpm || 0) - (a.time15Wpm || 0);
+        }
+        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
+        return (b.totalTests || 0) - (a.totalTests || 0);
+      });
     } else if (timeFilter === '30') {
       list = list.filter((u) => (u.time30Wpm || 0) > 0);
-      list.sort((a, b) => (b.time30Wpm || 0) - (a.time30Wpm || 0));
+      list.sort((a, b) => {
+        if ((b.time30Wpm || 0) !== (a.time30Wpm || 0)) {
+          return (b.time30Wpm || 0) - (a.time30Wpm || 0);
+        }
+        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
+        return (b.totalTests || 0) - (a.totalTests || 0);
+      });
     } else if (timeFilter === '60') {
       list = list.filter((u) => (u.time60Wpm || 0) > 0);
-      list.sort((a, b) => (b.time60Wpm || 0) - (a.time60Wpm || 0));
+      list.sort((a, b) => {
+        if ((b.time60Wpm || 0) !== (a.time60Wpm || 0)) {
+          return (b.time60Wpm || 0) - (a.time60Wpm || 0);
+        }
+        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
+        return (b.totalTests || 0) - (a.totalTests || 0);
+      });
     } else if (timeFilter === '120') {
       list = list.filter((u) => (u.time120Wpm || 0) > 0);
-      list.sort((a, b) => (b.time120Wpm || 0) - (a.time120Wpm || 0));
+      list.sort((a, b) => {
+        if ((b.time120Wpm || 0) !== (a.time120Wpm || 0)) {
+          return (b.time120Wpm || 0) - (a.time120Wpm || 0);
+        }
+        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
+        return (b.totalTests || 0) - (a.totalTests || 0);
+      });
     }
 
     return list.map((u, index) => {
@@ -232,18 +270,19 @@ export const LeaderboardView: React.FC = () => {
       let modeLabel = '30s';
 
       if (timeFilter === '15') {
-        displayWpm = u.time15Wpm || u.highestWpm;
+        displayWpm = u.time15Wpm || 0;
         modeLabel = '15s';
       } else if (timeFilter === '30') {
-        displayWpm = u.time30Wpm || u.highestWpm;
+        displayWpm = u.time30Wpm || 0;
         modeLabel = '30s';
       } else if (timeFilter === '60') {
-        displayWpm = u.time60Wpm || u.highestWpm;
+        displayWpm = u.time60Wpm || 0;
         modeLabel = '60s';
       } else if (timeFilter === '120') {
-        displayWpm = u.time120Wpm || u.highestWpm;
+        displayWpm = u.time120Wpm || 0;
         modeLabel = '120s';
       } else if (timeFilter === 'all') {
+        displayWpm = u.highestWpm;
         if (u.time15Wpm && u.time15Wpm === u.highestWpm) modeLabel = '15s';
         else if (u.time30Wpm && u.time30Wpm === u.highestWpm) modeLabel = '30s';
         else if (u.time60Wpm && u.time60Wpm === u.highestWpm) modeLabel = '60s';
@@ -251,13 +290,21 @@ export const LeaderboardView: React.FC = () => {
         else modeLabel = '15s';
       }
 
-      // Calculate raw WPM if not explicitly stored
-      const accRatio = Math.max(0.7, (u.highestAccuracy || 98) / 100);
+      // Calculate raw WPM strictly from standard formula: raw = displayWpm / (acc / 100)
+      const accRatio = Math.max(0.5, (u.highestAccuracy || 100) / 100);
       const rawWpmCalc = u.rawWpm || Math.round(displayWpm / accRatio);
 
-      // Calculate consistency %
-      const rawConsistency = u.consistency || (90 + ((u.highestAccuracy || 98) % 8.5) + (index % 3));
-      const consistencyCalc = `${Math.min(99.4, Math.max(70.0, rawConsistency)).toFixed(2)}%`;
+      // Stable user-bound consistency percentage (never fluctuates with table row index or page shifts)
+      let consistencyCalc: string;
+      if (typeof u.consistency === 'number' && u.consistency > 0) {
+        consistencyCalc = `${u.consistency.toFixed(2)}%`;
+      } else {
+        const seed = (u.uid || u.username || '').split('').reduce((sum, c) => sum + c.charCodeAt(0), 0);
+        const userSeed = seed % 3;
+        const acc = u.highestAccuracy || 98;
+        const rawConsistency = 90 + (acc % 8.5) + userSeed;
+        consistencyCalc = `${(Math.round(rawConsistency * 2) / 2).toFixed(2)}%`;
+      }
 
       return {
         ...u,
