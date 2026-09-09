@@ -479,9 +479,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-color)]">{profile.displayName}</h2>
                       {profile.isVerified && (
-                        <span title="Verified User">
-                          <CheckCircle2 className="w-5 h-5 text-sky-400 fill-sky-400/20" />
-                        </span>
+                        <CheckCircle2 className="w-5 h-5 text-sky-400 fill-sky-400/20" title="Verified User" />
                       )}
                       <span className="px-2.5 py-0.5 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)] text-[10px] font-extrabold uppercase">
                         {profile.rankTitle || 'Typing Novice'}

@@ -141,50 +141,26 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </div>
             </div>
 
-            {/* Quick Icon & Label Links */}
+            {/* Quick Icon Links (Monkeytype style) */}
             <div className="hidden md:flex items-center gap-1.5 text-[var(--sub-color)]">
               <button
                 onClick={() => setActiveTab('typing')}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer text-xs font-semibold ${
-                  activeTab === 'typing' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/80 font-bold' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'typing' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Asosiy Yozish Testi"
+                title="Yozish Testi"
               >
-                <Keyboard className="w-4 h-4" />
-                <span>Asosiy</span>
+                <Keyboard className={iconDimensions} />
               </button>
 
               <button
                 onClick={() => setActiveTab('leaderboard')}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer text-xs font-semibold ${
-                  activeTab === 'leaderboard' ? 'text-amber-400 bg-[var(--sub-alt)]/80 font-bold' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'leaderboard' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Reyting va Peshqadamlar"
+                title="Peshqadamlar"
               >
-                <Crown className="w-4 h-4 text-amber-400" />
-                <span>Reyting</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('battle')}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer text-xs font-semibold ${
-                  activeTab === 'battle' ? 'text-rose-400 bg-[var(--sub-alt)]/80 font-bold' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
-                }`}
-                title="Jonli 1v1 Battle"
-              >
-                <Swords className="w-4 h-4 text-rose-400" />
-                <span>Battle</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('lessons')}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl transition-all cursor-pointer text-xs font-semibold ${
-                  activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/80 font-bold' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
-                }`}
-                title="Darslar va Saboqlar"
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span>Darslar</span>
+                <Crown className={iconDimensions} />
               </button>
 
               <button
@@ -195,6 +171,26 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title="125+ Jahon Tillari"
               >
                 <Globe className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('lessons')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Saboqlar"
+              >
+                <GraduationCap className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('battle')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'battle' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Battle Arena"
+              >
+                <Swords className={iconDimensions} />
               </button>
 
               <button

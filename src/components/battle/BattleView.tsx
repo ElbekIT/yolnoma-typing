@@ -80,8 +80,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
   initialRoomCode,
   onClearInitialRoomCode
 }) => {
-  const { user, profile, saveTestResult } = useAuth();
-  const { soundProfile } = useSettings();
+  const { user, profile, saveTestResult, addXp } = useAuth();
+  const { soundEnabled } = useSettings();
 
   // Active user data
   const currentUid = user?.uid || localStorage.getItem('yolnoma_guest_id') || 'guest_racer';
@@ -167,17 +167,20 @@ export const BattleView: React.FC<BattleViewProps> = ({
           Object.keys(val).forEach((k) => {
             const p = val[k];
             if (k !== currentUid && p && !p.isBlocked) {
-              items.push({
-                uid: k,
-                displayName: p.displayName || p.username || 'Racer',
-                username: p.username || k.slice(0, 6),
-                highestWpm: Number(p.highestWpm) || 45,
-                highestAccuracy: Number(p.highestAccuracy) || 98,
-                avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${k}`,
-                lastActive: p.lastActive || Date.now(),
-                country: p.country || '🇺🇿 Uzbekistan',
-                level: p.level || 1
-              });
+              const userWpm = Number(p.highestWpm) || 0;
+              if (userWpm > 0) {
+                items.push({
+                  uid: k,
+                  displayName: p.displayName || p.username || 'Racer',
+                  username: p.username || k.slice(0, 6),
+                  highestWpm: userWpm,
+                  highestAccuracy: Number(p.highestAccuracy) || 98,
+                  avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${k}`,
+                  lastActive: p.lastActive || Date.now(),
+                  country: p.country || '🇺🇿 Uzbekistan',
+                  level: Number(p.level) || 1
+                });
+              }
             }
           });
 
@@ -546,6 +549,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
       setGameState('finished');
 
       // Save user XP & result
+      if (addXp) addXp(150);
       if (saveTestResult) {
         saveTestResult({
           wpm: calculatedWpm,
@@ -553,10 +557,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
           accuracy: updatedMyState.accuracy,
           rawWpm: calculatedWpm,
           consistency: 95,
-          testTimeSeconds: Math.round((Date.now() - (startTime || Date.now())) / 1000),
-          mode: 'words',
+          time: Math.round((Date.now() - (startTime || Date.now())) / 1000),
+          mode: 'time',
           language: 'uzbek'
-        } as any);
+        });
       }
 
       if (!isBotMatch && activeRoomCode) {
