@@ -101,134 +101,142 @@ export const PartnersView: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Partner & Sponsor Showcase Card */}
-      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-xl relative overflow-hidden space-y-6">
-        <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
-          {/* Left Column: Portrait Photo & Channels & Quick Action */}
-          <div className="flex flex-col items-center text-center w-full lg:w-72 flex-shrink-0 space-y-4">
-            {/* Photo Avatar with Crown & Golden Ring */}
-            <div className="relative">
-              <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-3xl overflow-hidden bg-slate-900 border-4 border-amber-500/80 shadow-2xl shadow-amber-500/20 group transition-transform duration-300 hover:scale-[1.02]">
-                <img
-                  src="/shamsiddin_partner.jpg"
-                  alt="Shamsiddin Kamoliddinov"
-                  className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    // Fallback to stylized SVG if needed
-                    e.currentTarget.src = '/yosh_avlod_logo.svg';
-                  }}
-                />
-              </div>
+      {/* Main Partner & Sponsor Showcase Card (Pure Typographic & Badges - No Photo) */}
+      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-6">
+        {/* Subtle decorative glow elements */}
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              {/* Verified Crown Badge */}
-              <div className="absolute -top-2.5 -right-2.5 bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 p-2 rounded-2xl shadow-lg border-2 border-slate-900">
-                <Crown className="w-5 h-5 fill-slate-950" />
-              </div>
+        {/* Top Header Section with Status Badges & Quick Action */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-amber-500/25 pb-6">
+          <div className="space-y-2.5">
+            {/* Status & Project Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md shadow-amber-500/20">
+                <Crown className="w-3.5 h-3.5 fill-slate-950" />
+                <span>Bosh Hamkor va Homiy</span>
+              </span>
 
-              {/* Status indicator */}
-              <div className="absolute -bottom-2 inset-x-0 mx-auto w-max px-3 py-0.5 rounded-full bg-slate-950/90 border border-amber-500/60 text-amber-300 text-[10px] font-black uppercase tracking-wider shadow-md">
-                HAMKOR VA HOMIY
-              </div>
-            </div>
-
-            {/* Badges and Project Label */}
-            <div className="space-y-1.5 w-full pt-1">
-              <div className="flex items-center justify-center gap-1.5 text-xs font-black text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-black">
                 <Award className="w-3.5 h-3.5 text-amber-400" />
                 <span>Yosh Avlod Kanali Asoschisi</span>
-              </div>
-              <div className="flex items-center justify-center gap-1 text-[11px] text-emerald-400 font-bold">
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Rasmiy Tasdiqlangan Hamkor</span>
-              </div>
-            </div>
-
-            {/* Official Website Button */}
-            <div className="w-full space-y-2 pt-1">
-              <a
-                href="https://yosh-avlod-kanali.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02] cursor-pointer"
-              >
-                <span>Hamkorimiz Saytiga O'tish</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-
-              <a
-                href="https://yosh-avlod-kanali.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-[var(--sub-color)] hover:text-amber-400 transition-colors flex items-center justify-center gap-1 truncate px-2"
-              >
-                <Globe className="w-3 h-3 flex-shrink-0 text-amber-400" />
-                <span className="truncate">yosh-avlod-kanali.vercel.app</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Right Column: Information, Profession, Bio, and Expertise */}
-          <div className="flex-1 space-y-4 text-left min-w-0">
-            {/* Title & Role */}
-            <div className="space-y-2 border-b border-[var(--sub-alt)] pb-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-widest text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-lg border border-amber-500/40 flex items-center gap-1">
-                  <Cpu className="w-3.5 h-3.5 text-amber-400" /> Mutaxassisligi:
-                </span>
-                <span className="text-xs font-black text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
-                  AI / ML muhandisi
-                </span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-color)] tracking-tight">
-                Shamsiddin Kamoliddinov Aqliddin o'g'li
-              </h2>
-
-              {/* Education & Location details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[var(--sub-color)] pt-1">
-                <div className="flex items-center gap-2 bg-[var(--sub-alt)]/40 p-2.5 rounded-xl border border-[var(--sub-color)]/10">
-                  <GraduationCap className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <span className="truncate">Farg'ona Davlat Texnika Universiteti (TATF)</span>
-                </div>
-                <div className="flex items-center gap-2 bg-[var(--sub-alt)]/40 p-2.5 rounded-xl border border-[var(--sub-color)]/10">
-                  <Code2 className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <span className="truncate">Sun'iy intellekt yo'nalishi 4-bosqich</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Biography & Presentation Text */}
-            <div className="space-y-3 bg-[var(--sub-alt)]/25 border border-[var(--sub-color)]/15 rounded-2xl p-4 sm:p-5">
-              <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                <UserCheck className="w-4 h-4" />
-                <span>Hamkor va Homiy Haqida Ma'lumot</span>
-              </div>
-
-              <p className="text-xs sm:text-sm text-[var(--text-color)] leading-relaxed font-normal">
-                Men Shamsiddin Kamoliddinov Aqliddin o'g'li 2005-yil 15-fevral Farg'ona viloyati Toshloq tumanida tavallud topganman. Hozirda Farg'ona Davlat Texnika Universiteti Axborot texnologiyalari va telekommunikatsiyalar fakulteti Sun'iy intellekt yo'nalishi 4-bosqich talabasiman.
-              </p>
-
-              <p className="text-xs sm:text-sm text-[var(--text-color)] leading-relaxed font-normal">
-                Dasturlash bo'yicha 7 yillik tajribaga egaman. Kiberxavfsizlik, AI menejmenti va Computer Science sohalarida ish olib boraman. Sun'iy intellekt bo'yicha ko'plab loyihalar va tadqiqotlar muallifiman. Kiberxavfsizlik va IT bo'yicha YouTube va Telegram tarmoqlarida shaxsiy blog yuritib, yosh avlodni zamonaviy texnologiyalar bilan tanishtirib kelaman.
-              </p>
-            </div>
-
-            {/* Competencies Badges */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <span className="px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5 text-amber-400" /> 7 yillik tajriba
+                <span>Rasmiy Tasdiqlangan</span>
               </span>
-              <span className="px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> Kiberxavfsizlik
+            </div>
+
+            {/* Partner's Full Name */}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-color)] tracking-tight">
+              Shamsiddin Kamoliddinov Aqliddin o'g'li
+            </h2>
+
+            {/* Primary Specialization Label */}
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-400/90">
+                Mutaxassisligi:
               </span>
-              <span className="px-3 py-1 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-purple-400" /> AI Menejmenti
+              <span className="text-xs sm:text-sm font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-0.5 rounded-lg">
+                AI / ML muhandisi
               </span>
-              <span className="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-emerald-400" /> Computer Science
+              <span className="text-xs text-[var(--sub-color)] font-medium">
+                • 2005-yil 15-fevral, Farg'ona viloyati Toshloq tumani
               </span>
             </div>
           </div>
+
+          {/* Official Website Action Button */}
+          <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-2 flex-shrink-0">
+            <a
+              href="https://yosh-avlod-kanali.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02] cursor-pointer"
+            >
+              <span>Hamkorimiz Saytiga O'tish</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+
+            <a
+              href="https://yosh-avlod-kanali.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-[var(--sub-color)] hover:text-amber-400 transition-colors flex items-center justify-center lg:justify-end gap-1 px-1"
+            >
+              <Globe className="w-3.5 h-3.5 text-amber-400" />
+              <span>yosh-avlod-kanali.vercel.app</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Education & Academic Information Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/35 border border-[var(--sub-color)]/15 flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 flex-shrink-0 mt-0.5">
+              <GraduationCap className="w-5 h-5 text-amber-400" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Oliy Ta'lim Muassasasi</p>
+              <p className="text-sm font-bold text-[var(--text-color)]">
+                Farg'ona Davlat Texnika Universiteti (TATF)
+              </p>
+              <p className="text-xs text-[var(--sub-color)]">
+                Axborot texnologiyalari va telekommunikatsiyalar fakulteti
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/35 border border-[var(--sub-color)]/15 flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 flex-shrink-0 mt-0.5">
+              <Cpu className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Yo'nalish & Bosqich</p>
+              <p className="text-sm font-bold text-[var(--text-color)]">
+                Sun'iy intellekt (Artificial Intelligence) yo'nalishi
+              </p>
+              <p className="text-xs text-[var(--sub-color)]">
+                4-bosqich bitiruvchi talabasi
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed Bio & About Text */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[var(--sub-alt)]/40 to-[var(--sub-alt)]/20 border border-amber-500/20 space-y-3">
+          <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider">
+            <UserCheck className="w-4 h-4 text-amber-400" />
+            <span>Hamkor va Homiy Haqida Ma'lumot</span>
+          </div>
+
+          <p className="text-xs sm:text-sm text-[var(--text-color)] leading-relaxed">
+            Men Shamsiddin Kamoliddinov Aqliddin o'g'li 2005-yil 15-fevral Farg'ona viloyati Toshloq tumanida tavallud topganman. Hozirda Farg'ona Davlat Texnika Universiteti Axborot texnologiyalari va telekommunikatsiyalar fakulteti Sun'iy intellekt yo'nalishi 4-bosqich talabasiman.
+          </p>
+
+          <p className="text-xs sm:text-sm text-[var(--text-color)] leading-relaxed">
+            Dasturlash bo'yicha 7 yillik tajribaga egaman. Kiberxavfsizlik, AI menejmenti va Computer Science sohalarida ish olib boraman. Sun'iy intellekt bo'yicha ko'plab loyihalar va tadqiqotlar muallifiman. Kiberxavfsizlik va IT bo'yicha YouTube va Telegram tarmoqlarida shaxsiy blog yuritib, yosh avlodni zamonaviy texnologiyalar bilan tanishtirib kelaman.
+          </p>
+        </div>
+
+        {/* Competencies & Badges List */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          <span className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-black flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-amber-400" /> 7 yillik tajriba
+          </span>
+          <span className="px-3.5 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-black flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-cyan-400" /> Kiberxavfsizlik
+          </span>
+          <span className="px-3.5 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-black flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-purple-400" /> AI Menejmenti
+          </span>
+          <span className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-black flex items-center gap-2">
+            <Code2 className="w-4 h-4 text-emerald-400" /> Computer Science
+          </span>
+          <span className="px-3.5 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-black flex items-center gap-2">
+            <Globe className="w-4 h-4 text-blue-400" /> IT Blog (YouTube & Telegram)
+          </span>
         </div>
       </div>
 
