@@ -16,12 +16,17 @@ import {
   HeartHandshake,
   CheckCircle2,
   ZoomIn,
-  X
+  X,
+  Plus,
+  Trash2,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { SponsorItem } from '../../types';
 import { rtdb } from '../../config/firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, set, remove } from 'firebase/database';
 import { useAuth } from '../../context/AuthContext';
+import { getAdminToken } from '../../utils/ownerAuth';
 
 export const PartnersView: React.FC = () => {
   const { user, profile } = useAuth();
@@ -29,14 +34,46 @@ export const PartnersView: React.FC = () => {
   const [loadingSponsors, setLoadingSponsors] = useState(true);
   const [isPhotoOpen, setIsPhotoOpen] = useState(false);
 
+  // Admin Quick Add Sponsor State
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickSponsorName, setQuickSponsorName] = useState('');
+  const [isQuickSubmitting, setIsQuickSubmitting] = useState(false);
+  const [quickFeedback, setQuickFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const isAdmin = Boolean(
     profile?.role === 'admin' ||
     profile?.role === 'owner' ||
     (user?.email && user.email.toLowerCase().includes('yuldashivagavharoy'))
   );
 
-  // Sync sponsors in realtime from Firebase RTDB with API fallback
+  const fetchSponsorsList = async () => {
+    try {
+      const res = await fetch('/api/sponsors');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.sponsors)) {
+        setSponsors(data.sponsors);
+      }
+    } catch (err) {
+      console.warn('Failed to load sponsors list:', err);
+    } finally {
+      setLoadingSponsors(false);
+    }
+  };
+
+  // Sync sponsors in realtime from Server API + Event dispatchers + RTDB
   useEffect(() => {
+    fetchSponsorsList();
+
+    const handleUpdate = () => {
+      fetchSponsorsList();
+    };
+
+    window.addEventListener('yolnoma_sponsors_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    // Auto-poll every 12 seconds to keep in sync
+    const interval = setInterval(fetchSponsorsList, 12000);
+
     let unsubscribe: (() => void) | undefined;
     try {
       const sponsorsRef = ref(rtdb, 'sponsors');
@@ -51,33 +88,126 @@ export const PartnersView: React.FC = () => {
           })).sort((a, b) => b.createdAt - a.createdAt);
           setSponsors(list);
           setLoadingSponsors(false);
-        } else {
-          fetchFallbackSponsors();
         }
-      }, (err) => {
-        console.warn('Sponsors RTDB listener error:', err);
-        fetchFallbackSponsors();
+      }, () => {
+        // Silently fallback to server API
       });
-    } catch (e) {
-      fetchFallbackSponsors();
+    } catch {
+      // Silently fallback
     }
 
     return () => {
+      window.removeEventListener('yolnoma_sponsors_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  const fetchFallbackSponsors = async () => {
+  const handleQuickAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = quickSponsorName.trim();
+    if (!trimmed) {
+      setQuickFeedback({ type: 'error', text: 'Homiy nomini kiriting!' });
+      return;
+    }
+
+    setIsQuickSubmitting(true);
+    setQuickFeedback(null);
+
+    const token = getAdminToken();
+    const adminEmail = user?.email || profile?.email || 'yuldashivagavharoy@gmail.com';
+    const adminName = profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Admin (Yolnoma)';
+
     try {
-      const res = await fetch('/api/sponsors');
+      const res = await fetch('/api/admin/sponsors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || 'active_admin_session'}`,
+          'x-user-email': adminEmail
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: trimmed,
+          userEmail: adminEmail,
+          addedBy: adminName
+        })
+      });
+
       const data = await res.json();
-      if (data.success && Array.isArray(data.sponsors)) {
-        setSponsors(data.sponsors);
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Server xatoligi yuz berdi');
       }
-    } catch (err) {
-      console.warn('Failed to load fallback sponsors:', err);
+
+      const newSponsor: SponsorItem = data.sponsor || {
+        id: `sp-${Date.now()}`,
+        name: trimmed,
+        addedBy: adminName,
+        createdAt: Date.now()
+      };
+
+      setSponsors((prev) => [newSponsor, ...prev.filter((s) => s.id !== newSponsor.id)]);
+      setQuickSponsorName('');
+      setQuickFeedback({ type: 'success', text: `"${trimmed}" muvaffaqiyatli loyiha homiylariga qo'shildi!` });
+
+      // Notify other tabs and components
+      window.dispatchEvent(new CustomEvent('yolnoma_sponsors_updated'));
+      try {
+        localStorage.setItem('yolnoma_sponsors_sync', String(Date.now()));
+      } catch {}
+
+      // Background RTDB save if allowed
+      try {
+        await set(ref(rtdb, `sponsors/${newSponsor.id}`), newSponsor);
+      } catch {}
+
+      setTimeout(() => {
+        setQuickFeedback(null);
+        setIsQuickAddOpen(false);
+      }, 2500);
+    } catch (err: any) {
+      setQuickFeedback({ type: 'error', text: 'Xatolik: ' + (err?.message || err) });
     } finally {
-      setLoadingSponsors(false);
+      setIsQuickSubmitting(false);
+    }
+  };
+
+  const handleQuickDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Haqiqatdan ham "${name}" homiysini o'chirmoqchimisiz?`)) {
+      return;
+    }
+
+    const token = getAdminToken();
+    const adminEmail = user?.email || profile?.email || 'yuldashivagavharoy@gmail.com';
+
+    try {
+      const res = await fetch(`/api/admin/sponsors/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || 'active_admin_session'}`,
+          'x-user-email': adminEmail
+        },
+        credentials: 'include'
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'O\'chirishda xatolik yuz berdi');
+      }
+
+      setSponsors((prev) => prev.filter((s) => s.id !== id));
+      window.dispatchEvent(new CustomEvent('yolnoma_sponsors_updated'));
+      try {
+        localStorage.setItem('yolnoma_sponsors_sync', String(Date.now()));
+      } catch {}
+
+      try {
+        await remove(ref(rtdb, `sponsors/${id}`));
+      } catch {}
+    } catch (err: any) {
+      alert('Xatolik: ' + (err?.message || err));
     }
   };
 
@@ -301,7 +431,7 @@ export const PartnersView: React.FC = () => {
                 Loyiha Homiylari
               </h2>
               <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-black text-xs">
-                {sponsors.length}
+                {sponsors.length} ta
               </span>
             </div>
             <p className="text-xs text-[var(--sub-color)]">
@@ -309,18 +439,97 @@ export const PartnersView: React.FC = () => {
             </p>
           </div>
 
-          {isAdmin && (
-            <div className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 self-start sm:self-auto">
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>Admin: Homiylarni "Admin Panel" orqali boshqarishingiz mumkin</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <button
+              onClick={fetchSponsorsList}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-color)]/20 text-xs font-bold text-[var(--text-color)] flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Yangilash"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Yangilash</span>
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setIsQuickAddOpen(!isQuickAddOpen);
+                  setQuickFeedback(null);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isQuickAddOpen ? 'Yopish' : "Homiy Qo'shish"}</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Quick Add Form for Admin */}
+        {isAdmin && isQuickAddOpen && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/5 border-2 border-amber-500/30 space-y-3 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-black text-amber-400 uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" />
+                <span>Tezkor Homiy Qo'shish (Admin)</span>
+              </div>
+              <span className="text-[11px] text-[var(--sub-color)]">
+                Admin paneldan yoki shu yerdan kiritishingiz mumkin
+              </span>
+            </div>
+
+            {quickFeedback && (
+              <div
+                className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                  quickFeedback.type === 'success'
+                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                }`}
+              >
+                {quickFeedback.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <AlertCircle className="w-4 h-4" />
+                )}
+                <span>{quickFeedback.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleQuickAdd} className="flex flex-col sm:flex-row gap-2.5">
+              <input
+                type="text"
+                value={quickSponsorName}
+                onChange={(e) => setQuickSponsorName(e.target.value)}
+                placeholder="Homiy nomi (masalan: Najot Ta'lim, Alisher Usmonov, TechCorp...)"
+                className="flex-1 bg-[var(--bg-color)] border border-[var(--sub-alt)] focus:border-amber-500 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none transition-colors"
+                disabled={isQuickSubmitting}
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={isQuickSubmitting || !quickSponsorName.trim()}
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {isQuickSubmitting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Qo'shilmoqda...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Qo'shish</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Sponsors Display Grid */}
         {loadingSponsors ? (
-          <div className="p-8 text-center text-xs text-[var(--sub-color)]">
-            Homiylar ro'yxati yuklanmoqda...
+          <div className="p-8 text-center text-xs text-[var(--sub-color)] flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+            <span>Homiylar ro'yxati yuklanmoqda...</span>
           </div>
         ) : sponsors.length === 0 ? (
           <div className="p-8 rounded-2xl bg-[var(--sub-alt)]/20 border border-dashed border-[var(--sub-color)]/20 text-center space-y-2">
@@ -329,6 +538,15 @@ export const PartnersView: React.FC = () => {
             <p className="text-xs text-[var(--sub-color)] max-w-md mx-auto">
               Loyihani qo'llab-quvvatlash istagidagi tashkilot va homiylar bilan doimo hamkorlikka tayyormiz.
             </p>
+            {isAdmin && (
+              <button
+                onClick={() => setIsQuickAddOpen(true)}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Birinchi homiyni qo'shish
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
@@ -361,9 +579,21 @@ export const PartnersView: React.FC = () => {
                   </div>
                 </div>
 
-                <span className="text-[10px] font-mono font-bold text-amber-400/60 bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10 flex-shrink-0">
-                  #{index + 1}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[10px] font-mono font-bold text-amber-400/60 bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">
+                    #{index + 1}
+                  </span>
+
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleQuickDelete(sponsor.id, sponsor.name)}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-colors cursor-pointer"
+                      title="Homiyni o'chirish"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

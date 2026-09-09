@@ -27,7 +27,8 @@ import {
   Check,
   AlertCircle,
   MessageSquare,
-  Gamepad2
+  Gamepad2,
+  Share2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -36,6 +37,7 @@ import { themes } from '../config/themes';
 import { LanguageCode, ThemeMode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
 import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
+import { ShareModal } from './share/ShareModal';
 
 interface HeaderProps {
   activeTab: string;
@@ -50,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isBackendOwner, setIsBackendOwner] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -201,6 +204,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title="Sozlamalar"
               >
                 <Settings className={iconDimensions} />
+              </button>
+
+              {/* Share & Viral Invite Button */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer ml-1"
+                title="Saytni do'stlarga ulashish & musobaqaga taklif qilish"
+              >
+                <Share2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Ulashish</span>
               </button>
             </div>
           </div>
@@ -546,6 +559,23 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                   );
                 })}
               </div>
+
+              {/* Mobile Viral Share Banner Button */}
+              <div className="pt-3">
+                <button
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    setShowShareModal(true);
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-bold transition-all shadow-sm cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Share2 className="w-5 h-5 text-amber-400" />
+                    <span className="text-sm font-black">Do'stlarga Ulashish</span>
+                  </div>
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                </button>
+              </div>
             </div>
 
             {/* Bottom Minimalist User Footer */}
@@ -596,6 +626,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
           </div>
         </div>
       )}
+
+      {/* High-Converting Viral Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        payload={{
+          wpm: profile?.highestWpm,
+          source: 'header'
+        }}
+      />
     </>
   );
 };

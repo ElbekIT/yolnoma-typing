@@ -23,6 +23,7 @@ import { UserBlockedScreen } from './components/security/UserBlockedScreen';
 import { fetchIpSecurityStatus } from './utils/securityShield';
 import { Wrench } from 'lucide-react';
 import { antiCheatManager } from './utils/antiCheat';
+import { updatePageSEO } from './utils/seo';
 
 // Lazy-loaded secondary views for high performance & fast initial loading
 const DashboardView = React.lazy(() => import('./components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
@@ -145,7 +146,22 @@ function MainAppContent() {
   });
   const prevUserRef = useRef<string | null>(null);
 
-  // Synchronize browser address bar with active tab and update tab title
+  // Viral challenge link detector (?wpm=85 or ?challenge=85)
+  const [challengeBanner, setChallengeBanner] = useState<{ wpm: number; acc?: number } | null>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const wpmVal = parseInt(params.get('wpm') || params.get('challenge') || '', 10);
+        if (wpmVal > 0 && wpmVal <= 350) {
+          const accVal = parseInt(params.get('acc') || '', 10) || undefined;
+          return { wpm: wpmVal, acc: accVal };
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  // Synchronize browser address bar with active tab and update comprehensive SEO meta tags
   useEffect(() => {
     try {
       const slug = TAB_TO_PATH[activeTab] ?? (activeTab === 'typing' ? '' : activeTab);
@@ -156,9 +172,8 @@ function MainAppContent() {
         window.history.pushState({ tab: activeTab }, '', targetUrl);
       }
 
-      if (TAB_TITLES[activeTab]) {
-        document.title = TAB_TITLES[activeTab];
-      }
+      // Update document title and dynamic SEO/OpenGraph meta tags
+      updatePageSEO(activeTab);
     } catch {}
   }, [activeTab]);
 
@@ -943,6 +958,32 @@ function MainAppContent() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
         {activeTab === 'typing' && (
           <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
+            {/* Viral Social Challenge Banner */}
+            {challengeBanner && (
+              <div className="w-full max-w-2xl mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-3 text-amber-400 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <span className="text-xl shrink-0">⚡</span>
+                  <div className="text-xs sm:text-sm font-bold text-[var(--text-color)]">
+                    Do'stingiz sizni{' '}
+                    <span className="text-amber-400 font-mono font-black text-sm sm:text-base">
+                      {challengeBanner.wpm} WPM
+                    </span>
+                    {challengeBanner.acc ? ` (${challengeBanner.acc}% aniqlik)` : ''} tezlik bilan bellashuvga chaqirdi!
+                    <span className="hidden sm:inline text-xs font-normal text-[var(--sub-color)] ml-1.5">
+                      Qani, uni yengib ko'ring-chi!
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setChallengeBanner(null)}
+                  className="px-2 py-1 rounded-lg text-xs font-bold text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer shrink-0"
+                  title="Yopish"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             <TypingHeader
               mode={mode}
               setMode={setMode}
@@ -1051,6 +1092,7 @@ function MainAppContent() {
         }}
         onOpenOwner={() => setActiveTab('owner')}
         onOpenAdmin={() => setActiveTab('admin')}
+        onNavigate={(tab) => setActiveTab(tab)}
       />
 
       <PubgInviteModal

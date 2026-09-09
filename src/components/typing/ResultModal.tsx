@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { TypingResult } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
+import { ShareModal } from '../share/ShareModal';
 
 interface ResultModalProps {
   result: TypingResult | null;
@@ -196,6 +197,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 }) => {
   const { themeConfig } = useSettings();
   const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Keyboard shortcut listener: Enter / Tab / Space to restart or start next test instantly
   useEffect(() => {
@@ -307,11 +309,12 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           <div className="flex items-center gap-2">
             {/* Share button */}
             <button
-              onClick={handleShare}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] text-xs font-semibold text-[var(--text-color)] hover:bg-[var(--main-color)] hover:text-white transition-colors cursor-pointer"
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm"
+              title="Do'stlarga ulashish va musobaqaga chaqirish"
             >
-              {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Nusxalandi!' : 'Ulashish'}</span>
+              <Share2 className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ulashish</span>
             </button>
 
             {/* Optional Leaderboard button */}
@@ -354,6 +357,17 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)]">Tab</kbd> yoki <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)]">Enter</kbd> bosilsa keyingi test boshlanadi
         </div>
       </div>
+
+      {/* 1-Tap Viral Share Dialog */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        payload={{
+          wpm: result.wpm,
+          accuracy: result.accuracy,
+          source: 'test_result'
+        }}
+      />
     </div>
   );
 };

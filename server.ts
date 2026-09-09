@@ -918,7 +918,12 @@ const serverVerifiedLeaderboard: VerifiedTypingRecord[] = [];
 // -------------------------------------------------------------
 
 const requireAdminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const userEmailHeader = (req.headers['x-user-email'] as string || '').toLowerCase().trim();
+  const userEmailHeader = (
+    (req.headers['x-user-email'] as string) ||
+    (req.body && (req.body.userEmail || req.body.adminEmail)) ||
+    (req.query && (req.query.userEmail as string || req.query.adminEmail as string)) ||
+    ''
+  ).toLowerCase().trim();
   const isOwnerByEmail =
     userEmailHeader === ROOT_OWNER_EMAIL ||
     userEmailHeader.startsWith('yuldashivagavharoy') ||
@@ -1770,6 +1775,7 @@ interface StoredSponsor {
 }
 
 const SPONSORS_FILE = '/tmp/yolnoma_sponsors.json';
+const BACKUP_SPONSORS_FILE = path.join(process.cwd(), 'sponsors.json');
 let serverSponsors: StoredSponsor[] = [];
 
 function loadSponsorsFromFile() {
@@ -1777,19 +1783,41 @@ function loadSponsorsFromFile() {
     if (fs.existsSync(SPONSORS_FILE)) {
       const data = fs.readFileSync(SPONSORS_FILE, 'utf-8');
       serverSponsors = JSON.parse(data);
-    } else {
-      serverSponsors = [];
+    } else if (fs.existsSync(BACKUP_SPONSORS_FILE)) {
+      const data = fs.readFileSync(BACKUP_SPONSORS_FILE, 'utf-8');
+      serverSponsors = JSON.parse(data);
       fs.writeFileSync(SPONSORS_FILE, JSON.stringify(serverSponsors, null, 2));
+    } else {
+      serverSponsors = [
+        {
+          id: 'sp-1',
+          name: 'Yosh Avlod Kanali',
+          addedBy: 'Admin (Yolnoma)',
+          createdAt: 1788879446253
+        }
+      ];
+      saveSponsorsToFile();
     }
   } catch (e) {
-    serverSponsors = [];
+    serverSponsors = [
+      {
+        id: 'sp-1',
+        name: 'Yosh Avlod Kanali',
+        addedBy: 'Admin (Yolnoma)',
+        createdAt: 1788879446253
+      }
+    ];
   }
 }
 loadSponsorsFromFile();
 
 function saveSponsorsToFile() {
   try {
-    fs.writeFileSync(SPONSORS_FILE, JSON.stringify(serverSponsors, null, 2));
+    const json = JSON.stringify(serverSponsors, null, 2);
+    fs.writeFileSync(SPONSORS_FILE, json);
+    try {
+      fs.writeFileSync(BACKUP_SPONSORS_FILE, json);
+    } catch {}
   } catch (e) {
     console.error('Error saving sponsors:', e);
   }

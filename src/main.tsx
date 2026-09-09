@@ -53,4 +53,13 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
+// Register PWA Service Worker for offline capability, instant load & Google PWA SEO indexation
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Graceful ignore
+    });
+  });
+}
+
 

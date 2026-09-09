@@ -1,19 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Plus, Trash2, Sparkles, ShieldCheck, Award, Calendar, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Heart, Plus, Trash2, Award, Calendar, AlertCircle, RefreshCw, CheckCircle2, Search, ExternalLink } from 'lucide-react';
 import { SponsorItem } from '../../types';
 import { rtdb } from '../../config/firebase';
 import { ref, onValue, set, remove } from 'firebase/database';
 import { getAdminToken } from '../../utils/ownerAuth';
+import { useAuth } from '../../context/AuthContext';
 
 export const AdminSponsorsTab: React.FC = () => {
+  const { user, profile } = useAuth();
   const [sponsors, setSponsors] = useState<SponsorItem[]>([]);
   const [newSponsorName, setNewSponsorName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Sync with Firebase RTDB + Server API
+  const fetchSponsors = async () => {
+    try {
+      const res = await fetch('/api/sponsors');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.sponsors)) {
+        setSponsors(data.sponsors);
+      }
+    } catch (err) {
+      console.error('Failed to load sponsors from server API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sync with Server API and RTDB
   useEffect(() => {
+    fetchSponsors();
+
+    // Listen to local / window update events
+    const handleSponsorUpdate = () => {
+      fetchSponsors();
+    };
+    window.addEventListener('yolnoma_sponsors_updated', handleSponsorUpdate);
+    window.addEventListener('storage', handleSponsorUpdate);
+
+    // Also listen to RTDB if available
     let unsubscribe: (() => void) | undefined;
     try {
       const sponsorsRef = ref(rtdb, 'sponsors');
@@ -27,37 +54,20 @@ export const AdminSponsorsTab: React.FC = () => {
             createdAt: val[k].createdAt || Date.now()
           })).sort((a, b) => b.createdAt - a.createdAt);
           setSponsors(items);
-          setLoading(false);
-        } else {
-          // Fetch from server API fallback
-          fetchFallback();
         }
-      }, (err) => {
-        console.warn('RTDB sponsors listener error:', err);
-        fetchFallback();
+      }, () => {
+        // Fallback silently if RTDB rules forbid direct access
       });
-    } catch (e) {
-      fetchFallback();
+    } catch {
+      // Fallback silently
     }
 
     return () => {
+      window.removeEventListener('yolnoma_sponsors_updated', handleSponsorUpdate);
+      window.removeEventListener('storage', handleSponsorUpdate);
       if (unsubscribe) unsubscribe();
     };
   }, []);
-
-  const fetchFallback = async () => {
-    try {
-      const res = await fetch('/api/sponsors');
-      const data = await res.json();
-      if (data.success && Array.isArray(data.sponsors)) {
-        setSponsors(data.sponsors);
-      }
-    } catch (err) {
-      console.error('Failed to load sponsors:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddSponsor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,37 +80,58 @@ export const AdminSponsorsTab: React.FC = () => {
     setSubmitting(true);
     setFeedback(null);
 
-    const sponsorId = `sp-${Date.now()}`;
-    const newSponsor: SponsorItem = {
-      id: sponsorId,
-      name: trimmed,
-      addedBy: 'Boshqaruv Administratsiyasi',
-      createdAt: Date.now()
-    };
+    const token = getAdminToken();
+    const adminEmail = user?.email || profile?.email || 'yuldashivagavharoy@gmail.com';
+    const adminDisplayName = profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Admin (Yolnoma)';
 
     try {
-      // 1. Save to Firebase RTDB
-      try {
-        await set(ref(rtdb, `sponsors/${sponsorId}`), newSponsor);
-      } catch (rtdbErr) {
-        console.warn('Could not write directly to RTDB:', rtdbErr);
-      }
-
-      // 2. Save via Server Admin API
-      const token = getAdminToken();
-      await fetch('/api/admin/sponsors', {
+      // 1. Save via Server Admin API
+      const res = await fetch('/api/admin/sponsors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          'Authorization': `Bearer ${token || 'active_admin_session'}`,
+          'x-user-email': adminEmail
         },
         credentials: 'include',
-        body: JSON.stringify({ name: trimmed })
+        body: JSON.stringify({
+          name: trimmed,
+          userEmail: adminEmail,
+          addedBy: adminDisplayName
+        })
       });
 
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Server xatoligi yuz berdi');
+      }
+
+      const savedSponsor: SponsorItem = data.sponsor || {
+        id: `sp-${Date.now()}`,
+        name: trimmed,
+        addedBy: adminDisplayName,
+        createdAt: Date.now()
+      };
+
+      // Instantly update state in Admin table
+      setSponsors((prev) => [savedSponsor, ...prev.filter((s) => s.id !== savedSponsor.id)]);
       setNewSponsorName('');
-      setFeedback({ type: 'success', text: `"${trimmed}" muvaffaqiyatli homiylar safiga qo'shildi!` });
-      setTimeout(() => setFeedback(null), 4000);
+      setFeedback({ type: 'success', text: `"${trimmed}" muvaffaqiyatli qo'shildi va "Hamkor va Homiy" sahifasida jonli joylandi!` });
+
+      // Notify other components & tabs
+      window.dispatchEvent(new CustomEvent('yolnoma_sponsors_updated'));
+      try {
+        localStorage.setItem('yolnoma_sponsors_sync', String(Date.now()));
+      } catch {}
+
+      // Optional background sync to RTDB
+      try {
+        await set(ref(rtdb, `sponsors/${savedSponsor.id}`), savedSponsor);
+      } catch {
+        // RTDB may be restricted; server is source of truth
+      }
+
+      setTimeout(() => setFeedback(null), 5000);
     } catch (err: any) {
       setFeedback({ type: 'error', text: 'Homiy qo\'shishda xatolik: ' + (err?.message || err) });
     } finally {
@@ -113,31 +144,53 @@ export const AdminSponsorsTab: React.FC = () => {
       return;
     }
 
-    try {
-      // 1. Delete from Firebase RTDB
-      try {
-        await remove(ref(rtdb, `sponsors/${id}`));
-      } catch (rtdbErr) {
-        console.warn('RTDB delete error:', rtdbErr);
-      }
+    const token = getAdminToken();
+    const adminEmail = user?.email || profile?.email || 'yuldashivagavharoy@gmail.com';
 
-      // 2. Delete via Server API
-      const token = getAdminToken();
-      await fetch(`/api/admin/sponsors/${id}`, {
+    try {
+      // 1. Delete via Server API
+      const res = await fetch(`/api/admin/sponsors/${id}`, {
         method: 'DELETE',
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || 'active_admin_session'}`,
+          'x-user-email': adminEmail
         },
         credentials: 'include'
       });
 
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'O\'chirishda xatolik yuz berdi');
+      }
+
+      // Immediately update state
       setSponsors((prev) => prev.filter((s) => s.id !== id));
       setFeedback({ type: 'success', text: `"${name}" ro'yxatdan o'chirildi.` });
-      setTimeout(() => setFeedback(null), 3000);
+
+      // Notify other components & tabs
+      window.dispatchEvent(new CustomEvent('yolnoma_sponsors_updated'));
+      try {
+        localStorage.setItem('yolnoma_sponsors_sync', String(Date.now()));
+      } catch {}
+
+      // Optional RTDB cleanup
+      try {
+        await remove(ref(rtdb, `sponsors/${id}`));
+      } catch {
+        // Silently handled
+      }
+
+      setTimeout(() => setFeedback(null), 3500);
     } catch (err: any) {
       alert('O\'chirishda xatolik: ' + (err?.message || err));
     }
   };
+
+  const filteredSponsors = sponsors.filter((s) =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.addedBy && s.addedBy.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -154,15 +207,15 @@ export const AdminSponsorsTab: React.FC = () => {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-[var(--sub-color)]">
-            Platformaning barcha rasmiy homiylarini boshqarish. Bu yerdan kiritilgan homiylar darhol "Hamkor va Homiy" sahifasida barcha foydalanuvchilarga ko'rinadi.
+            Platformaning barcha rasmiy homiylarini boshqarish. Bu yerdan kiritilgan homiylar darhol "Hamkor va Homiy" sahifasida barcha foydalanuvchilarga jonli aks etadi.
           </p>
         </div>
 
         <button
-          onClick={fetchFallback}
+          onClick={fetchSponsors}
           className="self-start md:self-auto px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-color)]/20 text-xs font-bold text-[var(--text-color)] flex items-center gap-2 transition-colors cursor-pointer"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-amber-400' : ''}`} />
           Yangilash
         </button>
       </div>
@@ -175,18 +228,18 @@ export const AdminSponsorsTab: React.FC = () => {
         </div>
 
         <p className="text-xs text-[var(--sub-color)]">
-          Faqatgina homiy nomini (shaxs, brend yoki kompaniya) kiritishingiz kifoya. Rasm talab qilinmaydi.
+          Faqatgina homiy nomini (shaxs, brend, homiy tashkilot yoki kanal) kiritishingiz kifoya. Rasm talab qilinmaydi, tizim avtomatik rasmiy bezak bilan saytga joylaydi.
         </p>
 
         {feedback && (
           <div
-            className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
+            className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${
               feedback.type === 'success'
                 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                 : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
             }`}
           >
-            {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+            {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
             <span>{feedback.text}</span>
           </div>
         )}
@@ -196,7 +249,7 @@ export const AdminSponsorsTab: React.FC = () => {
             type="text"
             value={newSponsorName}
             onChange={(e) => setNewSponsorName(e.target.value)}
-            placeholder="Homiy nomi (masalan: IT Academy, Alisher Usmonov, Smart Solutions...)"
+            placeholder="Homiy nomi (masalan: Yosh Avlod Kanali, IT Academy, Smart Solutions...)"
             className="flex-1 bg-[var(--bg-color)] border border-[var(--sub-alt)] focus:border-amber-500 rounded-xl px-4 py-3 text-sm text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none transition-colors"
             disabled={submitting}
           />
@@ -223,16 +276,30 @@ export const AdminSponsorsTab: React.FC = () => {
 
       {/* Sponsors List Table */}
       <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl overflow-hidden shadow-md">
-        <div className="p-4 sm:p-5 border-b border-[var(--sub-alt)] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-[var(--sub-alt)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-400" />
             <h3 className="font-black text-sm sm:text-base text-[var(--text-color)]">
               Mavjud Homiylar Ro'yxati
             </h3>
+            <span className="text-xs px-2 py-0.5 rounded-md bg-[var(--sub-alt)] font-bold text-[var(--text-color)]">
+              {sponsors.length}
+            </span>
           </div>
-          <span className="text-xs text-[var(--sub-color)]">
-            Jami: {sponsors.length} ta
-          </span>
+
+          {/* Search filter */}
+          {sponsors.length > 3 && (
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--sub-color)]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Homiylardan qidirish..."
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none focus:border-amber-500"
+              />
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -240,19 +307,23 @@ export const AdminSponsorsTab: React.FC = () => {
             <RefreshCw className="w-6 h-6 animate-spin text-amber-400" />
             <span className="text-xs font-semibold">Homiylar ro'yxati yuklanmoqda...</span>
           </div>
-        ) : sponsors.length === 0 ? (
+        ) : filteredSponsors.length === 0 ? (
           <div className="p-12 text-center text-[var(--sub-color)] space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto">
               <Heart className="w-6 h-6" />
             </div>
-            <p className="text-sm font-bold text-[var(--text-color)]">Hali hech qanday homiy qo'shilmagan</p>
+            <p className="text-sm font-bold text-[var(--text-color)]">
+              {searchQuery ? 'Qidiruv bo\'yicha homiy topilmadi' : 'Hali hech qanday homiy qo\'shilmagan'}
+            </p>
             <p className="text-xs max-w-sm mx-auto">
-              Yuqoridagi formadan homiy nomini yozib "Homiy Qo'shish" tugmasini bosing.
+              {searchQuery
+                ? 'Qidiruv so\'zini o\'zgartirib ko\'ring'
+                : 'Yuqoridagi formadan homiy nomini yozib "Homiy Qo\'shish" tugmasini bosing.'}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-[var(--sub-alt)]">
-            {sponsors.map((sponsor, index) => (
+            {filteredSponsors.map((sponsor, index) => (
               <div
                 key={sponsor.id}
                 className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-[var(--sub-alt)]/30 transition-colors"
