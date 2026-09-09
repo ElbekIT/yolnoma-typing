@@ -1760,6 +1760,82 @@ app.delete('/api/admin/announcements/:id', requireAdminAuth, (req, res) => {
 });
 
 // -------------------------------------------------------------
+// SPONSORS (HOMIYLAR) ENDPOINTS
+// -------------------------------------------------------------
+interface StoredSponsor {
+  id: string;
+  name: string;
+  addedBy?: string;
+  createdAt: number;
+}
+
+const SPONSORS_FILE = '/tmp/yolnoma_sponsors.json';
+let serverSponsors: StoredSponsor[] = [];
+
+function loadSponsorsFromFile() {
+  try {
+    if (fs.existsSync(SPONSORS_FILE)) {
+      const data = fs.readFileSync(SPONSORS_FILE, 'utf-8');
+      serverSponsors = JSON.parse(data);
+    } else {
+      serverSponsors = [];
+      fs.writeFileSync(SPONSORS_FILE, JSON.stringify(serverSponsors, null, 2));
+    }
+  } catch (e) {
+    serverSponsors = [];
+  }
+}
+loadSponsorsFromFile();
+
+function saveSponsorsToFile() {
+  try {
+    fs.writeFileSync(SPONSORS_FILE, JSON.stringify(serverSponsors, null, 2));
+  } catch (e) {
+    console.error('Error saving sponsors:', e);
+  }
+}
+
+// Public: Get all sponsors
+app.get('/api/sponsors', (req, res) => {
+  res.json({ success: true, sponsors: serverSponsors });
+});
+
+// Admin: Add sponsor (Only name required)
+app.post('/api/admin/sponsors', requireAdminAuth, (req, res) => {
+  const { name } = req.body;
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ success: false, error: 'Homiy nomi kiritilishi shart' });
+  }
+
+  const addedBy = (req as any).adminUser?.email || (req as any).adminUser?.sub || 'Admin';
+  const newSponsor: StoredSponsor = {
+    id: `sp-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
+    name: String(name).trim(),
+    addedBy,
+    createdAt: Date.now()
+  };
+
+  serverSponsors.unshift(newSponsor);
+  saveSponsorsToFile();
+
+  res.json({ success: true, message: 'Homiy muvaffaqiyatli qo\'shildi', sponsor: newSponsor });
+});
+
+// Admin: Delete sponsor
+app.delete('/api/admin/sponsors/:id', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const idx = serverSponsors.findIndex((s) => s.id === id);
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Homiy topilmadi' });
+  }
+
+  const removed = serverSponsors.splice(idx, 1)[0];
+  saveSponsorsToFile();
+
+  res.json({ success: true, message: 'Homiy o\'chirildi', removed });
+});
+
+// -------------------------------------------------------------
 // PUBLIC SECURITY & MAINTENANCE STATUS ENDPOINTS
 // -------------------------------------------------------------
 

@@ -49,6 +49,7 @@ import { AdminServerTab } from './AdminServerTab';
 import { AdminSessionsTab } from './AdminSessionsTab';
 import { AdminMaintenanceTab } from './AdminMaintenanceTab';
 import { AdminTeamTab } from './AdminTeamTab';
+import { AdminSponsorsTab } from './AdminSponsorsTab';
 import { AdminPermissionsModal } from './AdminPermissionsModal';
 import { maskEmail } from '../../utils/maskEmail';
 import {
@@ -128,7 +129,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active' | 'admins'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'team' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'team' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance' | 'sponsors'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
 
@@ -1009,10 +1010,22 @@ export const AdminView: React.FC = () => {
           <Wrench className="w-4 h-4" />
           <span>🛠️ Saytni Yangilash</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('sponsors')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
+            activeTab === 'sponsors'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
+          }`}
+        >
+          <Award className="w-4 h-4" />
+          <span>🤝 Homiylar Boshqaruvi</span>
+        </button>
       </div>
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
-      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'sessions' && activeTab !== 'maintenance' && (
+      {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'sessions' && activeTab !== 'maintenance' && activeTab !== 'sponsors' && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1409,6 +1422,11 @@ export const AdminView: React.FC = () => {
       {/* TAB 8: SAYTNI YANGILASH / MAINTENANCE */}
       {activeTab === 'maintenance' && (
         <AdminMaintenanceTab />
+      )}
+
+      {/* TAB 9: HOMIYLAR BOSHQARUVI */}
+      {activeTab === 'sponsors' && (
+        <AdminSponsorsTab />
       )}
 
       {/* EDIT LEADERBOARD / USER MODAL */}

@@ -208,3 +208,10 @@ export interface AdminInboxMessage {
     uid?: string;
   };
 }
+
+export interface SponsorItem {
+  id: string;
+  name: string;
+  addedBy?: string;
+  createdAt: number;
+}
