@@ -2332,6 +2332,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Start Server with Vite Middleware and Hardened Sockets
 async function startServer() {
+  // Always serve public assets (photos, icons, manifests)
+  const publicPath = path.join(process.cwd(), 'public');
+  app.use(express.static(publicPath, { maxAge: '1h' }));
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

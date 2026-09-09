@@ -14,7 +14,9 @@ import {
   Cpu,
   UserCheck,
   HeartHandshake,
-  CheckCircle2
+  CheckCircle2,
+  ZoomIn,
+  X
 } from 'lucide-react';
 import { SponsorItem } from '../../types';
 import { rtdb } from '../../config/firebase';
@@ -25,6 +27,7 @@ export const PartnersView: React.FC = () => {
   const { user, profile } = useAuth();
   const [sponsors, setSponsors] = useState<SponsorItem[]>([]);
   const [loadingSponsors, setLoadingSponsors] = useState(true);
+  const [isPhotoOpen, setIsPhotoOpen] = useState(false);
 
   const isAdmin = Boolean(
     profile?.role === 'admin' ||
@@ -101,17 +104,68 @@ export const PartnersView: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Partner & Sponsor Showcase Card (Pure Typographic & Badges - No Photo) */}
-      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-6">
+      {/* Main Partner & Sponsor Showcase Card with Photo & Executive Badges */}
+      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 lg:p-8 shadow-xl relative overflow-hidden space-y-6">
         {/* Subtle decorative glow elements */}
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Top Header Section with Status Badges & Quick Action */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-amber-500/25 pb-6">
-          <div className="space-y-2.5">
-            {/* Status & Project Badges */}
-            <div className="flex flex-wrap items-center gap-2">
+        {/* Top Header Section with Photo & Core Partner Information */}
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8 border-b border-amber-500/25 pb-6">
+          {/* Partner Photo Card */}
+          <div className="flex flex-col items-center flex-shrink-0 space-y-3">
+            <div className="relative group">
+              {/* Glowing ring */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-amber-300 to-amber-600 rounded-3xl blur-sm opacity-60 group-hover:opacity-100 transition duration-300" />
+              
+              {/* Photo Container */}
+              <div
+                onClick={() => setIsPhotoOpen(true)}
+                className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden bg-slate-900 border-2 border-amber-500/80 shadow-2xl cursor-pointer"
+                title="Rasmni kattalashtirib ko'rish"
+              >
+                <img
+                  src="/photo_2024-10-04_23-21-18.jpg"
+                  alt="Shamsiddin Kamoliddinov - Hamkor va Homiy"
+                  className="w-full h-full object-cover object-top filter grayscale contrast-110 group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    // Fallback to partner photo path
+                    const target = e.currentTarget;
+                    if (target.src.indexOf('/shamsiddin_partner.jpg') === -1) {
+                      target.src = '/shamsiddin_partner.jpg';
+                    }
+                  }}
+                />
+
+                {/* Hover overlay with Zoom Icon */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white font-bold text-xs backdrop-blur-[2px]">
+                  <ZoomIn className="w-4 h-4 text-amber-300" />
+                  <span>Kattalashtirish</span>
+                </div>
+              </div>
+
+              {/* VIP Crown Badge on Top Right */}
+              <div className="absolute -top-2.5 -right-2.5 bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 p-2 rounded-2xl shadow-lg border-2 border-slate-950 flex items-center justify-center">
+                <Crown className="w-4 h-4 fill-slate-950 text-slate-950" />
+              </div>
+
+              {/* Status Pill on Bottom */}
+              <div className="absolute -bottom-2.5 inset-x-0 mx-auto w-max px-3 py-0.5 rounded-full bg-slate-950/95 border border-amber-500/70 text-amber-300 text-[10px] font-black uppercase tracking-wider shadow-md">
+                HAMKOR VA HOMIY
+              </div>
+            </div>
+
+            {/* Quick Status Sub-label */}
+            <div className="flex items-center justify-center gap-1 text-[11px] text-emerald-400 font-bold pt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Rasmiy Tasdiqlangan Hamkor</span>
+            </div>
+          </div>
+
+          {/* Partner Details & Actions */}
+          <div className="flex-1 space-y-4 text-center lg:text-left min-w-0">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md shadow-amber-500/20">
                 <Crown className="w-3.5 h-3.5 fill-slate-950" />
                 <span>Bosh Hamkor va Homiy</span>
@@ -121,53 +175,48 @@ export const PartnersView: React.FC = () => {
                 <Award className="w-3.5 h-3.5 text-amber-400" />
                 <span>Yosh Avlod Kanali Asoschisi</span>
               </span>
-
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Rasmiy Tasdiqlangan</span>
-              </span>
             </div>
 
-            {/* Partner's Full Name */}
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-color)] tracking-tight">
-              Shamsiddin Kamoliddinov Aqliddin o'g'li
-            </h2>
-
-            {/* Primary Specialization Label */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              <span className="text-xs font-black uppercase tracking-wider text-amber-400/90">
-                Mutaxassisligi:
-              </span>
-              <span className="text-xs sm:text-sm font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-0.5 rounded-lg">
-                AI / ML muhandisi
-              </span>
-              <span className="text-xs text-[var(--sub-color)] font-medium">
-                • 2005-yil 15-fevral, Farg'ona viloyati Toshloq tumani
-              </span>
+            {/* Partner Name */}
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-color)] tracking-tight">
+                Shamsiddin Kamoliddinov Aqliddin o'g'li
+              </h2>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-400/90">
+                  Mutaxassisligi:
+                </span>
+                <span className="text-xs sm:text-sm font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-0.5 rounded-lg">
+                  AI / ML muhandisi
+                </span>
+                <span className="text-xs text-[var(--sub-color)] font-medium">
+                  • 2005-yil 15-fevral, Farg'ona viloyati Toshloq tumani
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Official Website Action Button */}
-          <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-2 flex-shrink-0">
-            <a
-              href="https://yosh-avlod-kanali.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02] cursor-pointer"
-            >
-              <span>Hamkorimiz Saytiga O'tish</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
+            {/* Official Website Button & Link */}
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
+              <a
+                href="https://yosh-avlod-kanali.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02] cursor-pointer"
+              >
+                <span>Hamkorimiz Saytiga O'tish</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
 
-            <a
-              href="https://yosh-avlod-kanali.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-[var(--sub-color)] hover:text-amber-400 transition-colors flex items-center justify-center lg:justify-end gap-1 px-1"
-            >
-              <Globe className="w-3.5 h-3.5 text-amber-400" />
-              <span>yosh-avlod-kanali.vercel.app</span>
-            </a>
+              <a
+                href="https://yosh-avlod-kanali.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[var(--sub-color)] hover:text-amber-400 transition-colors flex items-center gap-1.5 px-2 py-1"
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-400" />
+                <span>yosh-avlod-kanali.vercel.app</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -320,6 +369,56 @@ export const PartnersView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* High-Resolution Photo Lightbox Modal */}
+      {isPhotoOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsPhotoOpen(false)}
+        >
+          <div
+            className="relative max-w-lg w-full bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-4 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsPhotoOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer z-10"
+              title="Yopish"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Photo Preview */}
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black border border-amber-500/30">
+              <img
+                src="/photo_2024-10-04_23-21-18.jpg"
+                alt="Shamsiddin Kamoliddinov - Bosh Hamkor va Homiy"
+                className="w-full h-full object-cover object-top filter grayscale contrast-110"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src.indexOf('/shamsiddin_partner.jpg') === -1) {
+                    target.src = '/shamsiddin_partner.jpg';
+                  }
+                }}
+              />
+            </div>
+
+            {/* Modal Caption */}
+            <div className="text-center space-y-1 pb-1">
+              <div className="flex items-center justify-center gap-2">
+                <Crown className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  Shamsiddin Kamoliddinov
+                </h3>
+              </div>
+              <p className="text-xs text-amber-300/90 font-medium">
+                AI / ML muhandisi • Yolnoma Bosh Hamkori va Homiysi
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
