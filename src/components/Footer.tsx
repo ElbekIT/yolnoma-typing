@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Globe,
   Handshake,
+  Send,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -108,15 +109,28 @@ export const Footer: React.FC<FooterProps> = ({
             </a>
           </nav>
 
-          {/* Quick Viral Share Button */}
-          <button
-            onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
-            title="Do'stlarga ulashish"
-          >
-            <Share2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>Do'stlarga Ulashish</span>
-          </button>
+          {/* Actions: Telegram Channel & Share Modal */}
+          <div className="flex items-center gap-2">
+            <a
+              href="https://t.me/yolnoma_uz1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#229ED9] border border-[#229ED9]/30 text-xs font-bold transition-all shadow-sm"
+              title="Yolnoma rasmiy Telegram kanali (@yolnoma_uz1)"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>@yolnoma_uz1</span>
+            </a>
+
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
+              title="Do'stlarga ulashish"
+            >
+              <Share2 className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ulashish</span>
+            </button>
+          </div>
         </div>
 
         {/* SEO Collapsible Information & Platform Description */}

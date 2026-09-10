@@ -128,6 +128,13 @@ export function updatePageSEO(tabKey: string, customTitle?: string, customDesc?:
   link.setAttribute('href', info.canonicalUrl);
 }
 
+export const OFFICIAL_TELEGRAM_CHANNEL = 'https://t.me/yolnoma_uz1';
+export const OFFICIAL_TELEGRAM_HANDLE = '@yolnoma_uz1';
+
+export function openTelegramChannel() {
+  window.open(OFFICIAL_TELEGRAM_CHANNEL, '_blank', 'noopener,noreferrer');
+}
+
 /**
  * Viral Sharing Helpers
  */
@@ -140,7 +147,7 @@ export interface SharePayload {
 }
 
 export function generateShareUrl(payload?: SharePayload): string {
-  const baseUrl = 'https://yolnoma.uz';
+  const baseUrl = 'https://www.yolnoma.uz';
   if (!payload) return baseUrl;
 
   const params = new URLSearchParams();
