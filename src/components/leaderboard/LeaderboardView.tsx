@@ -65,7 +65,11 @@ interface FormattedLeaderboardEntry extends LeaderboardUser {
   dateFormatted: string;
 }
 
-export const LeaderboardView: React.FC = () => {
+interface LeaderboardViewProps {
+  onOpenLogin?: () => void;
+}
+
+export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin }) => {
   const { profile: currentUser } = useAuth();
 
   // Active Scope & Time Filter
@@ -463,6 +467,34 @@ export const LeaderboardView: React.FC = () => {
         </div>
       )}
 
+      {/* Guest Notice: Prompt to join the leaderboard */}
+      {!currentUser && (
+        <div className="bg-[var(--sub-alt)]/40 border border-amber-500/30 rounded-2xl px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[var(--text-color)]">
+                Reytingda o&apos;rningizni ko&apos;rish va natijangizni saqlash uchun tizimga kiring
+              </div>
+              <p className="text-xs text-[var(--sub-color)] mt-0.5">
+                Mehmon natijalari reytingga kiritilmaydi. Google yoki GitHub orqali 1 bosqichda tizimga kiring!
+              </p>
+            </div>
+          </div>
+          {onOpenLogin && (
+            <button
+              onClick={onOpenLogin}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-xs"
+            >
+              <span>Kirish / Ro&apos;yxatdan o&apos;tish</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Main 2-Column Responsive Layout (Sidebar + Main Content Table) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Sidebar Filters (4 Cols on desktop) */}
@@ -689,14 +721,14 @@ export const LeaderboardView: React.FC = () => {
             <table className="w-full text-left text-sm font-mono border-collapse">
               <thead>
                 <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
-                  <th className="pb-3.5 px-3 w-12 font-medium">#</th>
-                  <th className="pb-3.5 px-4 font-medium">name</th>
-                  <th className="pb-3.5 px-3 text-center font-medium">mode</th>
-                  <th className="pb-3.5 px-4 text-right font-bold text-[var(--main-color)]">wpm</th>
-                  <th className="pb-3.5 px-4 text-right font-medium">accuracy</th>
-                  <th className="pb-3.5 px-4 text-right font-medium text-[var(--sub-color)]">raw</th>
-                  <th className="pb-3.5 px-4 text-right font-medium text-[var(--sub-color)]">consistency</th>
-                  <th className="pb-3.5 px-4 text-right font-medium text-[var(--sub-color)]">date</th>
+                  <th className="pb-3.5 px-2.5 sm:px-3 w-10 sm:w-12 font-medium">#</th>
+                  <th className="pb-3.5 px-3 sm:px-4 font-medium">name</th>
+                  <th className="pb-3.5 px-2 sm:px-3 text-center font-medium">mode</th>
+                  <th className="pb-3.5 px-3 sm:px-4 text-right font-bold text-[var(--main-color)]">wpm</th>
+                  <th className="pb-3.5 px-3 sm:px-4 text-right font-medium">accuracy</th>
+                  <th className="pb-3.5 px-4 text-right font-medium text-[var(--sub-color)] hidden md:table-cell">raw</th>
+                  <th className="pb-3.5 px-4 text-right font-medium text-[var(--sub-color)] hidden lg:table-cell">consistency</th>
+                  <th className="pb-3.5 px-3 sm:px-4 text-right font-medium text-[var(--sub-color)]">date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--sub-alt)]/20">
@@ -777,12 +809,12 @@ export const LeaderboardView: React.FC = () => {
                         </td>
 
                         {/* Raw WPM */}
-                        <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm">
+                        <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm hidden md:table-cell">
                           {item.rawWpmCalc}
                         </td>
 
                         {/* Consistency */}
-                        <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm">
+                        <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm hidden lg:table-cell">
                           {item.consistencyCalc}
                         </td>
 

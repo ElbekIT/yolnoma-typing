@@ -461,7 +461,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                 ref={(el) => {
                   wordRefs.current[idx] = el;
                 }}
-                className={`inline-block whitespace-nowrap ${isTape ? 'mr-0' : 'my-0.5'}`}
+                className={`inline-block whitespace-nowrap max-w-full ${isTape ? 'mr-0' : 'my-0.5'}`}
               >
                 {/* Word Characters */}
                 {wordObj.chars.map(({ char, globalIndex }) => {

@@ -43,15 +43,15 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="w-full mt-auto select-none safe-bottom border-t border-[var(--sub-alt)]/60 bg-[var(--card-bg)]/40 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
+    <footer className="w-full mt-auto select-none safe-bottom border-t border-[var(--sub-alt)]/50 bg-[var(--card-bg)]/40 backdrop-blur-xs">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 space-y-2 sm:space-y-2.5">
         {/* Top SEO Crawlable Navigation Links */}
-        <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 text-xs font-semibold text-[var(--sub-color)] border-b border-[var(--sub-alt)]/40 pb-4">
-          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2" aria-label="Asosiy bo'limlar">
+        <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2.5 text-[11px] sm:text-xs font-mono text-[var(--sub-color)] border-b border-[var(--sub-alt)]/30 pb-2.5">
+          <nav className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 gap-y-1.5" aria-label="Asosiy bo'limlar">
             <a
               href="/"
               onClick={(e) => handleNav('typing', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
               title="Klaviaturada tez yozish testi"
             >
               <Keyboard className="w-3.5 h-3.5 text-[var(--main-color)]" />
@@ -61,7 +61,7 @@ export const Footer: React.FC<FooterProps> = ({
             <a
               href="/leaderboard"
               onClick={(e) => handleNav('leaderboard', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
               title="O'zbekiston milliy reytingi"
             >
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
@@ -71,7 +71,7 @@ export const Footer: React.FC<FooterProps> = ({
             <a
               href="/battle"
               onClick={(e) => handleNav('battle', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
               title="Speedway 1v1 yozish jangi"
             >
               <Swords className="w-3.5 h-3.5 text-rose-400" />
@@ -81,7 +81,7 @@ export const Footer: React.FC<FooterProps> = ({
             <a
               href="/lessons"
               onClick={(e) => handleNav('lessons', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
               title="10 barmoq bilan ko'r-ko'rona yozish saboqlari"
             >
               <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
             <a
               href="/languages"
               onClick={(e) => handleNav('languages', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
               title="125 dan ortiq jahon tillari"
             >
               <Globe className="w-3.5 h-3.5 text-sky-400" />
@@ -101,7 +101,7 @@ export const Footer: React.FC<FooterProps> = ({
             <a
               href="/partners"
               onClick={(e) => handleNav('partners', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
               title="Rasmiy hamkor va homiylar"
             >
               <Handshake className="w-3.5 h-3.5 text-amber-500" />
@@ -109,71 +109,71 @@ export const Footer: React.FC<FooterProps> = ({
             </a>
           </nav>
 
-          {/* Actions: Telegram Channel & Share Modal */}
+          {/* Actions: Telegram Channel & Share Modal (Compact) */}
           <div className="flex items-center gap-2">
             <a
               href="https://t.me/yolnoma_uz1"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#229ED9] border border-[#229ED9]/30 text-xs font-bold transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#229ED9] border border-[#229ED9]/30 text-[11px] font-bold transition-all shadow-xs"
               title="Yolnoma rasmiy Telegram kanali (@yolnoma_uz1)"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-3 h-3" />
               <span>@yolnoma_uz1</span>
             </a>
 
             <button
               onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition-all shadow-xs cursor-pointer"
               title="Do'stlarga ulashish"
             >
-              <Share2 className="w-3.5 h-3.5 text-amber-400" />
+              <Share2 className="w-3 h-3 text-amber-400" />
               <span>Ulashish</span>
             </button>
           </div>
         </div>
 
-        {/* SEO Collapsible Information & Platform Description */}
+        {/* SEO Collapsible Information (Compact, Lightweight & Balanced) */}
         <div className="text-center">
           <button
             onClick={() => setShowSeoDetails(!showSeoDetails)}
-            className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer py-1"
+            className="inline-flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-mono text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer py-0.5"
           >
             <span>Yolnoma Typing Platformasi Haqida & SEO Ma'lumotlari</span>
             {showSeoDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
 
           {showSeoDetails && (
-            <div className="mt-3 p-4 rounded-2xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)] text-left text-xs text-[var(--sub-color)] space-y-3 animate-in fade-in duration-200">
-              <h4 className="font-bold text-[var(--text-color)] text-sm">
+            <div className="mt-2 p-3 sm:p-3.5 rounded-xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)]/50 text-left text-[11px] text-[var(--sub-color)] space-y-2 animate-in fade-in duration-150">
+              <h4 className="font-bold text-[var(--text-color)] text-xs sm:text-[13px]">
                 Yolnoma Typing — O'zbekistondagi №1 Tez Yozish va 10 Barmoq Mashqlari Portali
               </h4>
-              <p className="leading-relaxed">
+              <p className="leading-relaxed text-[11px]">
                 Yolnoma Typing — klaviaturada ko'r-ko'rona 10 barmoq bilan tez yozish (touch typing) ko'nikmalarini oshirish, 
-                WPM (Words Per Minute — bir daqiqadagi so'zlar soni) va CPM (Characters Per Minute — belgilar soni) ko'rsatkichlarini real-vaqtda aniqlash 
+                WPM (bir daqiqadagi so'zlar) va CPM (belgilar soni) ko'rsatkichlarini real-vaqtda aniqlash 
                 hamda O'zbekiston milliy reytingida yetakchilik qilish uchun mo'ljallangan zamonaviy onlayn platformadir.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)]">
-                  <div className="font-bold text-[var(--text-color)] mb-1">⚡ 125+ Jahon Tillari</div>
-                  <div className="text-[11px]">O'zbekcha (Lotin & Kirill), Ruscha, Inglizcha va boshqa 120 dan ortiq tillarda professional yozish mashqlari.</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                <div className="p-2 rounded-lg bg-[var(--card-bg)]/70 border border-[var(--sub-alt)]/40">
+                  <div className="font-bold text-[var(--text-color)] text-[11px] mb-0.5">⚡ 125+ Jahon Tillari</div>
+                  <div className="text-[10px] leading-snug">O'zbekcha (Lotin & Kirill), Ruscha, Inglizcha va boshqa 120 dan ortiq tillarda professional yozish mashqlari.</div>
                 </div>
-                <div className="p-3 rounded-xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)]">
-                  <div className="font-bold text-[var(--text-color)] mb-1">🏆 Jonli Milliy Reyting</div>
-                  <div className="text-[11px]">Barcha natijalar Firebase orqali xavfsiz hisoblanadi va mamlakatning eng tezkor tipistlari ro'yxatida aks etadi.</div>
+                <div className="p-2 rounded-lg bg-[var(--card-bg)]/70 border border-[var(--sub-alt)]/40">
+                  <div className="font-bold text-[var(--text-color)] text-[11px] mb-0.5">🏆 Jonli Milliy Reyting</div>
+                  <div className="text-[10px] leading-snug">Barcha natijalar Firebase orqali xavfsiz hisoblanadi va mamlakatning eng tezkor tipistlari ro'yxatida aks etadi.</div>
                 </div>
-                <div className="p-3 rounded-xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)]">
-                  <div className="font-bold text-[var(--text-color)] mb-1">🏎️ Speedway Battle Arena</div>
-                  <div className="text-[11px]">Do'stlaringiz yoki onlayn raqiblaringiz bilan 1v1 poygada klaviatura tezligingizni sinab ko'ring.</div>
+                <div className="p-2 rounded-lg bg-[var(--card-bg)]/70 border border-[var(--sub-alt)]/40">
+                  <div className="font-bold text-[var(--text-color)] text-[11px] mb-0.5">🏎️ Speedway Battle Arena</div>
+                  <div className="text-[10px] leading-snug">Do'stlaringiz yoki onlayn raqiblaringiz bilan 1v1 poygada klaviatura tezligingizni sinab ko'ring.</div>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Bottom Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-[var(--sub-color)] pt-2 border-t border-[var(--sub-alt)]/30">
-          <div className="flex items-center gap-3">
+        {/* Bottom Bar - Ultra clean & compact */}
+        <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2 sm:gap-3 text-[10.5px] sm:text-[11px] font-mono text-[var(--sub-color)] pt-1.5 border-t border-[var(--sub-alt)]/25">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
             <div className="flex items-center gap-1.5 text-[var(--text-color)] font-bold">
               <Keyboard className="w-3.5 h-3.5 text-[var(--main-color)]" />
               <span>yolnoma</span>
@@ -187,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({
             {onOpenUpdates ? (
               <button
                 onClick={onOpenUpdates}
-                className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 cursor-pointer font-bold px-1.5 py-0.5 rounded-md hover:bg-[var(--sub-alt)]"
+                className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1 cursor-pointer font-bold px-1.5 py-0.5 rounded-md hover:bg-[var(--sub-alt)]"
                 title="Sayt yangilanishlari xronologiyasi (Changelog)"
               >
                 <Zap className="w-3 h-3 text-amber-400" />
@@ -199,7 +199,7 @@ export const Footer: React.FC<FooterProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {onOpenUpdates && (
               <button
                 onClick={onOpenUpdates}

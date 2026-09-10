@@ -464,11 +464,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </div>
             ) : (
               <button
-                onClick={onOpenAuth}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[var(--main-color)] text-white font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                onClick={() => setActiveTab('login')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-bold text-xs ${
+                  activeTab === 'login'
+                    ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/80 shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
+                }`}
+                title="Tizimga kirish (Login)"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Kirish</span>
+                <UserIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Kirish</span>
               </button>
             )}
           </div>
@@ -614,11 +619,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 <button
                   onClick={() => {
                     setIsDrawerOpen(false);
-                    onOpenAuth();
+                    setActiveTab('login');
                   }}
-                  className="w-full py-3 rounded-2xl bg-[var(--main-color)] text-white font-extrabold text-sm shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2.5 hover:opacity-95 transition-all"
+                  className="w-full py-3 rounded-2xl bg-[var(--main-color)] text-white font-extrabold text-sm shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2.5 hover:opacity-95 transition-all cursor-pointer"
                 >
-                  <LogIn className="w-5 h-5" />
+                  <UserIcon className="w-5 h-5" />
                   <span>Tizimga Kirish</span>
                 </button>
               )}

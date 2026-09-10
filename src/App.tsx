@@ -78,6 +78,7 @@ function MainAppContent() {
     statistics: 'statistics',
     profile: 'profile',
     settings: 'settings',
+    login: 'login',
     achievements: 'achievements',
     challenges: 'challenges',
     partners: 'partners',
@@ -94,6 +95,7 @@ function MainAppContent() {
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
     profile: 'Foydalanuvchi Profili - Yolnoma Typing',
+    login: 'Kirish & Ro\'yxatdan o\'tish - Yolnoma Typing',
     settings: 'Sozlamalar - Yolnoma Typing',
     achievements: 'Yutuqlar & Unvonlar - Yolnoma Typing',
     challenges: 'Musobaqalar & Bellashuvlar - Yolnoma Typing',
@@ -108,6 +110,7 @@ function MainAppContent() {
     const _adm = atob('YWRtaW4=');
     if (!pathname || pathname === 'typing' || pathname === 'home' || pathname === 'index.html') return 'typing';
     if (pathname === _adm) return _adm;
+    if (['login', 'kirish', 'auth', 'signin', 'signup', 'register'].includes(pathname)) return 'login';
     if (['languages', 'tillar', 'language', 'til'].includes(pathname)) return 'languages';
     if (['leaderboard', 'rating', 'reyting', 'top'].includes(pathname)) return 'leaderboard';
     if (['battle', 'arena', 'duel', 'jang'].includes(pathname)) return 'battle';
@@ -756,9 +759,9 @@ function MainAppContent() {
     );
   }
 
-  // Mandatory Login Gate if user is not authenticated (AFTER ALL HOOKS)
-  if (!user) {
-    return <LoginPage />;
+  // Redirect to typing test if already logged in and on login tab
+  if (user && activeTab === 'login') {
+    setActiveTab('typing');
   }
 
   // Blocked / Banned User Gate (Cloud & Device Local Anti-Cheat)
@@ -952,7 +955,7 @@ function MainAppContent() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => setActiveTab('login')}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
@@ -1027,6 +1030,10 @@ function MainAppContent() {
                 setIsTestFinished(false);
                 setActiveTab('leaderboard');
               }}
+              onOpenLogin={() => {
+                setIsTestFinished(false);
+                setActiveTab('login');
+              }}
             />
           </div>
         )}
@@ -1050,7 +1057,9 @@ function MainAppContent() {
             />
           )}
           {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'leaderboard' && <LeaderboardView />}
+          {activeTab === 'leaderboard' && (
+            <LeaderboardView onOpenLogin={() => setActiveTab('login')} />
+          )}
           {activeTab === 'statistics' && <StatisticsView />}
           {activeTab === 'achievements' && <AchievementsView />}
           {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
@@ -1066,8 +1075,14 @@ function MainAppContent() {
           {activeTab === 'admin' && <AdminView />}
           {activeTab === 'profile' && (
             <ProfileView
-              onOpenAuth={() => setIsAuthOpen(true)}
+              onOpenAuth={() => setActiveTab('login')}
               onSavedHome={() => setActiveTab('typing')}
+            />
+          )}
+          {activeTab === 'login' && (
+            <LoginPage
+              onSuccess={() => setActiveTab('typing')}
+              onBackToTyping={() => setActiveTab('typing')}
             />
           )}
           {activeTab === 'settings' && <SettingsView />}

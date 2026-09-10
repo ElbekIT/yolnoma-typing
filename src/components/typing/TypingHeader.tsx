@@ -88,7 +88,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         }`}
       >
         {/* Monkeytype Style Minimal Floating Pill Bar */}
-        <div className={`w-full bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-xl ${scaleConfig.container} flex items-center justify-center font-mono select-none overflow-x-auto no-scrollbar shadow-sm`}>
+        <div className={`w-full bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar shadow-sm`}>
           {/* Modes List */}
           <div className="flex items-center gap-1 sm:gap-1.5">
             {modesList.map((m) => {
