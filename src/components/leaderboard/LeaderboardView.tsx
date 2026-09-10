@@ -3,6 +3,7 @@ import {
   Crown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Search,
   CheckCircle2,
   Trophy,
@@ -16,7 +17,8 @@ import {
   Sparkles,
   ArrowUpRight,
   X,
-  FileText
+  FileText,
+  Layers
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
@@ -87,6 +89,41 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
   // Profile modal
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Floating Scroll to Top button state
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Track window scroll for Scroll-to-Top visibility
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (window.scrollY > 220) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Dedicated mouse wheel handler for table container to guarantee
+  // that mouse wheel vertical scrolls seamlessly scroll the page without freezing
+  const handleTableWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      return; // allow native horizontal scroll if shift key or horizontal gesture
+    }
+    if (Math.abs(e.deltaY) > 0) {
+      window.scrollBy({
+        top: e.deltaY,
+        behavior: 'auto'
+      });
+    }
+  };
 
   // Format Date helper (e.g., 07 Sept 2026)
   const formatDate = (timestamp?: number): string => {
@@ -356,12 +393,18 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
     return null;
   }, [currentUser, sortedList]);
 
-  // Jump to user's row
+  // Jump to user's row with smooth scrolling
   const handleJumpToMyRank = () => {
     if (!myRankingInfo) return;
     const targetPage = Math.floor((myRankingInfo.rank - 1) / pageSize) + 1;
     setCurrentPage(targetPage);
     setSearchQuery('');
+    setTimeout(() => {
+      const el = document.getElementById(`rank-row-${currentUser?.uid}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
   };
 
   // Open profile modal
@@ -717,9 +760,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
           </div>
 
           {/* Table Container - clean, spacious, matching the exact Monkeytype style */}
-          <div className="w-full overflow-x-auto pb-4">
+          <div
+            onWheel={handleTableWheel}
+            className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y"
+          >
             <table className="w-full text-left text-sm font-mono border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
                 <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
                   <th className="pb-3.5 px-2.5 sm:px-3 w-10 sm:w-12 font-medium">#</th>
                   <th className="pb-3.5 px-3 sm:px-4 font-medium">name</th>
@@ -748,6 +794,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
                     return (
                       <tr
                         key={item.uid}
+                        id={`rank-row-${item.uid}`}
                         onClick={() => openUserProfile(item)}
                         className={`cursor-pointer transition-colors hover:bg-[var(--sub-alt)]/30 group ${
                           isSelf ? 'bg-[var(--main-color)]/10 font-bold' : ''
@@ -829,8 +876,79 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
               </tbody>
             </table>
           </div>
+
+          {/* Bottom Table Pagination & Display Size Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 pb-1 border-t border-[var(--sub-alt)]/40 text-xs text-[var(--sub-color)] font-mono">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--sub-color)]/80 text-[11px]">Ko&apos;rsatish:</span>
+              <div className="flex items-center gap-1">
+                {[15, 25, 50].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => {
+                      setPageSize(size);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold cursor-pointer transition-all ${
+                      pageSize === size
+                        ? 'bg-[var(--main-color)] text-white shadow-xs'
+                        : 'bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+              <span className="hidden sm:inline text-[var(--sub-color)]/60 text-[11px]">• Jami {totalCount} ta teruvchi</span>
+            </div>
+
+            {/* Bottom Pagination Controls */}
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              <button
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  window.scrollTo({ top: 120, behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+                className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                title="Oldingi sahifa"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <span className="font-mono text-sm text-[var(--main-color)] font-semibold px-1">
+                # {currentPage} / {totalPages}
+              </span>
+
+              <button
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 120, behavior: 'smooth' });
+                }}
+                disabled={currentPage === totalPages}
+                className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                title="Keyingi sahifa"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Floating Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-40 p-3 sm:px-4 sm:py-2.5 rounded-2xl bg-[var(--main-color)] text-white shadow-2xl hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 font-mono text-xs font-bold cursor-pointer border border-white/20 animate-in fade-in slide-in-from-bottom-3 duration-200"
+          title="Tepaga qaytish"
+          aria-label="Tepaga qaytish"
+        >
+          <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Tepaga</span>
+        </button>
+      )}
 
       {/* Bottom Footer Meta Links (Matching the screenshot footer: yo'riqnoma, verified, v2.6, yangilanishlar, muallif, qoidalar) */}
       <div className="pt-8 border-t border-[var(--sub-alt)]/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--sub-color)] font-mono">

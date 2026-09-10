@@ -40,6 +40,7 @@ const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m
 const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
+const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
 
 function ViewLoadingFallback() {
   return (
@@ -632,6 +633,15 @@ function MainAppContent() {
     };
   }, [initTestText]);
 
+  // Scroll to top immediately when switching views/tabs
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab]);
+
   // Handle finish test
   const finishTest = useCallback(async () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -941,7 +951,7 @@ function MainAppContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-hidden w-full">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-clip w-full">
       {/* Whitelisted Owner Notice during Active Maintenance */}
       {maintenanceInfo.active && isOwnerWhitelisted && (
         <div className="bg-rose-600 text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-lg border-b border-rose-700">
@@ -958,7 +968,7 @@ function MainAppContent() {
         onOpenAuth={() => setActiveTab('login')}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-hidden">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-clip">
         {activeTab === 'typing' && (
           <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
             {/* Viral Social Challenge Banner */}
@@ -1035,6 +1045,10 @@ function MainAppContent() {
                 setActiveTab('login');
               }}
             />
+
+            <React.Suspense fallback={null}>
+              <SeoArticleSection onStartPractice={initTestText} />
+            </React.Suspense>
           </div>
         )}
 

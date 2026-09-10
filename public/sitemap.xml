@@ -5,71 +5,71 @@
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
   <url>
-    <loc>https://yolnoma.uz/</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/leaderboard</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/leaderboard</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.95</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/battle</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/battle</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/lessons</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/lessons</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/languages</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/languages</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/statistics</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/statistics</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.75</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/achievements</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/achievements</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/challenges</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/challenges</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/partners</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/partners</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.65</priority>
   </url>
 
   <url>
-    <loc>https://yolnoma.uz/about</loc>
-    <lastmod>2026-09-09</lastmod>
+    <loc>https://www.yolnoma.uz/about</loc>
+    <lastmod>2026-09-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

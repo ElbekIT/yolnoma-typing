@@ -16,67 +16,67 @@ export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
     title: "Yolnoma Typing - O'zbekiston №1 Tez Yozish Platformasi & Klaviaturada 10 Barmoq Testi",
     description: "Dunyo bo'yicha 125+ tilda klaviaturada tez yozish, 10 barmoq mashqlari va real-vaqt musobaqa platformasi. Bepul WPM va CPM tezligingizni aniqlang!",
     keywords: "yolnoma, yolnoma typing, tez yozish testi, klaviaturada tez yozish, 10 barmoq bilan yozish, wpm test uzbek, speed typing uzbekistan, klaviatura trenajyori, touch typing test",
-    canonicalUrl: "https://yolnoma.uz/"
+    canonicalUrl: "https://www.yolnoma.uz/"
   },
   leaderboard: {
     title: "Milliy Reyting - O'zbekistonning Eng Tezkor Yozuvchilari | Yolnoma Typing",
     description: "Yolnoma Typing rasmiy milliy peshqadamlar jadvali. O'zbekiston bo'yicha eng yuqori WPM tezlikka ega foydalanuvchilar va kunlik rekordlar.",
     keywords: "yolnoma reyting, eng tez yozuvchilar, typing leaderboard uzbekistan, wpm rekordlar, typing arena reyting, o'zbekcha tez yozish chempionlari",
-    canonicalUrl: "https://yolnoma.uz/leaderboard"
+    canonicalUrl: "https://www.yolnoma.uz/leaderboard"
   },
   battle: {
     title: "Speedway Battle Arena - Jonli 1v1 Tez Yozish Janglari | Yolnoma Typing",
     description: "Boshqa foydalanuvchilar bilan real-vaqtda klaviaturada tez yozish jangi. Duelda g'alaba qozoning va tajriba ballaringizni oshiring!",
     keywords: "yolnoma battle, tez yozish jangi, typing arena 1v1, speedway battle, klaviatura dueli, real-time typing battle uzbek",
-    canonicalUrl: "https://yolnoma.uz/battle"
+    canonicalUrl: "https://www.yolnoma.uz/battle"
   },
   lessons: {
     title: "10 Barmoq Mashqlari & Saboqlar - Ko'r-ko'rona Yozish Kursi | Yolnoma",
     description: "Klaviaturaga qaramasdan 10 barmoq bilan tez yozishni bosqichma-bosqich o'rganing. Boshlang'ichdan professional darajagacha bepul interaktiv mashqlar.",
     keywords: "10 barmoq saboqlari, klaviaturada yozishni organish, touch typing darslari, kor korona yozish uzbekcha, tez yozish kurslari",
-    canonicalUrl: "https://yolnoma.uz/lessons"
+    canonicalUrl: "https://www.yolnoma.uz/lessons"
   },
   languages: {
     title: "125+ Jahon Tillari & Lug'atlar - Klaviaturada Tez Yozish | Yolnoma",
     description: "O'zbek (Lotin va Kirill), Ingliz, Rus va dunyoning 125 dan ortiq tillarida yozish mashqlari. Istalgan tilda WPM tezligingizni sinab ko'ring.",
     keywords: "yolnoma tillar, o'zbekcha yozish testi, ruscha tez yozish, inglizcha typing test, 125 languages typing",
-    canonicalUrl: "https://yolnoma.uz/languages"
+    canonicalUrl: "https://www.yolnoma.uz/languages"
   },
   statistics: {
     title: "Shaxsiy Statistika & Tahlil - Tezlik O'sish Grafigi | Yolnoma",
     description: "Barcha topshirilgan testlar tarixi, WPM va aniqlik dinamikasi, eng ko'p adashilgan harflar tahlili.",
     keywords: "typing statistika, wpm grafigi, aniqlik tahlili, klaviatura tezlik rekordi",
-    canonicalUrl: "https://yolnoma.uz/statistics"
+    canonicalUrl: "https://www.yolnoma.uz/statistics"
   },
   achievements: {
     title: "Yutuqlar & Unvonlar - Professional Tipist Pog'onalari | Yolnoma",
     description: "Tez yozish orqali yangi unvonlar, medallar va yutuqlarni qo'lga kiriting. O'z mahoratingizni isbotlang!",
     keywords: "yolnoma yutuqlar, typing badges, tez yozish medali, unvonlar",
-    canonicalUrl: "https://yolnoma.uz/achievements"
+    canonicalUrl: "https://www.yolnoma.uz/achievements"
   },
   challenges: {
     title: "Musobaqalar & Maxsus Bellashuvlar | Yolnoma Typing",
     description: "Kunlik va haftalik tez yozish topshiriqlari, murakkab matnlar va tezlik musobaqalari.",
     keywords: "typing challenges, kunlik musobaqa, tez yozish topshirig'i",
-    canonicalUrl: "https://yolnoma.uz/challenges"
+    canonicalUrl: "https://www.yolnoma.uz/challenges"
   },
   partners: {
     title: "Rasmiy Hamkor va Homiyimiz - Shamsiddin Kamoliddinov | Yolnoma Typing",
     description: "Yolnoma platformasining rivojlanishi va yoshlarning IT hamda klaviaturada tez yozish ko'nikmalarini oshirishdagi rasmiy hamkor va homiysi.",
     keywords: "yolnoma hamkor, yolnoma homiy, shamsiddin kamoliddinov, Farg'ona Davlat Texnika Universiteti, sun'iy intellekt",
-    canonicalUrl: "https://yolnoma.uz/partners"
+    canonicalUrl: "https://www.yolnoma.uz/partners"
   },
   owner: {
     title: "Sayt Haqida & Muallif - Yolnoma Typing Tarixi",
     description: "Yolnoma platformasi haqida ma'lumot, yaratilish tarixi va maqsadlari.",
     keywords: "yolnoma haqida, muallif, yolnoma kim yaratgan",
-    canonicalUrl: "https://yolnoma.uz/about"
+    canonicalUrl: "https://www.yolnoma.uz/about"
   },
   dashboard: {
     title: "Boshqaruv Paneli | Yolnoma Typing",
     description: "Foydalanuvchi shaxsiy boshqaruv va statistika paneli.",
     keywords: "yolnoma dashboard, profil boshqaruvi",
-    canonicalUrl: "https://yolnoma.uz/dashboard"
+    canonicalUrl: "https://www.yolnoma.uz/dashboard"
   }
 };
 

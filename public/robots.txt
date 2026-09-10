@@ -3,5 +3,6 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://yolnoma.uz/sitemap.xml
-Host: https://yolnoma.uz
+Sitemap: https://www.yolnoma.uz/sitemap.xml
+Host: https://www.yolnoma.uz
+
