@@ -1,10 +1,14 @@
 import { TextMode, DifficultyMode, LanguageCode } from '../types';
 import { getLanguageInfo, codeSnippets } from '../config/languages';
 import { getCustomTextsForLanguage } from './customContentStore';
+import { ALL_UZBEK_QUOTES, getRandomUzbekQuote } from '../data/uzbekQuotes';
+import { CODE_SNIPPETS, getRandomCodeSnippet, CodeLanguage } from '../data/codeSnippets';
 
 export interface GeneratedText {
   rawText: string;
   wordsList: string[];
+  quoteMeta?: { author: string; source?: string };
+  codeLang?: string;
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -21,7 +25,8 @@ export function generateTestText(
   language: LanguageCode,
   difficulty: DifficultyMode,
   wordCount: number = 25,
-  customText?: string
+  customText?: string,
+  targetCodeLang?: CodeLanguage
 ): GeneratedText {
   // If explicitly in custom mode with customText provided
   if (mode === 'custom' && customText && customText.trim().length > 0) {
@@ -48,23 +53,26 @@ export function generateTestText(
     }
   }
 
+  // Developer Code Mode (real JavaScript, Python, HTML/CSS, C++/Go)
   if (mode === 'code') {
-    const snippets = codeSnippets.javascript.concat(codeSnippets.python, codeSnippets.html);
-    const selected = snippets[Math.floor(Math.random() * snippets.length)];
-    const clean = selected.replace(/\n/g, ' ');
+    const snippet = getRandomCodeSnippet(targetCodeLang);
     return {
-      rawText: clean,
-      wordsList: clean.split(' ')
+      rawText: snippet.code,
+      wordsList: snippet.code.split(' '),
+      codeLang: snippet.language
     };
   }
 
+  // Uzbek Literature & Proverbs Mode
   if (mode === 'quotes') {
-    const quoteList = langInfo.quotes && langInfo.quotes.length > 0 ? langInfo.quotes : getLanguageInfo('uz-latn').quotes;
-    const quote = quoteList[Math.floor(Math.random() * quoteList.length)];
-    const text = `${quote.text} — ${quote.author}`;
+    const quoteItem = getRandomUzbekQuote();
     return {
-      rawText: text,
-      wordsList: text.split(' ')
+      rawText: quoteItem.text,
+      wordsList: quoteItem.text.split(' '),
+      quoteMeta: {
+        author: quoteItem.author,
+        source: quoteItem.source
+      }
     };
   }
 

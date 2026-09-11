@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Home,
   Keyboard,
   Trophy,
   BarChart2,
@@ -38,6 +39,8 @@ import { LanguageCode, ThemeMode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
 import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
 import { ShareModal } from './share/ShareModal';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useI18n } from '../context/I18nContext';
 
 interface HeaderProps {
   activeTab: string;
@@ -48,6 +51,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
+  const { t } = useI18n();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -91,7 +95,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   );
 
   const navItems = [
-    { id: 'typing', label: 'Yozish Testi', enLabel: 'Typing Test', icon: Keyboard },
+    { id: 'home', label: t('navHome'), enLabel: 'Home', icon: Home },
+    { id: 'typing', label: t('navTyping'), enLabel: 'Typing Test', icon: Keyboard },
     { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
@@ -130,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </button>
 
             {/* Brand Logo */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('typing')}>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
               <img
                 src="/yolnoma_icon.svg"
                 alt="Yolnoma Logo"
@@ -146,6 +151,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
             {/* Quick Icon Links (Monkeytype style) */}
             <div className="hidden md:flex items-center gap-1.5 text-[var(--sub-color)]">
+              <button
+                onClick={() => setActiveTab('home')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'home' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Bosh Sahifa"
+              >
+                <Home className={iconDimensions} />
+              </button>
+
               <button
                 onClick={() => setActiveTab('typing')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
@@ -218,8 +233,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </div>
           </div>
 
-          {/* Right Side: Circular Profile Avatar with Dropdown */}
-          <div className="flex items-center gap-3">
+          {/* Right Side: Language Switcher & Profile Avatar */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSwitcher />
+
             {user ? (
               <div className="relative">
                 {/* Circular Profile Avatar Button */}
@@ -519,6 +536,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 >
                   <X className="w-5 h-5" />
                 </button>
+              </div>
+
+              {/* Mobile Language Switcher (UZ / RU / EN) */}
+              <div className="pt-2 pb-2">
+                <LanguageSwitcher compact={true} />
               </div>
 
               {/* Clean Navigation Menu Links */}

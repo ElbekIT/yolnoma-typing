@@ -13,6 +13,8 @@ interface TypingDisplayProps {
   onInputChange: (newInput: string) => void;
   onRestart: () => void;
   isTestFinished: boolean;
+  quoteMeta?: { author: string; source?: string };
+  codeLang?: string;
 }
 
 export const TypingDisplay: React.FC<TypingDisplayProps> = ({
@@ -20,7 +22,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   typedInput,
   onInputChange,
   onRestart,
-  isTestFinished
+  isTestFinished,
+  quoteMeta,
+  codeLang
 }) => {
   const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
@@ -586,6 +590,20 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               </span>
             ))}
         </div>
+
+        {/* Literature Quote Attribution or Code Tag */}
+        {quoteMeta && (
+          <div className="mt-3 text-right text-xs font-mono text-[var(--main-color)] italic select-none opacity-90">
+            — {quoteMeta.author}{quoteMeta.source ? `, «${quoteMeta.source}»` : ''}
+          </div>
+        )}
+        {codeLang && (
+          <div className="mt-2 flex items-center justify-end">
+            <span className="text-[10px] font-mono uppercase bg-[var(--sub-alt)] text-[var(--main-color)] px-2 py-0.5 rounded border border-[var(--main-color)]/30">
+              Stack: {codeLang}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Quick Mouse & Keyboard Controls Bar */}

@@ -36,6 +36,7 @@ import {
 } from '../../utils/typingEngine';
 import { rtdb } from '../../config/firebase';
 import { ref, set, onValue, update, remove, get } from 'firebase/database';
+import { CustomRoomBattle } from './CustomRoomBattle';
 
 interface RealPlayerItem {
   uid: string;
@@ -88,6 +89,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const currentDisplayName = profile?.displayName || (user?.email ? user.email.split('@')[0] : 'Mehmon Racer');
   const currentUsername = profile?.username || 'racer';
   const currentAvatar = profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUid}`;
+
+  // Mode: Speedway Arena or Private 1v1 Room
+  const [battleMode, setBattleMode] = useState<'arena' | 'private'>(() => {
+    if (initialRoomCode) return 'private';
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('room')) return 'private';
+    } catch {}
+    return 'arena';
+  });
 
   // Game Lifecycle State
   const [gameState, setGameState] = useState<'lobby' | 'ready_screen' | 'countdown' | 'racing' | 'finished'>('lobby');
@@ -628,6 +639,44 @@ export const BattleView: React.FC<BattleViewProps> = ({
         </div>
       </div>
 
+      {/* Battle Sub-Mode Selector */}
+      <div className="flex items-center justify-center gap-2 p-1 bg-slate-900/80 border border-slate-800 rounded-2xl max-w-md mx-auto">
+        <button
+          onClick={() => setBattleMode('arena')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            battleMode === 'arena'
+              ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Swords className="w-3.5 h-3.5" />
+          <span>Speedway Arena</span>
+        </button>
+
+        <button
+          onClick={() => setBattleMode('private')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            battleMode === 'private'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>Do'st Bilan 1v1 (Xususiy)</span>
+        </button>
+      </div>
+
+      {/* RENDER PRIVATE ROOM 1v1 BATTLE */}
+      {battleMode === 'private' && (
+        <CustomRoomBattle
+          initialRoomCode={initialRoomCode}
+          onClose={() => setBattleMode('arena')}
+        />
+      )}
+
+      {/* RENDER SPEEDWAY ARENA */}
+      {battleMode === 'arena' && (
+        <>
       {/* Invite Notification Banner */}
       {inviteSentStatus && (
         <div className="p-3 bg-cyan-950/70 border border-cyan-500/50 rounded-2xl text-cyan-200 text-xs flex items-center justify-between animate-in slide-in-from-top-2">
@@ -1043,6 +1092,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
             );
           })()}
         </div>
+      )}
+        </>
       )}
     </div>
   );

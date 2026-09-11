@@ -16,6 +16,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
+import { useI18n } from '../context/I18nContext';
 
 interface FooterProps {
   onOpenAbout: () => void;
@@ -32,6 +33,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdmin,
   onNavigate
 }) => {
+  const { t, uiLanguage } = useI18n();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSeoDetails, setShowSeoDetails] = useState(false);
 
@@ -55,7 +57,7 @@ export const Footer: React.FC<FooterProps> = ({
               title="Klaviaturada tez yozish testi"
             >
               <Keyboard className="w-3.5 h-3.5 text-[var(--main-color)]" />
-              <span>Yozish Testi</span>
+              <span>{t('navTyping')}</span>
             </a>
 
             <a
@@ -65,7 +67,7 @@ export const Footer: React.FC<FooterProps> = ({
               title="O'zbekiston milliy reytingi"
             >
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>Milliy Reyting</span>
+              <span>{t('navLeaderboard')}</span>
             </a>
 
             <a
@@ -75,7 +77,7 @@ export const Footer: React.FC<FooterProps> = ({
               title="Speedway 1v1 yozish jangi"
             >
               <Swords className="w-3.5 h-3.5 text-rose-400" />
-              <span>Speedway Battle</span>
+              <span>{t('navBattle')}</span>
             </a>
 
             <a
@@ -85,7 +87,7 @@ export const Footer: React.FC<FooterProps> = ({
               title="10 barmoq bilan ko'r-ko'rona yozish saboqlari"
             >
               <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
-              <span>10 Barmoq Saboqlari</span>
+              <span>{t('navLessons')}</span>
             </a>
 
             <a
@@ -95,7 +97,7 @@ export const Footer: React.FC<FooterProps> = ({
               title="125 dan ortiq jahon tillari"
             >
               <Globe className="w-3.5 h-3.5 text-sky-400" />
-              <span>125+ Jahon Tillari</span>
+              <span>{t('statLanguages')}</span>
             </a>
 
             <a
@@ -105,7 +107,7 @@ export const Footer: React.FC<FooterProps> = ({
               title="Rasmiy hamkor va homiylar"
             >
               <Handshake className="w-3.5 h-3.5 text-amber-500" />
-              <span>Hamkor & Homiy</span>
+              <span>{t('navPartners')}</span>
             </a>
           </nav>
 

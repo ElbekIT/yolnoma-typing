@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
+import { I18nProvider, useI18n } from './context/I18nContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
 import { AboutModal } from './components/about/AboutModal';
 import { LoginPage } from './components/LoginPage';
-import { VirtualKeyboard } from './components/VirtualKeyboard';
-import { TypingHeader } from './components/typing/TypingHeader';
-import { LiveStats } from './components/typing/LiveStats';
-import { TypingDisplay } from './components/typing/TypingDisplay';
-import { ResultModal } from './components/typing/ResultModal';
+import { HomePage } from './pages/HomePage';
+import { TypingPage } from './pages/TypingPage';
+import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
@@ -64,6 +63,7 @@ import {
   TypingResult
 } from './types';
 import { generateTestText, calculateWpm, calculateCpm, calculateAccuracy } from './utils/typingEngine';
+import { CodeLanguage } from './data/codeSnippets';
 
 function MainAppContent() {
   const { language } = useSettings();
@@ -71,7 +71,8 @@ function MainAppContent() {
 
   // Route to URL slug mapping
   const TAB_TO_PATH: Record<string, string> = {
-    typing: '',
+    home: '',
+    typing: 'test',
     languages: 'languages',
     leaderboard: 'leaderboard',
     battle: 'battle',
@@ -89,7 +90,8 @@ function MainAppContent() {
   };
 
   const TAB_TITLES: Record<string, string> = {
-    typing: 'Yolnoma Typing - Tez Yozish Mashqi & Arena',
+    home: "Yolnoma Typing - O'zbekistonda №1 Tez Yozish Platformasi",
+    typing: 'Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing',
     languages: '125+ Jahon Tillari - Yolnoma Typing',
     leaderboard: 'Peshqadamlar Reytingi - Yolnoma Typing',
     battle: 'Speedway Battle Arena - Yolnoma Typing',
@@ -109,7 +111,8 @@ function MainAppContent() {
   const resolvePathToTab = useCallback((rawPath: string): string => {
     const pathname = (rawPath || '').replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
     const _adm = atob('YWRtaW4=');
-    if (!pathname || pathname === 'typing' || pathname === 'home' || pathname === 'index.html') return 'typing';
+    if (!pathname || pathname === 'home' || pathname === 'index.html') return 'home';
+    if (pathname === 'test' || pathname === 'typing' || pathname === 'arena') return 'typing';
     if (pathname === _adm) return _adm;
     if (['login', 'kirish', 'auth', 'signin', 'signup', 'register'].includes(pathname)) return 'login';
     if (['languages', 'tillar', 'language', 'til'].includes(pathname)) return 'languages';
@@ -124,8 +127,7 @@ function MainAppContent() {
     if (['partners', 'hamkorlar'].includes(pathname)) return 'partners';
     if (['about', 'owner', 'haqida'].includes(pathname)) return 'owner';
     if (['dashboard'].includes(pathname)) return 'dashboard';
-    // Graceful fallback: never throw 404, default smoothly to typing arena
-    return 'typing';
+    return 'home';
   }, []);
 
   // Active navigation tab initialized from current browser route
@@ -146,7 +148,7 @@ function MainAppContent() {
       const pathCandidate = redirectRoute || window.location.pathname;
       return resolvePathToTab(pathCandidate);
     } catch {}
-    return 'typing';
+    return 'home';
   });
   const prevUserRef = useRef<string | null>(null);
 
@@ -168,7 +170,7 @@ function MainAppContent() {
   // Synchronize browser address bar with active tab and update comprehensive SEO meta tags
   useEffect(() => {
     try {
-      const slug = TAB_TO_PATH[activeTab] ?? (activeTab === 'typing' ? '' : activeTab);
+      const slug = TAB_TO_PATH[activeTab] ?? (activeTab === 'home' ? '' : activeTab);
       const targetUrl = slug ? `/${slug}` : '/';
       const currentUrl = window.location.pathname;
 
@@ -530,6 +532,10 @@ function MainAppContent() {
   const [wordCountMode, setWordCountMode] = useState<WordCountMode>(0);
   const [difficulty, setDifficulty] = useState<DifficultyMode>('easy');
   const [customText, setCustomText] = useState('');
+  const [codeLanguage, setCodeLanguage] = useState<CodeLanguage>('javascript');
+  const [quoteMeta, setQuoteMeta] = useState<{ author: string; source?: string } | undefined>();
+  const [codeLang, setCodeLang] = useState<string | undefined>();
+  const charStatsRef = useRef<Record<string, { total: number; errors: number }>>({});
 
   // Test Runtime State
   const [targetText, setTargetText] = useState('');
@@ -570,9 +576,13 @@ function MainAppContent() {
       language,
       difficulty,
       wordCountToGenerate,
-      customText
+      customText,
+      codeLanguage
     );
     setTargetText(generated.rawText);
+    setQuoteMeta(generated.quoteMeta);
+    setCodeLang(generated.codeLang);
+    charStatsRef.current = {};
     setTypedInput('');
     setIsTestActive(false);
     setIsTestFinished(false);
@@ -588,7 +598,7 @@ function MainAppContent() {
     setTimeLeft(initialTime);
 
     if (timerRef.current) clearInterval(timerRef.current);
-  }, [mode, language, difficulty, wordCountMode, customText, timeMode]);
+  }, [mode, language, difficulty, wordCountMode, customText, timeMode, codeLanguage]);
 
   useEffect(() => {
     initTestText();
@@ -693,12 +703,15 @@ function MainAppContent() {
       difficulty,
       language,
       timestamp: Date.now(),
-      wpmHistory
+      wpmHistory,
+      charStats: { ...charStatsRef.current },
+      quoteMeta,
+      codeLang
     };
 
     const saved = await saveTestResult(resultObj);
     setFinalResult(saved);
-  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, saveTestResult]);
+  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, quoteMeta, codeLang, saveTestResult]);
 
   // Timer loop (depends ONLY on isTestActive and timeMode)
   useEffect(() => {
@@ -747,6 +760,97 @@ function MainAppContent() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isTestActive, timeMode, finishTest]);
+
+  // Feature 5: Targeted practice on error-prone keys (Hook declared before ANY early returns)
+  const handleStartTargetedPractice = useCallback((keys: string[]) => {
+    if (!keys || keys.length === 0) return;
+    const wordsPool = [
+      'qalam', 'soz', 'kitob', 'shahar', 'bilim', 'yoshlar', 'maktab', 'daryo', 'havo',
+      'quyosh', 'yulduz', 'daraxt', 'orol', 'dunyo', 'mehnat', 'baxt', 'fikr',
+      'xalq', 'tarix', 'til', 'madaniyat', 'ilm', 'hunar', 'odamiylik', 'sabr', 'matonat',
+      'vaqt', 'hayot', 'yaxshilik', 'vatan', 'kelajak', 'orzu', 'maqsad', 'harakat',
+      'samarali', 'intizom', 'guzal', 'ziyo', 'maqom', 'qalb', 'suhbat', 'sabot'
+    ];
+    const keyLower = keys.map((k) => k.toLowerCase());
+    const matched = wordsPool.filter((w) => keyLower.some((k) => w.toLowerCase().includes(k)));
+    const selected = matched.length >= 4 ? matched : wordsPool.slice(0, 10);
+    const customContent = [...selected, ...selected].slice(0, 16).join(' ');
+    setCustomText(customContent);
+    setMode('custom');
+    setTimeMode(0);
+    setFinalResult(null);
+    setIsTestFinished(false);
+  }, []);
+
+  const handleThematicAction = useCallback((action: ThematicActionType) => {
+    const navigateToArena = () => {
+      setActiveTab('typing');
+      setTimeout(() => {
+        const arena = document.getElementById('typing-arena');
+        if (arena) {
+          arena.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        const input = document.getElementById('typing-input-field') || document.querySelector('input[type="text"]');
+        if (input) {
+          (input as HTMLInputElement).focus();
+        }
+      }, 100);
+    };
+
+    if (action === 'battle') {
+      setActiveTab('battle');
+      return;
+    }
+
+    if (action === 'code') {
+      setMode('code');
+      setCodeLanguage('javascript');
+      navigateToArena();
+      return;
+    }
+
+    if (action === 'quotes') {
+      setMode('quotes');
+      navigateToArena();
+      return;
+    }
+
+    if (action === 'uzbek-drills') {
+      const uzbekSpecialText = "Oʻzbekiston goʻzal va maʼnaviy boy vatan. Shijoatli, chechan va gʻayratli yoshlar yurtimiz bayrogʻini baland koʻtarmoqda. Oʻtkir qalam, chuqur tafakkur va sharafli mehnat insonni ulugʻlaydi. Oʻzbek tili maʼnolarga boy, ohangdor va ifodali tildir.";
+      setCustomText(uzbekSpecialText);
+      setMode('custom');
+      setTimeMode(0);
+      navigateToArena();
+      return;
+    }
+
+    if (action === 'symbols') {
+      const symbolsText = 'const calc = (wpm, acc) => { return `WPM: ${wpm * 1.5}% [Score: #1] & {CPM: 100%};`; }; /* 100% test */';
+      setCustomText(symbolsText);
+      setMode('custom');
+      setTimeMode(0);
+      navigateToArena();
+      return;
+    }
+  }, []);
+
+  const handleStartHero = useCallback((targetMode?: string) => {
+    if (targetMode && typeof targetMode === 'string') {
+      handleThematicAction(targetMode as ThematicActionType);
+      return;
+    }
+    setActiveTab('typing');
+    setTimeout(() => {
+      const arena = document.getElementById('typing-arena');
+      if (arena) {
+        arena.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      const input = document.getElementById('typing-input-field') || document.querySelector('input[type="text"]');
+      if (input) {
+        (input as HTMLInputElement).focus();
+      }
+    }, 100);
+  }, [handleThematicAction]);
 
   // DevTools Security Gate (Runs before loading, login, and application screens)
   if (isDevToolsBlocked) {
@@ -853,13 +957,25 @@ function MainAppContent() {
       const addedCount = newInput.length - typedInput.length;
       totalKeystrokesRef.current += addedCount;
 
-      // Track errors on newly typed characters
+      // Track errors on newly typed characters and per-character statistics
       const startIndex = typedInput.length;
       for (let i = startIndex; i < newInput.length; i++) {
         const charTyped = newInput[i];
         const targetChar = targetText[i];
+        const keyChar = (targetChar || charTyped || '').toLowerCase();
+
+        if (keyChar) {
+          if (!charStatsRef.current[keyChar]) {
+            charStatsRef.current[keyChar] = { total: 0, errors: 0 };
+          }
+          charStatsRef.current[keyChar].total += 1;
+        }
+
         if (targetChar === undefined || charTyped !== targetChar) {
           totalMistakesCountRef.current += 1;
+          if (keyChar && charStatsRef.current[keyChar]) {
+            charStatsRef.current[keyChar].errors += 1;
+          }
         }
       }
     }
@@ -969,87 +1085,59 @@ function MainAppContent() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-clip">
+        {activeTab === 'home' && (
+          <HomePage
+            onStartTyping={handleStartHero}
+            onGoToBattle={() => setActiveTab('battle')}
+            onViewFullLeaderboard={() => setActiveTab('leaderboard')}
+            onOpenLogin={() => setActiveTab('login')}
+          />
+        )}
+
         {activeTab === 'typing' && (
-          <div className="flex flex-col items-center justify-center py-1 sm:py-3 w-full">
-            {/* Viral Social Challenge Banner */}
-            {challengeBanner && (
-              <div className="w-full max-w-2xl mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-3 text-amber-400 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-xl shrink-0">⚡</span>
-                  <div className="text-xs sm:text-sm font-bold text-[var(--text-color)]">
-                    Do'stingiz sizni{' '}
-                    <span className="text-amber-400 font-mono font-black text-sm sm:text-base">
-                      {challengeBanner.wpm} WPM
-                    </span>
-                    {challengeBanner.acc ? ` (${challengeBanner.acc}% aniqlik)` : ''} tezlik bilan bellashuvga chaqirdi!
-                    <span className="hidden sm:inline text-xs font-normal text-[var(--sub-color)] ml-1.5">
-                      Qani, uni yengib ko'ring-chi!
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setChallengeBanner(null)}
-                  className="px-2 py-1 rounded-lg text-xs font-bold text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer shrink-0"
-                  title="Yopish"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            <TypingHeader
-              mode={mode}
-              setMode={setMode}
-              timeMode={timeMode}
-              setTimeMode={setTimeMode}
-              wordCountMode={wordCountMode}
-              setWordCountMode={setWordCountMode}
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-              customText={customText}
-              setCustomText={setCustomText}
-              onReset={initTestText}
-              isTestActive={isTestActive}
-              onOpenLanguagePage={() => setActiveTab('languages')}
-            />
-
-            <LiveStats
-              wpm={liveWpm}
-              cpm={liveCpm}
-              accuracy={liveAcc}
-              timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
-              progressPercent={progressPercent}
-              isTestActive={isTestActive}
-            />
-
-            <TypingDisplay
-              targetText={targetText}
-              typedInput={typedInput}
-              onInputChange={handleInputChange}
-              onRestart={initTestText}
-              isTestFinished={isTestFinished}
-            />
-
-            <VirtualKeyboard activeChar={currentTargetChar} />
-
-            <ResultModal
-              result={finalResult}
-              onRestart={initTestText}
-              onNextTest={initTestText}
-              onGoToLeaderboard={() => {
-                setIsTestFinished(false);
-                setActiveTab('leaderboard');
-              }}
-              onOpenLogin={() => {
-                setIsTestFinished(false);
-                setActiveTab('login');
-              }}
-            />
-
-            <React.Suspense fallback={null}>
-              <SeoArticleSection onStartPractice={initTestText} />
-            </React.Suspense>
-          </div>
+          <TypingPage
+            mode={mode}
+            setMode={setMode}
+            timeMode={timeMode}
+            setTimeMode={setTimeMode}
+            wordCountMode={wordCountMode}
+            setWordCountMode={setWordCountMode}
+            difficulty={difficulty}
+            setDifficulty={setDifficulty}
+            customText={customText}
+            setCustomText={setCustomText}
+            codeLanguage={codeLanguage}
+            setCodeLanguage={setCodeLanguage}
+            isTestActive={isTestActive}
+            isTestFinished={isTestFinished}
+            setIsTestFinished={setIsTestFinished}
+            targetText={targetText}
+            typedInput={typedInput}
+            handleInputChange={handleInputChange}
+            initTestText={initTestText}
+            quoteMeta={quoteMeta}
+            codeLang={codeLang}
+            currentTargetChar={currentTargetChar}
+            liveWpm={liveWpm}
+            liveCpm={liveCpm}
+            liveAcc={liveAcc}
+            timeLeft={timeLeft}
+            elapsedSeconds={elapsedSeconds}
+            progressPercent={progressPercent}
+            finalResult={finalResult}
+            challengeBanner={challengeBanner}
+            setChallengeBanner={setChallengeBanner}
+            onOpenLanguagePage={() => setActiveTab('languages')}
+            onGoToLeaderboard={() => {
+              setIsTestFinished(false);
+              setActiveTab('leaderboard');
+            }}
+            onOpenLogin={() => {
+              setIsTestFinished(false);
+              setActiveTab('login');
+            }}
+            onStartTargetedPractice={handleStartTargetedPractice}
+          />
         )}
 
         <React.Suspense fallback={<ViewLoadingFallback />}>
@@ -1143,7 +1231,9 @@ export default function App() {
   return (
     <AuthProvider>
       <SettingsProvider>
-        <MainAppContent />
+        <I18nProvider>
+          <MainAppContent />
+        </I18nProvider>
       </SettingsProvider>
     </AuthProvider>
   );

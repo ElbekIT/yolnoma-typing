@@ -12,11 +12,17 @@ export interface PageSEOInfo {
 }
 
 export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
-  typing: {
-    title: "Yolnoma Typing - O'zbekiston №1 Tez Yozish Platformasi & Klaviaturada 10 Barmoq Testi",
-    description: "Dunyo bo'yicha 125+ tilda klaviaturada tez yozish, 10 barmoq mashqlari va real-vaqt musobaqa platformasi. Bepul WPM va CPM tezligingizni aniqlang!",
+  home: {
+    title: "Yolnoma Typing - O'zbekistonda №1 Tez Yozish Platformasi",
+    description: "Klaviaturada tez yozishni o'rganing, 10 barmoq mashqlarini bajaring va milliy reytingda bellashing!",
     keywords: "yolnoma, yolnoma typing, tez yozish testi, klaviaturada tez yozish, 10 barmoq bilan yozish, wpm test uzbek, speed typing uzbekistan, klaviatura trenajyori, touch typing test",
     canonicalUrl: "https://www.yolnoma.uz/"
+  },
+  typing: {
+    title: "Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing",
+    description: "Klaviaturada tez yozish trenajyori, 125+ tilda so'zlar, kod testi va jonli WPM tezlik hisoblagichi.",
+    keywords: "tez yozish trenajyori, yolnoma test, wpm hisoblagich, monkeytype uzbek",
+    canonicalUrl: "https://www.yolnoma.uz/test"
   },
   leaderboard: {
     title: "Milliy Reyting - O'zbekistonning Eng Tezkor Yozuvchilari | Yolnoma Typing",

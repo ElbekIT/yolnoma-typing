@@ -6,12 +6,16 @@ import {
   Share2,
   CheckCircle2,
   TrendingUp,
-  Award
+  Award,
+  Sparkles,
+  Download
 } from 'lucide-react';
 import { TypingResult } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { ShareModal } from '../share/ShareModal';
+import { ShareResultCertificateModal } from '../share/ShareResultCertificateModal';
+import { KeyboardHeatmap } from './KeyboardHeatmap';
 
 interface ResultModalProps {
   result: TypingResult | null;
@@ -19,6 +23,7 @@ interface ResultModalProps {
   onNextTest: () => void;
   onGoToLeaderboard?: () => void;
   onOpenLogin?: () => void;
+  onStartTargetedPractice?: (keys: string[]) => void;
 }
 
 // Ultra-fast lightweight SVG timeline chart (Zero CPU overhead, no heavy chart libraries)
@@ -196,12 +201,14 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   onRestart,
   onNextTest,
   onGoToLeaderboard,
-  onOpenLogin
+  onOpenLogin,
+  onStartTargetedPractice
 }) => {
   const { themeConfig } = useSettings();
-  const { user, signInWithGoogle, signInWithGithub } = useAuth();
+  const { user, profile, signInWithGoogle, signInWithGithub } = useAuth();
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
 
   // Keyboard shortcut listener: Enter / Tab / Space to restart or start next test instantly
@@ -315,6 +322,12 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           </div>
         )}
 
+        {/* Feature 5: Keyboard Heatmap & Error Analysis */}
+        <KeyboardHeatmap
+          charStats={result.charStats}
+          onStartTargetedPractice={onStartTargetedPractice}
+        />
+
         {/* Guest Leaderboard CTA: Prompt Google / GitHub login */}
         {!user && (
           <div className="mb-5 p-4 rounded-xl bg-[var(--sub-alt)]/40 border border-amber-500/30 text-left space-y-2.5">
@@ -394,10 +407,20 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         {/* Action Buttons Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[var(--sub-alt)]">
           <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+            {/* Share Certificate Button (Viral feature) */}
+            <button
+              onClick={() => setShowCertificateModal(true)}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-md"
+              title="Instagram Story yoki Banner formatida rasmiy sertifikat yuklab olish"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-300" />
+              <span>Sertifikat</span>
+            </button>
+
             {/* Share button */}
             <button
               onClick={() => setShowShareModal(true)}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm"
               title="Do'stlarga ulashish va musobaqaga chaqirish"
             >
               <Share2 className="w-3.5 h-3.5 text-amber-400" />
@@ -454,6 +477,14 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           accuracy: result.accuracy,
           source: 'test_result'
         }}
+      />
+
+      {/* Feature 1: Result Certificate Generator Modal */}
+      <ShareResultCertificateModal
+        isOpen={showCertificateModal}
+        onClose={() => setShowCertificateModal(false)}
+        result={result}
+        displayName={profile?.displayName || user?.displayName || 'Tezkor Yozuvchi'}
       />
     </div>
   );

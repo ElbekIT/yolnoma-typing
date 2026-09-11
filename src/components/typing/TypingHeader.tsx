@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { Clock, Type, Layers, Globe, Sparkles, Film } from 'lucide-react';
+import { Clock, Type, Layers, Globe, Sparkles, Film, BookOpen, Code } from 'lucide-react';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
 import { getAllLanguages } from '../../utils/customContentStore';
+import { CodeLanguage } from '../../data/codeSnippets';
+import { CodeLanguageSelector } from './CodeLanguageSelector';
 
 interface TypingHeaderProps {
   mode: TextMode;
@@ -18,6 +20,8 @@ interface TypingHeaderProps {
   onReset: () => void;
   isTestActive?: boolean;
   onOpenLanguagePage?: () => void;
+  codeLanguage?: CodeLanguage;
+  setCodeLanguage?: (l: CodeLanguage) => void;
 }
 
 export const TypingHeader: React.FC<TypingHeaderProps> = ({
@@ -29,7 +33,9 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   setWordCountMode,
   onReset,
   isTestActive = false,
-  onOpenLanguagePage
+  onOpenLanguagePage,
+  codeLanguage = 'javascript',
+  setCodeLanguage
 }) => {
   const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode } = useSettings();
 
@@ -38,6 +44,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   const modesList: { id: TextMode; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'words', label: "So'zlar", icon: Type },
     { id: 'sentences', label: 'Jumlalar', icon: Layers },
+    { id: 'quotes', label: 'Maqol & Adabiyot', icon: BookOpen },
+    { id: 'code', label: 'Kod (Dev)', icon: Code },
     { id: 'story', label: 'Hikoyalar', icon: Sparkles },
   ];
 
@@ -222,6 +230,19 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             <span>tape: {tapeMode}</span>
           </button>
         </div>
+
+        {/* Programmer Code Language Sub-Selector */}
+        {mode === 'code' && setCodeLanguage && (
+          <div className="mt-3">
+            <CodeLanguageSelector
+              currentLanguage={codeLanguage}
+              onSelectLanguage={(l) => {
+                setCodeLanguage(l);
+                onReset();
+              }}
+            />
+          </div>
+        )}
       </div>
   );
 };
