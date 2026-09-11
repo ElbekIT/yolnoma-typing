@@ -23,8 +23,10 @@ import {
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
+import { LeaderboardPodium } from './LeaderboardPodium';
 
 // Scope categories from image: all-time uzbek, all-time english, weekly xp, daily
 export type ScopeCategory = 'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily';
@@ -73,6 +75,7 @@ interface LeaderboardViewProps {
 
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin }) => {
   const { profile: currentUser } = useAuth();
+  const { t } = useI18n();
 
   // Active Scope & Time Filter
   const [scope, setScope] = useState<ScopeCategory>('all-time-uzbek');
@@ -376,9 +379,14 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const pageItems = useMemo(() => {
+    // If on page 1 and not searching and there are more than 3 participants,
+    // top 3 are showcased on the podium above, and table continues with 4, 5, 6...
+    if (currentPage === 1 && !searchQuery.trim() && filteredList.length > 3) {
+      return filteredList.slice(3, 3 + pageSize);
+    }
     const start = (currentPage - 1) * pageSize;
     return filteredList.slice(start, start + pageSize);
-  }, [filteredList, currentPage, pageSize]);
+  }, [filteredList, currentPage, pageSize, searchQuery]);
 
   // Current logged in user's position
   const myRankingInfo = useMemo(() => {
@@ -722,6 +730,15 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onOpenLogin })
 
         {/* Right Main Table (8 Cols on desktop / 9 on xl) */}
         <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+          {/* Top Podium (1, 2, 3-o'rinlar shohsupasi: Oltin, Kumush, Bronza) */}
+          {currentPage === 1 && !searchQuery.trim() && sortedList.length > 0 && (
+            <LeaderboardPodium
+              topUsers={sortedList.slice(0, 3)}
+              onSelectUser={openUserProfile}
+              currentUserId={currentUser?.uid}
+            />
+          )}
+
           {/* Main Top Header: Title, Subtitle, Pagination controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
             <div>

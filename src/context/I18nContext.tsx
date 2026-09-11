@@ -39,6 +39,12 @@ export const translations: Record<UiLanguage, Record<string, string>> = {
     accLabel: "Aniqlik",
     timeLabel: "Vaqt",
     pressAnyKeyToStart: "Yozishni boshlash uchun klaviaturadan istalgan harfni bosing...",
+    backToHome: "← Bosh sahifa",
+    podiumTitle: "Shohsupa — Eng Tezkor Ishtirokchilar",
+    podiumSubtitle: "Haftalik eng yuqori WPM qayd etgan chempionlar",
+    podiumRank1: "1-o'rin • Chempion",
+    podiumRank2: "2-o'rin",
+    podiumRank3: "3-o'rin",
 
     // Thematic Cards
     thematicTitle: "Mavzuli Mashqlar va Maxsus Imkoniyatlar",
@@ -140,6 +146,12 @@ export const translations: Record<UiLanguage, Record<string, string>> = {
     accLabel: "Точность",
     timeLabel: "Время",
     pressAnyKeyToStart: "Нажмите любую клавишу, чтобы начать тест печати...",
+    backToHome: "← На главную",
+    podiumTitle: "Пьедестал — Самые Быстрые Участники",
+    podiumSubtitle: "Еженедельные чемпионы с самым высоким WPM",
+    podiumRank1: "1-е место • Чемпион",
+    podiumRank2: "2-е место",
+    podiumRank3: "3-е место",
 
     // Thematic Cards
     thematicTitle: "Тематические Тесты и Возможности",
@@ -241,6 +253,12 @@ export const translations: Record<UiLanguage, Record<string, string>> = {
     accLabel: "Accuracy",
     timeLabel: "Time",
     pressAnyKeyToStart: "Press any key on your keyboard to start typing...",
+    backToHome: "← Home",
+    podiumTitle: "Podium — Top Fastest Typists",
+    podiumSubtitle: "Weekly champions with the highest WPM score",
+    podiumRank1: "1st Place • Champion",
+    podiumRank2: "2nd Place",
+    podiumRank3: "3rd Place",
 
     // Thematic Cards
     thematicTitle: "Thematic Tests & Core Capabilities",
@@ -317,14 +335,18 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uiLanguage, setUiLanguageState] = useState<UiLanguage>(() => {
+    // 1. Check URL path prefix first (e.g., /uz, /ru, /en)
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      if (parts[0] === 'uz' || parts[0] === 'ru' || parts[0] === 'en') {
+        return parts[0] as UiLanguage;
+      }
+    }
     const saved = localStorage.getItem('yolnoma_ui_lang');
     if (saved === 'uz' || saved === 'ru' || saved === 'en') {
       return saved;
     }
-    // Check browser language or default to uz
-    const browserLang = navigator.language?.toLowerCase() || '';
-    if (browserLang.startsWith('ru')) return 'ru';
-    if (browserLang.startsWith('en')) return 'en';
+    // Default to uz as specified: "Standart sahifa: https://www.yolnoma.uz/uz (O'zbekcha)"
     return 'uz';
   });
 
@@ -340,6 +362,16 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     document.documentElement.lang = uiLanguage;
+
+    const handleLocationChange = () => {
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      if (parts[0] === 'uz' || parts[0] === 'ru' || parts[0] === 'en') {
+        setUiLanguageState(parts[0] as UiLanguage);
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, [uiLanguage]);
 
   const t = (key: string): string => {

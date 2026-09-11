@@ -1,4 +1,5 @@
 import React from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { TypingHeader } from '../components/typing/TypingHeader';
 import { LiveStats } from '../components/typing/LiveStats';
 import { TypingDisplay } from '../components/typing/TypingDisplay';
@@ -6,6 +7,7 @@ import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { ResultModal } from '../components/typing/ResultModal';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode, TypingResult } from '../types';
 import { CodeLanguage } from '../data/codeSnippets';
+import { useI18n } from '../context/I18nContext';
 
 interface TypingPageProps {
   mode: TextMode;
@@ -43,6 +45,7 @@ interface TypingPageProps {
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
   onStartTargetedPractice: (keys: string[]) => void;
+  onBackToHome?: () => void;
 }
 
 export const TypingPage: React.FC<TypingPageProps> = ({
@@ -80,10 +83,31 @@ export const TypingPage: React.FC<TypingPageProps> = ({
   onOpenLanguagePage,
   onGoToLeaderboard,
   onOpenLogin,
-  onStartTargetedPractice
+  onStartTargetedPractice,
+  onBackToHome
 }) => {
+  const { t } = useI18n();
+
   return (
     <div id="typing-arena" className="w-full flex flex-col items-center justify-center py-2 sm:py-4 animate-fade-in">
+      {/* Top Bar with Back button */}
+      {onBackToHome && (
+        <div className="w-full max-w-4xl flex items-center justify-between pb-3 px-2">
+          <button
+            onClick={onBackToHome}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono font-semibold transition-all duration-200 cursor-pointer active:scale-95"
+            title="Bosh sahifaga qaytish"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>{t('backToHome')}</span>
+          </button>
+
+          <div className="text-[11px] font-mono text-[var(--sub-color)]/70 uppercase tracking-wider">
+            {t('arenaTitle')}
+          </div>
+        </div>
+      )}
+
       {/* Viral Social Challenge Banner */}
       {challengeBanner && (
         <div className="w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-3 text-amber-400 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300">

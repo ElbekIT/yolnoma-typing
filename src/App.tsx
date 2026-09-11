@@ -9,6 +9,7 @@ import { AboutModal } from './components/about/AboutModal';
 import { LoginPage } from './components/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TypingPage } from './pages/TypingPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
@@ -68,6 +69,7 @@ import { CodeLanguage } from './data/codeSnippets';
 function MainAppContent() {
   const { language } = useSettings();
   const { user, profile, loading, saveTestResult } = useAuth();
+  const { uiLanguage, setUiLanguage } = useI18n();
 
   // Route to URL slug mapping
   const TAB_TO_PATH: Record<string, string> = {
@@ -108,26 +110,39 @@ function MainAppContent() {
     admin: 'Admin Panel - Yolnoma Typing'
   };
 
-  const resolvePathToTab = useCallback((rawPath: string): string => {
+  // Parse path into language and tab components (supports /:lang/... and /...)
+  const parsePath = useCallback((rawPath: string): { lang: 'uz' | 'ru' | 'en'; tab: string } => {
     const pathname = (rawPath || '').replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0];
+    const parts = pathname.split('/').filter(Boolean);
+
+    let detectedLang: 'uz' | 'ru' | 'en' = 'uz';
+    let subParts = parts;
+
+    if (parts.length > 0 && (parts[0] === 'uz' || parts[0] === 'ru' || parts[0] === 'en')) {
+      detectedLang = parts[0] as 'uz' | 'ru' | 'en';
+      subParts = parts.slice(1);
+    }
+
+    const subpath = subParts.join('/');
     const _adm = atob('YWRtaW4=');
-    if (!pathname || pathname === 'home' || pathname === 'index.html') return 'home';
-    if (pathname === 'test' || pathname === 'typing' || pathname === 'arena') return 'typing';
-    if (pathname === _adm) return _adm;
-    if (['login', 'kirish', 'auth', 'signin', 'signup', 'register'].includes(pathname)) return 'login';
-    if (['languages', 'tillar', 'language', 'til'].includes(pathname)) return 'languages';
-    if (['leaderboard', 'rating', 'reyting', 'top'].includes(pathname)) return 'leaderboard';
-    if (['battle', 'arena', 'duel', 'jang'].includes(pathname)) return 'battle';
-    if (['lessons', 'darslar', 'saboqlar'].includes(pathname)) return 'lessons';
-    if (['statistics', 'statistika', 'stats'].includes(pathname)) return 'statistics';
-    if (['profile', 'profil'].includes(pathname)) return 'profile';
-    if (['settings', 'sozlamalar'].includes(pathname)) return 'settings';
-    if (['achievements', 'yutuqlar'].includes(pathname)) return 'achievements';
-    if (['challenges', 'musobaqalar', 'muvaffaqiyatlar'].includes(pathname)) return 'challenges';
-    if (['partners', 'hamkorlar'].includes(pathname)) return 'partners';
-    if (['about', 'owner', 'haqida'].includes(pathname)) return 'owner';
-    if (['dashboard'].includes(pathname)) return 'dashboard';
-    return 'home';
+
+    if (!subpath || subpath === 'home' || subpath === 'index.html') return { lang: detectedLang, tab: 'home' };
+    if (subpath === 'test' || subpath === 'typing' || subpath === 'arena' || subpath.startsWith('tests') || subpath.startsWith('test/')) return { lang: detectedLang, tab: 'typing' };
+    if (subpath === _adm) return { lang: detectedLang, tab: _adm };
+    if (['login', 'kirish', 'auth', 'signin', 'signup', 'register'].includes(subpath)) return { lang: detectedLang, tab: 'login' };
+    if (['languages', 'tillar', 'language', 'til'].includes(subpath)) return { lang: detectedLang, tab: 'languages' };
+    if (['leaderboard', 'rating', 'reyting', 'top'].includes(subpath)) return { lang: detectedLang, tab: 'leaderboard' };
+    if (['battle', 'arena', 'duel', 'jang'].includes(subpath)) return { lang: detectedLang, tab: 'battle' };
+    if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
+    if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
+    if (['profile', 'profil'].includes(subpath)) return { lang: detectedLang, tab: 'profile' };
+    if (['settings', 'sozlamalar'].includes(subpath)) return { lang: detectedLang, tab: 'settings' };
+    if (['achievements', 'yutuqlar'].includes(subpath)) return { lang: detectedLang, tab: 'achievements' };
+    if (['challenges', 'musobaqalar', 'muvaffaqiyatlar'].includes(subpath)) return { lang: detectedLang, tab: 'challenges' };
+    if (['partners', 'hamkorlar'].includes(subpath)) return { lang: detectedLang, tab: 'partners' };
+    if (['about', 'owner', 'haqida'].includes(subpath)) return { lang: detectedLang, tab: 'owner' };
+    if (['dashboard'].includes(subpath)) return { lang: detectedLang, tab: 'dashboard' };
+    return { lang: detectedLang, tab: 'home' };
   }, []);
 
   // Active navigation tab initialized from current browser route
@@ -146,7 +161,8 @@ function MainAppContent() {
       if (sessionStorage.getItem('yolnoma_redirect_route')) sessionStorage.removeItem('yolnoma_redirect_route');
 
       const pathCandidate = redirectRoute || window.location.pathname;
-      return resolvePathToTab(pathCandidate);
+      const { tab } = parsePath(pathCandidate);
+      return tab;
     } catch {}
     return 'home';
   });
@@ -167,34 +183,46 @@ function MainAppContent() {
     return null;
   });
 
-  // Synchronize browser address bar with active tab and update comprehensive SEO meta tags
+  // Synchronize browser address bar with language prefix (e.g. /uz, /ru, /en, /uz/test, /uz/leaderboard)
   useEffect(() => {
     try {
+      const _adm = atob('YWRtaW4=');
+      if (activeTab === _adm) {
+        if (window.location.pathname !== `/${_adm}`) {
+          window.history.pushState({ tab: _adm }, '', `/${_adm}`);
+        }
+        updatePageSEO(activeTab);
+        return;
+      }
+
       const slug = TAB_TO_PATH[activeTab] ?? (activeTab === 'home' ? '' : activeTab);
-      const targetUrl = slug ? `/${slug}` : '/';
+      const targetUrl = slug ? `/${uiLanguage}/${slug}` : `/${uiLanguage}`;
       const currentUrl = window.location.pathname;
 
-      if (currentUrl !== targetUrl && activeTab !== 'admin') {
-        window.history.pushState({ tab: activeTab }, '', targetUrl);
+      if (currentUrl !== targetUrl) {
+        window.history.pushState({ tab: activeTab, lang: uiLanguage }, '', targetUrl);
       }
 
       // Update document title and dynamic SEO/OpenGraph meta tags
       updatePageSEO(activeTab);
     } catch {}
-  }, [activeTab]);
+  }, [activeTab, uiLanguage]);
 
   // Handle browser Back & Forward history buttons seamlessly
   useEffect(() => {
     const handlePopState = () => {
       try {
-        const resolved = resolvePathToTab(window.location.pathname);
-        setActiveTab(resolved);
+        const { lang, tab } = parsePath(window.location.pathname);
+        if (lang !== uiLanguage) {
+          setUiLanguage(lang);
+        }
+        setActiveTab(tab);
       } catch {}
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [resolvePathToTab]);
+  }, [parsePath, uiLanguage, setUiLanguage]);
 
   // DevTools detection state
   const [isDevToolsBlocked, setIsDevToolsBlocked] = useState<boolean>(() => antiCheatManager.isDevToolsOpen());
@@ -1137,6 +1165,7 @@ function MainAppContent() {
               setActiveTab('login');
             }}
             onStartTargetedPractice={handleStartTargetedPractice}
+            onBackToHome={() => setActiveTab('home')}
           />
         )}
 
@@ -1160,7 +1189,10 @@ function MainAppContent() {
           )}
           {activeTab === 'dashboard' && <DashboardView />}
           {activeTab === 'leaderboard' && (
-            <LeaderboardView onOpenLogin={() => setActiveTab('login')} />
+            <LeaderboardPage
+              onOpenLogin={() => setActiveTab('login')}
+              onBackToHome={() => setActiveTab('home')}
+            />
           )}
           {activeTab === 'statistics' && <StatisticsView />}
           {activeTab === 'achievements' && <AchievementsView />}
