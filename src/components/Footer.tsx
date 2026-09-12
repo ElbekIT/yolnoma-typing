@@ -13,7 +13,8 @@ import {
   Handshake,
   Send,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Rocket
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -78,6 +79,16 @@ export const Footer: React.FC<FooterProps> = ({
             >
               <Swords className="w-3.5 h-3.5 text-rose-400" />
               <span>{t('navBattle')}</span>
+            </a>
+
+            <a
+              href="/space"
+              onClick={(e) => handleNav('space', e)}
+              className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 py-0.5 font-medium"
+              title="Koinot Jangi — ZType uslubidagi Space Typing Shooter arkada o'yini"
+            >
+              <Rocket className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Koinot Jangi 🚀</span>
             </a>
 
             <a

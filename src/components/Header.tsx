@@ -29,7 +29,8 @@ import {
   AlertCircle,
   MessageSquare,
   Gamepad2,
-  Share2
+  Share2,
+  Rocket
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -97,6 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const navItems = [
     { id: 'home', label: t('navHome'), enLabel: 'Home', icon: Home },
     { id: 'typing', label: t('navTyping'), enLabel: 'Typing Test', icon: Keyboard },
+    { id: 'space', label: 'Koinot Jangi 🚀', enLabel: 'Space Shooter', icon: Rocket },
     { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
     { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
     { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
@@ -209,6 +211,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title="Battle Arena"
               >
                 <Swords className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('space')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-cyan-500/20' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title="Koinot Jangi (Space Typing Shooter)"
+              >
+                <Rocket className={iconDimensions} />
               </button>
 
               <button

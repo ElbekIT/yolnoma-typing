@@ -40,6 +40,7 @@ const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m
 const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
+const SpaceGamePage = React.lazy(() => import('./pages/SpaceGamePage').then(m => ({ default: m.SpaceGamePage })));
 const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
 
 function ViewLoadingFallback() {
@@ -78,6 +79,7 @@ function MainAppContent() {
     languages: 'languages',
     leaderboard: 'leaderboard',
     battle: 'battle',
+    space: 'space',
     lessons: 'lessons',
     statistics: 'statistics',
     profile: 'profile',
@@ -97,6 +99,7 @@ function MainAppContent() {
     languages: '125+ Jahon Tillari - Yolnoma Typing',
     leaderboard: 'Peshqadamlar Reytingi - Yolnoma Typing',
     battle: 'Speedway Battle Arena - Yolnoma Typing',
+    space: 'Koinot Jangi (Space Typing Shooter) - Yolnoma Typing',
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
     profile: 'Foydalanuvchi Profili - Yolnoma Typing',
@@ -133,6 +136,7 @@ function MainAppContent() {
     if (['languages', 'tillar', 'language', 'til'].includes(subpath)) return { lang: detectedLang, tab: 'languages' };
     if (['leaderboard', 'rating', 'reyting', 'top'].includes(subpath)) return { lang: detectedLang, tab: 'leaderboard' };
     if (['battle', 'arena', 'duel', 'jang'].includes(subpath)) return { lang: detectedLang, tab: 'battle' };
+    if (['space', 'spacegame', 'koinot', 'koinot-jangi', 'ztype', 'shooter'].includes(subpath)) return { lang: detectedLang, tab: 'space' };
     if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
     if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
     if (['profile', 'profil'].includes(subpath)) return { lang: detectedLang, tab: 'profile' };
@@ -1182,6 +1186,13 @@ function MainAppContent() {
           )}
 
           {activeTab === 'lessons' && <LessonsView />}
+          {activeTab === 'space' && (
+            <SpaceGamePage
+              onBackToHome={() => setActiveTab('home')}
+              onGoToTyping={() => setActiveTab('typing')}
+              onGoToLeaderboard={() => setActiveTab('leaderboard')}
+            />
+          )}
           {activeTab === 'battle' && (
             <BattleView
               initialRoomCode={pendingBattleRoomCode}

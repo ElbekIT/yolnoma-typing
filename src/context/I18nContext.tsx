@@ -93,6 +93,7 @@ export const translations: Record<UiLanguage, Record<string, string>> = {
 
     // Navigation & Common
     navTyping: "Yozish Testi",
+    navSpaceGame: "Koinot Jangi",
     navLanguages: "Tillar",
     navLessons: "Saboqlar",
     navBattle: "Battle Arena",
@@ -200,6 +201,7 @@ export const translations: Record<UiLanguage, Record<string, string>> = {
 
     // Navigation & Common
     navTyping: "Тест Печати",
+    navSpaceGame: "Космическая Битва",
     navLanguages: "Языки",
     navLessons: "Уроки",
     navBattle: "Арена Битв",
@@ -307,6 +309,7 @@ export const translations: Record<UiLanguage, Record<string, string>> = {
 
     // Navigation & Common
     navTyping: "Typing Test",
+    navSpaceGame: "Space Shooter",
     navLanguages: "Languages",
     navLessons: "Lessons",
     navBattle: "Battle Arena",
