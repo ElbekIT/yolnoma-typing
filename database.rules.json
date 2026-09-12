@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "battle_rooms": {
+      ".read": true,
+      ".write": true
+    },
+    "private_battle_rooms": {
+      ".read": true,
+      ".write": true
+    },
+    "battles": {
+      ".read": true,
+      ".write": true
+    },
+    "online_players": {
+      ".read": true,
+      ".write": true
+    },
+    "user_notifications": {
+      ".read": true,
+      ".write": true
+    },
+    "users": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    ".read": true,
+    ".write": true
+  }
+}

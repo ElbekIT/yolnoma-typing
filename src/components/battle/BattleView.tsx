@@ -34,9 +34,12 @@ import {
   getLockedMinLength,
   getNextWordStartIndexOnSpace
 } from '../../utils/typingEngine';
-import { rtdb } from '../../config/firebase';
+import { rtdb, db, auth } from '../../config/firebase';
+import { signInAnonymously } from 'firebase/auth';
 import { ref, set, onValue, update, remove, get } from 'firebase/database';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { CustomRoomBattle } from './CustomRoomBattle';
+import { getRandomBattleText } from '../../data/battleTexts';
 
 interface RealPlayerItem {
   uid: string;
@@ -59,18 +62,6 @@ const generateCleanRoomCode = (): string => {
   }
   return result;
 };
-
-// Uzbek & English sentences for battle tests
-const BATTLE_TEXTS = [
-  "Har bir muvaffaqiyat tinimsiz mehnat va sabr-toqat orqali qo'lga kiritiladi.",
-  "Tez va aniq yozish ko'nikmasi zamonaviy dunyoda eng muhim malakalardan biridir.",
-  "Bilim o'rganish hech qachon kech emas, har bir yangi kun yangi imkoniyatdir.",
-  "Dasturlash va axborot texnologiyalari orqali dunyoni yaxshiroq qilishimiz mumkin.",
-  "O'zbekiston yoshlari har sohada yetakchi bo'lishga qodir va intiluvchandir.",
-  "The quick brown fox jumps over the lazy dog in a swift typing battle.",
-  "Speed and precision are the true marks of a master keyboard typist.",
-  "Never stop learning and improving your skills every single day."
-];
 
 interface BattleViewProps {
   initialRoomCode?: string | null;
@@ -106,7 +97,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const [isHost, setIsHost] = useState(false);
   const [isBotMatch, setIsBotMatch] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const [battleText, setBattleText] = useState(BATTLE_TEXTS[0]);
+  const [battleText, setBattleText] = useState(() => getRandomBattleText('uz-latn'));
 
   // Online Users for Direct Invite
   const [onlinePlayers, setOnlinePlayers] = useState<RealPlayerItem[]>([]);
@@ -212,6 +203,14 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   // Create a new Multiplayer Room
   const handleCreateRoom = async () => {
+    if (!auth.currentUser) {
+      try {
+        await signInAnonymously(auth);
+      } catch (e) {
+        console.warn('BattleView auth warn:', e);
+      }
+    }
+
     const code = generateCleanRoomCode();
     setActiveRoomCode(code);
     setIsHost(true);
@@ -219,7 +218,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     setJoinError(null);
     setDisqualifiedReason(null);
 
-    const randomText = BATTLE_TEXTS[Math.floor(Math.random() * BATTLE_TEXTS.length)];
+    const randomText = getRandomBattleText('uz-latn');
     setBattleText(randomText);
 
     const initialHostData: RacerProgress = {
@@ -247,29 +246,53 @@ export const BattleView: React.FC<BattleViewProps> = ({
       isBot: false
     });
 
+    const roomPayload = {
+      code,
+      roomId: code,
+      gameType: 'speedway',
+      text: randomText,
+      selectedText: randomText,
+      status: 'waiting',
+      createdAt: Date.now(),
+      host: initialHostData,
+      guest: null,
+      winner: null
+    };
+
+    let isCreated = false;
     try {
       const roomRef = ref(rtdb, `battle_rooms/${code}`);
-      await set(roomRef, {
-        code,
-        gameType: 'speedway',
-        text: randomText,
-        status: 'waiting',
-        createdAt: Date.now(),
-        host: initialHostData,
-        guest: null,
-        winner: null
-      });
+      await set(roomRef, roomPayload);
+      isCreated = true;
+    } catch (err) {
+      console.warn('RTDB create room fallback:', err);
+    }
 
+    try {
+      await setDoc(doc(db, 'battle_rooms', code), roomPayload);
+      isCreated = true;
+    } catch (err) {
+      console.warn('Firestore create room fallback:', err);
+    }
+
+    if (isCreated) {
       setGameState('ready_screen');
       listenToRoom(code, true);
-    } catch (err) {
-      console.error('Failed to create RTDB room:', err);
+    } else {
       setJoinError("Xona yaratishda xatolik yuz berdi. Qayta urinib ko'ring.");
     }
   };
 
   // Join Existing Room by Code
   const handleJoinRoom = async (codeToJoin?: string) => {
+    if (!auth.currentUser) {
+      try {
+        await signInAnonymously(auth);
+      } catch (e) {
+        console.warn('BattleView auth warn:', e);
+      }
+    }
+
     const code = (codeToJoin || joinInputCode).toUpperCase().trim();
     if (!code || code.length < 4) {
       setJoinError("Iltimos, haqiqiy xona kodini kiriting (masalan: 6 ta belgi).");
@@ -283,21 +306,33 @@ export const BattleView: React.FC<BattleViewProps> = ({
     setDisqualifiedReason(null);
 
     try {
-      const roomRef = ref(rtdb, `battle_rooms/${code}`);
-      const snap = await get(roomRef);
+      let roomVal: any = null;
 
-      if (!snap.exists()) {
+      try {
+        const roomRef = ref(rtdb, `battle_rooms/${code}`);
+        const snap = await get(roomRef);
+        if (snap.exists()) roomVal = snap.val();
+      } catch (e) {}
+
+      if (!roomVal) {
+        try {
+          const fSnap = await getDoc(doc(db, 'battle_rooms', code));
+          if (fSnap.exists()) roomVal = fSnap.data();
+        } catch (e) {}
+      }
+
+      if (!roomVal) {
         setJoinError(`"${code}" kodli xona topilmadi yoki yopilgan.`);
         return;
       }
 
-      const roomVal = snap.val();
       if (roomVal.status !== 'waiting' && roomVal.status !== 'ready') {
         setJoinError("Bu xonadagi o'yin allaqachon boshlangan yoki yakunlangan.");
         return;
       }
 
-      setBattleText(roomVal.text || BATTLE_TEXTS[0]);
+      const textToUse = roomVal.selectedText || roomVal.text || getRandomBattleText('uz-latn');
+      setBattleText(textToUse);
 
       const guestData: RacerProgress = {
         id: currentUid,
@@ -314,15 +349,23 @@ export const BattleView: React.FC<BattleViewProps> = ({
       setMyProgress(guestData);
       setOpponentProgress(roomVal.host);
 
-      await update(roomRef, {
+      const guestUpdate = {
         guest: guestData,
         status: 'ready'
-      });
+      };
+
+      try {
+        await update(ref(rtdb, `battle_rooms/${code}`), guestUpdate);
+      } catch {}
+
+      try {
+        await updateDoc(doc(db, 'battle_rooms', code), guestUpdate);
+      } catch {}
 
       setGameState('ready_screen');
       listenToRoom(code, false);
     } catch (err) {
-      console.error('Failed to join RTDB room:', err);
+      console.error('Failed to join room:', err);
       setJoinError("Xonaga ulanishda xatolik yuz berdi.");
     }
   };
@@ -366,7 +409,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     setIsBotMatch(false);
     setJoinError(null);
 
-    const randomText = BATTLE_TEXTS[Math.floor(Math.random() * BATTLE_TEXTS.length)];
+    const randomText = getRandomBattleText('uz-latn');
     setBattleText(randomText);
 
     const initialHostData: RacerProgress = {
@@ -424,7 +467,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     setJoinError(null);
     setDisqualifiedReason(null);
 
-    const randomText = BATTLE_TEXTS[Math.floor(Math.random() * BATTLE_TEXTS.length)];
+    const randomText = getRandomBattleText('uz-latn');
     setBattleText(randomText);
 
     setMyProgress({
@@ -584,8 +627,31 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
-  // Rematch Handler
-  const handleRematch = () => {
+  // Rematch Handler (Select fresh random text)
+  const handleRematch = async () => {
+    const freshText = getRandomBattleText('uz-latn');
+    setBattleText(freshText);
+
+    if (!isBotMatch && activeRoomCode) {
+      try {
+        await update(ref(rtdb, `battle_rooms/${activeRoomCode}`), {
+          text: freshText,
+          selectedText: freshText,
+          winner: null,
+          status: 'ready'
+        });
+      } catch {}
+
+      try {
+        await updateDoc(doc(db, 'battle_rooms', activeRoomCode), {
+          text: freshText,
+          selectedText: freshText,
+          winner: null,
+          status: 'ready'
+        });
+      } catch {}
+    }
+
     handleTriggerStartMatch();
   };
 

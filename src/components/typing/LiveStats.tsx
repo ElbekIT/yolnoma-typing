@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 
 interface LiveStatsProps {
@@ -10,7 +10,7 @@ interface LiveStatsProps {
   isTestActive: boolean;
 }
 
-export const LiveStats: React.FC<LiveStatsProps> = ({
+export const LiveStats = memo<LiveStatsProps>(({
   wpm,
   accuracy,
   timeLeft,
@@ -45,10 +45,14 @@ export const LiveStats: React.FC<LiveStatsProps> = ({
       {/* Subtle Progress Bar */}
       <div className="w-full bg-[var(--sub-alt)]/30 h-1 rounded-full overflow-hidden mt-0.5">
         <div
-          className="bg-[var(--main-color)] h-full transition-all duration-100 opacity-80"
-          style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+          className="bg-[var(--main-color)] h-full opacity-80"
+          style={{
+            width: `${Math.min(100, Math.max(0, progressPercent))}%`,
+            transform: 'translateZ(0)',
+            willChange: 'width'
+          }}
         />
       </div>
     </div>
   );
-};
+});

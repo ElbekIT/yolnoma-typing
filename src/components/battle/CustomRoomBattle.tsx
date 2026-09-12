@@ -11,22 +11,19 @@ import {
   Crown,
   Clock,
   Globe,
-  Share2,
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Flame,
   AlertCircle
 } from 'lucide-react';
 import { RaceTrack, RacerProgress } from './RaceTrack';
 import { useAuth } from '../../context/AuthContext';
-import { rtdb } from '../../config/firebase';
-import { ref, set, onValue, update, remove, get } from 'firebase/database';
+import { rtdb, db, auth } from '../../config/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { ref, set, onValue, update, get } from 'firebase/database';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { calculateWpm, calculateAccuracy } from '../../utils/typingEngine';
-import { ALL_UZBEK_QUOTES } from '../../data/uzbekQuotes';
-import { CODE_SNIPPETS } from '../../data/codeSnippets';
+import { getRandomBattleText } from '../../data/battleTexts';
 
-// Generate 6-char clean alphanumeric room code
+// Generate 6-char clean alphanumeric room code (e.g., "UZ829F")
 export const generateRoomCode = (): string => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let res = '';
@@ -48,7 +45,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
   initialRoomCode,
   onClose
 }) => {
-  const { user, profile, saveTestResult, addXp } = useAuth();
+  const { user, profile, addXp } = useAuth();
 
   const currentUid = user?.uid || localStorage.getItem('yolnoma_guest_id') || `guest_${Math.random().toString(36).substring(2, 7)}`;
   const currentDisplayName = profile?.displayName || (user?.email ? user.email.split('@')[0] : 'Siz');
@@ -91,7 +88,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
 
   const [friendProgress, setFriendProgress] = useState<RacerProgress>({
     id: 'friend_placeholder',
-    name: 'Do\'stingiz kutilmoqda...',
+    name: "Do'stingiz kutilmoqda...",
     avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=Friend',
     progressPercent: 0,
     wpm: 0,
@@ -103,12 +100,26 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<any>(null);
-  const roomUnsubRef = useRef<(() => void) | null>(null);
+  const rtdbUnsubRef = useRef<(() => void) | null>(null);
+  const firestoreUnsubRef = useRef<(() => void) | null>(null);
 
-  // Clean up RTDB listener on unmount
+  // Ensure Firebase Auth session for Guest and logged-in racers
+  const ensureFirebaseAuth = async () => {
+    if (!auth.currentUser) {
+      try {
+        await signInAnonymously(auth);
+        console.log('[Firebase Auth] Guest anonim muvaffaqiyatli autentifikatsiyadan oʻtdi:', auth.currentUser?.uid);
+      } catch (err: any) {
+        console.warn('[Firebase Auth Warning]:', err?.code, err?.message);
+      }
+    }
+  };
+
+  // Clean up listeners on unmount
   useEffect(() => {
     return () => {
-      if (roomUnsubRef.current) roomUnsubRef.current();
+      if (rtdbUnsubRef.current) rtdbUnsubRef.current();
+      if (firestoreUnsubRef.current) firestoreUnsubRef.current();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
@@ -120,31 +131,17 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     }
   }, [initialRoomCode]);
 
-  // Generate appropriate text based on language
-  const getSampleTextForBattle = (lang: BattleLanguage): string => {
-    if (lang === 'code') {
-      const snip = CODE_SNIPPETS[Math.floor(Math.random() * CODE_SNIPPETS.length)];
-      return snip.code;
-    } else if (lang === 'uz-latn') {
-      const q = ALL_UZBEK_QUOTES[Math.floor(Math.random() * ALL_UZBEK_QUOTES.length)];
-      return q.text;
-    } else if (lang === 'uz-cyrl') {
-      return "Ҳар бир муваффақият тинимсиз меҳнат ва сабр-тоқат орқали қўлга киритилади. Тез ва аниқ ёзиш кўникмаси муҳимдир.";
-    } else if (lang === 'ru') {
-      return "Быстрая и точная печать на клавиатуре — это залог высокой продуктивности современного специалиста.";
-    } else {
-      return "Speed and accuracy in keyboard typing empower programmers, writers, and students worldwide.";
-    }
-  };
-
   // Host creates a new room
   const handleCreateRoom = async () => {
+    await ensureFirebaseAuth();
+
     const code = generateRoomCode();
     setRoomCode(code);
     setIsHost(true);
     setJoinError(null);
 
-    const generatedText = getSampleTextForBattle(selectedLanguage);
+    // 2-VAZIFA: 50+ random matnlar bazasidan tasodifiy matn tanlanadi
+    const generatedText = getRandomBattleText(selectedLanguage);
     setBattleText(generatedText);
     setTimeLeft(selectedDuration);
 
@@ -163,7 +160,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     setMyProgress(hostInitialData);
     setFriendProgress({
       id: 'friend_placeholder',
-      name: 'Do\'stingiz kutilmoqda...',
+      name: "Do'stingiz kutilmoqda...",
       avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=FriendWaiting',
       progressPercent: 0,
       wpm: 0,
@@ -173,31 +170,58 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
       isBot: false
     });
 
-    try {
-      const roomRef = ref(rtdb, `private_battle_rooms/${code}`);
-      await set(roomRef, {
-        code,
-        status: 'waiting',
-        duration: selectedDuration,
-        language: selectedLanguage,
-        text: generatedText,
-        createdAt: Date.now(),
-        host: hostInitialData,
-        guest: null,
-        winner: null,
-        rematchRequested: false
-      });
+    const roomData = {
+      code,
+      roomId: code,
+      status: 'waiting',
+      duration: selectedDuration,
+      language: selectedLanguage,
+      text: generatedText,
+      selectedText: generatedText,
+      createdAt: Date.now(),
+      host: hostInitialData,
+      guest: null,
+      winner: null,
+      rematchRequested: false
+    };
 
+    let saveSuccess = false;
+    let detailedError: any = null;
+
+    // 1. Write to RTDB (both battle_rooms and private_battle_rooms)
+    try {
+      await set(ref(rtdb, `battle_rooms/${code}`), roomData);
+      await set(ref(rtdb, `private_battle_rooms/${code}`), roomData);
+      saveSuccess = true;
+      console.log('[RTDB Room Created]:', code);
+    } catch (err: any) {
+      console.warn('[RTDB Write Warning]:', err?.code || err?.message || err);
+      detailedError = err;
+    }
+
+    // 2. Write to Firestore as dual resilient synchronization
+    try {
+      await setDoc(doc(db, 'battle_rooms', code), roomData);
+      saveSuccess = true;
+      console.log('[Firestore Room Created]:', code);
+    } catch (err: any) {
+      console.warn('[Firestore Write Warning]:', err?.code || err?.message || err);
+      if (!detailedError) detailedError = err;
+    }
+
+    if (saveSuccess) {
       setStep('waiting_friend');
       listenToRoom(code, true);
-    } catch (err) {
-      console.error('Create room error:', err);
-      setJoinError("Xona yaratishda xatolik yuz berdi. Internet aloqasini tekshiring.");
+    } else {
+      console.error('[Create Room Error Details]:', detailedError);
+      setJoinError(`Xona yaratishda xatolik yuz berdi (${detailedError?.code || 'Tarmoq/Baza xatosi'}). Iltimos qayta urining.`);
     }
   };
 
   // Join existing room
   const handleJoinRoom = async (codeToJoin?: string) => {
+    await ensureFirebaseAuth();
+
     const code = (codeToJoin || joinCodeInput).toUpperCase().trim();
     if (!code || code.length < 4) {
       setJoinError("Iltimos, 6 xonali xona kodini to'g'ri kiriting.");
@@ -208,62 +232,95 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     setRoomCode(code);
     setIsHost(false);
 
+    let roomData: any = null;
+
+    // 1. Check RTDB first
     try {
-      const roomRef = ref(rtdb, `private_battle_rooms/${code}`);
-      const snap = await get(roomRef);
-
-      if (!snap.exists()) {
-        setJoinError(`"${code}" kodli xona topilmadi yoki yopilgan.`);
-        return;
+      const snap = await get(ref(rtdb, `battle_rooms/${code}`));
+      if (snap.exists()) {
+        roomData = snap.val();
+      } else {
+        const snap2 = await get(ref(rtdb, `private_battle_rooms/${code}`));
+        if (snap2.exists()) roomData = snap2.val();
       }
-
-      const roomData = snap.val();
-      if (roomData.status !== 'waiting' && roomData.status !== 'ready') {
-        setJoinError("Bu duel allaqachon boshlangan yoki yakunlangan.");
-        return;
-      }
-
-      setBattleText(roomData.text || getSampleTextForBattle('uz-latn'));
-      setTimeLeft(roomData.duration || 30);
-      setSelectedDuration(roomData.duration || 30);
-      setSelectedLanguage(roomData.language || 'uz-latn');
-
-      const guestData: RacerProgress = {
-        id: currentUid,
-        name: currentDisplayName,
-        avatarUrl: currentAvatar,
-        progressPercent: 0,
-        wpm: 0,
-        accuracy: 100,
-        carColor: 'red',
-        isWinner: false,
-        isBot: false
-      };
-
-      setMyProgress(guestData);
-
-      // Register guest in RTDB and trigger READY status
-      await update(roomRef, {
-        guest: guestData,
-        status: 'ready'
-      });
-
-      setStep('waiting_friend');
-      listenToRoom(code, false);
     } catch (err) {
-      console.error('Join room error:', err);
-      setJoinError("Xonaga ulanishda xatolik yuz berdi.");
+      console.warn('RTDB read fallback to Firestore:', err);
     }
+
+    // 2. Check Firestore
+    if (!roomData) {
+      try {
+        const fSnap = await getDoc(doc(db, 'battle_rooms', code));
+        if (fSnap.exists()) {
+          roomData = fSnap.data();
+        }
+      } catch (err) {
+        console.warn('Firestore read error:', err);
+      }
+    }
+
+    if (!roomData) {
+      console.warn('[Join Room Not Found]:', code);
+      setJoinError(`"${code}" kodli xona topilmadi yoki yopilgan.`);
+      return;
+    }
+
+    if (roomData.status !== 'waiting' && roomData.status !== 'ready') {
+      setJoinError("Bu duel allaqachon boshlangan yoki yakunlangan.");
+      return;
+    }
+
+    const roomText = roomData.selectedText || roomData.text || getRandomBattleText('uz-latn');
+    setBattleText(roomText);
+    setTimeLeft(roomData.duration || 30);
+    setSelectedDuration(roomData.duration || 30);
+    setSelectedLanguage(roomData.language || 'uz-latn');
+
+    const guestData: RacerProgress = {
+      id: currentUid,
+      name: currentDisplayName,
+      avatarUrl: currentAvatar,
+      progressPercent: 0,
+      wpm: 0,
+      accuracy: 100,
+      carColor: 'red',
+      isWinner: false,
+      isBot: false
+    };
+
+    setMyProgress(guestData);
+
+    const updatePayload = {
+      guest: guestData,
+      status: 'ready'
+    };
+
+    // Update in RTDB
+    try {
+      await update(ref(rtdb, `battle_rooms/${code}`), updatePayload);
+      await update(ref(rtdb, `private_battle_rooms/${code}`), updatePayload);
+    } catch {}
+
+    // Update in Firestore
+    try {
+      await updateDoc(doc(db, 'battle_rooms', code), updatePayload);
+    } catch {}
+
+    setStep('waiting_friend');
+    listenToRoom(code, false);
   };
 
-  // Real-time listener for room events
+  // Real-time listener for room events (Dual Engine RTDB + Firestore)
   const listenToRoom = (code: string, amHost: boolean) => {
-    if (roomUnsubRef.current) roomUnsubRef.current();
+    if (rtdbUnsubRef.current) rtdbUnsubRef.current();
+    if (firestoreUnsubRef.current) firestoreUnsubRef.current();
 
-    const roomRef = ref(rtdb, `private_battle_rooms/${code}`);
-    roomUnsubRef.current = onValue(roomRef, (snapshot) => {
-      if (!snapshot.exists()) return;
-      const val = snapshot.val();
+    const handleDataUpdate = (val: any) => {
+      if (!val) return;
+
+      if (val.selectedText || val.text) {
+        setBattleText(val.selectedText || val.text);
+      }
 
       // Track friend's presence & progress
       const opponentData = amHost ? val.guest : val.host;
@@ -273,7 +330,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
 
       // If status became 'ready' -> trigger countdown
       if (val.status === 'ready' && step === 'waiting_friend') {
-        startCountdownFlow(val.text, val.duration);
+        startCountdownFlow(val.selectedText || val.text, val.duration || selectedDuration);
       }
 
       // In-game progress updates from opponent
@@ -288,13 +345,36 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
 
       // Check if rematch was triggered
       if (val.status === 'waiting' && step === 'result') {
-        setBattleText(val.text);
+        setBattleText(val.selectedText || val.text);
         setTimeLeft(val.duration || 30);
         setUserInput('');
         setWinnerName(null);
         setStep('waiting_friend');
       }
-    });
+    };
+
+    // 1. Listen via RTDB
+    try {
+      const roomRef = ref(rtdb, `battle_rooms/${code}`);
+      rtdbUnsubRef.current = onValue(roomRef, (snapshot) => {
+        if (snapshot.exists()) {
+          handleDataUpdate(snapshot.val());
+        }
+      });
+    } catch (e) {
+      console.warn('RTDB listen error:', e);
+    }
+
+    // 2. Listen via Firestore
+    try {
+      firestoreUnsubRef.current = onSnapshot(doc(db, 'battle_rooms', code), (docSnap) => {
+        if (docSnap.exists()) {
+          handleDataUpdate(docSnap.data());
+        }
+      });
+    } catch (e) {
+      console.warn('Firestore listen error:', e);
+    }
   };
 
   // 3, 2, 1 Countdown
@@ -313,7 +393,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
       } else {
         clearInterval(interval);
         setCountdown(0);
-        // Start Racing!
+        // Start Racing
         setStep('racing');
         setStartTime(Date.now());
         setTimeout(() => {
@@ -347,13 +427,22 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
 
     setMyProgress(updatedMyProgress);
 
-    // Sync to RTDB
+    // Sync to Realtime Database & Firestore
     if (roomCode) {
       const myRole = isHost ? 'host' : 'guest';
-      update(ref(rtdb, `private_battle_rooms/${roomCode}`), {
+      const syncPayload = {
         [myRole]: updatedMyProgress,
         status: 'racing'
-      });
+      };
+
+      try {
+        update(ref(rtdb, `battle_rooms/${roomCode}`), syncPayload);
+        update(ref(rtdb, `private_battle_rooms/${roomCode}`), syncPayload);
+      } catch {}
+
+      try {
+        updateDoc(doc(db, 'battle_rooms', roomCode), syncPayload);
+      } catch {}
     }
 
     // Check if reached finish line
@@ -368,22 +457,30 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     setWinnerName(winName);
 
     if (roomCode) {
-      update(ref(rtdb, `private_battle_rooms/${roomCode}`), {
+      const finishPayload = {
         status: 'finished',
         winner: { uid: winUid, name: winName }
-      });
+      };
+
+      try {
+        update(ref(rtdb, `battle_rooms/${roomCode}`), finishPayload);
+        update(ref(rtdb, `private_battle_rooms/${roomCode}`), finishPayload);
+      } catch {}
+
+      try {
+        updateDoc(doc(db, 'battle_rooms', roomCode), finishPayload);
+      } catch {}
     }
 
-    // Reward XP to players
     if (winUid === currentUid && addXp) {
       addXp(150, "1v1 Do'st bilan duelda g'alaba!");
     }
   };
 
-  // Rematch button
+  // Rematch button (Selects a fresh random text from 50+ pool)
   const handleRematch = async () => {
     if (!roomCode) return;
-    const freshText = getSampleTextForBattle(selectedLanguage);
+    const freshText = getRandomBattleText(selectedLanguage);
     setBattleText(freshText);
     setUserInput('');
     setWinnerName(null);
@@ -397,16 +494,22 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     };
     setMyProgress(resetMy);
 
+    const rematchPayload = {
+      status: 'ready',
+      text: freshText,
+      selectedText: freshText,
+      winner: null,
+      [isHost ? 'host' : 'guest']: resetMy
+    };
+
     try {
-      await update(ref(rtdb, `private_battle_rooms/${roomCode}`), {
-        status: 'ready',
-        text: freshText,
-        winner: null,
-        [isHost ? 'host' : 'guest']: resetMy
-      });
-    } catch (e) {
-      console.error('Rematch error:', e);
-    }
+      await update(ref(rtdb, `battle_rooms/${roomCode}`), rematchPayload);
+      await update(ref(rtdb, `private_battle_rooms/${roomCode}`), rematchPayload);
+    } catch {}
+
+    try {
+      await updateDoc(doc(db, 'battle_rooms', roomCode), rematchPayload);
+    } catch {}
   };
 
   // Copy share invite link
@@ -425,11 +528,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 bg-slate-900/90 border border-blue-500/30 rounded-3xl shadow-2xl relative overflow-hidden text-slate-100">
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 bg-slate-900 border border-blue-500/30 rounded-3xl shadow-2xl relative overflow-hidden text-slate-100">
       {/* Top Header */}
       <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -452,7 +551,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
         {onClose && (
           <button
             onClick={onClose}
-            className="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors"
+            className="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
           >
             Yopish
           </button>
@@ -463,7 +562,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
       {step === 'lobby' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-2">
           {/* Create Room Box */}
-          <div className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 flex flex-col justify-between space-y-4">
+          <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center gap-2 text-amber-400 font-bold text-sm mb-1">
                 <Crown className="w-4 h-4" />
@@ -538,7 +637,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
           </div>
 
           {/* Join Existing Room Box */}
-          <div className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 flex flex-col justify-between space-y-4">
+          <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center gap-2 text-blue-400 font-bold text-sm mb-1">
                 <Users className="w-4 h-4" />
@@ -660,7 +759,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
           <RaceTrack racers={[myProgress, friendProgress]} />
 
           {/* Target Text Box */}
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 font-mono text-sm sm:text-base leading-relaxed tracking-wide select-none">
+          <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 font-mono text-sm sm:text-base leading-relaxed tracking-wide select-none">
             {battleText.split('').map((char, index) => {
               let color = 'text-slate-500';
               if (index < userInput.length) {
@@ -683,7 +782,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
               value={userInput}
               onChange={handleInputChange}
               placeholder="Matnni shu yerga tezkor tering..."
-              className="w-full py-3 px-4 rounded-2xl bg-slate-800/80 border-2 border-blue-500/40 font-mono text-base text-white focus:outline-none focus:border-blue-400 shadow-inner"
+              className="w-full py-3 px-4 rounded-2xl bg-slate-800/90 border-2 border-blue-500/40 font-mono text-base text-white focus:outline-none focus:border-blue-400 shadow-inner"
               autoFocus
             />
           </div>

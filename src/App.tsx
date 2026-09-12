@@ -1027,18 +1027,19 @@ function MainAppContent() {
     }
   };
 
-  // Live stats calculation (Exact International Standard - Accuracy accounts for fixed & unfixed errors)
+  // Live stats calculation with zero-allocation (ultra-fast, zero GC/CPU load)
   const hasStartedTyping = typedInput.length > 0 && isTestActive && startTimeRef.current > 0;
   const liveElapsed = hasStartedTyping
     ? Math.max(0.5, (Date.now() - startTimeRef.current) / 1000)
     : 0;
 
-  const targetChars = targetText.split('');
-  const typedChars = typedInput.split('');
   let liveCorrect = 0;
-  typedChars.forEach((ch, idx) => {
-    if (idx < targetChars.length && ch === targetChars[idx]) liveCorrect++;
-  });
+  const typedLen = typedInput.length;
+  for (let i = 0; i < typedLen; i++) {
+    if (typedInput[i] === targetText[i]) {
+      liveCorrect++;
+    }
+  }
 
   const totalAttemptedKeystrokes = Math.max(typedInput.length, liveCorrect + totalMistakesCountRef.current);
   const liveWpm = hasStartedTyping && typedInput.length > 0
