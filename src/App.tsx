@@ -1204,6 +1204,7 @@ function MainAppContent() {
             <LeaderboardPage
               onOpenLogin={() => setActiveTab('login')}
               onBackToHome={() => setActiveTab('home')}
+              onGoToSpace={() => setActiveTab('space')}
             />
           )}
           {activeTab === 'statistics' && <StatisticsView />}

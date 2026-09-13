@@ -6,16 +6,18 @@ import { useI18n } from '../context/I18nContext';
 interface LeaderboardPageProps {
   onOpenLogin?: () => void;
   onBackToHome?: () => void;
+  onGoToSpace?: () => void;
 }
 
 export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
   onOpenLogin,
-  onBackToHome
+  onBackToHome,
+  onGoToSpace
 }) => {
   const { t } = useI18n();
 
   return (
-    <div className="w-full flex flex-col space-y-4 animate-fade-in">
+    <div className="w-full flex flex-col space-y-4">
       {onBackToHome && (
         <div className="flex items-center justify-between pb-2">
           <button
@@ -28,7 +30,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
         </div>
       )}
 
-      <LeaderboardView onOpenLogin={onOpenLogin} />
+      <LeaderboardView onOpenLogin={onOpenLogin} onGoToSpace={onGoToSpace} />
     </div>
   );
 };
