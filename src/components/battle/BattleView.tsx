@@ -260,26 +260,35 @@ export const BattleView: React.FC<BattleViewProps> = ({
     };
 
     let isCreated = false;
+    let detailedError: any = null;
+
+    // 1. Try Firestore
+    try {
+      await setDoc(doc(db, 'battle_rooms', code), roomPayload);
+      isCreated = true;
+      console.log('[Firestore Battle Room Created]:', code);
+    } catch (err: any) {
+      console.error('[Firestore Create Room Error Details]:', err);
+      detailedError = err;
+    }
+
+    // 2. Try RTDB
     try {
       const roomRef = ref(rtdb, `battle_rooms/${code}`);
       await set(roomRef, roomPayload);
       isCreated = true;
-    } catch (err) {
-      console.warn('RTDB create room fallback:', err);
-    }
-
-    try {
-      await setDoc(doc(db, 'battle_rooms', code), roomPayload);
-      isCreated = true;
-    } catch (err) {
-      console.warn('Firestore create room fallback:', err);
+      console.log('[RTDB Battle Room Created]:', code);
+    } catch (err: any) {
+      console.error('[RTDB Create Room Error Details]:', err);
+      if (!detailedError) detailedError = err;
     }
 
     if (isCreated) {
       setGameState('ready_screen');
       listenToRoom(code, true);
     } else {
-      setJoinError("Xona yaratishda xatolik yuz berdi. Qayta urinib ko'ring.");
+      console.error('[BattleView Error] Xona yaratishda xatolik yuz berdi:', detailedError);
+      setJoinError(`Xona yaratishda xatolik yuz berdi (${detailedError?.code || detailedError?.message || 'Tarmoq xatosi'}). Qayta urinib ko'ring.`);
     }
   };
 

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { menuTranslations } from '../locales/translations';
 
 export type UiLanguage = 'uz' | 'ru' | 'en';
 
@@ -345,9 +346,9 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return parts[0] as UiLanguage;
       }
     }
-    const saved = localStorage.getItem('yolnoma_ui_lang');
+    const saved = localStorage.getItem('yolnoma_lang') || localStorage.getItem('yolnoma_ui_lang');
     if (saved === 'uz' || saved === 'ru' || saved === 'en') {
-      return saved;
+      return saved as UiLanguage;
     }
     // Default to uz as specified: "Standart sahifa: https://www.yolnoma.uz/uz (O'zbekcha)"
     return 'uz';
@@ -356,6 +357,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setUiLanguage = (lang: UiLanguage) => {
     setUiLanguageState(lang);
     try {
+      localStorage.setItem('yolnoma_lang', lang);
       localStorage.setItem('yolnoma_ui_lang', lang);
       document.documentElement.lang = lang;
     } catch {
@@ -378,12 +380,19 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [uiLanguage]);
 
   const t = (key: string): string => {
+    // Check menuTranslations first if key matches
+    const menuDict = menuTranslations[uiLanguage];
+    if (menuDict && (menuDict as any)[key]) {
+      return (menuDict as any)[key];
+    }
     const langDict = translations[uiLanguage];
     if (langDict && langDict[key]) {
       return langDict[key];
     }
     // Fallback to Uzbek, then English
+    if (menuTranslations.uz && (menuTranslations.uz as any)[key]) return (menuTranslations.uz as any)[key];
     if (translations.uz[key]) return translations.uz[key];
+    if (menuTranslations.en && (menuTranslations.en as any)[key]) return (menuTranslations.en as any)[key];
     if (translations.en[key]) return translations.en[key];
     return key;
   };

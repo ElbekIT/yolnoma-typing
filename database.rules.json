@@ -4,6 +4,10 @@
       ".read": true,
       ".write": true
     },
+    "space_scores": {
+      ".read": true,
+      ".write": true
+    },
     "private_battle_rooms": {
       ".read": true,
       ".write": true

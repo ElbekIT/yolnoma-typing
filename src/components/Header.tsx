@@ -42,6 +42,7 @@ import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/o
 import { ShareModal } from './share/ShareModal';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useI18n } from '../context/I18nContext';
+import { menuTranslations } from '../locales/translations';
 
 interface HeaderProps {
   activeTab: string;
@@ -52,7 +53,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
-  const { t } = useI18n();
+  const { t, uiLanguage } = useI18n();
+  const currMenu = menuTranslations[uiLanguage] || menuTranslations.uz;
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifSection, setShowNotifSection] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -96,22 +98,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   );
 
   const navItems = [
-    { id: 'home', label: t('navHome'), enLabel: 'Home', icon: Home },
-    { id: 'typing', label: t('navTyping'), enLabel: 'Typing Test', icon: Keyboard },
-    { id: 'space', label: 'Koinot Jangi 🚀', enLabel: 'Space Shooter', icon: Rocket },
-    { id: 'languages', label: 'Tillar & Lug\'atlar', enLabel: 'Languages', icon: Globe },
-    { id: 'lessons', label: 'Saboqlar & Mashqlar', enLabel: 'Lessons', icon: GraduationCap },
-    { id: 'battle', label: 'Battle Arena', enLabel: 'Battle Arena', icon: Swords },
-    { id: 'dashboard', label: 'Boshqaruv Paneli', enLabel: 'Dashboard', icon: BarChart2 },
-    { id: 'leaderboard', label: 'Peshqadamlar', enLabel: 'Leaderboard', icon: Trophy },
-    { id: 'statistics', label: 'Statistika', enLabel: 'Statistics', icon: Clock },
-    { id: 'achievements', label: 'Yutuqlar', enLabel: 'Achievements', icon: Award },
-    { id: 'challenges', label: 'Muvaffaqiyatlar', enLabel: 'Challenges', icon: Target },
-    { id: 'partners', label: 'Hamkor & Homiy', enLabel: 'Partners & Sponsors', icon: Handshake },
-    { id: 'owner', label: 'Sayt Haqida & Muallif', enLabel: 'About & Creator', icon: Sparkles },
-    ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', enLabel: 'Admin Panel', icon: ShieldAlert }] : []),
-    { id: 'profile', label: 'Profil', enLabel: 'Profile', icon: UserIcon },
-    { id: 'settings', label: 'Sozlamalar', enLabel: 'Settings', icon: Settings },
+    { id: 'home', label: currMenu.home, icon: Home },
+    { id: 'typing', label: currMenu.typingTest, icon: Keyboard },
+    { id: 'space', label: currMenu.spaceGame, icon: Rocket },
+    { id: 'languages', label: currMenu.languages, icon: Globe },
+    { id: 'lessons', label: currMenu.lessons, icon: GraduationCap },
+    { id: 'battle', label: currMenu.battleArena, icon: Swords },
+    { id: 'dashboard', label: currMenu.dashboard, icon: BarChart2 },
+    { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
+    { id: 'statistics', label: currMenu.statistics, icon: Clock },
+    { id: 'achievements', label: currMenu.achievements, icon: Award },
+    { id: 'challenges', label: currMenu.milestones, icon: Target },
+    { id: 'partners', label: currMenu.partners, icon: Handshake },
+    { id: 'owner', label: currMenu.about, icon: Sparkles },
+    ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', icon: ShieldAlert }] : []),
+    { id: 'profile', label: uiLanguage === 'ru' ? 'Профиль' : uiLanguage === 'en' ? 'Profile' : 'Profil', icon: UserIcon },
+    { id: 'settings', label: uiLanguage === 'ru' ? 'Настройки' : uiLanguage === 'en' ? 'Settings' : 'Sozlamalar', icon: Settings },
   ];
 
   const handleSelectTab = (id: string) => {
@@ -130,10 +132,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             <button
               onClick={() => setIsDrawerOpen(true)}
               className="p-2 rounded-xl bg-[var(--sub-alt)]/60 text-[var(--sub-color)] hover:text-[var(--main-color)] border border-[var(--sub-alt)] transition-colors flex items-center gap-2 cursor-pointer"
-              title="Menyu"
+              title={uiLanguage === 'ru' ? 'Меню' : uiLanguage === 'en' ? 'Menu' : 'Menyu'}
             >
               <Menu className="w-4 h-4 text-[var(--main-color)]" />
-              <span className="text-xs font-bold hidden sm:inline text-[var(--text-color)]">Menyu</span>
+              <span className="text-xs font-bold hidden sm:inline text-[var(--text-color)]">
+                {uiLanguage === 'ru' ? 'Меню' : uiLanguage === 'en' ? 'Menu' : 'Menyu'}
+              </span>
             </button>
 
             {/* Brand Logo */}
@@ -158,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'home' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Bosh Sahifa"
+                title={currMenu.home}
               >
                 <Home className={iconDimensions} />
               </button>
@@ -168,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'typing' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Yozish Testi"
+                title={currMenu.typingTest}
               >
                 <Keyboard className={iconDimensions} />
               </button>
@@ -178,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'leaderboard' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Peshqadamlar"
+                title={currMenu.leaderboard}
               >
                 <Crown className={iconDimensions} />
               </button>
@@ -188,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'languages' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="125+ Jahon Tillari"
+                title={currMenu.languages}
               >
                 <Globe className={iconDimensions} />
               </button>
@@ -198,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'lessons' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Saboqlar"
+                title={currMenu.lessons}
               >
                 <GraduationCap className={iconDimensions} />
               </button>
@@ -208,7 +212,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'battle' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Battle Arena"
+                title={currMenu.battleArena}
               >
                 <Swords className={iconDimensions} />
               </button>
@@ -218,7 +222,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-cyan-500/20' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Koinot Jangi (Space Typing Shooter)"
+                title={currMenu.spaceGame}
               >
                 <Rocket className={iconDimensions} />
               </button>
@@ -228,7 +232,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'settings' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
                 }`}
-                title="Sozlamalar"
+                title={uiLanguage === 'ru' ? 'Настройки' : uiLanguage === 'en' ? 'Settings' : 'Sozlamalar'}
               >
                 <Settings className={iconDimensions} />
               </button>
@@ -237,10 +241,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               <button
                 onClick={() => setShowShareModal(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer ml-1"
-                title="Saytni do'stlarga ulashish & musobaqaga taklif qilish"
+                title={uiLanguage === 'ru' ? 'Поделиться сайтом с друзьями' : uiLanguage === 'en' ? 'Share with friends' : "Saytni do'stlarga ulashish"}
               >
                 <Share2 className="w-3.5 h-3.5 text-amber-400" />
-                <span>Ulashish</span>
+                <span>{uiLanguage === 'ru' ? 'Поделиться' : uiLanguage === 'en' ? 'Share' : 'Ulashish'}</span>
               </button>
             </div>
           </div>
@@ -305,12 +309,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       >
                         <div className="flex items-center gap-2">
                           <Bell className="w-4 h-4 text-[var(--main-color)]" />
-                          <span>Habarnomalar</span>
+                          <span>{uiLanguage === 'ru' ? 'Уведомления' : uiLanguage === 'en' ? 'Notifications' : 'Habarnomalar'}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {unreadCount > 0 ? (
                             <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white text-[10px] font-mono font-bold">
-                              {unreadCount} yangi
+                              {unreadCount} {uiLanguage === 'ru' ? 'новых' : uiLanguage === 'en' ? 'new' : 'yangi'}
                             </span>
                           ) : (
                             <span className="text-[10px] text-[var(--sub-color)] font-normal">
@@ -330,14 +334,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                           <div className="flex items-center justify-between px-2 py-1">
                             <span className="text-[10px] font-bold text-[var(--sub-color)] uppercase tracking-wider flex items-center gap-1.5">
                               <Bell className="w-3 h-3 text-[var(--main-color)]" />
-                              <span>Bildirishnomalar</span>
+                              <span>{uiLanguage === 'ru' ? 'Уведомления' : uiLanguage === 'en' ? 'Notifications' : 'Bildirishnomalar'}</span>
                             </span>
                             {notifications.length > 0 && (
                               <button
                                 onClick={clearNotifications}
                                 className="text-[10px] text-[var(--sub-color)] hover:text-rose-500 font-bold transition-colors cursor-pointer"
                               >
-                                Tozalash
+                                {uiLanguage === 'ru' ? 'Очистить' : uiLanguage === 'en' ? 'Clear' : 'Tozalash'}
                               </button>
                             )}
                           </div>
@@ -397,7 +401,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                             })
                           ) : (
                             <p className="text-center text-[var(--sub-color)] py-4 text-xs font-medium">
-                              Hozircha bildirishnoma yo'q
+                              {uiLanguage === 'ru' ? 'Пока нет уведомлений' : uiLanguage === 'en' ? 'No notifications yet' : "Hozircha bildirishnoma yo'q"}
                             </p>
                           )}
                         </div>
@@ -412,7 +416,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       >
                         <div className="flex items-center gap-2.5">
                           <UserIcon className="w-4 h-4 text-[var(--main-color)]" />
-                          <span>Profilni Tahrirlash</span>
+                          <span>{uiLanguage === 'ru' ? 'Редактировать профиль' : uiLanguage === 'en' ? 'Edit Profile' : 'Profilni Tahrirlash'}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
@@ -423,7 +427,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       >
                         <div className="flex items-center gap-2.5">
                           <BarChart2 className="w-4 h-4 text-emerald-500" />
-                          <span>Mening Statistikam</span>
+                          <span>{currMenu.statistics}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
@@ -434,7 +438,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       >
                         <div className="flex items-center gap-2.5">
                           <Award className="w-4 h-4 text-amber-500" />
-                          <span>Yutuqlarim</span>
+                          <span>{currMenu.achievements}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
@@ -445,7 +449,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       >
                         <div className="flex items-center gap-2.5">
                           <Settings className="w-4 h-4 text-indigo-400" />
-                          <span>Sozlamalar</span>
+                          <span>{uiLanguage === 'ru' ? 'Настройки' : uiLanguage === 'en' ? 'Settings' : 'Sozlamalar'}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>
@@ -469,7 +473,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                       >
                         <div className="flex items-center gap-2.5">
                           <Sparkles className="w-4 h-4 text-[var(--main-color)]" />
-                          <span className="text-[var(--main-color)]">Sayt Haqida & Muallif</span>
+                          <span className="text-[var(--main-color)]">{currMenu.about}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--main-color)] opacity-70" />
                       </button>
@@ -485,7 +489,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors font-bold text-xs cursor-pointer"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>Tizimdan Chiqish</span>
+                        <span>{uiLanguage === 'ru' ? 'Выйти из системы' : uiLanguage === 'en' ? 'Sign Out' : 'Tizimdan Chiqish'}</span>
                       </button>
                     </div>
                   </div>
@@ -499,10 +503,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/80 shadow-xs'
                     : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
                 }`}
-                title="Tizimga kirish (Login)"
+                title={uiLanguage === 'ru' ? 'Войти в систему' : uiLanguage === 'en' ? 'Sign In' : 'Tizimga kirish'}
               >
                 <UserIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Kirish</span>
+                <span className="hidden sm:inline">
+                  {uiLanguage === 'ru' ? 'Войти' : uiLanguage === 'en' ? 'Sign In' : 'Kirish'}
+                </span>
               </button>
             )}
           </div>
@@ -537,34 +543,36 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     <h2 className="text-base font-black tracking-tight text-[var(--text-color)]">
                       Yolnoma <span className="text-[var(--main-color)] text-xs font-bold">Typing</span>
                     </h2>
-                    <p className="text-[10px] text-[var(--sub-color)] font-medium">O'zbekiston №1 Tez Yozish Platformasi</p>
+                    <p className="text-[10px] text-[var(--sub-color)] font-medium">
+                      {uiLanguage === 'ru' ? 'Платформа быстрой печати №1 в Узбекистане' : uiLanguage === 'en' ? "Uzbekistan's #1 Touch Typing Platform" : "O'zbekiston №1 Tez Yozish Platformasi"}
+                    </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsDrawerOpen(false)}
                   className="p-1.5 rounded-lg text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
-                  title="Yopish"
+                  title={currMenu.close}
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Mobile Language Switcher (UZ / RU / EN) */}
-              <div className="pt-2 pb-2">
+              <div className="pt-2 pb-3">
                 <LanguageSwitcher compact={true} />
               </div>
 
               {/* Clean Navigation Menu Links */}
               <div className="space-y-1">
                 <div className="px-2 py-1 text-[10px] font-bold uppercase text-[var(--sub-color)] tracking-wider">
-                  Bo'limlar
+                  {currMenu.sections}
                 </div>
 
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
-                  const displayLabel = language.startsWith('uz') ? item.label : item.enLabel;
+                  const displayLabel = item.label;
 
                   return (
                     <button
@@ -610,7 +618,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 >
                   <div className="flex items-center gap-3">
                     <Share2 className="w-5 h-5 text-amber-400" />
-                    <span className="text-sm font-black">Do'stlarga Ulashish</span>
+                    <span className="text-sm font-black">
+                      {uiLanguage === 'ru' ? 'Поделиться с друзьями' : uiLanguage === 'en' ? 'Share with Friends' : "Do'stlarga Ulashish"}
+                    </span>
                   </div>
                   <Sparkles className="w-4 h-4 text-amber-400" />
                 </button>
@@ -632,7 +642,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     />
                     <div className="text-xs truncate">
                       <div className="font-black text-sm text-[var(--text-color)] truncate max-w-[150px]">
-                        {profile?.displayName || 'Foydalanuvchi'}
+                        {profile?.displayName || (uiLanguage === 'ru' ? 'Пользователь' : uiLanguage === 'en' ? 'User' : 'Foydalanuvchi')}
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold">
                         <span className="text-[var(--main-color)]">{profile?.highestWpm || 0} WPM</span>
@@ -644,7 +654,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                   <button
                     onClick={logout}
                     className="p-2 rounded-xl text-[var(--sub-color)] hover:text-rose-500 hover:bg-rose-500/10 transition-all"
-                    title="Chiqish"
+                    title={uiLanguage === 'ru' ? 'Выйти' : uiLanguage === 'en' ? 'Sign Out' : 'Chiqish'}
                   >
                     <LogOut className="w-5 h-5" />
                   </button>
@@ -658,7 +668,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                   className="w-full py-3 rounded-2xl bg-[var(--main-color)] text-white font-extrabold text-sm shadow-md shadow-[var(--main-color)]/25 flex items-center justify-center gap-2.5 hover:opacity-95 transition-all cursor-pointer"
                 >
                   <UserIcon className="w-5 h-5" />
-                  <span>Tizimga Kirish</span>
+                  <span>
+                    {uiLanguage === 'ru' ? 'Войти в систему' : uiLanguage === 'en' ? 'Sign In' : 'Tizimga Kirish'}
+                  </span>
                 </button>
               )}
             </div>

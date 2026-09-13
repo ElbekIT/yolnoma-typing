@@ -85,10 +85,10 @@ export const Footer: React.FC<FooterProps> = ({
               href="/space"
               onClick={(e) => handleNav('space', e)}
               className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 py-0.5 font-medium"
-              title="Koinot Jangi — ZType uslubidagi Space Typing Shooter arkada o'yini"
+              title="Koinot Jangi — Space Typing Shooter"
             >
               <Rocket className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Koinot Jangi 🚀</span>
+              <span>{t('spaceGame')}</span>
             </a>
 
             <a
