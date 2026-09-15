@@ -125,8 +125,20 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </div>
           </div>
         ) : (
-          <div className="order-2 md:order-1 hidden md:flex p-5 rounded-2xl border border-dashed border-[var(--sub-alt)] items-center justify-center text-xs text-[var(--sub-color)] h-64">
-            2-o'rin bo'sh
+          <div className="order-2 md:order-1 flex flex-col p-5 rounded-2xl border border-dashed border-slate-500/30 bg-slate-500/5 items-center justify-center text-center space-y-3 min-h-[220px]">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-400/10 border border-slate-400/20 text-slate-400 text-xs font-mono font-bold">
+              <span>🥈 2-o'rin</span>
+              <span className="text-[10px] text-slate-500">(Ochiq)</span>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-dashed border-slate-400/30 flex items-center justify-center text-slate-500 text-xl font-mono">
+              ?
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-slate-300">Kumush pog'ona bo'sh</p>
+              <p className="text-[11px] text-[var(--sub-color)] max-w-[160px]">
+                Natijangizni ko'rsatib, 2-o'rinni egallang!
+              </p>
+            </div>
           </div>
         )}
 
@@ -257,8 +269,20 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </div>
           </div>
         ) : (
-          <div className="order-3 hidden md:flex p-5 rounded-2xl border border-dashed border-[var(--sub-alt)] items-center justify-center text-xs text-[var(--sub-color)] h-64">
-            3-o'rin bo'sh
+          <div className="order-3 flex flex-col p-5 rounded-2xl border border-dashed border-amber-800/30 bg-amber-900/5 items-center justify-center text-center space-y-3 min-h-[220px]">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-800/10 border border-amber-800/20 text-amber-500 text-xs font-mono font-bold">
+              <span>🥉 3-o'rin</span>
+              <span className="text-[10px] text-amber-600">(Ochiq)</span>
+            </div>
+            <div className="w-14 h-14 rounded-full border-2 border-dashed border-amber-700/30 flex items-center justify-center text-amber-600 text-xl font-mono">
+              ?
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-amber-300">Bronza pog'ona bo'sh</p>
+              <p className="text-[11px] text-[var(--sub-color)] max-w-[160px]">
+                TOP 3 talikka kirish uchun shohsupani egallang!
+              </p>
+            </div>
           </div>
         )}
       </div>

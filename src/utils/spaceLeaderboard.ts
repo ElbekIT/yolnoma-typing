@@ -54,15 +54,86 @@ export async function saveSpaceScore(record: SpaceScoreRecord): Promise<void> {
 }
 
 /**
- * Top 10 Koinot Qahramonlari ro'yxatini yuklaydi
+ * Har bir o'yinchining faqat bitta — eng yuqori rekordi olinishini ta'minlaydi (shaxsiy eng yaxshi natija)
  */
-export async function getTopSpaceScores(limitCount: number = 100): Promise<SpaceScoreRecord[]> {
+export function deduplicateSpaceScores(rawScores: SpaceScoreRecord[]): SpaceScoreRecord[] {
+  const map = new Map<string, SpaceScoreRecord>();
+
+  for (const s of rawScores) {
+    if (!s || typeof s.score !== 'number' || isNaN(s.score)) continue;
+
+    const cleanUid = (s.uid || '').trim();
+    const cleanName = (s.playerName || '').trim().toLowerCase();
+
+    // Haqiqiy UID bo'lsa UID bo'yicha, aks holda taxallus bo'yicha identifikatsiya qilamiz
+    let key = '';
+    if (cleanUid && !cleanUid.startsWith('guest_') && cleanUid.length > 5) {
+      key = `uid_${cleanUid}`;
+    } else if (cleanName) {
+      key = `name_${cleanName}`;
+    } else if (cleanUid) {
+      key = `uid_${cleanUid}`;
+    } else {
+      key = `id_${s.id || Math.random()}`;
+    }
+
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, s);
+    } else {
+      // Eng yuqori ballni saqlab qolamiz
+      if ((s.score || 0) > (existing.score || 0)) {
+        map.set(key, s);
+      } else if ((s.score || 0) === (existing.score || 0)) {
+        // Teng bo'lsa: yuqoriroq to'lqin, ko'proq aniqlik, keyin yangiroq sana
+        if (
+          (s.wave || 1) > (existing.wave || 1) ||
+          ((s.wave || 1) === (existing.wave || 1) && (s.accuracy || 0) > (existing.accuracy || 0)) ||
+          ((s.accuracy || 0) === (existing.accuracy || 0) && (s.createdAt || 0) > (existing.createdAt || 0))
+        ) {
+          map.set(key, s);
+        }
+      }
+    }
+  }
+
+  // Qo'shimcha tekshiruv: agar bir xil taxallusdagi ishtirokchilar bo'lsa, ularni birlashtirib eng zo'rini qoldirish
+  const finalNameMap = new Map<string, SpaceScoreRecord>();
+  for (const item of map.values()) {
+    const nameKey = (item.playerName || '').trim().toLowerCase();
+    if (!nameKey) {
+      finalNameMap.set(`item_${item.id || Math.random()}`, item);
+      continue;
+    }
+    const existing = finalNameMap.get(nameKey);
+    if (!existing) {
+      finalNameMap.set(nameKey, item);
+    } else {
+      if ((item.score || 0) > (existing.score || 0)) {
+        finalNameMap.set(nameKey, item);
+      }
+    }
+  }
+
+  const result = Array.from(finalNameMap.values());
+  result.sort((a, b) => (b.score || 0) - (a.score || 0));
+  return result;
+}
+
+/**
+ * Top Koinot Qahramonlari ro'yxatini yuklaydi.
+ * Har bir o'yinchidan faqat bitta eng yaxshi rekord olinadi (takrorlanishlarga yo'l qo'yilmaydi).
+ */
+export async function getTopSpaceScores(
+  limitCount: number = 100,
+  onlyBestPerPlayer: boolean = true
+): Promise<SpaceScoreRecord[]> {
   const scores: SpaceScoreRecord[] = [];
 
   // 1. Firestore dan urinish
   try {
     const colRef = collection(db, 'space_scores');
-    const q = query(colRef, orderBy('score', 'desc'), limit(limitCount));
+    const q = query(colRef, orderBy('score', 'desc'), limit(limitCount * 3));
     const snap = await getDocs(q);
 
     if (!snap.empty) {
@@ -85,12 +156,14 @@ export async function getTopSpaceScores(limitCount: number = 100): Promise<Space
       if (snap.exists()) {
         const val = snap.val();
         Object.keys(val).forEach((k) => {
-          scores.push({
-            id: k,
-            ...val[k]
-          });
+          const item = val[k];
+          if (item && typeof item.score === 'number') {
+            scores.push({
+              id: k,
+              ...item
+            });
+          }
         });
-        scores.sort((a, b) => b.score - a.score);
       }
     } catch (err) {
       console.warn('[RTDB] Space scores yuklash xatosi:', err);
@@ -108,7 +181,13 @@ export async function getTopSpaceScores(limitCount: number = 100): Promise<Space
     });
   } catch {}
 
-  // Saralash va eng yaxshi N tasini qaytarish (sun'iy foydalanuvchilarsiz, faqat real natijalar)
-  scores.sort((a, b) => b.score - a.score);
+  // 4. Faqat har bir ishtirokchidan bitta eng zo'r natija qoldirish
+  if (onlyBestPerPlayer) {
+    const uniqueScores = deduplicateSpaceScores(scores);
+    return uniqueScores.slice(0, limitCount);
+  }
+
+  // Saralash va eng yaxshi N tasini qaytarish
+  scores.sort((a, b) => (b.score || 0) - (a.score || 0));
   return scores.slice(0, limitCount);
 }

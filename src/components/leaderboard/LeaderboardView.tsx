@@ -32,11 +32,14 @@ import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
 import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
-import { SentenceScoreRecord, getTopSentenceScores } from '../../utils/sentencesLeaderboard';
-import { SpaceScoreRecord, getTopSpaceScores } from '../../utils/spaceLeaderboard';
+import { SentenceScoreRecord, getTopSentenceScores, deduplicateSentenceScores } from '../../utils/sentencesLeaderboard';
+import { SpaceScoreRecord, getTopSpaceScores, deduplicateSpaceScores } from '../../utils/spaceLeaderboard';
 
 // Main Leaderboard Domains (Completely Separated)
 export type LeaderboardDomain = 'typing' | 'sentences' | 'space';
+
+// Ranking mode: best personal score per player vs all attempts
+export type LeaderboardViewMode = 'unique' | 'all';
 
 // Scope categories for typing
 export type ScopeCategory = 'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily';
@@ -135,6 +138,9 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   // Space Battle Leaderboard Data (Real scores only)
   const [spaceScores, setSpaceScores] = useState<SpaceScoreRecord[]>([]);
   const [spaceLoading, setSpaceLoading] = useState(false);
+  // Default to 'unique' (only 1 best record per player, prevents duplicate entries)
+  const [spaceModeFilter, setSpaceModeFilter] = useState<LeaderboardViewMode>('unique');
+  const [sentenceModeFilter, setSentenceModeFilter] = useState<LeaderboardViewMode>('unique');
 
   // Profile modal
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
@@ -506,6 +512,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const filteredSentenceList = useMemo(() => {
     let list = [...sentenceScores];
 
+    if (sentenceModeFilter === 'unique') {
+      list = deduplicateSentenceScores(list);
+    }
+
     if (sentenceCategoryFilter !== 'all') {
       list = list.filter((s) => s.category === sentenceCategoryFilter);
     }
@@ -515,32 +525,40 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       list = list.filter((s) => s.playerName?.toLowerCase().includes(q));
     }
 
-    list.sort((a, b) => b.score - a.score);
+    list.sort((a, b) => (b.score || 0) - (a.score || 0));
     return list;
-  }, [sentenceScores, sentenceCategoryFilter, searchQuery]);
+  }, [sentenceScores, sentenceModeFilter, sentenceCategoryFilter, searchQuery]);
 
-  const sentenceTotalCount = filteredSentenceList.length;
+  // Har bir qatorga aniq global rank berish
+  const rankedSentenceList = useMemo(() => {
+    return filteredSentenceList.map((item, index) => ({
+      ...item,
+      rank: index + 1
+    }));
+  }, [filteredSentenceList]);
+
+  const sentenceTotalCount = rankedSentenceList.length;
   const sentenceTotalPages = Math.max(1, Math.ceil(sentenceTotalCount / pageSize));
 
   const sentencePageItems = useMemo(() => {
-    if (currentPage === 1 && !searchQuery.trim() && filteredSentenceList.length > 3) {
-      return filteredSentenceList.slice(3, 3 + pageSize);
+    if (currentPage === 1 && !searchQuery.trim() && rankedSentenceList.length > 3) {
+      return rankedSentenceList.slice(3, 3 + pageSize);
     }
     const start = (currentPage - 1) * pageSize;
-    return filteredSentenceList.slice(start, start + pageSize);
-  }, [filteredSentenceList, currentPage, pageSize, searchQuery]);
+    return rankedSentenceList.slice(start, start + pageSize);
+  }, [rankedSentenceList, currentPage, pageSize, searchQuery]);
 
   const mySentenceRankingInfo = useMemo(() => {
     if (!currentUser?.uid) return null;
-    const idx = sentenceScores.findIndex((s) => s.uid === currentUser.uid);
+    const idx = rankedSentenceList.findIndex((s) => s.uid === currentUser.uid);
     if (idx !== -1) {
       return {
-        rank: idx + 1,
-        item: sentenceScores[idx]
+        rank: rankedSentenceList[idx].rank,
+        item: rankedSentenceList[idx]
       };
     }
     return null;
-  }, [currentUser, sentenceScores]);
+  }, [currentUser, rankedSentenceList]);
 
   // =========================================================================
   // SPACE BATTLE COMPUTATIONS & STATS
@@ -549,16 +567,21 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     let topScore = 0;
     let maxWave = 0;
     let totalEnemies = 0;
+    const uniquePilots = deduplicateSpaceScores(spaceScores);
     spaceScores.forEach((s) => {
       if ((s.score || 0) > topScore) topScore = s.score;
       if ((s.wave || 1) > maxWave) maxWave = s.wave;
       totalEnemies += s.enemiesKilled || 0;
     });
-    return { topScore, maxWave, totalEnemies, totalPilots: spaceScores.length };
+    return { topScore, maxWave, totalEnemies, totalPilots: uniquePilots.length };
   }, [spaceScores]);
 
   const filteredSpaceList = useMemo(() => {
     let list = [...spaceScores];
+
+    if (spaceModeFilter === 'unique') {
+      list = deduplicateSpaceScores(list);
+    }
 
     if (spaceLanguageFilter !== 'all') {
       list = list.filter((s) => s.language === spaceLanguageFilter);
@@ -571,30 +594,38 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
     list.sort((a, b) => (b.score || 0) - (a.score || 0));
     return list;
-  }, [spaceScores, spaceLanguageFilter, searchQuery]);
+  }, [spaceScores, spaceModeFilter, spaceLanguageFilter, searchQuery]);
 
-  const spaceTotalCount = filteredSpaceList.length;
+  // Har bir uchuvchiga aniq global o'rin (rank) berish
+  const rankedSpaceList = useMemo(() => {
+    return filteredSpaceList.map((item, index) => ({
+      ...item,
+      rank: index + 1
+    }));
+  }, [filteredSpaceList]);
+
+  const spaceTotalCount = rankedSpaceList.length;
   const spaceTotalPages = Math.max(1, Math.ceil(spaceTotalCount / pageSize));
 
   const spacePageItems = useMemo(() => {
-    if (currentPage === 1 && !searchQuery.trim() && filteredSpaceList.length > 3) {
-      return filteredSpaceList.slice(3, 3 + pageSize);
+    if (currentPage === 1 && !searchQuery.trim() && rankedSpaceList.length > 3) {
+      return rankedSpaceList.slice(3, 3 + pageSize);
     }
     const start = (currentPage - 1) * pageSize;
-    return filteredSpaceList.slice(start, start + pageSize);
-  }, [filteredSpaceList, currentPage, pageSize, searchQuery]);
+    return rankedSpaceList.slice(start, start + pageSize);
+  }, [rankedSpaceList, currentPage, pageSize, searchQuery]);
 
   const mySpaceRankingInfo = useMemo(() => {
     if (!currentUser?.uid) return null;
-    const idx = spaceScores.findIndex((s) => s.uid === currentUser.uid);
+    const idx = rankedSpaceList.findIndex((s) => s.uid === currentUser.uid);
     if (idx !== -1) {
       return {
-        rank: idx + 1,
-        item: spaceScores[idx]
+        rank: rankedSpaceList[idx].rank,
+        item: rankedSpaceList[idx]
       };
     }
     return null;
-  }, [currentUser, spaceScores]);
+  }, [currentUser, rankedSpaceList]);
 
   // =========================================================================
   // PODIUM MAPPINGS
@@ -1329,6 +1360,55 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {/* SIDEBAR FOR SPACE BATTLE */}
           {domain === 'space' && (
             <>
+              {/* Leaderboard View Mode: 1 best per player vs All attempts */}
+              <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
+                <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
+                    REYTING TURI
+                  </span>
+                  <span className="text-[10px] text-cyan-400 font-mono font-bold">
+                    {spaceModeFilter === 'unique' ? '1 ta / ishtirokchi' : 'barchasi'}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSpaceModeFilter('unique');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-between cursor-pointer ${
+                    spaceModeFilter === 'unique'
+                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Trophy className="w-4 h-4 shrink-0" />
+                    <span>Eng yuqori natijalar</span>
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-mono font-bold">
+                    Faqat 1 ta
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSpaceModeFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-between cursor-pointer ${
+                    spaceModeFilter === 'all'
+                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Layers className="w-4 h-4 shrink-0" />
+                    <span>Barcha urinishlar</span>
+                  </span>
+                </button>
+              </div>
+
               <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
                 <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
@@ -1671,7 +1751,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                       </tr>
                     ) : (
                       sentencePageItems.map((item, idx) => {
-                        const globalRank = (currentPage - 1) * pageSize + (idx + 1) + (currentPage === 1 && !searchQuery.trim() ? 3 : 0);
+                        const globalRank = (item as any).rank || ((currentPage - 1) * pageSize + (idx + 1));
                         const isSelf = currentUser?.uid === item.uid;
 
                         return (
@@ -1682,8 +1762,16 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                               isSelf ? 'bg-emerald-500/10 font-bold border-l-2 border-emerald-400' : ''
                             }`}
                           >
-                            <td className="py-3.5 px-3 text-[var(--sub-color)] font-medium text-xs">
-                              {globalRank === 1 ? '🥇 1' : globalRank === 2 ? '🥈 2' : globalRank === 3 ? '🥉 3' : globalRank}
+                            <td className="py-3.5 px-3 text-[var(--sub-color)] font-medium text-xs font-mono">
+                              {globalRank === 1 ? (
+                                <span className="text-amber-400 font-bold">🥇 1</span>
+                              ) : globalRank === 2 ? (
+                                <span className="text-slate-300 font-bold">🥈 2</span>
+                              ) : globalRank === 3 ? (
+                                <span className="text-amber-600 font-bold">🥉 3</span>
+                              ) : (
+                                <span>#{globalRank}</span>
+                              )}
                             </td>
                             <td className="py-3.5 px-4 font-semibold text-[var(--text-color)] text-xs">
                               <div className="flex items-center gap-2.5">
@@ -1762,39 +1850,80 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               )}
 
               {/* Header Title & Pagination */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
-                    <Rocket className="w-5 h-5 text-cyan-400" />
-                    <span>🚀 Koinot Jangi (Space Typing Shooter) Chempionlar Reytingi</span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
-                    Kosmik jang merganlarining haqiqiy rekordlari • Jami {spaceTotalCount} ta natija
-                  </p>
+              <div className="flex flex-col gap-3 pb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
+                      <Rocket className="w-5 h-5 text-cyan-400" />
+                      <span>🚀 Koinot Jangi (Space Typing Shooter) Chempionlar Reytingi</span>
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
+                      Kosmik jang merganlarining haqiqiy natijalari • Jami {spaceTotalCount} ta {spaceModeFilter === 'unique' ? 'ishtirokchi rekordi' : 'urinish'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                      title="Oldingi sahifa"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    <span className="font-mono text-sm text-cyan-400 font-semibold px-1">
+                      # {currentPage} / {spaceTotalPages}
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(spaceTotalPages, p + 1))}
+                      disabled={currentPage === spaceTotalPages}
+                      className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                      title="Keyingi sahifa"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                    title="Oldingi sahifa"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  <span className="font-mono text-sm text-cyan-400 font-semibold px-1">
-                    # {currentPage} / {spaceTotalPages}
+                {/* Quick Toggle: Best record per player vs All attempts */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[var(--sub-alt)]/30">
+                  <div className="inline-flex p-1 rounded-xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-xs font-medium">
+                    <button
+                      onClick={() => {
+                        setSpaceModeFilter('unique');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        spaceModeFilter === 'unique'
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow-xs'
+                          : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                      }`}
+                    >
+                      <Trophy className="w-3.5 h-3.5" />
+                      <span>Shaxsiy eng yuqori rekordlar (1 ta / o&apos;yinchi)</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSpaceModeFilter('all');
+                        setCurrentPage(1);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        spaceModeFilter === 'all'
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow-xs'
+                          : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Barcha o&apos;yinlar tarixi</span>
+                    </button>
+                  </div>
+                  <span className="text-[11px] text-[var(--sub-color)] font-mono">
+                    {spaceModeFilter === 'unique'
+                      ? '✓ Har bir o\'yinchining faqat eng yaxshi rekordi'
+                      : '✓ O\'yinchilarning barcha urinishlari'}
                   </span>
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(spaceTotalPages, p + 1))}
-                    disabled={currentPage === spaceTotalPages}
-                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                    title="Keyingi sahifa"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
@@ -1843,7 +1972,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                       </tr>
                     ) : (
                       spacePageItems.map((item, idx) => {
-                        const globalRank = (currentPage - 1) * pageSize + (idx + 1) + (currentPage === 1 && !searchQuery.trim() ? 3 : 0);
+                        const globalRank = (item as any).rank || ((currentPage - 1) * pageSize + (idx + 1));
                         const isSelf = currentUser?.uid === item.uid;
 
                         return (
@@ -1854,8 +1983,16 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                               isSelf ? 'bg-cyan-500/10 font-bold border-l-2 border-cyan-400' : ''
                             }`}
                           >
-                            <td className="py-3.5 px-3 text-[var(--sub-color)] font-medium text-xs">
-                              {globalRank === 1 ? '🥇 1' : globalRank === 2 ? '🥈 2' : globalRank === 3 ? '🥉 3' : globalRank}
+                            <td className="py-3.5 px-3 text-[var(--sub-color)] font-medium text-xs font-mono">
+                              {globalRank === 1 ? (
+                                <span className="text-amber-400 font-bold">🥇 1</span>
+                              ) : globalRank === 2 ? (
+                                <span className="text-slate-300 font-bold">🥈 2</span>
+                              ) : globalRank === 3 ? (
+                                <span className="text-amber-600 font-bold">🥉 3</span>
+                              ) : (
+                                <span>#{globalRank}</span>
+                              )}
                             </td>
                             <td className="py-3.5 px-4 font-semibold text-[var(--text-color)] text-xs">
                               <div className="flex items-center gap-2.5">

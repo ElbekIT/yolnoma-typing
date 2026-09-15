@@ -67,9 +67,60 @@ export async function saveSentenceScore(record: SentenceScoreRecord): Promise<vo
 }
 
 /**
+ * Har bir o'quvchining faqat bitta — eng yuqori natijasi qoldiriladi
+ */
+export function deduplicateSentenceScores(rawScores: SentenceScoreRecord[]): SentenceScoreRecord[] {
+  const map = new Map<string, SentenceScoreRecord>();
+
+  for (const item of rawScores) {
+    if (!item || typeof item.score !== 'number' || isNaN(item.score)) continue;
+
+    const cleanUid = (item.uid || '').trim();
+    const cleanName = (item.playerName || '').trim().toLowerCase();
+
+    let key = '';
+    if (cleanUid && !cleanUid.startsWith('guest_') && cleanUid.length > 5) {
+      key = `uid_${cleanUid}`;
+    } else if (cleanName) {
+      key = `name_${cleanName}`;
+    } else if (cleanUid) {
+      key = `uid_${cleanUid}`;
+    } else {
+      key = `id_${item.id || Math.random()}`;
+    }
+
+    const existing = map.get(key);
+    if (!existing || (item.score || 0) > (existing.score || 0)) {
+      map.set(key, item);
+    }
+  }
+
+  // Nom bo'yicha ham birlashtirish
+  const nameMap = new Map<string, SentenceScoreRecord>();
+  for (const item of map.values()) {
+    const nameKey = (item.playerName || '').trim().toLowerCase();
+    if (!nameKey) {
+      nameMap.set(`item_${item.id || Math.random()}`, item);
+      continue;
+    }
+    const existing = nameMap.get(nameKey);
+    if (!existing || (item.score || 0) > (existing.score || 0)) {
+      nameMap.set(nameKey, item);
+    }
+  }
+
+  const result = Array.from(nameMap.values());
+  result.sort((a, b) => (b.score || 0) - (a.score || 0));
+  return result;
+}
+
+/**
  * Peshqadamlar reytingi uchun eng yuqori natijalarni oladi
  */
-export async function getTopSentenceScores(limitCount: number = 25): Promise<SentenceScoreRecord[]> {
+export async function getTopSentenceScores(
+  limitCount: number = 25,
+  onlyBestPerPlayer: boolean = true
+): Promise<SentenceScoreRecord[]> {
   const recordsMap = new Map<string, SentenceScoreRecord>();
 
   // 1. RTDB dan tekshirish
@@ -95,7 +146,7 @@ export async function getTopSentenceScores(limitCount: number = 25): Promise<Sen
   // 2. Firestore orqali zaxira qidirish
   try {
     const colRef = collection(db, 'sentence_scores');
-    const q = query(colRef, orderBy('score', 'desc'), limit(limitCount));
+    const q = query(colRef, orderBy('score', 'desc'), limit(limitCount * 3));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -127,9 +178,11 @@ export async function getTopSentenceScores(limitCount: number = 25): Promise<Sen
   } catch {}
 
   const allRecords = Array.from(recordsMap.values());
+  if (onlyBestPerPlayer) {
+    return deduplicateSentenceScores(allRecords).slice(0, limitCount);
+  }
+
   // Ball bo'yicha yuqoridan pastga saralash
   allRecords.sort((a, b) => (b.score || 0) - (a.score || 0));
-
-  // Faqat real foydalanuvchilar natijalarini qaytarish (sun'iy foydalanuvchilarsiz)
   return allRecords.slice(0, limitCount);
 }
