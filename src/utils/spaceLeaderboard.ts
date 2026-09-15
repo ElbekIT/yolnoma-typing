@@ -1,6 +1,6 @@
 import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { ref, set, get } from 'firebase/database';
-import { db, rtdb } from '../config/firebase';
+import { db, rtdb, ensureFirebaseAuth } from '../config/firebase';
 
 export interface SpaceScoreRecord {
   id?: string;
@@ -21,6 +21,20 @@ export interface SpaceScoreRecord {
  * Koinot Jangi natijasini Firebase Firestore, RTDB va LocalStorage ga saqlaydi
  */
 export async function saveSpaceScore(record: SpaceScoreRecord): Promise<void> {
+  // Ensure valid authenticated session (user or anonymous guest)
+  const authUser = await ensureFirebaseAuth();
+  if (authUser?.uid) {
+    record.uid = authUser.uid;
+  }
+
+  // Sanitize & bound parameters according to anti-cheat limits
+  record.score = Math.min(5000000, Math.max(0, Math.round(Number(record.score) || 0)));
+  record.wave = Math.min(200, Math.max(1, Math.round(Number(record.wave) || 1)));
+  record.wpm = Math.min(350, Math.max(0, Math.round(Number(record.wpm) || 0)));
+  record.accuracy = Math.min(100, Math.max(0, Math.round(Number(record.accuracy) || 0)));
+  record.enemiesKilled = Math.max(0, Math.round(Number(record.enemiesKilled) || 0));
+  record.createdAt = Date.now();
+
   // 1. Mahalliy saqlash (offline / tezkor fallback)
   try {
     const localKey = 'yolnoma_space_scores_history';

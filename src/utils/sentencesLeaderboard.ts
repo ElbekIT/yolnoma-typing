@@ -1,6 +1,6 @@
 import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { ref, set, get, update } from 'firebase/database';
-import { db, rtdb } from '../config/firebase';
+import { db, rtdb, ensureFirebaseAuth } from '../config/firebase';
 
 export interface SentenceScoreRecord {
   id?: string;
@@ -23,6 +23,19 @@ export interface SentenceScoreRecord {
  * Jumlalar trenajyori natijasini Firebase va LocalStorage ga saqlaydi
  */
 export async function saveSentenceScore(record: SentenceScoreRecord): Promise<void> {
+  // Ensure valid authenticated session (user or anonymous guest)
+  const authUser = await ensureFirebaseAuth();
+  if (authUser?.uid) {
+    record.uid = authUser.uid;
+  }
+
+  // Anti-cheat bounds validation
+  record.score = Math.min(2000000, Math.max(0, Math.round(Number(record.score) || 0)));
+  record.wpm = Math.min(350, Math.max(0, Math.round(Number(record.wpm) || 0)));
+  record.accuracy = Math.min(100, Math.max(0, Math.round(Number(record.accuracy) || 0)));
+  record.sentencesCompleted = Math.max(0, Math.round(Number(record.sentencesCompleted) || 0));
+  record.createdAt = Date.now();
+
   // 1. Mahalliy saqlash (offline fallback)
   try {
     const localKey = 'yolnoma_sentence_scores_history';
@@ -50,7 +63,7 @@ export async function saveSentenceScore(record: SentenceScoreRecord): Promise<vo
     await set(rtdbRef, record);
 
     // Foydalanuvchi profiliga ham sentence darajasi va IELTS bandini yangilash
-    if (record.uid && !record.uid.startsWith('guest_')) {
+    if (record.uid && !record.uid.startsWith('guest_') && authUser?.uid === record.uid) {
       const userRef = ref(rtdb, `users/${record.uid}`);
       await update(userRef, {
         sentenceLevel: record.userLevel || 1,

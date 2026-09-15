@@ -161,6 +161,9 @@ class AntiCheatSystem {
    * Validates typing score before submission to prevent console tampering and bans if illegal
    */
   public validateTypingResult(wpm: number, accuracy: number, durationSeconds: number, charCount: number): boolean {
+    if (durationSeconds < 5) {
+      return false; // Test must run at least 5 seconds for valid statistical measurement
+    }
     if (wpm < 0 || wpm > 260) {
       this.banDeviceAndUser(`Insoniy imkoniyatdan yuqori soxta WPM (${Math.round(wpm)} WPM) aniqlandi!`);
       return false;
@@ -170,8 +173,14 @@ class AntiCheatSystem {
       return false;
     }
     const maxPossibleChars = durationSeconds * 25; // 25 chars/sec = 300 WPM
-    if (charCount > maxPossibleChars && durationSeconds > 3) {
+    if (charCount > maxPossibleChars && durationSeconds >= 5) {
       this.banDeviceAndUser('Belgilar soni va test vaqti mutanosibligi buzilgan (Soxta ma\'lumot)!');
+      return false;
+    }
+    // Cross-check WPM calculation consistency
+    const calculatedExpectedWpm = (charCount / 5) / (durationSeconds / 60);
+    if (wpm > calculatedExpectedWpm + 35 && wpm > 80) {
+      this.banDeviceAndUser('WPM va kiritilgan belgilar matematik nomuvofiqligi aniqlandi!');
       return false;
     }
     return true;

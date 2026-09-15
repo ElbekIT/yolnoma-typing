@@ -502,8 +502,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       const newValue = e.target.value;
 
-      if (newValue.length - typedInput.length > 10) {
-        antiCheatManager.banDeviceAndUser('Avto-Typer Bot yozuvi aniqlandi va bloklandi!');
+      // Inhuman burst injection (human keystrokes cannot generate 3+ chars in one tick)
+      if (newValue.length - typedInput.length > 2) {
+        antiCheatManager.banDeviceAndUser('Noxolis kiritish yoki Avto-Typer Bot aniqlandi va bloklandi!');
         window.location.reload();
         return;
       }

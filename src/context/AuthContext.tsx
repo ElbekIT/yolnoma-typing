@@ -13,7 +13,7 @@ import {
   deleteUser
 } from 'firebase/auth';
 import { ref, set, update, push, get, child, onValue, remove } from 'firebase/database';
-import { auth, rtdb, googleProvider, githubProvider } from '../config/firebase';
+import { auth, rtdb, googleProvider, githubProvider, ensureFirebaseAuth } from '../config/firebase';
 import { UserProfile, TypingResult, LanguageCode, UserNotificationItem } from '../types';
 import { antiCheatManager } from '../utils/antiCheat';
 
@@ -978,16 +978,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (rawResult.timeMode === 60) localStorage.setItem('yolnoma_guest_60_wpm', String(guest60));
         if (rawResult.timeMode === 120) localStorage.setItem('yolnoma_guest_120_wpm', String(guest120));
 
+        // Ensure session exists for secure database rules validation
+        await ensureFirebaseAuth();
+
         await set(ref(rtdb, `leaderboard/${guestId}`), {
           uid: guestId,
-          displayName: `Mehmon (${guestId.replace('guest_', '')})`,
-          username: guestId,
-          highestWpm: guestBest,
-          time15Wpm: guest15,
-          time30Wpm: guest30,
-          time60Wpm: guest60,
-          time120Wpm: guest120,
-          highestAccuracy: rawResult.accuracy,
+          displayName: `Mehmon (${guestId.replace('guest_', '').slice(0, 10)})`,
+          username: guestId.slice(0, 25),
+          highestWpm: Math.min(260, Math.max(0, guestBest)),
+          time15Wpm: Math.min(260, Math.max(0, guest15)),
+          time30Wpm: Math.min(260, Math.max(0, guest30)),
+          time60Wpm: Math.min(260, Math.max(0, guest60)),
+          time120Wpm: Math.min(260, Math.max(0, guest120)),
+          highestAccuracy: Math.min(100, Math.max(0, rawResult.accuracy)),
           country: '🇺🇿 Uzbekistan',
           level: 1,
           rankTitle: 'Mehmon Typer',

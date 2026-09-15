@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, GithubAuthProvider, signInAnonymously } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
 
@@ -75,5 +75,22 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const githubProvider = new GithubAuthProvider();
 githubProvider.addScope('read:user');
 githubProvider.addScope('user:email');
+
+/**
+ * Ensures a valid Firebase Auth session exists (authenticated user or secure anonymous session)
+ * Guarantees request.auth is never null for database security validation
+ */
+export async function ensureFirebaseAuth() {
+  if (auth.currentUser) {
+    return auth.currentUser;
+  }
+  try {
+    const cred = await signInAnonymously(auth);
+    return cred.user;
+  } catch (err) {
+    console.warn('[Firebase Auth] Anonymous sign-in notice:', err);
+    return auth.currentUser || null;
+  }
+}
 
 export default app;

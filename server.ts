@@ -679,14 +679,31 @@ app.use((req, res, next) => {
   next();
 });
 
-// Strict Security Headers (Anti-Sniff, Anti-Clickjacking, Anti-XSS, Anti-Reverse Engineering)
+// Strict Security Headers (CSP, Anti-Sniff, Anti-Clickjacking, Anti-XSS, Anti-Reverse Engineering)
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+
+  // Content-Security-Policy: restrict all origins to trusted Google, Firebase, Dicebear, and Yolnoma endpoints
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https://api.dicebear.com https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.firebasestorage.googleapis.com https://*.firebase.com https://*.gstatic.com",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app",
+    "media-src 'self' data: blob:",
+    "frame-ancestors 'self' https://ai.studio https://ais-*.run.app https://*.google.com https://yolnoma.uz https://www.yolnoma.uz",
+    "object-src 'none'",
+    "base-uri 'self'"
+  ].join('; ');
+
+  res.setHeader('Content-Security-Policy', csp);
   next();
 });
 
@@ -1125,9 +1142,29 @@ app.post('/api/contact', async (req, res) => {
 // ANTI-CHEAT TYPING TEST VERIFICATION ENGINE
 // -------------------------------------------------------------
 
+const typingSubmitRateMap = new Map<string, number>();
+
+function escapeHtmlSafe(str: unknown, maxLen = 100): string {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&#39;', '"': '&quot;' }[c] || c))
+    .trim()
+    .slice(0, maxLen);
+}
+
 app.post('/api/typing/submit', (req, res) => {
   const clientIp = getClientIp(req);
   const now = Date.now();
+
+  // Submission rate limiting: minimum 3 seconds between tests per IP
+  const lastSubmit = typingSubmitRateMap.get(clientIp) || 0;
+  if (now - lastSubmit < 3000) {
+    return res.status(429).json({
+      success: false,
+      error: 'Iltimos, har bir test topshirish oraligʻida kamida 3 soniya kuting.'
+    });
+  }
+  typingSubmitRateMap.set(clientIp, now);
 
   const {
     userId,
@@ -1156,22 +1193,37 @@ app.post('/api/typing/submit', (req, res) => {
     return res.status(400).json({ success: false, error: 'Yaroqsiz test ma\'lumotlari' });
   }
 
-  // Anti-Cheat Check 1: Inhuman speed detection
-  // World record is ~240-250 WPM. Speeds > 280 WPM are flagged as suspicious bots.
-  if (wpm > 280) {
+  // Anti-Cheat Check 1: Inhuman speed detection (World record is ~240-250 WPM)
+  if (wpm < 0 || wpm > 260) {
     serverStats.suspiciousTestsBlocked += 1;
     return res.status(422).json({
       success: false,
       isVerified: false,
       flagged: true,
-      error: 'Anti-Cheat: Natija insoniy chegaradan yuqori deb topildi va rad etildi.'
+      error: 'Anti-Cheat: Natija insoniy chegaradan yuqori (260+ WPM) deb topildi va rad etildi.'
     });
   }
 
-  // Anti-Cheat Check 2: Mathematical character vs time consistency
-  // WPM is roughly (correctChars / 5) / (testTimeSeconds / 60)
-  const expectedMaxWpm = Math.round(((correctChars || wpm * 5) / 5) / (testTimeSeconds / 60)) + 30;
-  if (wpm > expectedMaxWpm && wpm > 100) {
+  // Anti-Cheat Check 2: Accuracy bounds
+  if (accuracy < 0 || accuracy > 100) {
+    return res.status(422).json({
+      success: false,
+      error: 'Yaroqsiz aniqlik qiymati (0-100 oraligʻida boʻlishi shart).'
+    });
+  }
+
+  // Anti-Cheat Check 3: Impossible short duration
+  if (testTimeSeconds < 5) {
+    return res.status(422).json({
+      success: false,
+      isVerified: false,
+      error: 'Test davomiyligi kamida 5 soniya bo\'lishi kerak.'
+    });
+  }
+
+  // Anti-Cheat Check 4: Character throughput vs time
+  const maxPossibleChars = testTimeSeconds * 25;
+  if (typeof correctChars === 'number' && correctChars > maxPossibleChars && testTimeSeconds >= 5) {
     serverStats.suspiciousTestsBlocked += 1;
     return res.status(422).json({
       success: false,
@@ -1181,35 +1233,45 @@ app.post('/api/typing/submit', (req, res) => {
     });
   }
 
-  // Anti-Cheat Check 3: Impossible 0-second or negative duration
-  if (testTimeSeconds < 5) {
+  // Anti-Cheat Check 5: Mathematical character vs time consistency
+  const expectedMaxWpm = Math.round(((correctChars || wpm * 5) / 5) / (testTimeSeconds / 60)) + 35;
+  if (wpm > expectedMaxWpm && wpm > 80) {
+    serverStats.suspiciousTestsBlocked += 1;
     return res.status(422).json({
       success: false,
       isVerified: false,
-      error: 'Test davomiyligi kamida 5 soniya bo\'lishi kerak.'
+      flagged: true,
+      error: 'Anti-Cheat: Belgilar soni va WPM oʻrtasidagi matematik bogʻliqlik buzilgan.'
     });
   }
+
+  // Sanitize user inputs for XSS safety
+  const safeUserId = String(userId || 'guest').slice(0, 50);
+  const safeUsername = escapeHtmlSafe(username, 30) || 'Mehmon';
+  const safeDisplayName = escapeHtmlSafe(displayName || username, 40) || 'Mehmon';
+  const safeCountry = escapeHtmlSafe(country, 40) || '🇺🇿 Uzbekistan';
+  const safeAvatarUrl = typeof avatarUrl === 'string' && (avatarUrl.startsWith('https://') || avatarUrl.startsWith('data:')) ? avatarUrl.slice(0, 500) : undefined;
 
   // Generate Cryptographic Proof Signature for Verified Result
   const signature = crypto
     .createHmac('sha256', SECRET_SALT)
-    .update(`${userId || 'guest'}:${wpm}:${accuracy}:${testTimeSeconds}:${now}`)
+    .update(`${safeUserId}:${wpm}:${accuracy}:${testTimeSeconds}:${now}`)
     .digest('hex');
 
   const verifiedRecord: VerifiedTypingRecord = {
     id: `rec-${now}-${crypto.randomBytes(4).toString('hex')}`,
-    userId: String(userId || 'guest'),
-    username: String(username || 'Mehmon'),
-    displayName: String(displayName || username || 'Mehmon'),
-    avatarUrl: avatarUrl ? String(avatarUrl) : undefined,
-    country: country ? String(country) : '🇺🇿 Uzbekistan',
+    userId: safeUserId,
+    username: safeUsername,
+    displayName: safeDisplayName,
+    avatarUrl: safeAvatarUrl,
+    country: safeCountry,
     wpm: Math.round(wpm),
     rawWpm: Math.round(rawWpm || wpm),
     accuracy: Math.min(100, Math.max(0, Math.round(accuracy))),
     consistency: Math.min(100, Math.max(0, Math.round(consistency || 90))),
     timeMode: Number(timeMode || 60),
-    mode: String(mode || 'time'),
-    language: String(language || 'uz-latn'),
+    mode: String(mode || 'time').slice(0, 20),
+    language: String(language || 'uz-latn').slice(0, 20),
     correctChars: Number(correctChars || wpm * 5),
     errorCount: Number(errorCount || 0),
     timestamp: now,

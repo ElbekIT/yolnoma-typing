@@ -1,34 +1,114 @@
 {
   "rules": {
-    "battle_rooms": {
-      ".read": true,
-      ".write": true
-    },
-    "space_scores": {
-      ".read": true,
-      ".write": true
-    },
-    "private_battle_rooms": {
-      ".read": true,
-      ".write": true
-    },
-    "battles": {
-      ".read": true,
-      ".write": true
-    },
-    "online_players": {
-      ".read": true,
-      ".write": true
-    },
-    "user_notifications": {
-      ".read": true,
-      ".write": true
-    },
+    ".read": false,
+    ".write": false,
+
     "users": {
       ".read": true,
-      ".write": "auth != null"
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || auth.uid === 'root_owner_gavharoy')",
+        ".validate": "newData.hasChildren([])"
+      }
     },
-    ".read": true,
-    ".write": true
+
+    "leaderboard": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
+        ".validate": "newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() <= 350 && newData.child('highestWpm').val() >= 0"
+      }
+    },
+
+    "results": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
+        "$resultId": {
+          ".write": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
+          ".validate": "newData.child('wpm').isNumber() && newData.child('wpm').val() <= 350 && newData.child('wpm').val() >= 0"
+        }
+      }
+    },
+
+    "space_scores": {
+      ".read": true,
+      "$scoreId": {
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
+        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 5000000 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() <= 100"
+      }
+    },
+
+    "sentence_scores": {
+      ".read": true,
+      "$scoreId": {
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
+        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 2000000 && newData.child('wpm').isNumber() && newData.child('wpm').val() <= 350"
+      }
+    },
+
+    "battle_rooms": {
+      ".read": "auth != null",
+      "$roomId": {
+        ".write": "auth != null",
+        ".validate": "newData.child('status').isString()"
+      }
+    },
+
+    "private_battle_rooms": {
+      ".read": "auth != null",
+      "$roomId": {
+        ".write": "auth != null"
+      }
+    },
+
+    "battles": {
+      ".read": "auth != null",
+      "$roomId": {
+        ".write": "auth != null"
+      }
+    },
+
+    "online_players": {
+      ".read": true,
+      "$playerId": {
+        ".write": "auth != null && (auth.uid === $playerId || $playerId.beginsWith('guest_'))"
+      }
+    },
+
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || auth.uid === 'root_owner_gavharoy')"
+      }
+    },
+
+    "user_notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || auth.uid === 'root_owner_gavharoy')"
+      }
+    },
+
+    "global_announcements": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'root_owner_gavharoy'"
+    },
+
+    "contactMessages": {
+      ".read": "auth != null && auth.uid === 'root_owner_gavharoy'",
+      "$msgId": {
+        ".write": true,
+        ".validate": "newData.child('message').isString() && newData.child('message').val().length <= 3000"
+      }
+    },
+
+    "maintenance": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'root_owner_gavharoy'"
+    },
+
+    "sponsors": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'root_owner_gavharoy'"
+    }
   }
 }
