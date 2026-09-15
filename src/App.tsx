@@ -9,7 +9,6 @@ import { AboutModal } from './components/about/AboutModal';
 import { LoginPage } from './components/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TypingPage } from './pages/TypingPage';
-import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { rtdb } from './config/firebase';
@@ -27,7 +26,6 @@ import { updatePageSEO } from './utils/seo';
 
 // Lazy-loaded secondary views for high performance & fast initial loading
 const DashboardView = React.lazy(() => import('./components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
-const LeaderboardView = React.lazy(() => import('./components/leaderboard/LeaderboardView').then(m => ({ default: m.LeaderboardView })));
 const StatisticsView = React.lazy(() => import('./components/statistics/StatisticsView').then(m => ({ default: m.StatisticsView })));
 const AchievementsView = React.lazy(() => import('./components/achievements/AchievementsView').then(m => ({ default: m.AchievementsView })));
 const ChallengesView = React.lazy(() => import('./components/challenges/ChallengesView').then(m => ({ default: m.ChallengesView })));
@@ -40,7 +38,9 @@ const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m
 const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
+const SentencesPage = React.lazy(() => import('./pages/SentencesPage').then(m => ({ default: m.SentencesPage })));
 const SpaceGamePage = React.lazy(() => import('./pages/SpaceGamePage').then(m => ({ default: m.SpaceGamePage })));
+const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
 const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
 
 function ViewLoadingFallback() {
@@ -76,10 +76,10 @@ function MainAppContent() {
   const TAB_TO_PATH: Record<string, string> = {
     home: '',
     typing: 'test',
-    languages: 'languages',
     leaderboard: 'leaderboard',
+    languages: 'languages',
+    sentences: 'sentences',
     battle: 'battle',
-    space: 'space',
     lessons: 'lessons',
     statistics: 'statistics',
     profile: 'profile',
@@ -90,16 +90,18 @@ function MainAppContent() {
     partners: 'partners',
     owner: 'about',
     dashboard: 'dashboard',
+    space: 'space',
     admin: atob('YWRtaW4=')
   };
 
   const TAB_TITLES: Record<string, string> = {
     home: "Yolnoma Typing - O'zbekistonda №1 Tez Yozish Platformasi",
     typing: 'Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing',
+    leaderboard: "Peshqadamlar & Milliy Reyting - Yolnoma Typing",
     languages: '125+ Jahon Tillari - Yolnoma Typing',
-    leaderboard: 'Peshqadamlar Reytingi - Yolnoma Typing',
-    battle: 'Speedway Battle Arena - Yolnoma Typing',
+    sentences: 'Inglizcha Jumlalar (Learn by Typing) - Yolnoma Typing',
     space: 'Koinot Jangi (Space Typing Shooter) - Yolnoma Typing',
+    battle: 'Speedway Battle Arena - Yolnoma Typing',
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
     profile: 'Foydalanuvchi Profili - Yolnoma Typing',
@@ -132,11 +134,12 @@ function MainAppContent() {
     if (!subpath || subpath === 'home' || subpath === 'index.html') return { lang: detectedLang, tab: 'home' };
     if (subpath === 'test' || subpath === 'typing' || subpath === 'arena' || subpath.startsWith('tests') || subpath.startsWith('test/')) return { lang: detectedLang, tab: 'typing' };
     if (subpath === _adm) return { lang: detectedLang, tab: _adm };
+    if (['leaderboard', 'reyting', 'top', 'peshqadamlar', 'rating', 'leaders'].includes(subpath)) return { lang: detectedLang, tab: 'leaderboard' };
     if (['login', 'kirish', 'auth', 'signin', 'signup', 'register'].includes(subpath)) return { lang: detectedLang, tab: 'login' };
     if (['languages', 'tillar', 'language', 'til'].includes(subpath)) return { lang: detectedLang, tab: 'languages' };
-    if (['leaderboard', 'rating', 'reyting', 'top'].includes(subpath)) return { lang: detectedLang, tab: 'leaderboard' };
+    if (['sentences', 'jumlalar', 'sentences-practice', 'learn', 'gaplar'].includes(subpath)) return { lang: detectedLang, tab: 'sentences' };
+    if (['space', 'koinot', 'space-game', 'ztype', 'shooter', 'kosmos', 'koinot-jangi'].includes(subpath)) return { lang: detectedLang, tab: 'space' };
     if (['battle', 'arena', 'duel', 'jang'].includes(subpath)) return { lang: detectedLang, tab: 'battle' };
-    if (['space', 'spacegame', 'koinot', 'koinot-jangi', 'ztype', 'shooter'].includes(subpath)) return { lang: detectedLang, tab: 'space' };
     if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
     if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
     if (['profile', 'profil'].includes(subpath)) return { lang: detectedLang, tab: 'profile' };
@@ -170,6 +173,7 @@ function MainAppContent() {
     } catch {}
     return 'home';
   });
+  const [leaderboardCategory, setLeaderboardCategory] = useState<'typing' | 'sentences' | 'space'>('typing');
   const prevUserRef = useRef<string | null>(null);
 
   // Viral challenge link detector (?wpm=85 or ?challenge=85)
@@ -1122,7 +1126,13 @@ function MainAppContent() {
           <HomePage
             onStartTyping={handleStartHero}
             onGoToBattle={() => setActiveTab('battle')}
-            onViewFullLeaderboard={() => setActiveTab('leaderboard')}
+            onGoToSentences={() => setActiveTab('sentences')}
+            onGoToSpace={() => setActiveTab('space')}
+            onGoToLessons={() => setActiveTab('lessons')}
+            onGoToLeaderboard={() => {
+              setLeaderboardCategory('typing');
+              setActiveTab('leaderboard');
+            }}
             onOpenLogin={() => setActiveTab('login')}
           />
         )}
@@ -1163,6 +1173,7 @@ function MainAppContent() {
             onOpenLanguagePage={() => setActiveTab('languages')}
             onGoToLeaderboard={() => {
               setIsTestFinished(false);
+              setLeaderboardCategory('typing');
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => {
@@ -1175,6 +1186,28 @@ function MainAppContent() {
         )}
 
         <React.Suspense fallback={<ViewLoadingFallback />}>
+          {activeTab === 'leaderboard' && (
+            <LeaderboardPage
+              onBackToHome={() => setActiveTab('home')}
+              onOpenLogin={() => setActiveTab('login')}
+              onGoToSentences={() => setActiveTab('sentences')}
+              onGoToSpace={() => setActiveTab('space')}
+              onGoToTyping={() => setActiveTab('typing')}
+              initialDomain={leaderboardCategory}
+            />
+          )}
+
+          {activeTab === 'space' && (
+            <SpaceGamePage
+              onBackToHome={() => setActiveTab('home')}
+              onGoToTyping={() => setActiveTab('typing')}
+              onGoToLeaderboard={() => {
+                setLeaderboardCategory('space');
+                setActiveTab('leaderboard');
+              }}
+            />
+          )}
+
           {activeTab === 'languages' && (
             <LanguageSelectView
               onConfirm={() => {
@@ -1186,13 +1219,6 @@ function MainAppContent() {
           )}
 
           {activeTab === 'lessons' && <LessonsView />}
-          {activeTab === 'space' && (
-            <SpaceGamePage
-              onBackToHome={() => setActiveTab('home')}
-              onGoToTyping={() => setActiveTab('typing')}
-              onGoToLeaderboard={() => setActiveTab('leaderboard')}
-            />
-          )}
           {activeTab === 'battle' && (
             <BattleView
               initialRoomCode={pendingBattleRoomCode}
@@ -1200,11 +1226,14 @@ function MainAppContent() {
             />
           )}
           {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'leaderboard' && (
-            <LeaderboardPage
-              onOpenLogin={() => setActiveTab('login')}
+          {activeTab === 'sentences' && (
+            <SentencesPage
               onBackToHome={() => setActiveTab('home')}
-              onGoToSpace={() => setActiveTab('space')}
+              onGoToLeaderboard={() => {
+                setLeaderboardCategory('sentences');
+                setActiveTab('leaderboard');
+              }}
+              onOpenLogin={() => setActiveTab('login')}
             />
           )}
           {activeTab === 'statistics' && <StatisticsView />}
@@ -1216,7 +1245,6 @@ function MainAppContent() {
               onStartTyping={() => setActiveTab('typing')}
               onGoToBattle={() => setActiveTab('battle')}
               onGoToLessons={() => setActiveTab('lessons')}
-              onGoToLeaderboard={() => setActiveTab('leaderboard')}
             />
           )}
           {activeTab === 'admin' && <AdminView />}

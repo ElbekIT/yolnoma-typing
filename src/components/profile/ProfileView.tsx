@@ -553,6 +553,56 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             </div>
           </div>
 
+          {/* English Sentences & IELTS Level Card */}
+          <div className="bg-[var(--card-bg)] border border-emerald-500/30 p-5 rounded-3xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-[var(--text-color)] flex items-center gap-2">
+                    <span>Inglizcha Jumlalar Trenajyori</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono text-[10px] font-black uppercase">
+                      0 dan IELTS 9 gacha
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[var(--sub-color)]">
+                    Yozib gap tuzish, tushib qolgan so'zlarni topish va million xil betakror matnlar statistikasi
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-400 font-mono text-xs font-black border border-emerald-500/30">
+                  LVL {profile.sentenceLevel || 1} • {profile.sentenceIeltsBand || 'IELTS 1.0'}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 text-xs">
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <span className="text-[10px] text-[var(--sub-color)] font-bold block">Joriy Level</span>
+                <span className="text-lg font-mono font-black text-emerald-400">Level {profile.sentenceLevel || 1}</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <span className="text-[10px] text-[var(--sub-color)] font-bold block">IELTS Band</span>
+                <span className="text-lg font-mono font-black text-amber-400">{profile.sentenceIeltsBand || 'Band 1.0'}</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <span className="text-[10px] text-[var(--sub-color)] font-bold block">O'rganilgan Jumlalar</span>
+                <span className="text-lg font-mono font-black text-[var(--text-color)]">{profile.sentencesMasteredCount || 0} ta</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <span className="text-[10px] text-[var(--sub-color)] font-bold block">Maksimal Combo</span>
+                <span className="text-lg font-mono font-black text-orange-400">🔥 x{profile.highestSentenceCombo || 0}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Privacy & Data Confidentiality Card */}
           <div className="bg-[var(--card-bg)] border border-emerald-500/20 p-5 rounded-3xl space-y-3">
             <div className="flex items-center justify-between">

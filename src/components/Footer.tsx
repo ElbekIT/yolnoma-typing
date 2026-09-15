@@ -62,16 +62,6 @@ export const Footer: React.FC<FooterProps> = ({
             </a>
 
             <a
-              href="/leaderboard"
-              onClick={(e) => handleNav('leaderboard', e)}
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
-              title="O'zbekiston milliy reytingi"
-            >
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>{t('navLeaderboard')}</span>
-            </a>
-
-            <a
               href="/battle"
               onClick={(e) => handleNav('battle', e)}
               className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5"
@@ -79,16 +69,6 @@ export const Footer: React.FC<FooterProps> = ({
             >
               <Swords className="w-3.5 h-3.5 text-rose-400" />
               <span>{t('navBattle')}</span>
-            </a>
-
-            <a
-              href="/space"
-              onClick={(e) => handleNav('space', e)}
-              className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 py-0.5 font-medium"
-              title="Koinot Jangi — Space Typing Shooter"
-            >
-              <Rocket className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{t('spaceGame')}</span>
             </a>
 
             <a

@@ -6,13 +6,19 @@ import { useI18n } from '../context/I18nContext';
 interface LeaderboardPageProps {
   onOpenLogin?: () => void;
   onBackToHome?: () => void;
+  onGoToSentences?: () => void;
   onGoToSpace?: () => void;
+  onGoToTyping?: () => void;
+  initialDomain?: 'typing' | 'sentences' | 'space';
 }
 
 export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
   onOpenLogin,
   onBackToHome,
-  onGoToSpace
+  onGoToSentences,
+  onGoToSpace,
+  onGoToTyping,
+  initialDomain
 }) => {
   const { t } = useI18n();
 
@@ -30,7 +36,13 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
         </div>
       )}
 
-      <LeaderboardView onOpenLogin={onOpenLogin} onGoToSpace={onGoToSpace} />
+      <LeaderboardView
+        onOpenLogin={onOpenLogin}
+        onGoToSentences={onGoToSentences}
+        onGoToSpace={onGoToSpace}
+        onGoToTyping={onGoToTyping}
+        initialDomain={initialDomain}
+      />
     </div>
   );
 };

@@ -13,6 +13,10 @@ export interface PodiumUser {
   modeLabel: string;
   rank: number;
   isVerified?: boolean;
+  scoreLabel?: string;
+  scoreValue?: string | number;
+  subStatLabel?: string;
+  subStatValue?: string | number;
 }
 
 interface LeaderboardPodiumProps {
@@ -103,19 +107,19 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="w-full pt-3 border-t border-slate-400/20 flex items-center justify-around">
               <div>
                 <div className="text-2xl sm:text-3xl font-black font-mono text-slate-200 tracking-tight">
-                  {second.displayWpm}
+                  {second.scoreValue !== undefined ? second.scoreValue : second.displayWpm}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)]">
-                  WPM
+                  {second.scoreLabel || 'WPM'}
                 </div>
               </div>
               <div className="h-7 w-px bg-slate-400/20" />
               <div>
                 <div className="text-sm sm:text-base font-bold font-mono text-slate-300">
-                  {second.highestAccuracy > 0 ? `${Number(second.highestAccuracy).toFixed(1)}%` : '100%'}
+                  {second.subStatValue !== undefined ? second.subStatValue : (second.highestAccuracy > 0 ? `${Number(second.highestAccuracy).toFixed(1)}%` : '100%')}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)]">
-                  {t('accLabel')}
+                  {second.subStatLabel || t('accLabel')}
                 </div>
               </div>
             </div>
@@ -171,19 +175,19 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="w-full pt-3.5 border-t border-amber-400/20 flex items-center justify-around">
               <div>
                 <div className="text-3xl sm:text-4xl font-black font-mono text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.35)] tracking-tight">
-                  {first.displayWpm}
+                  {first.scoreValue !== undefined ? first.scoreValue : first.displayWpm}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-amber-300/80 font-bold">
-                  WPM
+                  {first.scoreLabel || 'WPM'}
                 </div>
               </div>
               <div className="h-8 w-px bg-amber-400/20" />
               <div>
                 <div className="text-base sm:text-lg font-bold font-mono text-amber-200">
-                  {first.highestAccuracy > 0 ? `${Number(first.highestAccuracy).toFixed(1)}%` : '100%'}
+                  {first.subStatValue !== undefined ? first.subStatValue : (first.highestAccuracy > 0 ? `${Number(first.highestAccuracy).toFixed(1)}%` : '100%')}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-amber-300/80 font-bold">
-                  {t('accLabel')}
+                  {first.subStatLabel || t('accLabel')}
                 </div>
               </div>
             </div>
@@ -235,19 +239,19 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="w-full pt-3 border-t border-amber-700/20 flex items-center justify-around">
               <div>
                 <div className="text-2xl sm:text-3xl font-black font-mono text-amber-300 tracking-tight">
-                  {third.displayWpm}
+                  {third.scoreValue !== undefined ? third.scoreValue : third.displayWpm}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)]">
-                  WPM
+                  {third.scoreLabel || 'WPM'}
                 </div>
               </div>
               <div className="h-7 w-px bg-amber-700/20" />
               <div>
                 <div className="text-sm sm:text-base font-bold font-mono text-amber-200">
-                  {third.highestAccuracy > 0 ? `${Number(third.highestAccuracy).toFixed(1)}%` : '100%'}
+                  {third.subStatValue !== undefined ? third.subStatValue : (third.highestAccuracy > 0 ? `${Number(third.highestAccuracy).toFixed(1)}%` : '100%')}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)]">
-                  {t('accLabel')}
+                  {third.subStatLabel || t('accLabel')}
                 </div>
               </div>
             </div>

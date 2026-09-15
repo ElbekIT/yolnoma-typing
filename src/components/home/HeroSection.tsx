@@ -1,20 +1,25 @@
 import React from 'react';
-import { Play, Swords, Sparkles, Zap, Globe, Shield, Trophy } from 'lucide-react';
+import { Play, Swords, Sparkles, Zap, Globe, Shield, BookOpen, GraduationCap, ChevronRight, Keyboard, Trophy, Rocket } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
-import { MiniLeaderboard } from './MiniLeaderboard';
 
 interface HeroSectionProps {
   onStartTyping: () => void;
   onGoToBattle: () => void;
-  onViewFullLeaderboard: () => void;
   onOpenLogin: () => void;
+  onGoToSentences?: () => void;
+  onGoToLessons?: () => void;
+  onGoToLeaderboard?: () => void;
+  onGoToSpace?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onStartTyping,
   onGoToBattle,
-  onViewFullLeaderboard,
-  onOpenLogin
+  onOpenLogin,
+  onGoToSentences,
+  onGoToLessons,
+  onGoToLeaderboard,
+  onGoToSpace
 }) => {
   const { t } = useI18n();
 
@@ -93,12 +98,162 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Weekly Mini-Leaderboard Card */}
+        {/* Right Column: Quick Practice Training Hub Card */}
         <div className="lg:col-span-5 w-full">
-          <MiniLeaderboard
-            onViewFullLeaderboard={onViewFullLeaderboard}
-            onOpenLogin={onOpenLogin}
-          />
+          <div className="p-5 sm:p-6 rounded-3xl bg-[var(--card-bg)] border-2 border-[var(--sub-alt)] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--sub-alt)]/60">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <h2 className="text-sm font-black uppercase tracking-wider font-mono text-[var(--text-color)]">
+                  Mashg'ulotlar Markazi
+                </h2>
+              </div>
+              <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/25">
+                Tezkor Kirish
+              </span>
+            </div>
+
+            <div className="space-y-2.5">
+              {/* English Sentences Training */}
+              <button
+                type="button"
+                onClick={onGoToSentences || onStartTyping}
+                className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/30 text-left transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-[var(--text-color)]">Inglizcha Jumlalar</span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">
+                        0 dan IELTS 9
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--sub-color)]">
+                      Yozib o'rganish, 2 tomonlama tarjima va avto-oqim
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+              </button>
+
+              {/* Classic Speed Typing */}
+              <button
+                type="button"
+                onClick={onStartTyping}
+                className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Keyboard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-[var(--text-color)]">Klassik Tez Yozish Sinovi</span>
+                    <p className="text-xs text-[var(--sub-color)]">
+                      15s, 30s, 60s vaqt rejimlari, WPM va aniqlik
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+              </button>
+
+              {/* 10-Finger Lessons */}
+              <button
+                type="button"
+                onClick={onGoToLessons || onStartTyping}
+                className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-[var(--text-color)]">10 Barmoq Mashqlari</span>
+                    <p className="text-xs text-[var(--sub-color)]">
+                      Klaviaturaga qaramay yozish saboqlari
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+              </button>
+
+              {/* 1v1 Speedway Battle */}
+              <button
+                type="button"
+                onClick={onGoToBattle}
+                className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Swords className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-[var(--text-color)]">Speedway 1v1 Arena</span>
+                    <p className="text-xs text-[var(--sub-color)]">
+                      Do'stlar bilan real vaqtda poyga va jang
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-rose-400 group-hover:translate-x-1 transition-all" />
+              </button>
+
+              {/* Koinot Jangi (Space Shooter) */}
+              {onGoToSpace && (
+                <button
+                  type="button"
+                  onClick={onGoToSpace}
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-cyan-500/10 border border-[var(--sub-alt)] hover:border-cyan-500/30 text-left transition-all cursor-pointer flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                      <Rocket className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[var(--text-color)]">Koinot Jangi (Space Battle)</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">
+                          ARKADA
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--sub-color)]">
+                        Lazerlar bilan dushman kemalarini portlatish va rekord o'rnatish
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                </button>
+              )}
+
+              {/* Leaderboard / Peshqadamlar */}
+              {onGoToLeaderboard && (
+                <button
+                  type="button"
+                  onClick={onGoToLeaderboard}
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-amber-500/10 border border-[var(--sub-alt)] hover:border-amber-500/30 text-left transition-all cursor-pointer flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Trophy className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[var(--text-color)]">Milliy Reyting (Top 100)</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">
+                          LIVE
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--sub-color)]">
+                        O'zbekistonning eng tezkor yozuvchilari peshqadami
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>

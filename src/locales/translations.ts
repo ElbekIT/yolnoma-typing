@@ -15,6 +15,7 @@ export interface MenuTranslation {
   milestones: string;
   partners: string;
   about: string;
+  sentences: string;
   close: string;
 }
 
@@ -28,12 +29,13 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     lessons: "Saboqlar & Mashqlar",
     battleArena: "Battle Arena",
     dashboard: "Boshqaruv Paneli",
-    leaderboard: "Peshqadamlar",
+    leaderboard: "Peshqadamlar (Reyting)",
     statistics: "Statistika",
     achievements: "Yutuqlar",
     milestones: "Muvaffaqiyatlar",
     partners: "Hamkor & Homiy",
     about: "Sayt Haqida & Muallif",
+    sentences: "🎓 Inglizcha Jumlalar",
     close: "Yopish"
   },
   ru: {
@@ -51,6 +53,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Прогресс и успехи",
     partners: "Партнёры и спонсоры",
     about: "О сайте и авторе",
+    sentences: "🎓 Английские предложения",
     close: "Закрыть"
   },
   en: {
@@ -68,6 +71,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Milestones",
     partners: "Partners & Sponsors",
     about: "About & Author",
+    sentences: "🎓 English Sentences",
     close: "Close"
   }
 };

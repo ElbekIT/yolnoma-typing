@@ -30,7 +30,8 @@ import {
   MessageSquare,
   Gamepad2,
   Share2,
-  Rocket
+  Rocket,
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -100,12 +101,13 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
   const navItems = [
     { id: 'home', label: currMenu.home, icon: Home },
     { id: 'typing', label: currMenu.typingTest, icon: Keyboard },
+    { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
     { id: 'space', label: currMenu.spaceGame, icon: Rocket },
+    { id: 'sentences', label: currMenu.sentences, icon: GraduationCap },
     { id: 'languages', label: currMenu.languages, icon: Globe },
-    { id: 'lessons', label: currMenu.lessons, icon: GraduationCap },
+    { id: 'lessons', label: currMenu.lessons, icon: BookOpen },
     { id: 'battle', label: currMenu.battleArena, icon: Swords },
     { id: 'dashboard', label: currMenu.dashboard, icon: BarChart2 },
-    { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
     { id: 'statistics', label: currMenu.statistics, icon: Clock },
     { id: 'achievements', label: currMenu.achievements, icon: Award },
     { id: 'challenges', label: currMenu.milestones, icon: Target },
@@ -179,12 +181,33 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
               <button
                 onClick={() => setActiveTab('leaderboard')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'leaderboard' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'leaderboard' ? 'text-amber-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-amber-500/20' : 'hover:text-amber-400 hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title={currMenu.leaderboard}
               >
-                <Crown className={iconDimensions} />
+                <Trophy className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('space')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-cyan-500/20' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title={currMenu.spaceGame}
+              >
+                <Rocket className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('sentences')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'sentences' ? 'text-emerald-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-emerald-500/20' : 'hover:text-emerald-400 hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title={currMenu.sentences}
+              >
+                <BookOpen className={iconDimensions} />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[var(--card-bg)] animate-pulse" />
               </button>
 
               <button
@@ -215,16 +238,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title={currMenu.battleArena}
               >
                 <Swords className={iconDimensions} />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('space')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-cyan-500/20' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
-                }`}
-                title={currMenu.spaceGame}
-              >
-                <Rocket className={iconDimensions} />
               </button>
 
               <button

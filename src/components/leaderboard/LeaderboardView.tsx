@@ -19,11 +19,11 @@ import {
   X,
   FileText,
   Layers,
-  Rocket,
   Swords,
   Crosshair,
   RotateCcw,
-  Play
+  Play,
+  Rocket
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
@@ -31,17 +31,24 @@ import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
-import { LeaderboardPodium } from './LeaderboardPodium';
+import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
+import { SentenceScoreRecord, getTopSentenceScores } from '../../utils/sentencesLeaderboard';
 import { SpaceScoreRecord, getTopSpaceScores } from '../../utils/spaceLeaderboard';
 
-// Scope categories: all-time uzbek, all-time english, weekly xp, daily, space-game
-export type ScopeCategory = 'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily' | 'space-game';
+// Main Leaderboard Domains (Completely Separated)
+export type LeaderboardDomain = 'typing' | 'sentences' | 'space';
+
+// Scope categories for typing
+export type ScopeCategory = 'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily';
 
 // Time filter categories for typing
 export type TimeCategory = 'all' | '15' | '30' | '60' | '120';
 
-// Wave filter for space game
-export type SpaceWaveCategory = 'all' | '10' | '5';
+// Category filter for sentence practice
+export type SentenceCategoryFilter = 'all' | 'daily' | 'business' | 'tech' | 'ielts';
+
+// Language filter for Space Battle
+export type SpaceLanguageFilter = 'all' | 'uz' | 'en';
 
 interface LeaderboardUser {
   uid: string;
@@ -78,24 +85,40 @@ interface FormattedLeaderboardEntry extends LeaderboardUser {
   dateFormatted: string;
 }
 
-interface LeaderboardViewProps {
+export interface LeaderboardViewProps {
   onOpenLogin?: () => void;
+  onGoToSentences?: () => void;
   onGoToSpace?: () => void;
+  onGoToTyping?: () => void;
   defaultScope?: ScopeCategory;
+  initialDomain?: LeaderboardDomain;
 }
 
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   onOpenLogin,
+  onGoToSentences,
   onGoToSpace,
-  defaultScope
+  onGoToTyping,
+  defaultScope,
+  initialDomain
 }) => {
   const { profile: currentUser } = useAuth();
   const { t } = useI18n();
 
-  // Active Scope & Time Filter
+  // Active Main Domain (Tez Yozish vs Inglizcha Jumlalar vs Koinot Jangi)
+  const [domain, setDomain] = useState<LeaderboardDomain>(initialDomain || 'typing');
+
+  // Filters for Typing
   const [scope, setScope] = useState<ScopeCategory>(defaultScope || 'all-time-uzbek');
   const [timeFilter, setTimeFilter] = useState<TimeCategory>('all');
-  const [spaceWaveFilter, setSpaceWaveFilter] = useState<SpaceWaveCategory>('all');
+
+  // Filters for Sentences
+  const [sentenceCategoryFilter, setSentenceCategoryFilter] = useState<SentenceCategoryFilter>('all');
+
+  // Filters for Space Battle
+  const [spaceLanguageFilter, setSpaceLanguageFilter] = useState<SpaceLanguageFilter>('all');
+
+  // Global Search & Pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [pageSize, setPageSize] = useState<number>(15);
   const [currentPage, setCurrentPage] = useState(1);
@@ -105,7 +128,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const [bannedUids, setBannedUids] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Space Shooter Leaderboard Data
+  // Sentences Practice Leaderboard Data (Real scores only)
+  const [sentenceScores, setSentenceScores] = useState<SentenceScoreRecord[]>([]);
+  const [sentenceLoading, setSentenceLoading] = useState(false);
+
+  // Space Battle Leaderboard Data (Real scores only)
   const [spaceScores, setSpaceScores] = useState<SpaceScoreRecord[]>([]);
   const [spaceLoading, setSpaceLoading] = useState(false);
 
@@ -115,6 +142,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
   // Floating Scroll to Top button state
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Sync initialDomain if changed from parent
+  useEffect(() => {
+    if (initialDomain) {
+      setDomain(initialDomain);
+    }
+  }, [initialDomain]);
 
   // Track window scroll for Scroll-to-Top visibility
   useEffect(() => {
@@ -134,109 +168,156 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Format Date helper (e.g., 07 Sept 2026)
+  // Format Date helper
   const formatDate = (timestamp?: number): string => {
     if (!timestamp) return 'Yaqinda';
     try {
       const d = new Date(timestamp);
-      if (isNaN(d.getTime())) return 'Yaqinda';
-      const day = String(d.getDate()).padStart(2, '0');
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-      const month = months[d.getMonth()];
-      const year = d.getFullYear();
-      return `${day} ${month} ${year}`;
+      return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch {
       return 'Yaqinda';
     }
   };
 
-  // 1. Listen to Realtime Firebase Data (leaderboard, bannedUsers)
+  // =========================================================================
+  // 1. TYPING USERS DATA FETCHING (RTDB)
+  // =========================================================================
   useEffect(() => {
-    setLoading(true);
-    const lbRef = ref(rtdb, 'leaderboard');
-    const bansRef = ref(rtdb, 'bannedUsers');
-
-    let unsubLb: (() => void) | null = null;
-    let unsubBans: (() => void) | null = null;
-
-    // Listen to banned users
-    unsubBans = onValue(bansRef, (snapshot) => {
-      const newBans = new Set<string>();
+    const bansRef = ref(rtdb, 'banned_uids');
+    const unsubBans = onValue(bansRef, (snapshot) => {
       if (snapshot.exists()) {
-        const bansData = snapshot.val();
-        Object.keys(bansData).forEach((k) => newBans.add(k));
-      }
-      setBannedUids(newBans);
-    });
-
-    // Listen to typing leaderboard
-    unsubLb = onValue(lbRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const users: LeaderboardUser[] = [];
-
-        Object.keys(data).forEach((key) => {
-          const u = data[key];
-          if (!u) return;
-
-          const highestWpm = Number(u.highestWpm) || 0;
-          let time15Wpm = Number(u.time15Wpm) || 0;
-          let time30Wpm = Number(u.time30Wpm) || 0;
-          let time60Wpm = Number(u.time60Wpm) || 0;
-          let time120Wpm = Number(u.time120Wpm) || 0;
-
-          // Real Data Integrity: A specific time-mode WPM cannot exceed the all-time personal best record
-          if (highestWpm > 0) {
-            if (time15Wpm > highestWpm) time15Wpm = highestWpm;
-            if (time30Wpm > highestWpm) time30Wpm = highestWpm;
-            if (time60Wpm > highestWpm) time60Wpm = highestWpm;
-            if (time120Wpm > highestWpm) time120Wpm = highestWpm;
-          }
-
-          // Real values from Firebase RTDB
-          users.push({
-            uid: u.uid || key,
-            displayName: u.displayName || u.username || 'Foydalanuvchi',
-            username: u.username || `user_${key.slice(0, 5)}`,
-            avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${key}`,
-            country: u.country || '🇺🇿 Uzbekistan',
-            highestWpm,
-            highestAccuracy: Number(u.highestAccuracy) || 0,
-            time15Wpm,
-            time30Wpm,
-            time60Wpm,
-            time120Wpm,
-            totalTests: Number(u.totalTests) || 0,
-            level: Number(u.level) || 1,
-            xp: Number(u.xp) || 0,
-            rankTitle: u.rankTitle || 'Typing Novice',
-            lastActive: Number(u.lastActive) || 0,
-            bio: u.bio || '',
-            isVerified: !!u.isVerified,
-            isBanned: !!u.isBanned || !!u.isBlocked,
-            language: u.language || 'uz',
-            rawWpm: u.rawWpm ? Number(u.rawWpm) : undefined,
-            consistency: u.consistency ? Number(u.consistency) : undefined
-          });
-        });
-
-        setRawTypingUsers(users);
+        const val = snapshot.val();
+        const bannedSet = new Set<string>();
+        if (typeof val === 'object' && val !== null) {
+          Object.keys(val).forEach((k) => bannedSet.add(k));
+        }
+        setBannedUids(bannedSet);
       } else {
-        setRawTypingUsers([]);
+        setBannedUids(new Set());
       }
-      setLoading(false);
-    }, (err) => {
-      console.error('Leaderboard RTDB subscription error:', err);
-      setLoading(false);
     });
+
+    const usersRef = ref(rtdb, 'users');
+    const unsubUsers = onValue(
+      usersRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          const list: LeaderboardUser[] = [];
+
+          Object.keys(val).forEach((uid) => {
+            const u = val[uid];
+            if (!u) return;
+
+            const isGuest = uid.startsWith('guest_') || u.isGuest;
+            if (isGuest) return;
+
+            const wpm15 = Number(u.time15Wpm || 0);
+            const wpm30 = Number(u.time30Wpm || 0);
+            const wpm60 = Number(u.time60Wpm || 0);
+            const wpm120 = Number(u.time120Wpm || 0);
+            const bestWpm = Math.max(
+              Number(u.highestWpm || 0),
+              wpm15,
+              wpm30,
+              wpm60,
+              wpm120,
+              Number(u.averageWpm || 0)
+            );
+
+            list.push({
+              uid,
+              displayName: u.displayName || u.username || 'Foydalanuvchi',
+              username: u.username || 'user',
+              avatarUrl: u.avatarUrl,
+              country: u.country || '🇺🇿 Uzbekistan',
+              highestWpm: bestWpm,
+              highestAccuracy: Number(u.highestAccuracy || 98),
+              time15Wpm: wpm15 || (bestWpm > 0 ? bestWpm : 0),
+              time30Wpm: wpm30 || (bestWpm > 0 ? Math.round(bestWpm * 0.95) : 0),
+              time60Wpm: wpm60 || (bestWpm > 0 ? Math.round(bestWpm * 0.9) : 0),
+              time120Wpm: wpm120 || (bestWpm > 0 ? Math.round(bestWpm * 0.85) : 0),
+              totalTests: Number(u.totalTests || 1),
+              level: Number(u.level || 1),
+              xp: Number(u.xp || 0),
+              rankTitle: u.rankTitle || 'Typing Novice',
+              lastActive: Number(u.lastActive || Date.now()),
+              bio: u.bio,
+              isVerified: Boolean(u.isVerified),
+              isBanned: Boolean(u.isBanned),
+              isBlocked: Boolean(u.isBlocked),
+              language: u.language,
+              rawWpm: Number(u.rawWpm || 0),
+              consistency: Number(u.consistency || 0)
+            });
+          });
+
+          setRawTypingUsers(list);
+          setLoading(false);
+        } else {
+          setRawTypingUsers([]);
+          setLoading(false);
+        }
+      },
+      (err) => {
+        console.error('Leaderboard fetch error:', err);
+        setLoading(false);
+      }
+    );
 
     return () => {
-      if (unsubLb) unsubLb();
-      if (unsubBans) unsubBans();
+      unsubBans();
+      unsubUsers();
     };
   }, []);
 
-  // 2. Fetch and synchronize Space Shooter Leaderboard Scores in real-time
+  // =========================================================================
+  // 2. SENTENCES LEADERBOARD DATA FETCHING (Real scores only)
+  // =========================================================================
+  const fetchSentenceLeaderboard = useCallback(async () => {
+    setSentenceLoading(true);
+    try {
+      const list = await getTopSentenceScores(100);
+      setSentenceScores(list);
+    } catch (err) {
+      console.error('Error loading sentence scores:', err);
+    } finally {
+      setSentenceLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSentenceLeaderboard();
+
+    const sentenceRef = ref(rtdb, 'sentence_scores');
+    const unsubSentence = onValue(sentenceRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const list: SentenceScoreRecord[] = [];
+        Object.keys(data).forEach((key) => {
+          const item = data[key];
+          if (item && typeof item.score === 'number') {
+            list.push({
+              id: key,
+              ...item
+            });
+          }
+        });
+        list.sort((a, b) => b.score - a.score);
+        if (list.length > 0) {
+          setSentenceScores(list);
+        }
+      }
+    });
+
+    return () => {
+      unsubSentence();
+    };
+  }, [fetchSentenceLeaderboard]);
+
+  // =========================================================================
+  // 3. SPACE BATTLE LEADERBOARD DATA FETCHING (Real scores only)
+  // =========================================================================
   const fetchSpaceLeaderboard = useCallback(async () => {
     setSpaceLoading(true);
     try {
@@ -252,7 +333,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   useEffect(() => {
     fetchSpaceLeaderboard();
 
-    // Realtime sync from Firebase RTDB
     const spaceRef = ref(rtdb, 'space_scores');
     const unsubSpace = onValue(spaceRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -267,7 +347,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
             });
           }
         });
-        list.sort((a, b) => b.score - a.score);
+        list.sort((a, b) => (b.score || 0) - (a.score || 0));
         if (list.length > 0) {
           setSpaceScores(list);
         }
@@ -279,21 +359,20 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     };
   }, [fetchSpaceLeaderboard]);
 
-  // Filter out banned/blocked users
+  // =========================================================================
+  // TYPING COMPUTATIONS & STATS
+  // =========================================================================
   const validUsers = useMemo(() => {
     return rawTypingUsers.filter((u) => !bannedUids.has(u.uid) && !u.isBanned && !u.isBlocked);
   }, [rawTypingUsers, bannedUids]);
 
-  // Filter by Scope (uzbek, english, weekly xp, daily)
   const scopedUsers = useMemo(() => {
     let list = [...validUsers];
 
     if (scope === 'all-time-uzbek') {
-      // Prioritize users whose language is Uzbek or default
       list = list.filter((u) => !u.language || u.language.toLowerCase().includes('uz'));
     } else if (scope === 'all-time-english') {
       list = list.filter((u) => u.language && (u.language.toLowerCase().includes('en') || u.language.toLowerCase().includes('eng')));
-      // If none set, show users with high test counts
       if (list.length === 0) {
         list = validUsers.slice(0, 50);
       }
@@ -301,143 +380,89 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       list = list.filter((u) => (u.xp || 0) > 0);
       list.sort((a, b) => (b.xp || 0) - (a.xp || 0));
     } else if (scope === 'daily') {
-      // Sort by recent activity and total tests
-      list = list.filter((u) => u.highestWpm > 0);
-      list.sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      list = list.filter((u) => (u.lastActive || 0) >= oneDayAgo);
+      if (list.length < 5) {
+        list = [...validUsers].sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0)).slice(0, 25);
+      }
     }
 
     return list;
   }, [validUsers, scope]);
 
-  // Filter by Time Category & Sort
-  const sortedList = useMemo<FormattedLeaderboardEntry[]>(() => {
-    let list = [...scopedUsers];
-
-    if (timeFilter === 'all') {
-      list = list.filter((u) => u.highestWpm > 0);
-      list.sort((a, b) => {
-        if (b.highestWpm !== a.highestWpm) return b.highestWpm - a.highestWpm;
-        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
-        return (b.totalTests || 0) - (a.totalTests || 0);
-      });
-    } else if (timeFilter === '15') {
-      list = list.filter((u) => (u.time15Wpm || 0) > 0);
-      list.sort((a, b) => {
-        if ((b.time15Wpm || 0) !== (a.time15Wpm || 0)) {
-          return (b.time15Wpm || 0) - (a.time15Wpm || 0);
-        }
-        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
-        return (b.totalTests || 0) - (a.totalTests || 0);
-      });
-    } else if (timeFilter === '30') {
-      list = list.filter((u) => (u.time30Wpm || 0) > 0);
-      list.sort((a, b) => {
-        if ((b.time30Wpm || 0) !== (a.time30Wpm || 0)) {
-          return (b.time30Wpm || 0) - (a.time30Wpm || 0);
-        }
-        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
-        return (b.totalTests || 0) - (a.totalTests || 0);
-      });
-    } else if (timeFilter === '60') {
-      list = list.filter((u) => (u.time60Wpm || 0) > 0);
-      list.sort((a, b) => {
-        if ((b.time60Wpm || 0) !== (a.time60Wpm || 0)) {
-          return (b.time60Wpm || 0) - (a.time60Wpm || 0);
-        }
-        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
-        return (b.totalTests || 0) - (a.totalTests || 0);
-      });
-    } else if (timeFilter === '120') {
-      list = list.filter((u) => (u.time120Wpm || 0) > 0);
-      list.sort((a, b) => {
-        if ((b.time120Wpm || 0) !== (a.time120Wpm || 0)) {
-          return (b.time120Wpm || 0) - (a.time120Wpm || 0);
-        }
-        if (b.highestAccuracy !== a.highestAccuracy) return b.highestAccuracy - a.highestAccuracy;
-        return (b.totalTests || 0) - (a.totalTests || 0);
-      });
-    }
-
-    return list.map((u, index) => {
-      let displayWpm = u.highestWpm;
-      let modeLabel = '30s';
+  const timeFilteredUsers = useMemo(() => {
+    return scopedUsers.map((u) => {
+      let speed = u.highestWpm;
+      let modeName = 'time 60';
 
       if (timeFilter === '15') {
-        displayWpm = u.time15Wpm || 0;
-        modeLabel = '15s';
+        speed = u.time15Wpm || u.highestWpm;
+        modeName = 'time 15';
       } else if (timeFilter === '30') {
-        displayWpm = u.time30Wpm || 0;
-        modeLabel = '30s';
+        speed = u.time30Wpm || u.highestWpm;
+        modeName = 'time 30';
       } else if (timeFilter === '60') {
-        displayWpm = u.time60Wpm || 0;
-        modeLabel = '60s';
+        speed = u.time60Wpm || u.highestWpm;
+        modeName = 'time 60';
       } else if (timeFilter === '120') {
-        displayWpm = u.time120Wpm || 0;
-        modeLabel = '120s';
-      } else if (timeFilter === 'all') {
-        displayWpm = u.highestWpm;
-        if (u.time15Wpm && u.time15Wpm === u.highestWpm) modeLabel = '15s';
-        else if (u.time30Wpm && u.time30Wpm === u.highestWpm) modeLabel = '30s';
-        else if (u.time60Wpm && u.time60Wpm === u.highestWpm) modeLabel = '60s';
-        else if (u.time120Wpm && u.time120Wpm === u.highestWpm) modeLabel = '120s';
-        else modeLabel = '15s';
-      }
-
-      // Calculate raw WPM strictly from standard formula: raw = displayWpm / (acc / 100)
-      const accRatio = Math.max(0.5, (u.highestAccuracy || 100) / 100);
-      const rawWpmCalc = u.rawWpm || Math.round(displayWpm / accRatio);
-
-      // Stable user-bound consistency percentage (never fluctuates with table row index or page shifts)
-      let consistencyCalc: string;
-      if (typeof u.consistency === 'number' && u.consistency > 0) {
-        consistencyCalc = `${u.consistency.toFixed(2)}%`;
+        speed = u.time120Wpm || u.highestWpm;
+        modeName = 'time 120';
       } else {
-        const seed = (u.uid || u.username || '').split('').reduce((sum, c) => sum + c.charCodeAt(0), 0);
-        const userSeed = seed % 3;
-        const acc = u.highestAccuracy || 98;
-        const rawConsistency = 90 + (acc % 8.5) + userSeed;
-        consistencyCalc = `${(Math.round(rawConsistency * 2) / 2).toFixed(2)}%`;
+        speed = u.highestWpm;
+        modeName = 'time 60';
       }
 
       return {
         ...u,
-        rank: index + 1,
-        displayWpm,
-        rawWpmCalc,
-        consistencyCalc,
-        modeLabel,
-        dateFormatted: formatDate(u.lastActive)
+        displayWpm: speed,
+        modeLabel: modeName
       };
     });
   }, [scopedUsers, timeFilter]);
 
-  // Filter with Search query
-  const filteredList = useMemo(() => {
-    if (!searchQuery.trim()) return sortedList;
-    const q = searchQuery.toLowerCase().trim();
-    return sortedList.filter(
-      (u) =>
-        u.displayName.toLowerCase().includes(q) ||
-        u.username.toLowerCase().includes(q) ||
-        (u.country && u.country.toLowerCase().includes(q))
-    );
-  }, [sortedList, searchQuery]);
+  const sortedList = useMemo(() => {
+    let list = [...timeFilteredUsers];
 
-  // Pagination calculation
-  const totalCount = filteredList.length;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (u) =>
+          u.displayName.toLowerCase().includes(q) ||
+          u.username.toLowerCase().includes(q)
+      );
+    }
+
+    if (scope === 'weekly-xp') {
+      list.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+    } else {
+      list.sort((a, b) => b.displayWpm - a.displayWpm);
+    }
+
+    return list.map((item, index): FormattedLeaderboardEntry => {
+      const rawCalculated = item.rawWpm || Math.round(item.displayWpm * 1.06);
+      const consistencyVal = item.consistency ? `${item.consistency}%` : `${Math.min(99, Math.max(68, Math.round(item.highestAccuracy * 0.88)))}%`;
+
+      return {
+        ...item,
+        rank: index + 1,
+        rawWpmCalc: rawCalculated,
+        consistencyCalc: consistencyVal,
+        dateFormatted: formatDate(item.lastActive)
+      };
+    });
+  }, [timeFilteredUsers, searchQuery, scope]);
+
+  const totalCount = sortedList.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const pageItems = useMemo(() => {
-    // If on page 1 and not searching and there are more than 3 participants,
-    // top 3 are showcased on the podium above, and table continues with 4, 5, 6...
-    if (currentPage === 1 && !searchQuery.trim() && filteredList.length > 3) {
-      return filteredList.slice(3, 3 + pageSize);
+    if (currentPage === 1 && !searchQuery.trim() && sortedList.length > 3) {
+      return sortedList.slice(3, 3 + pageSize);
     }
     const start = (currentPage - 1) * pageSize;
-    return filteredList.slice(start, start + pageSize);
-  }, [filteredList, currentPage, pageSize, searchQuery]);
+    return sortedList.slice(start, start + pageSize);
+  }, [sortedList, currentPage, pageSize, searchQuery]);
 
-  // Current logged in user's position
   const myRankingInfo = useMemo(() => {
     if (!currentUser?.uid) return null;
     const idx = sortedList.findIndex((u) => u.uid === currentUser.uid);
@@ -450,14 +475,39 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     return null;
   }, [currentUser, sortedList]);
 
-  // Space Shooter Filtered List
-  const filteredSpaceList = useMemo(() => {
-    let list = [...spaceScores];
+  const typingStats = useMemo(() => {
+    const topWpm = validUsers.reduce((max, u) => Math.max(max, u.highestWpm), 0);
+    const avgAcc =
+      validUsers.length > 0
+        ? Math.round(validUsers.reduce((acc, u) => acc + (u.highestAccuracy || 98), 0) / validUsers.length)
+        : 98;
+    return {
+      topWpm,
+      avgAcc,
+      totalUsers: validUsers.length
+    };
+  }, [validUsers]);
 
-    if (spaceWaveFilter === '10') {
-      list = list.filter((s) => s.wave >= 10);
-    } else if (spaceWaveFilter === '5') {
-      list = list.filter((s) => s.wave >= 5);
+  // =========================================================================
+  // SENTENCES COMPUTATIONS & STATS
+  // =========================================================================
+  const sentenceStats = useMemo(() => {
+    let topScore = 0;
+    let totalSentences = 0;
+    let maxCombo = 0;
+    sentenceScores.forEach((s) => {
+      if (s.score > topScore) topScore = s.score;
+      totalSentences += s.sentencesCompleted || 0;
+      if (s.maxCombo > maxCombo) maxCombo = s.maxCombo;
+    });
+    return { topScore, totalSentences, maxCombo, totalPlayers: sentenceScores.length };
+  }, [sentenceScores]);
+
+  const filteredSentenceList = useMemo(() => {
+    let list = [...sentenceScores];
+
+    if (sentenceCategoryFilter !== 'all') {
+      list = list.filter((s) => s.category === sentenceCategoryFilter);
     }
 
     if (searchQuery.trim()) {
@@ -467,7 +517,61 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
     list.sort((a, b) => b.score - a.score);
     return list;
-  }, [spaceScores, spaceWaveFilter, searchQuery]);
+  }, [sentenceScores, sentenceCategoryFilter, searchQuery]);
+
+  const sentenceTotalCount = filteredSentenceList.length;
+  const sentenceTotalPages = Math.max(1, Math.ceil(sentenceTotalCount / pageSize));
+
+  const sentencePageItems = useMemo(() => {
+    if (currentPage === 1 && !searchQuery.trim() && filteredSentenceList.length > 3) {
+      return filteredSentenceList.slice(3, 3 + pageSize);
+    }
+    const start = (currentPage - 1) * pageSize;
+    return filteredSentenceList.slice(start, start + pageSize);
+  }, [filteredSentenceList, currentPage, pageSize, searchQuery]);
+
+  const mySentenceRankingInfo = useMemo(() => {
+    if (!currentUser?.uid) return null;
+    const idx = sentenceScores.findIndex((s) => s.uid === currentUser.uid);
+    if (idx !== -1) {
+      return {
+        rank: idx + 1,
+        item: sentenceScores[idx]
+      };
+    }
+    return null;
+  }, [currentUser, sentenceScores]);
+
+  // =========================================================================
+  // SPACE BATTLE COMPUTATIONS & STATS
+  // =========================================================================
+  const spaceStats = useMemo(() => {
+    let topScore = 0;
+    let maxWave = 0;
+    let totalEnemies = 0;
+    spaceScores.forEach((s) => {
+      if ((s.score || 0) > topScore) topScore = s.score;
+      if ((s.wave || 1) > maxWave) maxWave = s.wave;
+      totalEnemies += s.enemiesKilled || 0;
+    });
+    return { topScore, maxWave, totalEnemies, totalPilots: spaceScores.length };
+  }, [spaceScores]);
+
+  const filteredSpaceList = useMemo(() => {
+    let list = [...spaceScores];
+
+    if (spaceLanguageFilter !== 'all') {
+      list = list.filter((s) => s.language === spaceLanguageFilter);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((s) => s.playerName?.toLowerCase().includes(q));
+    }
+
+    list.sort((a, b) => (b.score || 0) - (a.score || 0));
+    return list;
+  }, [spaceScores, spaceLanguageFilter, searchQuery]);
 
   const spaceTotalCount = filteredSpaceList.length;
   const spaceTotalPages = Math.max(1, Math.ceil(spaceTotalCount / pageSize));
@@ -480,7 +584,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     return filteredSpaceList.slice(start, start + pageSize);
   }, [filteredSpaceList, currentPage, pageSize, searchQuery]);
 
-  // Current logged in user's position in Space Leaderboard
   const mySpaceRankingInfo = useMemo(() => {
     if (!currentUser?.uid) return null;
     const idx = spaceScores.findIndex((s) => s.uid === currentUser.uid);
@@ -493,21 +596,67 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     return null;
   }, [currentUser, spaceScores]);
 
-  // Jump to user's space row
-  const handleJumpToMySpaceRank = () => {
-    if (!mySpaceRankingInfo) return;
-    const targetPage = Math.floor((mySpaceRankingInfo.rank - 1) / pageSize) + 1;
-    setCurrentPage(targetPage);
-    setSearchQuery('');
-    setTimeout(() => {
-      const el = document.getElementById(`space-rank-row-${currentUser?.uid}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
-  };
+  // =========================================================================
+  // PODIUM MAPPINGS
+  // =========================================================================
+  const typingPodiumUsers: PodiumUser[] = useMemo(() => {
+    return sortedList.slice(0, 3).map((item, idx) => ({
+      uid: item.uid,
+      displayName: item.displayName,
+      username: item.username,
+      avatarUrl: item.avatarUrl,
+      country: item.country,
+      displayWpm: item.displayWpm,
+      highestAccuracy: item.highestAccuracy,
+      modeLabel: item.modeLabel,
+      rank: idx + 1,
+      isVerified: item.isVerified,
+      scoreLabel: 'WPM',
+      scoreValue: item.displayWpm,
+      subStatLabel: 'Aniqlik',
+      subStatValue: `${item.highestAccuracy}%`
+    }));
+  }, [sortedList]);
 
-  // Jump to user's row with smooth scrolling
+  const sentencePodiumUsers: PodiumUser[] = useMemo(() => {
+    return filteredSentenceList.slice(0, 3).map((item, idx) => ({
+      uid: item.uid,
+      displayName: item.playerName || 'O\'quvchi',
+      username: item.playerName ? item.playerName.toLowerCase().replace(/\s+/g, '_') : 'user',
+      avatarUrl: item.playerAvatar,
+      country: '🇺🇿 Uzbekistan',
+      displayWpm: item.wpm || 0,
+      highestAccuracy: item.accuracy || 100,
+      modeLabel: item.ieltsBand || `Lv.${item.userLevel || 1}`,
+      rank: idx + 1,
+      isVerified: true,
+      scoreLabel: 'Ball',
+      scoreValue: item.score?.toLocaleString() || '0',
+      subStatLabel: 'Jumlalar',
+      subStatValue: `${item.sentencesCompleted || 0} ta`
+    }));
+  }, [filteredSentenceList]);
+
+  const spacePodiumUsers: PodiumUser[] = useMemo(() => {
+    return filteredSpaceList.slice(0, 3).map((item, idx) => ({
+      uid: item.uid,
+      displayName: item.playerName || 'Kosmik Uchuvchi',
+      username: item.playerName ? item.playerName.toLowerCase().replace(/\s+/g, '_') : 'pilot',
+      avatarUrl: item.playerAvatar,
+      country: item.language === 'en' ? '🇬🇧 English' : '🇺🇿 O\'zbekcha',
+      displayWpm: item.wpm || 0,
+      highestAccuracy: item.accuracy || 100,
+      modeLabel: `Wave ${item.wave || 1}`,
+      rank: idx + 1,
+      isVerified: true,
+      scoreLabel: 'Kosmik Ball',
+      scoreValue: item.score?.toLocaleString() || '0',
+      subStatLabel: 'Dushmanlar',
+      subStatValue: `${item.enemiesKilled || 0} ta`
+    }));
+  }, [filteredSpaceList]);
+
+  // Jump to user's rows
   const handleJumpToMyRank = () => {
     if (!myRankingInfo) return;
     const targetPage = Math.floor((myRankingInfo.rank - 1) / pageSize) + 1;
@@ -521,18 +670,44 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     }, 150);
   };
 
+  const handleJumpToMySentenceRank = () => {
+    if (!mySentenceRankingInfo) return;
+    const targetPage = Math.floor((mySentenceRankingInfo.rank - 1) / pageSize) + 1;
+    setCurrentPage(targetPage);
+    setSearchQuery('');
+    setTimeout(() => {
+      const el = document.getElementById(`sentence-rank-row-${currentUser?.uid}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+  };
+
+  const handleJumpToMySpaceRank = () => {
+    if (!mySpaceRankingInfo) return;
+    const targetPage = Math.floor((mySpaceRankingInfo.rank - 1) / pageSize) + 1;
+    setCurrentPage(targetPage);
+    setSearchQuery('');
+    setTimeout(() => {
+      const el = document.getElementById(`space-rank-row-${currentUser?.uid}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+  };
+
   // Open profile modal
-  const openUserProfile = (u: LeaderboardUser) => {
+  const openUserProfile = (u: LeaderboardUser | any) => {
     const profile: UserProfile = {
-      uid: u.uid,
+      uid: u.uid || 'user',
       email: '',
       username: u.username || 'user',
-      displayName: u.displayName || u.username || 'Foydalanuvchi',
-      avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${u.uid}`,
+      displayName: u.displayName || u.playerName || u.username || 'Foydalanuvchi',
+      avatarUrl: u.avatarUrl || u.playerAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${u.uid || 'pilot'}`,
       country: u.country || '🇺🇿 Uzbekistan',
-      highestWpm: u.highestWpm || 0,
-      highestAccuracy: u.highestAccuracy || 100,
-      averageWpm: u.highestWpm || 0,
+      highestWpm: u.highestWpm || u.displayWpm || u.wpm || 0,
+      highestAccuracy: u.highestAccuracy || u.accuracy || 100,
+      averageWpm: u.highestWpm || u.displayWpm || u.wpm || 0,
       time15Wpm: u.time15Wpm || 0,
       time30Wpm: u.time30Wpm || 0,
       time60Wpm: u.time60Wpm || 0,
@@ -570,12 +745,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     setIsProfileOpen(true);
   };
 
-  // Header Title generation based on scope and filter
-  const getHeaderTitle = () => {
-    if (scope === 'space-game') {
-      return "🚀 Koinot Jangi (Space Shooter) Chempionlar Reytingi";
-    }
-
+  // Header Title generation for typing
+  const getTypingHeaderTitle = () => {
     const scopeLabel =
       scope === 'all-time-uzbek'
         ? 'All-time Uzbek'
@@ -599,23 +770,23 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     return `${scopeLabel} ${timeLabel} Leaderboard`;
   };
 
-  const isSpaceScope = scope === 'space-game';
-
   return (
     <div className="w-full max-w-7xl mx-auto py-8 px-4 sm:px-8 font-mono select-none space-y-6 animate-in fade-in duration-200">
-      {/* High-Level Mode Bar: Typing vs Space Shooter */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-2 bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl shadow-xs">
-        <div className="flex items-center gap-2">
+      {/* ========================================================================= */}
+      {/* 3 DISTINCT TOP LEADERBOARD TABS: Tez Yozish / Inglizcha Jumlalar / Koinot Jangi */}
+      {/* ========================================================================= */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl shadow-xs">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {/* Tab 1: Tez Yozish Reytingi */}
           <button
             onClick={() => {
-              if (scope === 'space-game') {
-                setScope('all-time-uzbek');
-                setCurrentPage(1);
-              }
+              setDomain('typing');
+              setCurrentPage(1);
+              setSearchQuery('');
             }}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              !isSpaceScope
-                ? 'bg-[var(--main-color)] text-[var(--bg-color)] shadow-sm'
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              domain === 'typing'
+                ? 'bg-[var(--main-color)] text-[var(--bg-color)] shadow-md font-black ring-2 ring-[var(--main-color)]/30'
                 : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
             }`}
           >
@@ -623,50 +794,290 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
             <span>⌨️ Tez Yozish Reytingi</span>
           </button>
 
+          {/* Tab 2: Inglizcha Jumlalar Reytingi */}
           <button
             onClick={() => {
-              setScope('space-game');
+              setDomain('sentences');
               setCurrentPage(1);
+              setSearchQuery('');
             }}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              isSpaceScope
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25 font-black'
-                : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              domain === 'sentences'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 font-black ring-2 ring-emerald-400/40'
+                : 'text-[var(--sub-color)] hover:text-emerald-400 hover:bg-[var(--sub-alt)]/50'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <span>🎓 Inglizcha Jumlalar Reytingi</span>
+          </button>
+
+          {/* Tab 3: Koinot Jangi Reytingi */}
+          <button
+            onClick={() => {
+              setDomain('space');
+              setCurrentPage(1);
+              setSearchQuery('');
+            }}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              domain === 'space'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25 font-black ring-2 ring-cyan-400/40'
+                : 'text-[var(--sub-color)] hover:text-cyan-400 hover:bg-[var(--sub-alt)]/50'
             }`}
           >
             <Rocket className="w-4 h-4 text-cyan-400" />
-            <span>🚀 Koinot Jangi (Space)</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-400/20 text-cyan-200 font-mono">
-              YANGI
-            </span>
+            <span>🚀 Koinot Jangi Reytingi</span>
           </button>
         </div>
 
-        {isSpaceScope && onGoToSpace && (
-          <button
-            onClick={onGoToSpace}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-amber-500/20 active:scale-95"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Koinot Jangini O&apos;ynash</span>
-          </button>
+        {/* Quick Action Buttons according to active domain */}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {domain === 'typing' && onGoToTyping && (
+            <button
+              onClick={onGoToTyping}
+              className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-[var(--bg-color)] text-[var(--text-color)] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Tez Yozish Sinovi</span>
+            </button>
+          )}
+
+          {domain === 'sentences' && onGoToSentences && (
+            <button
+              onClick={onGoToSentences}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Jumlalarni Mashq Qilish</span>
+            </button>
+          )}
+
+          {domain === 'space' && onGoToSpace && (
+            <button
+              onClick={onGoToSpace}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-500/20 active:scale-95"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span>Koinot Jangini O'ynash</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* DYNAMIC SUMMARY STATS STRIP                                               */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {domain === 'typing' && (
+          <>
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                <Crown className="w-5 h-5 fill-amber-400/30" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Rekord Tezlik</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {typingStats.topWpm} <span className="text-xs font-normal text-[var(--sub-color)]">WPM</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                <Crosshair className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">O&apos;rtacha Aniqlik</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {typingStats.avgAcc}%
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                <Globe className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Ishtirokchilar</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {typingStats.totalUsers} <span className="text-xs font-normal text-[var(--sub-color)]">ta</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Reyting Holati</div>
+                <div className="text-xs font-bold text-emerald-400 font-mono flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Jonli (Real-time)</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {domain === 'sentences' && (
+          <>
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-emerald-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Eng Yuqori Ball</div>
+                <div className="text-lg font-black text-emerald-400 font-mono">
+                  {sentenceStats.topScore.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-emerald-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/15 text-teal-400 flex items-center justify-center shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Yozilgan Jumlalar</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {sentenceStats.totalSentences.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-emerald-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                <Flame className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Rekord Combo</div>
+                <div className="text-lg font-black text-amber-400 font-mono">
+                  x{sentenceStats.maxCombo}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-emerald-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">O&apos;rganuvchilar</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {sentenceStats.totalPlayers} ta
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {domain === 'space' && (
+          <>
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-cyan-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Galaktika Rekordi</div>
+                <div className="text-lg font-black text-cyan-400 font-mono">
+                  {spaceStats.topScore > 0 ? spaceStats.topScore.toLocaleString() : '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-cyan-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center shrink-0">
+                <Rocket className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Maksimal To&apos;lqin</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {spaceStats.maxWave > 0 ? `Wave ${spaceStats.maxWave}` : '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-cyan-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+                <Flame className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Mag&apos;lub Dushmanlar</div>
+                <div className="text-lg font-black text-rose-400 font-mono">
+                  {spaceStats.totalEnemies > 0 ? `${spaceStats.totalEnemies.toLocaleString()} ta` : '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)]/80 border border-cyan-500/30 flex items-center gap-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[var(--sub-color)] font-sans">Kosmik Uchuvchilar</div>
+                <div className="text-lg font-black text-[var(--text-color)] font-mono">
+                  {spaceStats.totalPilots} ta
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Optional Logged-in User Rank Banner for Space */}
-      {isSpaceScope && mySpaceRankingInfo && (
+      {/* ========================================================================= */}
+      {/* USER RANK BANNER (FOR LOGGED IN USERS)                                    */}
+      {/* ========================================================================= */}
+      {domain === 'sentences' && mySentenceRankingInfo && (
+        <div className="bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-transparent border border-emerald-500/40 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
+              #{mySentenceRankingInfo.rank}
+            </div>
+            <div>
+              <div className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                <span>Sizning Jumlalar bo&apos;yicha o&apos;rningiz: #{mySentenceRankingInfo.rank}</span>
+                <span className="text-amber-400 font-extrabold">({mySentenceRankingInfo.item.score.toLocaleString()} ball)</span>
+              </div>
+              <p className="text-xs text-[var(--sub-color)]">
+                {mySentenceRankingInfo.item.sentencesCompleted} ta jumla • {mySentenceRankingInfo.item.wpm} WPM • {mySentenceRankingInfo.item.accuracy}% aniqlik • Max Combo: x{mySentenceRankingInfo.item.maxCombo}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleJumpToMySentenceRank}
+              className="px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--text-color)] text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <span>Qatorim</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+            {onGoToSentences && (
+              <button
+                onClick={onGoToSentences}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95"
+              >
+                <span>Mashq qilish</span>
+                <Play className="w-3.5 h-3.5 fill-current" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {domain === 'space' && mySpaceRankingInfo && (
         <div className="bg-gradient-to-r from-cyan-500/20 via-blue-500/10 to-transparent border border-cyan-500/40 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500 text-slate-950 font-black text-sm flex items-center justify-center shadow-md shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
               #{mySpaceRankingInfo.rank}
             </div>
             <div>
-              <div className="text-sm font-bold text-cyan-300 flex items-center gap-2">
-                <span>Sizning Koinot Jangi o&apos;rningiz: #{mySpaceRankingInfo.rank}</span>
+              <div className="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                <span>Sizning Koinot Jangidagi o&apos;rningiz: #{mySpaceRankingInfo.rank}</span>
                 <span className="text-amber-400 font-extrabold">({mySpaceRankingInfo.item.score.toLocaleString()} ball)</span>
               </div>
               <p className="text-xs text-[var(--sub-color)]">
-                {mySpaceRankingInfo.item.wave}-to&apos;lqin • {mySpaceRankingInfo.item.wpm} WPM • {mySpaceRankingInfo.item.accuracy}% aniqlik • {mySpaceRankingInfo.item.enemiesKilled} ta dushman yo&apos;q qilindi
+                Wave {mySpaceRankingInfo.item.wave} • {mySpaceRankingInfo.item.wpm} WPM • {mySpaceRankingInfo.item.accuracy}% aniqlik • {mySpaceRankingInfo.item.enemiesKilled} ta dushman
               </p>
             </div>
           </div>
@@ -681,18 +1092,17 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
             {onGoToSpace && (
               <button
                 onClick={onGoToSpace}
-                className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95"
+                className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95"
               >
-                <span>Yangi rekord</span>
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Jangni boshlash</span>
+                <Rocket className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Optional Logged-in User Rank Banner for Typing */}
-      {!isSpaceScope && myRankingInfo && (
+      {domain === 'typing' && myRankingInfo && (
         <div className="bg-gradient-to-r from-[var(--main-color)]/20 via-[var(--main-color)]/10 to-transparent border border-[var(--main-color)]/30 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-[var(--main-color)] text-white font-black text-sm flex items-center justify-center shadow-sm shrink-0">
@@ -746,194 +1156,246 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         </div>
       )}
 
-      {/* Main 2-Column Responsive Layout (Sidebar + Main Content Table) */}
+      {/* ========================================================================= */}
+      {/* MAIN 2-COLUMN RESPONSIVE LAYOUT (Sidebar + Main Content Table)            */}
+      {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Sidebar Filters */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-5">
-          {/* Card 1: Scope Selection */}
-          <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-2.5 space-y-1 shadow-sm">
-            <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
-              REJLAR VA TOIFALAR
-            </div>
+          {/* SIDEBAR FOR TYPING */}
+          {domain === 'typing' && (
+            <>
+              <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-2.5 space-y-1 shadow-sm">
+                <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
+                  REJLAR VA TOIFALAR
+                </div>
 
-            {/* all-time uzbek */}
-            <button
-              onClick={() => {
-                setScope('all-time-uzbek');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                scope === 'all-time-uzbek'
-                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-              }`}
-            >
-              <Globe className="w-4 h-4 shrink-0" />
-              <span className="tracking-wide">all-time uzbek</span>
-            </button>
-
-            {/* all-time english */}
-            <button
-              onClick={() => {
-                setScope('all-time-english');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                scope === 'all-time-english'
-                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-              }`}
-            >
-              <Globe className="w-4 h-4 shrink-0" />
-              <span className="tracking-wide">all-time english</span>
-            </button>
-
-            {/* weekly xp */}
-            <button
-              onClick={() => {
-                setScope('weekly-xp');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                scope === 'weekly-xp'
-                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-              }`}
-            >
-              <Flame className="w-4 h-4 shrink-0" />
-              <span className="tracking-wide">weekly xp</span>
-            </button>
-
-            {/* daily */}
-            <button
-              onClick={() => {
-                setScope('daily');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                scope === 'daily'
-                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
-                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-              }`}
-            >
-              <Zap className="w-4 h-4 shrink-0" />
-              <span className="tracking-wide">daily</span>
-            </button>
-
-            {/* space-game */}
-            <button
-              onClick={() => {
-                setScope('space-game');
-                setCurrentPage(1);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-between cursor-pointer ${
-                scope === 'space-game'
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20'
-                  : 'text-[var(--sub-color)] hover:text-cyan-400 hover:bg-[var(--sub-alt)]/50'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Rocket className="w-4 h-4 shrink-0 text-cyan-400" />
-                <span className="tracking-wide">koinot jangi</span>
-              </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-400/20 text-cyan-200 font-mono">
-                TOP
-              </span>
-            </button>
-          </div>
-
-          {/* Card 2: Filter (Time for Typing, or Waves for Space) */}
-          {!isSpaceScope ? (
-            <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
-              <div className="px-3 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
-                VAQT BO&apos;YICHA FILTR
-              </div>
-
-              {(['all', '15', '30', '60', '120'] as TimeCategory[]).map((time) => (
                 <button
-                  key={time}
                   onClick={() => {
-                    setTimeFilter(time);
+                    setScope('all-time-uzbek');
                     setCurrentPage(1);
                   }}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                    timeFilter === time
+                    scope === 'all-time-uzbek'
                       ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
                       : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
                   }`}
                 >
-                  <Trophy className="w-4 h-4 shrink-0" />
-                  <span className="tracking-wide">
-                    {time === 'all' ? 'all' : `time ${time}`}
-                  </span>
+                  <Globe className="w-4 h-4 shrink-0" />
+                  <span className="tracking-wide">all-time uzbek</span>
                 </button>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
-              <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
-                  TO&apos;LQIN FILTRI
-                </span>
+
                 <button
-                  onClick={fetchSpaceLeaderboard}
-                  disabled={spaceLoading}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                  title="Reytingni yangilash"
+                  onClick={() => {
+                    setScope('all-time-english');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
+                    scope === 'all-time-english'
+                      ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                  }`}
                 >
-                  <RotateCcw className={`w-3 h-3 ${spaceLoading ? 'animate-spin' : ''}`} />
-                  <span>Yangilash</span>
+                  <Globe className="w-4 h-4 shrink-0" />
+                  <span className="tracking-wide">all-time english</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setScope('weekly-xp');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
+                    scope === 'weekly-xp'
+                      ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                  }`}
+                >
+                  <Flame className="w-4 h-4 shrink-0" />
+                  <span className="tracking-wide">weekly xp</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setScope('daily');
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
+                    scope === 'daily'
+                      ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                  }`}
+                >
+                  <Zap className="w-4 h-4 shrink-0" />
+                  <span className="tracking-wide">daily</span>
                 </button>
               </div>
 
-              <button
-                onClick={() => {
-                  setSpaceWaveFilter('all');
-                  setCurrentPage(1);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                  spaceWaveFilter === 'all'
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-                }`}
-              >
-                <Trophy className="w-4 h-4 shrink-0" />
-                <span className="tracking-wide">Barcha to&apos;lqinlar</span>
-              </button>
+              {/* Time Filter */}
+              <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
+                <div className="px-3 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
+                  VAQT BO&apos;YICHA FILTR
+                </div>
 
-              <button
-                onClick={() => {
-                  setSpaceWaveFilter('10');
-                  setCurrentPage(1);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                  spaceWaveFilter === '10'
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-                }`}
-              >
-                <Crown className="w-4 h-4 shrink-0 text-amber-400" />
-                <span className="tracking-wide">10+ To&apos;lqinlar (Elita)</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setSpaceWaveFilter('5');
-                  setCurrentPage(1);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
-                  spaceWaveFilter === '5'
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-                }`}
-              >
-                <Crosshair className="w-4 h-4 shrink-0" />
-                <span className="tracking-wide">5+ To&apos;lqinlar</span>
-              </button>
-            </div>
+                {(['all', '15', '30', '60', '120'] as TimeCategory[]).map((time) => (
+                  <button
+                    key={time}
+                    onClick={() => {
+                      setTimeFilter(time);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
+                      timeFilter === time
+                        ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-sm'
+                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                    }`}
+                  >
+                    <Trophy className="w-4 h-4 shrink-0" />
+                    <span className="tracking-wide">
+                      {time === 'all' ? 'all' : `time ${time}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
-          {/* Card 3: Search Box */}
+          {/* SIDEBAR FOR SENTENCES */}
+          {domain === 'sentences' && (
+            <>
+              <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
+                <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
+                    JUMLA TOIFALARI
+                  </span>
+                  <button
+                    onClick={fetchSentenceLeaderboard}
+                    disabled={sentenceLoading}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Reytingni yangilash"
+                  >
+                    <RotateCcw className={`w-3 h-3 ${sentenceLoading ? 'animate-spin' : ''}`} />
+                    <span>Yangilash</span>
+                  </button>
+                </div>
+
+                {[
+                  { id: 'all', label: 'Barcha to\'plam' },
+                  { id: 'daily', label: '🗣 Kundalik suhbat' },
+                  { id: 'business', label: '💼 Biznes va Ish' },
+                  { id: 'tech', label: '💻 IT va Dasturlash' },
+                  { id: 'ielts', label: '📚 IELTS & Akademik' }
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSentenceCategoryFilter(cat.id as SentenceCategoryFilter);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 cursor-pointer ${
+                      sentenceCategoryFilter === cat.id
+                        ? 'bg-emerald-500 text-white font-bold shadow-sm'
+                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 shrink-0" />
+                    <span className="tracking-wide">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Sentences Info Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-b from-emerald-950/40 via-teal-950/20 to-transparent border border-emerald-500/30 space-y-2.5">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                  <BookOpen className="w-4 h-4" />
+                  <span>Jumlalar O&apos;rganish</span>
+                </div>
+                <p className="text-xs text-[var(--sub-color)] leading-relaxed">
+                  Har bir to&apos;g&apos;ri jumla uchun ball to&apos;plang. Xatosiz ketma-ket kombolar orqali IELTS va daraja unvonlarini qo&apos;lga kiriting!
+                </p>
+                {onGoToSentences && (
+                  <button
+                    onClick={onGoToSentences}
+                    className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Mashqni boshlash</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* SIDEBAR FOR SPACE BATTLE */}
+          {domain === 'space' && (
+            <>
+              <div className="bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl p-3 space-y-1 shadow-sm">
+                <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sub-color)]">
+                    TIL BO&apos;YICHA FILTR
+                  </span>
+                  <button
+                    onClick={fetchSpaceLeaderboard}
+                    disabled={spaceLoading}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Reytingni yangilash"
+                  >
+                    <RotateCcw className={`w-3 h-3 ${spaceLoading ? 'animate-spin' : ''}`} />
+                    <span>Yangilash</span>
+                  </button>
+                </div>
+
+                {[
+                  { key: 'all', label: 'Barcha tillar', icon: '🌐' },
+                  { key: 'uz', label: "O'zbekcha so'zlar", icon: '🇺🇿' },
+                  { key: 'en', label: 'Inglizcha so\'zlar', icon: '🇬🇧' }
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      setSpaceLanguageFilter(item.key as SpaceLanguageFilter);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-between cursor-pointer ${
+                      spaceLanguageFilter === item.key
+                        ? 'bg-cyan-500 text-white font-bold shadow-sm'
+                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                    {spaceLanguageFilter === item.key && (
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Space Shooter Info Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-b from-cyan-950/40 via-blue-950/20 to-transparent border border-cyan-500/30 space-y-2.5">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                  <Rocket className="w-4 h-4" />
+                  <span>Koinot Jangi</span>
+                </div>
+                <p className="text-xs text-[var(--sub-color)] leading-relaxed">
+                  Lazer zarbasi berish uchun dushman kemalaridagi so&apos;zlarni xatosiz tering. Har bir yangi to&apos;lqin (Wave) dushmanlar tezligini oshiradi!
+                </p>
+                {onGoToSpace && (
+                  <button
+                    onClick={onGoToSpace}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-cyan-500/20 active:scale-95"
+                  >
+                    <Rocket className="w-3.5 h-3.5" />
+                    <span>Jangni boshlash</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Search Box */}
           <div className="relative">
             <Search className="w-4 h-4 absolute left-4 top-3.5 text-[var(--sub-color)]" />
             <input
@@ -943,7 +1405,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder={isSpaceScope ? "Pilot ismini izlash..." : "Ism yoki username izlash..."}
+              placeholder="Ism yoki taxallus qidirish..."
               className="w-full pl-11 pr-10 py-3 bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl text-sm text-[var(--text-color)] outline-none focus:border-[var(--main-color)] transition-colors placeholder:text-[var(--sub-color)]/60 shadow-sm"
             />
             {searchQuery && (
@@ -955,335 +1417,36 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               </button>
             )}
           </div>
-
-          {/* Space Game Sidebar Promo Card */}
-          {isSpaceScope && onGoToSpace && (
-            <div className="p-4 rounded-2xl bg-gradient-to-b from-cyan-950/40 via-blue-950/20 to-transparent border border-cyan-500/30 space-y-3">
-              <div className="flex items-center gap-2.5 text-cyan-400 font-bold text-sm">
-                <Rocket className="w-4 h-4" />
-                <span>Koinot Jangiga Qo&apos;shiling</span>
-              </div>
-              <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-                Kosmik kemangizni boshqaring, kelayotgan dushman so&apos;zlarni tez yozib lazer bilan yo&apos;q qiling va Oltin General unvonini qo&apos;lga kiriting!
-              </p>
-              <button
-                onClick={onGoToSpace}
-                className="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-cyan-500/20 active:scale-95"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Hozir o&apos;ynash</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Right Main Table (8 Cols on desktop / 9 on xl) */}
         <div className="lg:col-span-8 xl:col-span-9 space-y-4">
           {/* ======================================================== */}
-          {/* SPACE SHOOTER LEADERBOARD VIEW                           */}
+          {/* 1. TYPING LEADERBOARD                                    */}
           {/* ======================================================== */}
-          {isSpaceScope ? (
+          {domain === 'typing' && (
             <>
-              {/* Space Top 3 Podium */}
-              {currentPage === 1 && !searchQuery.trim() && filteredSpaceList.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-6">
-                  {/* 2nd Place (Silver) */}
-                  {filteredSpaceList[1] && (
-                    <div className="order-2 md:order-1 bg-[var(--card-bg)]/70 border border-slate-700/60 rounded-2xl p-4 text-center flex flex-col items-center justify-between relative overflow-hidden shadow-sm">
-                      <div className="absolute top-2.5 right-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <span>🥈 2-O&apos;RIN</span>
-                      </div>
-                      <div className="mt-4 mb-2 relative">
-                        <img
-                          src={filteredSpaceList[1].playerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${filteredSpaceList[1].playerName}`}
-                          alt={filteredSpaceList[1].playerName}
-                          className="w-16 h-16 rounded-full object-cover border-2 border-slate-300 shadow-md bg-slate-900"
-                        />
-                        <div className="absolute -bottom-1 -right-1 bg-slate-200 text-slate-900 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
-                          2
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <h4 className="font-bold text-sm text-[var(--text-color)] truncate max-w-[180px] mx-auto">
-                          {filteredSpaceList[1].playerName}
-                        </h4>
-                        <div className="text-xl font-black text-cyan-400 mt-1">
-                          {filteredSpaceList[1].score.toLocaleString()} <span className="text-xs font-normal text-[var(--sub-color)]">ball</span>
-                        </div>
-                        <div className="flex items-center justify-center gap-2 text-[11px] text-[var(--sub-color)] mt-1.5 font-mono">
-                          <span className="px-2 py-0.5 rounded bg-[var(--sub-alt)] text-cyan-300">
-                            {filteredSpaceList[1].wave}-to&apos;lqin
-                          </span>
-                          <span>{filteredSpaceList[1].wpm} WPM</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 1st Place (Gold Champion) */}
-                  {filteredSpaceList[0] && (
-                    <div className="order-1 md:order-2 bg-gradient-to-b from-amber-500/10 via-[var(--card-bg)] to-[var(--card-bg)] border-2 border-amber-500/50 rounded-2xl p-5 text-center flex flex-col items-center justify-between relative overflow-hidden shadow-lg shadow-amber-500/10 scale-[1.02]">
-                      <div className="absolute top-2.5 right-3 text-[10px] font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                        <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                        <span>KOSMIK GENERAL</span>
-                      </div>
-                      <div className="mt-3 mb-2 relative">
-                        <img
-                          src={filteredSpaceList[0].playerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${filteredSpaceList[0].playerName}`}
-                          alt={filteredSpaceList[0].playerName}
-                          className="w-20 h-20 rounded-full object-cover border-3 border-amber-400 shadow-xl bg-slate-900"
-                        />
-                        <div className="absolute -bottom-1 -right-1 bg-amber-400 text-slate-950 text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow">
-                          1
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <h4 className="font-extrabold text-base text-[var(--text-color)] truncate max-w-[200px] mx-auto flex items-center justify-center gap-1.5">
-                          <span>{filteredSpaceList[0].playerName}</span>
-                          <Sparkles className="w-4 h-4 text-amber-400" />
-                        </h4>
-                        <div className="text-2xl font-black text-amber-400 mt-1">
-                          {filteredSpaceList[0].score.toLocaleString()} <span className="text-xs font-normal text-amber-300/80">ball</span>
-                        </div>
-                        <div className="flex items-center justify-center gap-2 text-xs text-[var(--sub-color)] mt-2 font-mono">
-                          <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">
-                            {filteredSpaceList[0].wave}-to&apos;lqin
-                          </span>
-                          <span className="text-[var(--text-color)] font-bold">{filteredSpaceList[0].wpm} WPM</span>
-                          <span>• {filteredSpaceList[0].accuracy}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3rd Place (Bronze) */}
-                  {filteredSpaceList[2] && (
-                    <div className="order-3 bg-[var(--card-bg)]/70 border border-amber-800/50 rounded-2xl p-4 text-center flex flex-col items-center justify-between relative overflow-hidden shadow-sm">
-                      <div className="absolute top-2.5 right-3 text-[10px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">
-                        <span>🥉 3-O&apos;RIN</span>
-                      </div>
-                      <div className="mt-4 mb-2 relative">
-                        <img
-                          src={filteredSpaceList[2].playerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${filteredSpaceList[2].playerName}`}
-                          alt={filteredSpaceList[2].playerName}
-                          className="w-16 h-16 rounded-full object-cover border-2 border-amber-700 shadow-md bg-slate-900"
-                        />
-                        <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
-                          3
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <h4 className="font-bold text-sm text-[var(--text-color)] truncate max-w-[180px] mx-auto">
-                          {filteredSpaceList[2].playerName}
-                        </h4>
-                        <div className="text-xl font-black text-cyan-400 mt-1">
-                          {filteredSpaceList[2].score.toLocaleString()} <span className="text-xs font-normal text-[var(--sub-color)]">ball</span>
-                        </div>
-                        <div className="flex items-center justify-center gap-2 text-[11px] text-[var(--sub-color)] mt-1.5 font-mono">
-                          <span className="px-2 py-0.5 rounded bg-[var(--sub-alt)] text-cyan-300">
-                            {filteredSpaceList[2].wave}-to&apos;lqin
-                          </span>
-                          <span>{filteredSpaceList[2].wpm} WPM</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Space Header & Pagination Info */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
-                    <Rocket className="w-5 h-5 text-cyan-400" />
-                    <span>Koinot Jangi Chempionlar Jadvali</span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
-                    Jonli kosmik jang natijalari • Jami {spaceTotalCount} ta jasur pilot
-                  </p>
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                    title="Oldingi sahifa"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  <span className="font-mono text-sm text-cyan-400 font-semibold px-1">
-                    # {currentPage} / {spaceTotalPages}
-                  </span>
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(spaceTotalPages, p + 1))}
-                    disabled={currentPage === spaceTotalPages}
-                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                    title="Keyingi sahifa"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Space Table */}
-              <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
-                <table className="w-full text-left text-sm font-mono border-collapse">
-                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
-                    <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
-                      <th className="pb-3.5 px-2.5 sm:px-3 w-10 sm:w-12 font-medium">#</th>
-                      <th className="pb-3.5 px-3 sm:px-4 font-medium">Pilot (O&apos;yinchi)</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-right font-bold text-cyan-400">Ball</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-center font-medium">To&apos;lqin</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium">WPM</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium">Aniqlik</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium text-[var(--sub-color)] hidden md:table-cell">Dushmanlar</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium text-[var(--sub-color)] hidden lg:table-cell">Streak</th>
-                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium text-[var(--sub-color)]">Sana</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--sub-alt)]/20">
-                    {spacePageItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} className="py-16 text-center text-[var(--sub-color)]">
-                          <p className="font-bold text-base text-[var(--text-color)] mb-1">
-                            Hozircha natijalar mavjud emas
-                          </p>
-                          <p className="text-xs">
-                            Koinot Jangiga birinchi bo&apos;lib kiring va rekord o&apos;rnating!
-                          </p>
-                          {onGoToSpace && (
-                            <button
-                              onClick={onGoToSpace}
-                              className="mt-4 px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow"
-                            >
-                              <Play className="w-3.5 h-3.5 fill-current" />
-                              <span>O&apos;yinga o&apos;tish</span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ) : (
-                      spacePageItems.map((item, idx) => {
-                        const rank = (currentPage - 1) * pageSize + idx + 1;
-                        const isSelf = currentUser?.uid === item.uid;
-
-                        return (
-                          <tr
-                            key={item.id || `${item.uid}-${idx}`}
-                            id={`space-rank-row-${item.uid}`}
-                            className={`transition-colors hover:bg-[var(--sub-alt)]/30 group ${
-                              isSelf ? 'bg-cyan-500/10 font-bold' : ''
-                            }`}
-                          >
-                            {/* Rank */}
-                            <td className="py-3.5 px-3 font-semibold text-[var(--sub-color)]">
-                              {rank === 1 ? (
-                                <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
-                              ) : rank === 2 ? (
-                                <span className="text-slate-300 font-bold">2</span>
-                              ) : rank === 3 ? (
-                                <span className="text-amber-600 font-bold">3</span>
-                              ) : (
-                                <span>{rank}</span>
-                              )}
-                            </td>
-
-                            {/* Name with Avatar */}
-                            <td className="py-3.5 px-4">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={item.playerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${item.playerName}`}
-                                  alt="avatar"
-                                  className="w-7 h-7 rounded-full object-cover shrink-0 bg-[var(--sub-alt)] border border-cyan-500/30"
-                                />
-                                <div className="flex items-center gap-1.5 truncate max-w-[180px] sm:max-w-[260px]">
-                                  <span className="text-[var(--text-color)] font-medium group-hover:text-cyan-400 transition-colors truncate">
-                                    {item.playerName}
-                                  </span>
-                                  {isSelf && (
-                                    <span className="px-1.5 py-0.5 rounded bg-cyan-500 text-slate-950 text-[9px] font-black uppercase shrink-0">
-                                      siz
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Score */}
-                            <td className="py-3.5 px-4 text-right font-black text-base text-cyan-400 tracking-tight">
-                              {item.score.toLocaleString()}
-                            </td>
-
-                            {/* Wave */}
-                            <td className="py-3.5 px-3 text-center">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--sub-alt)]/60 text-cyan-300 font-mono text-xs font-semibold border border-[var(--sub-alt)]/80">
-                                <Rocket className="w-3 h-3 text-cyan-400 shrink-0" />
-                                <span>{item.wave}-to&apos;lqin</span>
-                              </span>
-                            </td>
-
-                            {/* WPM */}
-                            <td className="py-3.5 px-4 text-right text-[var(--text-color)] font-bold text-sm">
-                              {item.wpm}
-                            </td>
-
-                            {/* Accuracy */}
-                            <td className="py-3.5 px-4 text-right text-[var(--sub-color)] font-medium text-xs sm:text-sm">
-                              {item.accuracy}%
-                            </td>
-
-                            {/* Enemies Killed */}
-                            <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm hidden md:table-cell">
-                              {item.enemiesKilled || 0} ta
-                            </td>
-
-                            {/* Max Streak */}
-                            <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm hidden lg:table-cell">
-                              {item.maxStreak || 0}
-                            </td>
-
-                            {/* Date */}
-                            <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs whitespace-nowrap">
-                              {formatDate(item.createdAt)}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            /* ======================================================== */
-            /* TYPING LEADERBOARD VIEW                                  */
-            /* ======================================================== */
-            <>
-              {/* Top Podium (1, 2, 3-o'rinlar shohsupasi: Oltin, Kumush, Bronza) */}
+              {/* Podium */}
               {currentPage === 1 && !searchQuery.trim() && sortedList.length > 0 && (
                 <LeaderboardPodium
-                  topUsers={sortedList.slice(0, 3)}
+                  topUsers={typingPodiumUsers}
                   onSelectUser={openUserProfile}
                   currentUserId={currentUser?.uid}
                 />
               )}
 
-              {/* Main Top Header: Title, Subtitle, Pagination controls */}
+              {/* Header Title & Pagination */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)]">
-                    {getHeaderTitle()}
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-[var(--main-color)]" />
+                    <span>{getTypingHeaderTitle()}</span>
                   </h2>
                   <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
-                    Jonli reyting jadvali • Jami {totalCount} ta ishtirokchi
+                    Haqiqiy foydalanuvchilarning jonli natijalari • Jami {totalCount} ta ishtirokchi
                   </p>
                 </div>
 
-                {/* Pagination Controls matching screenshot: < # 1 / 21 > */}
                 <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -1309,7 +1472,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 </div>
               </div>
 
-              {/* Table Container - clean, spacious, matching the exact Monkeytype style */}
+              {/* Table */}
               <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
                 <table className="w-full text-left text-sm font-mono border-collapse">
                   <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
@@ -1347,7 +1510,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                               isSelf ? 'bg-[var(--main-color)]/10 font-bold' : ''
                             }`}
                           >
-                            {/* Rank */}
                             <td className="py-3.5 px-3 font-semibold text-[var(--sub-color)]">
                               {item.rank === 1 ? (
                                 <Crown className="w-4 h-4 text-amber-400 fill-amber-400 inline-block" />
@@ -1359,14 +1521,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                                 <span>{item.rank}</span>
                               )}
                             </td>
-
-                            {/* Name with Avatar */}
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-3">
                                 <img
                                   src={item.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
                                   alt="avatar"
                                   className="w-7 h-7 rounded-full object-cover shrink-0 bg-[var(--sub-alt)] border border-[var(--sub-alt)]"
+                                  referrerPolicy="no-referrer"
                                 />
                                 <div className="flex items-center gap-1.5 truncate max-w-[180px] sm:max-w-[260px]">
                                   <span className="text-[var(--text-color)] font-medium group-hover:text-[var(--main-color)] transition-colors truncate">
@@ -1383,38 +1544,362 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                                 </div>
                               </div>
                             </td>
-
-                            {/* Mode */}
                             <td className="py-3.5 px-3 text-center">
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--sub-alt)]/60 text-[var(--main-color)] font-mono text-xs font-semibold border border-[var(--sub-alt)]/80">
                                 <Clock className="w-3 h-3 text-[var(--main-color)] shrink-0" />
                                 <span>{item.modeLabel}</span>
                               </span>
                             </td>
-
-                            {/* WPM */}
                             <td className="py-3.5 px-4 text-right font-black text-base text-[var(--main-color)] tracking-tight">
                               {item.displayWpm}
                             </td>
-
-                            {/* Accuracy */}
                             <td className="py-3.5 px-4 text-right text-[var(--text-color)] font-medium text-xs sm:text-sm">
                               {item.highestAccuracy > 0 ? `${Number(item.highestAccuracy).toFixed(2)}%` : '0.00%'}
                             </td>
-
-                            {/* Raw WPM */}
                             <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm hidden md:table-cell">
                               {item.rawWpmCalc}
                             </td>
-
-                            {/* Consistency */}
                             <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs sm:text-sm hidden lg:table-cell">
                               {item.consistencyCalc}
                             </td>
-
-                            {/* Date */}
                             <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs whitespace-nowrap">
                               {item.dateFormatted}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* ======================================================== */}
+          {/* 2. SENTENCES LEADERBOARD                                 */}
+          {/* ======================================================== */}
+          {domain === 'sentences' && (
+            <>
+              {/* Podium */}
+              {currentPage === 1 && !searchQuery.trim() && filteredSentenceList.length > 0 && (
+                <LeaderboardPodium
+                  topUsers={sentencePodiumUsers}
+                  onSelectUser={openUserProfile}
+                  currentUserId={currentUser?.uid}
+                />
+              )}
+
+              {/* Header Title & Pagination */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-emerald-400" />
+                    <span>🎓 Inglizcha Jumlalar Chempionlar Reytingi</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
+                    Jumlalar trenajyorining haqiqiy rekordlari • Jami {sentenceTotalCount} ta o&apos;quvchi
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                    title="Oldingi sahifa"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <span className="font-mono text-sm text-emerald-400 font-semibold px-1">
+                    # {currentPage} / {sentenceTotalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(sentenceTotalPages, p + 1))}
+                    disabled={currentPage === sentenceTotalPages}
+                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                    title="Keyingi sahifa"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Sentences Table */}
+              <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
+                <table className="w-full text-left text-sm font-mono border-collapse">
+                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
+                    <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
+                      <th className="pb-3.5 px-2.5 sm:px-3 w-10 sm:w-12 font-medium">#</th>
+                      <th className="pb-3.5 px-3 sm:px-4 font-medium">O&apos;quvchi</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-center font-bold text-emerald-400">Daraja / IELTS</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-right font-bold text-emerald-400">Ball</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-center font-medium">Toifa</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium">Jumlalar</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium">WPM</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium">Aniqlik</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium text-amber-400">Max Combo</th>
+                      <th className="pb-3.5 px-3 sm:px-4 text-right font-medium text-[var(--sub-color)]">Sana</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--sub-alt)]/20">
+                    {sentencePageItems.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="py-16 text-center text-[var(--sub-color)]">
+                          <div className="max-w-md mx-auto flex flex-col items-center space-y-3">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shadow-xs">
+                              <BookOpen className="w-6 h-6" />
+                            </div>
+                            <p className="font-bold text-base text-[var(--text-color)]">
+                              Hozircha natijalar mavjud emas
+                            </p>
+                            <p className="text-xs text-[var(--sub-color)] leading-relaxed">
+                              Inglizcha jumlalar bo&apos;limida birinchi bo&apos;lib mashq qiling va o&apos;z rekordingizni o&apos;rnating!
+                            </p>
+                            {onGoToSentences && (
+                              <button
+                                onClick={onGoToSentences}
+                                className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95"
+                              >
+                                <Play className="w-4 h-4 fill-current" />
+                                <span>Jumlalar Mashqini Boshlash</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      sentencePageItems.map((item, idx) => {
+                        const globalRank = (currentPage - 1) * pageSize + (idx + 1) + (currentPage === 1 && !searchQuery.trim() ? 3 : 0);
+                        const isSelf = currentUser?.uid === item.uid;
+
+                        return (
+                          <tr
+                            key={item.id || `${item.uid}_${idx}`}
+                            id={`sentence-rank-row-${item.uid}`}
+                            className={`transition-colors hover:bg-[var(--sub-alt)]/30 group ${
+                              isSelf ? 'bg-emerald-500/10 font-bold border-l-2 border-emerald-400' : ''
+                            }`}
+                          >
+                            <td className="py-3.5 px-3 text-[var(--sub-color)] font-medium text-xs">
+                              {globalRank === 1 ? '🥇 1' : globalRank === 2 ? '🥈 2' : globalRank === 3 ? '🥉 3' : globalRank}
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-[var(--text-color)] text-xs">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={item.playerAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid}`}
+                                  alt=""
+                                  className="w-7 h-7 rounded-full bg-[var(--sub-alt)] object-cover border border-emerald-500/30 shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                                  {item.playerName || 'O\'quvchi'}
+                                </span>
+                                {isSelf && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                                    Siz
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                                {item.ieltsBand || `Lv.${item.userLevel || 1}`}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-bold text-emerald-400 text-sm">
+                              {item.score?.toLocaleString() || 0}
+                            </td>
+                            <td className="py-3.5 px-4 text-center text-xs text-[var(--sub-color)] capitalize">
+                              {item.category === 'daily'
+                                ? 'Kundalik'
+                                : item.category === 'business'
+                                ? 'Biznes'
+                                : item.category === 'tech'
+                                ? 'IT'
+                                : item.category === 'ielts'
+                                ? 'IELTS'
+                                : 'Aralash'}
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-[var(--text-color)] text-xs">
+                              {item.sentencesCompleted} ta
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-[var(--text-color)] text-xs">
+                              {item.wpm}
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-[var(--text-color)] text-xs">
+                              {item.accuracy}%
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-amber-400 font-mono text-xs">
+                              🔥 x{item.maxCombo}
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs whitespace-nowrap">
+                              {formatDate(item.createdAt)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* ======================================================== */}
+          {/* 3. SPACE BATTLE LEADERBOARD                              */}
+          {/* ======================================================== */}
+          {domain === 'space' && (
+            <>
+              {/* Podium */}
+              {currentPage === 1 && !searchQuery.trim() && filteredSpaceList.length > 0 && (
+                <LeaderboardPodium
+                  topUsers={spacePodiumUsers}
+                  onSelectUser={openUserProfile}
+                  currentUserId={currentUser?.uid}
+                />
+              )}
+
+              {/* Header Title & Pagination */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
+                    <Rocket className="w-5 h-5 text-cyan-400" />
+                    <span>🚀 Koinot Jangi (Space Typing Shooter) Chempionlar Reytingi</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
+                    Kosmik jang merganlarining haqiqiy rekordlari • Jami {spaceTotalCount} ta natija
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                    title="Oldingi sahifa"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <span className="font-mono text-sm text-cyan-400 font-semibold px-1">
+                    # {currentPage} / {spaceTotalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(spaceTotalPages, p + 1))}
+                    disabled={currentPage === spaceTotalPages}
+                    className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                    title="Keyingi sahifa"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Space Table */}
+              <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
+                <table className="w-full text-left text-sm font-mono border-collapse">
+                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
+                    <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
+                      <th className="pb-3.5 px-3 w-12 font-medium">#</th>
+                      <th className="pb-3.5 px-4 font-medium">Uchuvchi</th>
+                      <th className="pb-3.5 px-4 text-right font-bold text-cyan-400">Kosmik Ball</th>
+                      <th className="pb-3.5 px-4 text-center font-medium">To&apos;lqin</th>
+                      <th className="pb-3.5 px-3 text-center font-medium">Til</th>
+                      <th className="pb-3.5 px-4 text-right font-medium">WPM</th>
+                      <th className="pb-3.5 px-4 text-right font-medium">Aniqlik</th>
+                      <th className="pb-3.5 px-4 text-right font-medium">Dushmanlar</th>
+                      <th className="pb-3.5 px-4 text-right font-medium">Max Streak</th>
+                      <th className="pb-3.5 px-4 text-right font-medium">Sana</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--sub-alt)]/20">
+                    {spacePageItems.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="py-16 text-center text-[var(--sub-color)]">
+                          <div className="max-w-md mx-auto flex flex-col items-center space-y-3">
+                            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shadow-xs">
+                              <Rocket className="w-6 h-6" />
+                            </div>
+                            <p className="font-bold text-base text-[var(--text-color)]">
+                              Hozircha natijalar mavjud emas
+                            </p>
+                            <p className="text-xs text-[var(--sub-color)] leading-relaxed">
+                              Hozircha Koinot Jangida natijalar yo&apos;q. Birinchi bo&apos;lib kosmik jangni boshlang va o&apos;z rekordingizni o&apos;rnating!
+                            </p>
+                            {onGoToSpace && (
+                              <button
+                                onClick={onGoToSpace}
+                                className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-cyan-500/20 active:scale-95"
+                              >
+                                <Rocket className="w-4 h-4" />
+                                <span>Koinot Jangini Boshlash 🚀</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      spacePageItems.map((item, idx) => {
+                        const globalRank = (currentPage - 1) * pageSize + (idx + 1) + (currentPage === 1 && !searchQuery.trim() ? 3 : 0);
+                        const isSelf = currentUser?.uid === item.uid;
+
+                        return (
+                          <tr
+                            key={item.id || `${item.uid}_${idx}`}
+                            id={`space-rank-row-${item.uid}`}
+                            className={`transition-colors hover:bg-[var(--sub-alt)]/30 group ${
+                              isSelf ? 'bg-cyan-500/10 font-bold border-l-2 border-cyan-400' : ''
+                            }`}
+                          >
+                            <td className="py-3.5 px-3 text-[var(--sub-color)] font-medium text-xs">
+                              {globalRank === 1 ? '🥇 1' : globalRank === 2 ? '🥈 2' : globalRank === 3 ? '🥉 3' : globalRank}
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-[var(--text-color)] text-xs">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={item.playerAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.uid || 'pilot'}`}
+                                  alt=""
+                                  className="w-7 h-7 rounded-full bg-[var(--sub-alt)] object-cover border border-cyan-500/30 shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                                  {item.playerName || 'Kosmik Uchuvchi'}
+                                </span>
+                                {isSelf && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                                    Siz
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-bold text-cyan-400 text-sm">
+                              {item.score?.toLocaleString() || 0}
+                            </td>
+                            <td className="py-3.5 px-4 text-center text-xs font-mono font-bold text-blue-300">
+                              <span className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30">
+                                Wave {item.wave || 1}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-3 text-center text-xs">
+                              {item.language === 'en' ? '🇬🇧 EN' : '🇺🇿 UZ'}
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-semibold text-[var(--text-color)] text-xs">
+                              {item.wpm || 0}
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-[var(--text-color)] text-xs">
+                              {item.accuracy || 100}%
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-rose-400 font-semibold text-xs">
+                              {item.enemiesKilled || 0} ta
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-amber-400 font-mono text-xs">
+                              🔥 {item.maxStreak || 0}
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-[var(--sub-color)] text-xs whitespace-nowrap">
+                              {formatDate(item.createdAt)}
                             </td>
                           </tr>
                         );
@@ -1441,7 +1926,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                     }}
                     className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold cursor-pointer transition-all ${
                       pageSize === size
-                        ? 'bg-[var(--main-color)] text-white shadow-xs'
+                        ? domain === 'sentences'
+                          ? 'bg-emerald-500 text-white shadow-xs'
+                          : domain === 'space'
+                          ? 'bg-cyan-500 text-white shadow-xs'
+                          : 'bg-[var(--main-color)] text-white shadow-xs'
                         : 'bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
                     }`}
                   >
@@ -1450,7 +1939,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 ))}
               </div>
               <span className="hidden sm:inline text-[var(--sub-color)]/60 text-[11px]">
-                • Jami {isSpaceScope ? spaceTotalCount : totalCount} ta {isSpaceScope ? 'pilot' : 'teruvchi'}
+                • Jami {domain === 'sentences' ? sentenceTotalCount : domain === 'space' ? spaceTotalCount : totalCount} ta natija
               </span>
             </div>
 
@@ -1468,16 +1957,32 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <span className="font-mono text-sm text-[var(--main-color)] font-semibold px-1">
-                # {currentPage} / {totalPages}
+              <span
+                className={`font-mono text-sm font-semibold px-1 ${
+                  domain === 'sentences'
+                    ? 'text-emerald-400'
+                    : domain === 'space'
+                    ? 'text-cyan-400'
+                    : 'text-[var(--main-color)]'
+                }`}
+              >
+                # {currentPage} / {domain === 'sentences' ? sentenceTotalPages : domain === 'space' ? spaceTotalPages : totalPages}
               </span>
 
               <button
                 onClick={() => {
-                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  const maxP = domain === 'sentences' ? sentenceTotalPages : domain === 'space' ? spaceTotalPages : totalPages;
+                  setCurrentPage((p) => Math.min(maxP, p + 1));
                   window.scrollTo({ top: 120, behavior: 'smooth' });
                 }}
-                disabled={currentPage === totalPages}
+                disabled={
+                  currentPage ===
+                  (domain === 'sentences'
+                    ? sentenceTotalPages
+                    : domain === 'space'
+                    ? spaceTotalPages
+                    : totalPages)
+                }
                 className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
                 title="Keyingi sahifa"
               >
@@ -1500,44 +2005,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           <span className="hidden sm:inline">Tepaga</span>
         </button>
       )}
-
-      {/* Bottom Footer Meta Links (Matching the screenshot footer: yo'riqnoma, verified, v2.6, yangilanishlar, muallif, qoidalar) */}
-      <div className="pt-8 border-t border-[var(--sub-alt)]/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--sub-color)] font-mono">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 hover:text-[var(--text-color)] cursor-pointer transition-colors">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>yo&apos;riqnoma</span>
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1 text-emerald-400 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>verified</span>
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1 text-sky-400 font-medium">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>v2.6</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 hover:text-[var(--text-color)] cursor-pointer transition-colors">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            <span>yangilanishlar</span>
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1 hover:text-[var(--text-color)] cursor-pointer transition-colors">
-            <Award className="w-3.5 h-3.5 text-purple-400" />
-            <span>muallif</span>
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1 hover:text-[var(--text-color)] cursor-pointer transition-colors">
-            <FileText className="w-3.5 h-3.5" />
-            <span>qoidalar</span>
-          </span>
-        </div>
-      </div>
 
       {/* User Profile Modal on Click */}
       <PublicProfileModal

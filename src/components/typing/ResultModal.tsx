@@ -257,7 +257,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                   "Natijangiz hisobga olindi va profilingizga saqlandi"
                 ) : (
                   <span className="text-amber-400 font-medium">
-                    Mehmon rejimi • Reytingda ko'rinish uchun tizimga kiring
+                    Mehmon rejimi • Natijalaringizni saqlash uchun tizimga kiring
                   </span>
                 )}
               </p>
@@ -426,17 +426,6 @@ export const ResultModal: React.FC<ResultModalProps> = ({
               <Share2 className="w-3.5 h-3.5 text-amber-400" />
               <span>Ulashish</span>
             </button>
-
-            {/* Optional Leaderboard button */}
-            {onGoToLeaderboard && (
-              <button
-                onClick={onGoToLeaderboard}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-color)]/20 text-xs font-semibold text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer"
-              >
-                <Trophy className="w-3.5 h-3.5" />
-                <span>Reyting</span>
-              </button>
-            )}
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">

@@ -128,6 +128,13 @@ export interface UserProfile {
   rankChange?: 'up' | 'down' | 'same';
   rankChangeAmount?: number;
   profileVisitorsCount?: number;
+
+  // Sentences Trainer & IELTS Stats
+  sentenceLevel?: number;
+  sentenceIeltsBand?: string;
+  sentencesMasteredCount?: number;
+  highestSentenceCombo?: number;
+  highestSentenceScore?: number;
 }
 
 export interface TypingResult {
