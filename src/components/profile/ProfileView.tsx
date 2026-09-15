@@ -31,6 +31,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 import { maskEmail, maskUid } from '../../utils/maskEmail';
+import { sanitizeText, sanitizeUsername } from '../../utils/security';
 
 interface ProfileViewProps {
   onOpenAuth?: () => void;
@@ -163,15 +164,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
     setSaving(true);
 
     const updates: Partial<UserProfile> = {
-      displayName: displayName.trim(),
-      bio: bio.trim(),
-      country,
+      displayName: sanitizeText(displayName, 35),
+      bio: sanitizeText(bio, 160),
+      country: sanitizeText(country, 40),
       avatarUrl: avatarUrl || profile.avatarUrl,
       bannerColor,
       socialLinks: {
-        twitter,
-        github,
-        website
+        twitter: sanitizeText(twitter, 100),
+        github: sanitizeText(github, 100),
+        website: sanitizeText(website, 100)
       }
     };
 
@@ -183,7 +184,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
         setSaving(false);
         return;
       }
-      updates.username = username.trim().toLowerCase().replace(/\s+/g, '_');
+      updates.username = sanitizeUsername(username).toLowerCase();
       updates.usernameChangesLeft = Math.max(0, changesLeft - 1);
     }
 

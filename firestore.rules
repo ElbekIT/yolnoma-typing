@@ -14,7 +14,7 @@ service cloud.firestore {
     }
 
     function isValidWpm(val) {
-      return val is number && val >= 0 && val <= 350;
+      return val is number && val >= 0 && val <= 260;
     }
 
     function isValidAccuracy(val) {

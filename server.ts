@@ -682,14 +682,26 @@ app.use((req, res, next) => {
 // Strict Security Headers (CSP, Anti-Sniff, Anti-Clickjacking, Anti-XSS, Anti-Reverse Engineering)
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
+  const host = req.headers.host || '';
+  const isPreview = host.includes('run.app') || host.includes('localhost') || host.includes('127.0.0.1');
+
+  if (isPreview) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  } else {
+    res.setHeader('X-Frame-Options', 'DENY');
+  }
+
   // Content-Security-Policy: restrict all origins to trusted Google, Firebase, Dicebear, and Yolnoma endpoints
+  const frameAncestors = isPreview
+    ? "frame-ancestors 'self' https://ai.studio https://ais-*.run.app https://*.google.com https://yolnoma.uz https://www.yolnoma.uz"
+    : "frame-ancestors 'none'";
+
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com",
@@ -698,13 +710,27 @@ app.use((req, res, next) => {
     "img-src 'self' data: blob: https://api.dicebear.com https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.firebasestorage.googleapis.com https://*.firebase.com https://*.gstatic.com",
     "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app",
     "media-src 'self' data: blob:",
-    "frame-ancestors 'self' https://ai.studio https://ais-*.run.app https://*.google.com https://yolnoma.uz https://www.yolnoma.uz",
+    frameAncestors,
     "object-src 'none'",
     "base-uri 'self'"
   ].join('; ');
 
   res.setHeader('Content-Security-Policy', csp);
   next();
+});
+
+// RFC 9116 security.txt Endpoint
+const SECURITY_TXT_CONTENT = `Contact: mailto:admin@yolnoma.uz
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: uz, en, ru
+Canonical: https://www.yolnoma.uz/.well-known/security.txt
+Policy: https://www.yolnoma.uz/privacy
+`;
+
+app.get(['/.well-known/security.txt', '/security.txt'], (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(SECURITY_TXT_CONTENT);
 });
 
 // Security & Body parsing with strict size limits

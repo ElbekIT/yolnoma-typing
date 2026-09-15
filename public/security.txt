@@ -1,0 +1,5 @@
+Contact: mailto:admin@yolnoma.uz
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: uz, en, ru
+Canonical: https://www.yolnoma.uz/.well-known/security.txt
+Policy: https://www.yolnoma.uz/privacy

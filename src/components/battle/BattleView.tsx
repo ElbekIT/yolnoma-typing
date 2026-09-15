@@ -40,6 +40,7 @@ import { ref, set, onValue, update, remove, get } from 'firebase/database';
 import { doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { CustomRoomBattle } from './CustomRoomBattle';
 import { getRandomBattleText } from '../../data/battleTexts';
+import { sanitizeRoomCode, sanitizeText } from '../../utils/security';
 
 interface RealPlayerItem {
   uid: string;
@@ -77,8 +78,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   // Active user data
   const currentUid = user?.uid || localStorage.getItem('yolnoma_guest_id') || 'guest_racer';
-  const currentDisplayName = profile?.displayName || (user?.email ? user.email.split('@')[0] : 'Mehmon Racer');
-  const currentUsername = profile?.username || 'racer';
+  const rawDisplayName = profile?.displayName || (user?.email ? user.email.split('@')[0] : 'Mehmon Racer');
+  const currentDisplayName = sanitizeText(rawDisplayName, 25);
+  const currentUsername = sanitizeText(profile?.username || 'racer', 25);
   const currentAvatar = profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUid}`;
 
   // Mode: Speedway Arena or Private 1v1 Room
@@ -302,7 +304,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }
     }
 
-    const code = (codeToJoin || joinInputCode).toUpperCase().trim();
+    const code = sanitizeRoomCode(codeToJoin || joinInputCode);
     if (!code || code.length < 4) {
       setJoinError("Iltimos, haqiqiy xona kodini kiriting (masalan: 6 ta belgi).");
       return;

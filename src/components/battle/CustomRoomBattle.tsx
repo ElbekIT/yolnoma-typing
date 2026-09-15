@@ -22,6 +22,7 @@ import { ref, set, onValue, update, get } from 'firebase/database';
 import { doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { calculateWpm, calculateAccuracy } from '../../utils/typingEngine';
 import { getRandomBattleText } from '../../data/battleTexts';
+import { sanitizeRoomCode, sanitizeText } from '../../utils/security';
 
 // Generate 6-char clean alphanumeric room code (e.g., "UZ829F")
 export const generateRoomCode = (): string => {
@@ -48,7 +49,8 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
   const { user, profile, addXp } = useAuth();
 
   const currentUid = user?.uid || localStorage.getItem('yolnoma_guest_id') || `guest_${Math.random().toString(36).substring(2, 7)}`;
-  const currentDisplayName = profile?.displayName || (user?.email ? user.email.split('@')[0] : 'Siz');
+  const rawDisplayName = profile?.displayName || (user?.email ? user.email.split('@')[0] : 'Siz');
+  const currentDisplayName = sanitizeText(rawDisplayName, 25);
   const currentAvatar = profile?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUid}`;
 
   // Room config state (for host)
@@ -222,7 +224,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
   const handleJoinRoom = async (codeToJoin?: string) => {
     await ensureFirebaseAuth();
 
-    const code = (codeToJoin || joinCodeInput).toUpperCase().trim();
+    const code = sanitizeRoomCode(codeToJoin || joinCodeInput);
     if (!code || code.length < 4) {
       setJoinError("Iltimos, 6 xonali xona kodini to'g'ri kiriting.");
       return;

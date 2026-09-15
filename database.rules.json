@@ -15,7 +15,7 @@
       ".read": true,
       "$uid": {
         ".write": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
-        ".validate": "newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() <= 350 && newData.child('highestWpm').val() >= 0"
+        ".validate": "newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() <= 260 && newData.child('highestWpm').val() >= 0"
       }
     },
 
@@ -24,7 +24,7 @@
         ".read": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
         "$resultId": {
           ".write": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
-          ".validate": "newData.child('wpm').isNumber() && newData.child('wpm').val() <= 350 && newData.child('wpm').val() >= 0"
+          ".validate": "newData.child('wpm').isNumber() && newData.child('wpm').val() <= 260 && newData.child('wpm').val() >= 0"
         }
       }
     },
@@ -41,7 +41,7 @@
       ".read": true,
       "$scoreId": {
         ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
-        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 2000000 && newData.child('wpm').isNumber() && newData.child('wpm').val() <= 350"
+        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 2000000 && newData.child('wpm').isNumber() && newData.child('wpm').val() <= 260"
       }
     },
 
