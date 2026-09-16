@@ -24,91 +24,87 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const { t } = useI18n();
 
   return (
-    <section className="relative w-full max-w-7xl mx-auto pt-6 sm:pt-10 pb-8 sm:pb-12 px-3 sm:px-6">
-      {/* Background Decorative Neon Gradients */}
-      <div className="absolute top-10 left-1/4 -translate-x-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-20 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+    <section className="relative w-full max-w-7xl mx-auto pt-4 sm:pt-8 pb-6 sm:pb-8 px-3 sm:px-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
         {/* Left Column: Attention-Grabbing Hero Content */}
-        <div className="lg:col-span-7 flex flex-col items-start text-left space-y-5 sm:space-y-6">
+        <div className="lg:col-span-7 flex flex-col items-start text-left space-y-4 sm:space-y-5">
           {/* Small Top Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-cyan-500/15 to-emerald-500/15 border border-amber-400/30 text-amber-300 text-xs sm:text-sm font-sans font-medium tracking-wide shadow-sm shadow-amber-500/10 animate-fade-in">
-            <span className="text-base leading-none">⚡️</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-medium">
+            <span className="text-sm leading-none">⚡️</span>
             <span>{t('heroBadge').replace('⚡️ ', '')}</span>
           </div>
 
           {/* Large H1 Catchy Title */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.75rem] font-extrabold text-white tracking-tight leading-[1.15] sm:leading-[1.18]">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[var(--text-color)] tracking-tight leading-[1.18]">
             <span>{t('heroTitlePart1')}</span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 drop-shadow-[0_2px_18px_rgba(6,182,212,0.35)]">
+            <span className="text-[var(--main-color)]">
               {t('heroTitleHighlight')}
             </span>
             <span>{t('heroTitlePart2')}</span>
           </h1>
 
           {/* Short Narrative Description */}
-          <p className="text-sm sm:text-base md:text-lg text-gray-300/90 leading-relaxed max-w-2xl font-normal">
+          <p className="text-sm sm:text-base text-[var(--sub-color)] leading-relaxed max-w-2xl font-normal">
             {t('heroDesc')}
           </p>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-1 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3 pt-1 w-full sm:w-auto">
             {/* Primary START Button */}
             <button
               onClick={onStartTyping}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-[#090d16] font-bold text-base transition-all duration-200 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-400/40 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer group"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--main-color)] hover:brightness-110 text-[var(--bg-color,#090d16)] font-bold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 cursor-pointer group"
             >
-              <Play className="w-5 h-5 fill-current text-[#090d16] transition-transform group-hover:scale-110" />
+              <Play className="w-4 h-4 fill-current transition-transform group-hover:scale-110" />
               <span>{t('startTypingBtn')}</span>
             </button>
 
             {/* Secondary BATTLE Button */}
             <button
               onClick={onGoToBattle}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#101726]/85 hover:bg-[#152033] border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 hover:text-white font-semibold text-sm sm:text-base transition-all duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 group"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--text-color)] font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 cursor-pointer group"
             >
-              <Swords className="w-4 h-4 text-cyan-400 group-hover:text-emerald-300 transition-colors" />
+              <Swords className="w-4 h-4 text-rose-400 transition-colors" />
               <span>{t('battleArenaBtn')}</span>
             </button>
           </div>
 
           {/* Core Feature Badges */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-2 border-t border-white/10 w-full max-w-xl text-gray-400 font-mono text-xs">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-2 border-t border-[var(--sub-alt)]/40 w-full max-w-xl text-[var(--sub-color)] font-mono text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-lg bg-[var(--sub-alt)]/50 text-cyan-400 flex items-center justify-center shrink-0">
                 <Globe className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[11px] sm:text-xs text-gray-300 font-sans">{t('statLanguages')}</span>
+              <span className="text-[11px] sm:text-xs text-[var(--sub-color)] font-sans">{t('statLanguages')}</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-lg bg-[var(--sub-alt)]/50 text-emerald-400 flex items-center justify-center shrink-0">
                 <Zap className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[11px] sm:text-xs text-gray-300 font-sans">{t('statMultiplayer')}</span>
+              <span className="text-[11px] sm:text-xs text-[var(--sub-color)] font-sans">{t('statMultiplayer')}</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-lg bg-[var(--sub-alt)]/50 text-amber-400 flex items-center justify-center shrink-0">
                 <Shield className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[11px] sm:text-xs text-gray-300 font-sans">{t('statFree')}</span>
+              <span className="text-[11px] sm:text-xs text-[var(--sub-color)] font-sans">{t('statFree')}</span>
             </div>
           </div>
         </div>
 
         {/* Right Column: Quick Practice Training Hub Card */}
         <div className="lg:col-span-5 w-full">
-          <div className="p-5 sm:p-6 rounded-3xl bg-[var(--card-bg)] border-2 border-[var(--sub-alt)] shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--sub-alt)]/60">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/60 space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-[var(--sub-alt)]/40">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <h2 className="text-sm font-black uppercase tracking-wider font-mono text-[var(--text-color)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider font-mono text-[var(--text-color)]">
                   Mashg'ulotlar Markazi
                 </h2>
               </div>
-              <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/25">
+              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                 Tezkor Kirish
               </span>
             </div>
@@ -118,85 +114,85 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <button
                 type="button"
                 onClick={onGoToSentences || onStartTyping}
-                className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/30 text-left transition-all cursor-pointer flex items-center justify-between group"
+                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <BookOpen className="w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[var(--text-color)]">Inglizcha Jumlalar</span>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">
+                      <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Inglizcha Jumlalar</span>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300">
                         0 dan IELTS 9
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--sub-color)]">
+                    <p className="text-[11px] text-[var(--sub-color)]">
                       Yozib o'rganish, 2 tomonlama tarjima va avto-oqim
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-emerald-400 transition-colors" />
               </button>
 
               {/* Classic Speed Typing */}
               <button
                 type="button"
                 onClick={onStartTyping}
-                className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left transition-all cursor-pointer flex items-center justify-between group"
+                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Keyboard className="w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                    <Keyboard className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-[var(--text-color)]">Klassik Tez Yozish Sinovi</span>
-                    <p className="text-xs text-[var(--sub-color)]">
+                    <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Klassik Tez Yozish Sinovi</span>
+                    <p className="text-[11px] text-[var(--sub-color)]">
                       15s, 30s, 60s vaqt rejimlari, WPM va aniqlik
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 transition-colors" />
               </button>
 
               {/* 10-Finger Lessons */}
               <button
                 type="button"
                 onClick={onGoToLessons || onStartTyping}
-                className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left transition-all cursor-pointer flex items-center justify-between group"
+                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <GraduationCap className="w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                    <GraduationCap className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-[var(--text-color)]">10 Barmoq Mashqlari</span>
-                    <p className="text-xs text-[var(--sub-color)]">
+                    <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">10 Barmoq Mashqlari</span>
+                    <p className="text-[11px] text-[var(--sub-color)]">
                       Klaviaturaga qaramay yozish saboqlari
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 transition-colors" />
               </button>
 
               {/* 1v1 Speedway Battle */}
               <button
                 type="button"
                 onClick={onGoToBattle}
-                className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-left transition-all cursor-pointer flex items-center justify-between group"
+                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Swords className="w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+                    <Swords className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-[var(--text-color)]">Speedway 1v1 Arena</span>
-                    <p className="text-xs text-[var(--sub-color)]">
+                    <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Speedway 1v1 Arena</span>
+                    <p className="text-[11px] text-[var(--sub-color)]">
                       Do'stlar bilan real vaqtda poyga va jang
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-rose-400 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-rose-400 transition-colors" />
               </button>
 
               {/* Koinot Jangi (Space Shooter) */}
@@ -204,25 +200,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <button
                   type="button"
                   onClick={onGoToSpace}
-                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-cyan-500/10 border border-[var(--sub-alt)] hover:border-cyan-500/30 text-left transition-all cursor-pointer flex items-center justify-between group"
+                  className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                      <Rocket className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                      <Rocket className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-[var(--text-color)]">Koinot Jangi (Space Battle)</span>
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">
+                        <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Koinot Jangi (Space Battle)</span>
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300">
                           ARKADA
                         </span>
                       </div>
-                      <p className="text-xs text-[var(--sub-color)]">
+                      <p className="text-[11px] text-[var(--sub-color)]">
                         Lazerlar bilan dushman kemalarini portlatish va rekord o'rnatish
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 transition-colors" />
                 </button>
               )}
 
@@ -231,25 +227,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <button
                   type="button"
                   onClick={onGoToLeaderboard}
-                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-color)] hover:bg-amber-500/10 border border-[var(--sub-alt)] hover:border-amber-500/30 text-left transition-all cursor-pointer flex items-center justify-between group"
+                  className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                      <Trophy className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                      <Trophy className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-[var(--text-color)]">Milliy Reyting (Top 100)</span>
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">
+                        <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Milliy Reyting (Top 100)</span>
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300">
                           LIVE
                         </span>
                       </div>
-                      <p className="text-xs text-[var(--sub-color)]">
+                      <p className="text-[11px] text-[var(--sub-color)]">
                         O'zbekistonning eng tezkor yozuvchilari peshqadami
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 transition-colors" />
                 </button>
               )}
             </div>

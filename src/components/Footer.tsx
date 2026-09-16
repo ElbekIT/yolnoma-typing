@@ -27,7 +27,7 @@ interface FooterProps {
   onNavigate?: (tab: string) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({
+export const Footer = React.memo<FooterProps>(({
   onOpenAbout,
   onOpenUpdates,
   onOpenOwner,
@@ -185,7 +185,7 @@ export const Footer: React.FC<FooterProps> = ({
               >
                 <Zap className="w-3 h-3 text-amber-400" />
                 <span>v2.6</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </button>
             ) : (
               <span>v2.6</span>
@@ -232,4 +232,4 @@ export const Footer: React.FC<FooterProps> = ({
       />
     </footer>
   );
-};
+});

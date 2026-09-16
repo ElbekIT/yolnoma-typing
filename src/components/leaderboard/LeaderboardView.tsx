@@ -25,7 +25,7 @@ import {
   Play,
   Rocket
 } from 'lucide-react';
-import { ref, onValue } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -34,6 +34,15 @@ import { PublicProfileModal } from '../profile/PublicProfileModal';
 import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
 import { SentenceScoreRecord, getTopSentenceScores, deduplicateSentenceScores } from '../../utils/sentencesLeaderboard';
 import { SpaceScoreRecord, getTopSpaceScores, deduplicateSpaceScores } from '../../utils/spaceLeaderboard';
+
+// Module-level caches for instant 0ms tab switching & reduced network load
+let cachedTypingUsers: LeaderboardUser[] | null = null;
+let cachedBannedUids: Set<string> = new Set();
+let lastTypingFetchTime = 0;
+let cachedSentenceScores: SentenceScoreRecord[] | null = null;
+let lastSentenceFetchTime = 0;
+let cachedSpaceScores: SpaceScoreRecord[] | null = null;
+let lastSpaceFetchTime = 0;
 
 // Main Leaderboard Domains (Completely Separated)
 export type LeaderboardDomain = 'typing' | 'sentences' | 'space';
@@ -127,16 +136,16 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   // Raw Data from Firebase RTDB for typing
-  const [rawTypingUsers, setRawTypingUsers] = useState<LeaderboardUser[]>([]);
-  const [bannedUids, setBannedUids] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const [rawTypingUsers, setRawTypingUsers] = useState<LeaderboardUser[]>(() => cachedTypingUsers || []);
+  const [bannedUids, setBannedUids] = useState<Set<string>>(() => cachedBannedUids);
+  const [loading, setLoading] = useState(() => !cachedTypingUsers);
 
   // Sentences Practice Leaderboard Data (Real scores only)
-  const [sentenceScores, setSentenceScores] = useState<SentenceScoreRecord[]>([]);
+  const [sentenceScores, setSentenceScores] = useState<SentenceScoreRecord[]>(() => cachedSentenceScores || []);
   const [sentenceLoading, setSentenceLoading] = useState(false);
 
   // Space Battle Leaderboard Data (Real scores only)
-  const [spaceScores, setSpaceScores] = useState<SpaceScoreRecord[]>([]);
+  const [spaceScores, setSpaceScores] = useState<SpaceScoreRecord[]>(() => cachedSpaceScores || []);
   const [spaceLoading, setSpaceLoading] = useState(false);
   // Default to 'unique' (only 1 best record per player, prevents duplicate entries)
   const [spaceModeFilter, setSpaceModeFilter] = useState<LeaderboardViewMode>('unique');
@@ -186,105 +195,134 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   };
 
   // =========================================================================
-  // 1. TYPING USERS DATA FETCHING (RTDB)
+  // 1. TYPING USERS DATA FETCHING (RTDB - Cached & Fast)
   // =========================================================================
-  useEffect(() => {
-    const bansRef = ref(rtdb, 'banned_uids');
-    const unsubBans = onValue(bansRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const val = snapshot.val();
-        const bannedSet = new Set<string>();
+  const fetchTypingUsers = useCallback(async (force = false) => {
+    if (!force && cachedTypingUsers && Date.now() - lastTypingFetchTime < 60000) {
+      setRawTypingUsers(cachedTypingUsers);
+      setBannedUids(cachedBannedUids);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(!cachedTypingUsers);
+    try {
+      const [bansSnap, usersSnap] = await Promise.all([
+        get(ref(rtdb, 'banned_uids')),
+        get(ref(rtdb, 'users'))
+      ]);
+
+      const bannedSet = new Set<string>();
+      if (bansSnap.exists()) {
+        const val = bansSnap.val();
         if (typeof val === 'object' && val !== null) {
           Object.keys(val).forEach((k) => bannedSet.add(k));
         }
-        setBannedUids(bannedSet);
-      } else {
-        setBannedUids(new Set());
       }
-    });
+      cachedBannedUids = bannedSet;
+      setBannedUids(bannedSet);
 
-    const usersRef = ref(rtdb, 'users');
-    const unsubUsers = onValue(
-      usersRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const val = snapshot.val();
-          const list: LeaderboardUser[] = [];
+      if (usersSnap.exists()) {
+        const val = usersSnap.val();
+        const list: LeaderboardUser[] = [];
 
-          Object.keys(val).forEach((uid) => {
-            const u = val[uid];
-            if (!u) return;
+        Object.keys(val).forEach((uid) => {
+          const u = val[uid];
+          if (!u) return;
 
-            const isGuest = uid.startsWith('guest_') || u.isGuest;
-            if (isGuest) return;
+          const isGuest = uid.startsWith('guest_') || u.isGuest;
+          if (isGuest) return;
 
-            const wpm15 = Number(u.time15Wpm || 0);
-            const wpm30 = Number(u.time30Wpm || 0);
-            const wpm60 = Number(u.time60Wpm || 0);
-            const wpm120 = Number(u.time120Wpm || 0);
-            const bestWpm = Math.max(
-              Number(u.highestWpm || 0),
-              wpm15,
-              wpm30,
-              wpm60,
-              wpm120,
-              Number(u.averageWpm || 0)
-            );
+          const wpm15 = Number(u.time15Wpm || 0);
+          const wpm30 = Number(u.time30Wpm || 0);
+          const wpm60 = Number(u.time60Wpm || 0);
+          const wpm120 = Number(u.time120Wpm || 0);
+          const bestWpm = Math.max(
+            Number(u.highestWpm || 0),
+            wpm15,
+            wpm30,
+            wpm60,
+            wpm120,
+            Number(u.averageWpm || 0)
+          );
 
-            list.push({
-              uid,
-              displayName: u.displayName || u.username || 'Foydalanuvchi',
-              username: u.username || 'user',
-              avatarUrl: u.avatarUrl,
-              country: u.country || '🇺🇿 Uzbekistan',
-              highestWpm: bestWpm,
-              highestAccuracy: Number(u.highestAccuracy || 98),
-              time15Wpm: wpm15 || (bestWpm > 0 ? bestWpm : 0),
-              time30Wpm: wpm30 || (bestWpm > 0 ? Math.round(bestWpm * 0.95) : 0),
-              time60Wpm: wpm60 || (bestWpm > 0 ? Math.round(bestWpm * 0.9) : 0),
-              time120Wpm: wpm120 || (bestWpm > 0 ? Math.round(bestWpm * 0.85) : 0),
-              totalTests: Number(u.totalTests || 1),
-              level: Number(u.level || 1),
-              xp: Number(u.xp || 0),
-              rankTitle: u.rankTitle || 'Typing Novice',
-              lastActive: Number(u.lastActive || Date.now()),
-              bio: u.bio,
-              isVerified: Boolean(u.isVerified),
-              isBanned: Boolean(u.isBanned),
-              isBlocked: Boolean(u.isBlocked),
-              language: u.language,
-              rawWpm: Number(u.rawWpm || 0),
-              consistency: Number(u.consistency || 0)
-            });
+          list.push({
+            uid,
+            displayName: u.displayName || u.username || 'Foydalanuvchi',
+            username: u.username || 'user',
+            avatarUrl: u.avatarUrl,
+            country: u.country || '🇺🇿 Uzbekistan',
+            highestWpm: bestWpm,
+            highestAccuracy: Number(u.highestAccuracy || 98),
+            time15Wpm: wpm15 || (bestWpm > 0 ? bestWpm : 0),
+            time30Wpm: wpm30 || (bestWpm > 0 ? Math.round(bestWpm * 0.95) : 0),
+            time60Wpm: wpm60 || (bestWpm > 0 ? Math.round(bestWpm * 0.9) : 0),
+            time120Wpm: wpm120 || (bestWpm > 0 ? Math.round(bestWpm * 0.85) : 0),
+            totalTests: Number(u.totalTests || 1),
+            level: Number(u.level || 1),
+            xp: Number(u.xp || 0),
+            rankTitle: u.rankTitle || 'Typing Novice',
+            lastActive: Number(u.lastActive || Date.now()),
+            bio: u.bio,
+            isVerified: Boolean(u.isVerified),
+            isBanned: Boolean(u.isBanned),
+            isBlocked: Boolean(u.isBlocked),
+            language: u.language,
+            rawWpm: Number(u.rawWpm || 0),
+            consistency: Number(u.consistency || 0)
           });
+        });
 
-          setRawTypingUsers(list);
-          setLoading(false);
-        } else {
-          setRawTypingUsers([]);
-          setLoading(false);
-        }
-      },
-      (err) => {
-        console.error('Leaderboard fetch error:', err);
-        setLoading(false);
+        cachedTypingUsers = list;
+        lastTypingFetchTime = Date.now();
+        setRawTypingUsers(list);
+      } else {
+        cachedTypingUsers = [];
+        setRawTypingUsers([]);
       }
-    );
-
-    return () => {
-      unsubBans();
-      unsubUsers();
-    };
+    } catch (err) {
+      console.error('Leaderboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    if (domain === 'typing') {
+      fetchTypingUsers();
+    }
+  }, [domain, fetchTypingUsers]);
+
   // =========================================================================
-  // 2. SENTENCES LEADERBOARD DATA FETCHING (Real scores only)
+  // 2. SENTENCES LEADERBOARD DATA FETCHING (Real scores only, Cached)
   // =========================================================================
-  const fetchSentenceLeaderboard = useCallback(async () => {
-    setSentenceLoading(true);
+  const fetchSentenceLeaderboard = useCallback(async (force = false) => {
+    if (!force && cachedSentenceScores && Date.now() - lastSentenceFetchTime < 60000) {
+      setSentenceScores(cachedSentenceScores);
+      return;
+    }
+    setSentenceLoading(!cachedSentenceScores);
     try {
-      const list = await getTopSentenceScores(100);
-      setSentenceScores(list);
+      const snap = await get(ref(rtdb, 'sentence_scores'));
+      if (snap.exists()) {
+        const data = snap.val();
+        const list: SentenceScoreRecord[] = [];
+        Object.keys(data).forEach((key) => {
+          const item = data[key];
+          if (item && typeof item.score === 'number') {
+            list.push({ id: key, ...item });
+          }
+        });
+        list.sort((a, b) => b.score - a.score);
+        cachedSentenceScores = list;
+        lastSentenceFetchTime = Date.now();
+        setSentenceScores(list);
+      } else {
+        const list = await getTopSentenceScores(100);
+        cachedSentenceScores = list;
+        lastSentenceFetchTime = Date.now();
+        setSentenceScores(list);
+      }
     } catch (err) {
       console.error('Error loading sentence scores:', err);
     } finally {
@@ -293,42 +331,41 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   }, []);
 
   useEffect(() => {
-    fetchSentenceLeaderboard();
+    if (domain === 'sentences') {
+      fetchSentenceLeaderboard();
+    }
+  }, [domain, fetchSentenceLeaderboard]);
 
-    const sentenceRef = ref(rtdb, 'sentence_scores');
-    const unsubSentence = onValue(sentenceRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const list: SentenceScoreRecord[] = [];
+  // =========================================================================
+  // 3. SPACE BATTLE LEADERBOARD DATA FETCHING (Real scores only, Cached)
+  // =========================================================================
+  const fetchSpaceLeaderboard = useCallback(async (force = false) => {
+    if (!force && cachedSpaceScores && Date.now() - lastSpaceFetchTime < 60000) {
+      setSpaceScores(cachedSpaceScores);
+      return;
+    }
+    setSpaceLoading(!cachedSpaceScores);
+    try {
+      const snap = await get(ref(rtdb, 'space_scores'));
+      if (snap.exists()) {
+        const data = snap.val();
+        const list: SpaceScoreRecord[] = [];
         Object.keys(data).forEach((key) => {
           const item = data[key];
           if (item && typeof item.score === 'number') {
-            list.push({
-              id: key,
-              ...item
-            });
+            list.push({ id: key, ...item });
           }
         });
-        list.sort((a, b) => b.score - a.score);
-        if (list.length > 0) {
-          setSentenceScores(list);
-        }
+        list.sort((a, b) => (b.score || 0) - (a.score || 0));
+        cachedSpaceScores = list;
+        lastSpaceFetchTime = Date.now();
+        setSpaceScores(list);
+      } else {
+        const list = await getTopSpaceScores(100);
+        cachedSpaceScores = list;
+        lastSpaceFetchTime = Date.now();
+        setSpaceScores(list);
       }
-    });
-
-    return () => {
-      unsubSentence();
-    };
-  }, [fetchSentenceLeaderboard]);
-
-  // =========================================================================
-  // 3. SPACE BATTLE LEADERBOARD DATA FETCHING (Real scores only)
-  // =========================================================================
-  const fetchSpaceLeaderboard = useCallback(async () => {
-    setSpaceLoading(true);
-    try {
-      const list = await getTopSpaceScores(100);
-      setSpaceScores(list);
     } catch (err) {
       console.error('Error loading space scores:', err);
     } finally {
@@ -337,33 +374,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   }, []);
 
   useEffect(() => {
-    fetchSpaceLeaderboard();
-
-    const spaceRef = ref(rtdb, 'space_scores');
-    const unsubSpace = onValue(spaceRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const list: SpaceScoreRecord[] = [];
-        Object.keys(data).forEach((key) => {
-          const item = data[key];
-          if (item && typeof item.score === 'number') {
-            list.push({
-              id: key,
-              ...item
-            });
-          }
-        });
-        list.sort((a, b) => (b.score || 0) - (a.score || 0));
-        if (list.length > 0) {
-          setSpaceScores(list);
-        }
-      }
-    });
-
-    return () => {
-      unsubSpace();
-    };
-  }, [fetchSpaceLeaderboard]);
+    if (domain === 'space') {
+      fetchSpaceLeaderboard();
+    }
+  }, [domain, fetchSpaceLeaderboard]);
 
   // =========================================================================
   // TYPING COMPUTATIONS & STATS
@@ -802,12 +816,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-8 px-4 sm:px-8 font-mono select-none space-y-6 animate-in fade-in duration-200">
+    <div className="w-full max-w-7xl mx-auto py-6 px-4 sm:px-8 font-mono select-none space-y-6">
       {/* ========================================================================= */}
       {/* 3 DISTINCT TOP LEADERBOARD TABS: Tez Yozish / Inglizcha Jumlalar / Koinot Jangi */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 bg-[var(--card-bg)]/80 border border-[var(--sub-alt)] rounded-2xl shadow-xs">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           {/* Tab 1: Tez Yozish Reytingi */}
           <button
             onClick={() => {
@@ -815,9 +829,9 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               setCurrentPage(1);
               setSearchQuery('');
             }}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               domain === 'typing'
-                ? 'bg-[var(--main-color)] text-[var(--bg-color)] shadow-md font-black ring-2 ring-[var(--main-color)]/30'
+                ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold'
                 : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
             }`}
           >
@@ -832,9 +846,9 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               setCurrentPage(1);
               setSearchQuery('');
             }}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               domain === 'sentences'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 font-black ring-2 ring-emerald-400/40'
+                ? 'bg-emerald-600 text-white font-bold'
                 : 'text-[var(--sub-color)] hover:text-emerald-400 hover:bg-[var(--sub-alt)]/50'
             }`}
           >
@@ -849,9 +863,9 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               setCurrentPage(1);
               setSearchQuery('');
             }}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               domain === 'space'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25 font-black ring-2 ring-cyan-400/40'
+                ? 'bg-cyan-600 text-white font-bold'
                 : 'text-[var(--sub-color)] hover:text-cyan-400 hover:bg-[var(--sub-alt)]/50'
             }`}
           >
@@ -865,7 +879,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {domain === 'typing' && onGoToTyping && (
             <button
               onClick={onGoToTyping}
-              className="px-4 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-[var(--bg-color)] text-[var(--text-color)] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+              className="px-3.5 py-1.5 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-[var(--bg-color)] text-[var(--text-color)] text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>Tez Yozish Sinovi</span>
@@ -875,7 +889,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {domain === 'sentences' && onGoToSentences && (
             <button
               onClick={onGoToSentences}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95"
+              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Jumlalarni Mashq Qilish</span>
@@ -885,10 +899,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {domain === 'space' && onGoToSpace && (
             <button
               onClick={onGoToSpace}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-500/20 active:scale-95"
+              className="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Rocket className="w-3.5 h-3.5" />
-              <span>Koinot Jangini O'ynash</span>
+              <span>Koinot Jangi O&apos;ynash</span>
             </button>
           )}
         </div>
@@ -1529,6 +1543,18 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
                 <div className="flex items-center gap-3 self-end sm:self-auto text-sm text-[var(--sub-color)]">
                   <button
+                    onClick={() => fetchTypingUsers(true)}
+                    disabled={loading}
+                    className="text-xs text-[var(--main-color)] hover:brightness-110 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Reytingni yangilash"
+                  >
+                    <RotateCcw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                    <span>Yangilash</span>
+                  </button>
+
+                  <div className="h-4 w-px bg-[var(--sub-alt)]" />
+
+                  <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     className="p-1 rounded hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
@@ -1555,7 +1581,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               {/* Table */}
               <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
                 <table className="w-full text-left text-sm font-mono border-collapse">
-                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
+                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]">
                     <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
                       <th className="pb-3.5 px-2.5 sm:px-3 w-10 sm:w-12 font-medium">#</th>
                       <th className="pb-3.5 px-3 sm:px-4 font-medium">name</th>
@@ -1709,7 +1735,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               {/* Sentences Table */}
               <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
                 <table className="w-full text-left text-sm font-mono border-collapse">
-                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
+                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]">
                     <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
                       <th className="pb-3.5 px-2.5 sm:px-3 w-10 sm:w-12 font-medium">#</th>
                       <th className="pb-3.5 px-3 sm:px-4 font-medium">O&apos;quvchi</th>
@@ -1930,7 +1956,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               {/* Space Table */}
               <div className="w-full overflow-x-auto pb-4 overscroll-x-contain touch-pan-y">
                 <table className="w-full text-left text-sm font-mono border-collapse">
-                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]/95 backdrop-blur-md">
+                  <thead className="sticky top-0 z-10 bg-[var(--bg-color)]">
                     <tr className="text-[var(--sub-color)] border-b border-[var(--sub-alt)]/60 text-xs">
                       <th className="pb-3.5 px-3 w-12 font-medium">#</th>
                       <th className="pb-3.5 px-4 font-medium">Uchuvchi</th>

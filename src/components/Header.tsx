@@ -51,7 +51,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
+export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
   const { t, uiLanguage } = useI18n();
@@ -182,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               <button
                 onClick={() => setActiveTab('leaderboard')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'leaderboard' ? 'text-amber-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-amber-500/20' : 'hover:text-amber-400 hover:bg-[var(--sub-alt)]/30'
+                  activeTab === 'leaderboard' ? 'text-amber-400 bg-[var(--sub-alt)]/70' : 'hover:text-amber-400 hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title={currMenu.leaderboard}
               >
@@ -192,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               <button
                 onClick={() => setActiveTab('space')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-cyan-500/20' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
+                  activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title={currMenu.spaceGame}
               >
@@ -202,12 +202,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               <button
                 onClick={() => setActiveTab('sentences')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'sentences' ? 'text-emerald-400 bg-[var(--sub-alt)]/70 shadow-sm shadow-emerald-500/20' : 'hover:text-emerald-400 hover:bg-[var(--sub-alt)]/30'
+                  activeTab === 'sentences' ? 'text-emerald-400 bg-[var(--sub-alt)]/70' : 'hover:text-emerald-400 hover:bg-[var(--sub-alt)]/30'
                 }`}
                 title={currMenu.sentences}
               >
                 <BookOpen className={iconDimensions} />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[var(--card-bg)] animate-pulse" />
               </button>
 
               <button
@@ -702,5 +701,5 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
       />
     </>
   );
-};
+});
 
