@@ -12,9 +12,11 @@ import {
   CheckCircle2,
   Lock,
   Mail,
-  User
+  User,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { formatAuthError } from '../utils/authErrorHelper';
 
 interface LoginPageProps {
   onSuccess?: () => void;
@@ -41,6 +43,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionHint, setActionHint] = useState<string | null>(null);
+  const [isIframeBlocked, setIsIframeBlocked] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // If already logged in, redirect immediately
@@ -64,6 +68,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    setActionHint(null);
+    setIsIframeBlocked(false);
     setSuccessMessage(null);
     setLoading(true);
     try {
@@ -71,10 +77,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
       localStorage.setItem('yolnoma_auth_completed', 'true');
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Google orqali kirishda xatolik yuz berdi');
-      } else {
-        setError('Google orqali kirishda xatolik yuz berdi');
+      const formatted = formatAuthError(err);
+      setError(formatted.userMessage);
+      setActionHint(formatted.actionHint || null);
+      if (formatted.isIframeBlocked) {
+        setIsIframeBlocked(true);
       }
     } finally {
       setLoading(false);
@@ -83,6 +90,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
 
   const handleGithubSignIn = async () => {
     setError(null);
+    setActionHint(null);
+    setIsIframeBlocked(false);
     setSuccessMessage(null);
     setLoading(true);
     try {
@@ -90,10 +99,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
       localStorage.setItem('yolnoma_auth_completed', 'true');
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'GitHub orqali kirishda xatolik yuz berdi');
-      } else {
-        setError('GitHub orqali kirishda xatolik yuz berdi');
+      const formatted = formatAuthError(err);
+      setError(formatted.userMessage);
+      setActionHint(formatted.actionHint || null);
+      if (formatted.isIframeBlocked) {
+        setIsIframeBlocked(true);
       }
     } finally {
       setLoading(false);
@@ -116,11 +126,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
         await resetPassword(email.trim());
         setSuccessMessage('Parolni tiklash havolasi pochtangizga yuborildi! Xatni tekshiring.');
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message || 'Parolni tiklashda xatolik yuz berdi');
-        } else {
-          setError('Parolni tiklashda xatolik yuz berdi');
-        }
+        const formatted = formatAuthError(err);
+        setError(formatted.userMessage);
+        setActionHint(formatted.actionHint || null);
       } finally {
         setLoading(false);
       }
@@ -152,11 +160,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
         localStorage.setItem('yolnoma_auth_completed', 'true');
         if (onSuccess) onSuccess();
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi');
-        } else {
-          setError('Ro\'yxatdan o\'tishda xatolik yuz berdi');
-        }
+        const formatted = formatAuthError(err);
+        setError(formatted.userMessage);
+        setActionHint(formatted.actionHint || null);
       } finally {
         setLoading(false);
       }
@@ -170,11 +176,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
       localStorage.setItem('yolnoma_auth_completed', 'true');
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Kirishda xatolik yuz berdi. Email yoki parol noto\'g\'ri');
-      } else {
-        setError('Kirishda xatolik yuz berdi');
-      }
+      const formatted = formatAuthError(err);
+      setError(formatted.userMessage);
+      setActionHint(formatted.actionHint || null);
     } finally {
       setLoading(false);
     }
@@ -258,9 +262,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
 
         {/* Feedback Messages */}
         {error && (
-          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono space-y-1.5">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="space-y-1 flex-1">
+                <span className="font-semibold block">{error}</span>
+                {actionHint && (
+                  <p className="text-zinc-400 text-[11px] leading-relaxed">{actionHint}</p>
+                )}
+                {isIframeBlocked && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg text-[11px] transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Yangi tabda ochish</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

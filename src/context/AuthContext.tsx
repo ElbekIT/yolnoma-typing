@@ -511,17 +511,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addNotification('Google orqali kirdingiz', `Xush kelibsiz, ${p.displayName}!`);
       }
     } catch (err: any) {
-      console.warn('Google Popup error, fallback to redirect:', err);
+      console.error('[Firebase Auth Error - signInWithGoogle]:', {
+        code: err?.code,
+        message: err?.message,
+        customData: err?.customData,
+        error: err
+      });
+
+      const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
       if (
-        err?.code === 'auth/popup-blocked' ||
-        err?.code === 'auth/popup-closed-by-user' ||
-        err?.code === 'auth/cancelled-popup-request' ||
-        err?.code === 'auth/unauthorized-domain'
+        !isInIframe &&
+        (err?.code === 'auth/popup-blocked' ||
+          err?.code === 'auth/popup-closed-by-user' ||
+          err?.code === 'auth/cancelled-popup-request' ||
+          err?.code === 'auth/internal-error' ||
+          err?.code === 'auth/unauthorized-domain')
       ) {
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        throw err;
+        console.log('[Firebase Auth]: Attempting redirect fallback for Google sign-in...');
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          console.error('[Firebase Auth Google Redirect Error]:', redirectErr);
+          throw redirectErr;
+        }
       }
+
+      throw err;
     }
   };
 
@@ -534,14 +551,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addNotification('GitHub orqali kirdingiz', `Xush kelibsiz, ${p.displayName}! 🚀`);
       }
     } catch (err: any) {
-      console.warn('GitHub Popup error, fallback to redirect:', err);
+      console.error('[Firebase Auth Error - signInWithGithub]:', {
+        code: err?.code,
+        message: err?.message,
+        customData: err?.customData,
+        error: err
+      });
+
+      const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
       if (
-        err?.code === 'auth/popup-blocked' ||
-        err?.code === 'auth/popup-closed-by-user' ||
-        err?.code === 'auth/cancelled-popup-request' ||
-        err?.code === 'auth/unauthorized-domain'
+        !isInIframe &&
+        (err?.code === 'auth/popup-blocked' ||
+          err?.code === 'auth/popup-closed-by-user' ||
+          err?.code === 'auth/cancelled-popup-request' ||
+          err?.code === 'auth/internal-error' ||
+          err?.code === 'auth/unauthorized-domain')
       ) {
-        await signInWithRedirect(auth, githubProvider);
+        console.log('[Firebase Auth]: Attempting redirect fallback for GitHub sign-in...');
+        try {
+          await signInWithRedirect(auth, githubProvider);
+          return;
+        } catch (redirectErr) {
+          console.error('[Firebase Auth GitHub Redirect Error]:', redirectErr);
+          throw redirectErr;
+        }
       } else if (err?.code === 'auth/account-exists-with-different-credential') {
         throw new Error('Bu email bilan boshqa usul orqali (masalan, Google) hisob ochilgan. Iltimos, o\'sha usul bilan kiring.');
       } else {

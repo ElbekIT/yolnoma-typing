@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User as UserIcon, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon, Sparkles, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { formatAuthError } from '../utils/authErrorHelper';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [actionHint, setActionHint] = useState<string | null>(null);
+  const [isIframeBlocked, setIsIframeBlocked] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +25,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setActionHint(null);
+    setIsIframeBlocked(false);
     setSuccess(null);
     setLoading(true);
 
@@ -30,19 +35,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         await loginWithEmail(email, password);
         onClose();
       } else if (mode === 'register') {
-        if (!username.trim()) throw new Error('Please enter a username');
+        if (!username.trim()) throw new Error('Iltimos, taxallus (username) kiriting');
         await registerWithEmail(email, password, username.trim());
         onClose();
       } else if (mode === 'forgot') {
         await resetPassword(email);
-        setSuccess('Password reset link sent to your email!');
+        setSuccess('Parolni tiklash havolasi pochtangizga yuborildi!');
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred.');
-      }
+      const formatted = formatAuthError(err);
+      setError(formatted.userMessage);
+      setActionHint(formatted.actionHint || null);
     } finally {
       setLoading(false);
     }
@@ -50,15 +53,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    setActionHint(null);
+    setIsIframeBlocked(false);
     setLoading(true);
     try {
       await signInWithGoogle();
       onClose();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Google Sign-in failed.');
+      const formatted = formatAuthError(err);
+      setError(formatted.userMessage);
+      setActionHint(formatted.actionHint || null);
+      if (formatted.isIframeBlocked) {
+        setIsIframeBlocked(true);
       }
     } finally {
       setLoading(false);
@@ -67,15 +73,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleGithubSignIn = async () => {
     setError(null);
+    setActionHint(null);
+    setIsIframeBlocked(false);
     setLoading(true);
     try {
       await signInWithGithub();
       onClose();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('GitHub Sign-in failed.');
+      const formatted = formatAuthError(err);
+      setError(formatted.userMessage);
+      setActionHint(formatted.actionHint || null);
+      if (formatted.isIframeBlocked) {
+        setIsIframeBlocked(true);
       }
     } finally {
       setLoading(false);
@@ -112,9 +121,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         {/* Feedback messages */}
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs space-y-1.5">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="space-y-1 flex-1">
+                <span className="font-semibold block">{error}</span>
+                {actionHint && (
+                  <p className="text-zinc-400 text-[11px] leading-relaxed">{actionHint}</p>
+                )}
+                {isIframeBlocked && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg text-[11px] transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Yangi tabda ochish</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

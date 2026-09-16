@@ -70,6 +70,8 @@ export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('profile');
+googleProvider.addScope('email');
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const githubProvider = new GithubAuthProvider();

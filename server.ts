@@ -686,29 +686,31 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
   const host = req.headers.host || '';
   const isPreview = host.includes('run.app') || host.includes('localhost') || host.includes('127.0.0.1');
 
   if (isPreview) {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   } else {
     res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   }
 
-  // Content-Security-Policy: restrict all origins to trusted Google, Firebase, Dicebear, and Yolnoma endpoints
+  // Content-Security-Policy: allow trusted Google, Firebase, Dicebear, and Yolnoma endpoints with explicit frame-src for auth iframes
   const frameAncestors = isPreview
     ? "frame-ancestors 'self' https://ai.studio https://ais-*.run.app https://*.google.com https://yolnoma.uz https://www.yolnoma.uz"
     : "frame-ancestors 'none'";
 
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com https://accounts.google.com https://ssl.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://api.dicebear.com https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.firebasestorage.googleapis.com https://*.firebase.com https://*.gstatic.com",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app https://accounts.google.com",
+    "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://*.google.com https://apis.google.com",
     "media-src 'self' data: blob:",
     frameAncestors,
     "object-src 'none'",
