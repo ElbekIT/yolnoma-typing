@@ -13,7 +13,9 @@ import {
   Zap,
   Gauge,
   Timer,
-  Film
+  Film,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useSettings, TypingAnimation, TypingAnimationSpeed } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
@@ -68,9 +70,11 @@ export const SettingsView: React.FC = () => {
     desc: string;
     icon: string;
   }[] = [
-    { id: 'jump', label: 'Sakrash (Jump)', desc: 'Harf bosilganda tepaga sakrab tushadi', icon: '🚀' },
-    { id: 'bounce', label: 'Koptokcha (Bounce)', desc: 'Harf kattalashib elastik tarzda joylashadi', icon: '⚡' },
-    { id: 'glow', label: 'Neon Nur (Glow)', desc: 'Harf bosilganda yorqin neon nur taratadi', icon: '✨' },
+    { id: 'pop', label: 'Elastik Pop (Uzbektype)', desc: 'Harf bosilganda elastik pop bo‘lib kattalashib joylashadi', icon: '✨' },
+    { id: 'bounce', label: 'Sakrash (Bounce Up)', desc: 'Harf bosilganda yuqoriga yengil sakrab tushadi', icon: '⚡' },
+    { id: 'bounceDown', label: 'Pastga sakrash (Bounce Down)', desc: 'Harf bosilganda pastga yengil sakrab joylashadi', icon: '⏬' },
+    { id: 'jump', label: 'Katta Sakrash (Jump)', desc: 'Harf bosilganda tepaga sakrab tushadi', icon: '🚀' },
+    { id: 'glow', label: 'Neon Nur (Glow)', desc: 'Harf bosilganda yorqin neon nur taratadi', icon: '🌟' },
     { id: 'wave', label: "To'lqin (Wave)", desc: "Harf bosilganda qiya to'lqinlanadi", icon: '🌊' },
     { id: 'slide', label: 'Pastdan Chiqish (Slide)', desc: 'Harf pastdan silliq ko‘tariladi', icon: '⬆️' },
     { id: 'pulse', label: 'Pulsatsiya (Pulse)', desc: 'Harf yengil puls berib mustahkamlanadi', icon: '💓' },
@@ -122,35 +126,68 @@ export const SettingsView: React.FC = () => {
         </p>
       </div>
 
-      {/* Theme Picker */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
-        <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
-          <Palette className="w-4 h-4 text-[var(--main-color)]" />
-          <span>Color Themes</span>
-        </h3>
+      {/* Theme Picker: TypingMaster clean style (Only Dark & Light) */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 sm:p-6 rounded-2xl shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
+            <Palette className="w-4 h-4 text-[var(--main-color)]" />
+            <span>Mavzu (Theme)</span>
+          </h3>
+          <span className="text-xs text-[var(--sub-color)] font-medium">Faqat 2 ta toza rejim</span>
+        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {Object.values(themes).map((th) => (
-            <button
-              key={th.id}
-              onClick={() => setTheme(th.id as ThemeMode)}
-              className={`p-3.5 rounded-2xl border text-left transition-all ${
-                theme === th.id
-                  ? 'border-[var(--main-color)] bg-[var(--sub-alt)] shadow-md ring-2 ring-[var(--main-color)]/30'
-                  : 'border-[var(--sub-color)]/20 bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[var(--text-color)]">{th.name}</span>
-                {theme === th.id && <Check className="w-4 h-4 text-[var(--main-color)]" />}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* 1. Qora tema (Dark) */}
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+              theme === 'dark'
+                ? 'border-[var(--main-color)] bg-[var(--sub-alt)]/70 ring-1 ring-[var(--main-color)]'
+                : 'border-[var(--sub-alt)] bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sky-400 shrink-0">
+                <Moon className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: th.bg }} />
-                <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: th.cardBg }} />
-                <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: th.mainColor }} />
+              <div>
+                <div className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
+                  <span>Qora tema (Dark)</span>
+                </div>
+                <div className="text-xs text-[var(--sub-color)] mt-0.5">
+                  To'q fon, toza oq matn, ko'zga qulay
+                </div>
               </div>
-            </button>
-          ))}
+            </div>
+            {theme === 'dark' && <Check className="w-5 h-5 text-[var(--main-color)] shrink-0 ml-2" />}
+          </button>
+
+          {/* 2. Oq tema (Light - TypingMaster) */}
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+              theme === 'light'
+                ? 'border-[var(--main-color)] bg-[var(--sub-alt)]/70 ring-1 ring-[var(--main-color)]'
+                : 'border-[var(--sub-alt)] bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white border border-slate-300 flex items-center justify-center text-amber-500 shrink-0">
+                <Sun className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
+                  <span>Oq tema (Light)</span>
+                </div>
+                <div className="text-xs text-[var(--sub-color)] mt-0.5">
+                  TypingMaster toza oq fon, tiniq qora matn
+                </div>
+              </div>
+            </div>
+            {theme === 'light' && <Check className="w-5 h-5 text-[var(--main-color)] shrink-0 ml-2" />}
+          </button>
         </div>
       </div>
 

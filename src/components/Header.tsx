@@ -30,8 +30,9 @@ import {
   MessageSquare,
   Gamepad2,
   Share2,
-  Rocket,
-  BookOpen
+  BookOpen,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -102,8 +103,6 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
     { id: 'home', label: currMenu.home, icon: Home },
     { id: 'typing', label: currMenu.typingTest, icon: Keyboard },
     { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
-    { id: 'space', label: currMenu.spaceGame, icon: Rocket },
-    { id: 'sentences', label: currMenu.sentences, icon: GraduationCap },
     { id: 'languages', label: currMenu.languages, icon: Globe },
     { id: 'lessons', label: currMenu.lessons, icon: BookOpen },
     { id: 'battle', label: currMenu.battleArena, icon: Swords },
@@ -190,26 +189,6 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
               </button>
 
               <button
-                onClick={() => setActiveTab('space')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'space' ? 'text-cyan-400 bg-[var(--sub-alt)]/70' : 'hover:text-cyan-400 hover:bg-[var(--sub-alt)]/30'
-                }`}
-                title={currMenu.spaceGame}
-              >
-                <Rocket className={iconDimensions} />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('sentences')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'sentences' ? 'text-emerald-400 bg-[var(--sub-alt)]/70' : 'hover:text-emerald-400 hover:bg-[var(--sub-alt)]/30'
-                }`}
-                title={currMenu.sentences}
-              >
-                <BookOpen className={iconDimensions} />
-              </button>
-
-              <button
                 onClick={() => setActiveTab('languages')}
                 className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
                   activeTab === 'languages' ? 'text-[var(--main-color)] bg-[var(--sub-alt)]/70' : 'hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
@@ -252,17 +231,31 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
               {/* Share & Viral Invite Button */}
               <button
                 onClick={() => setShowShareModal(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer ml-1"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer ml-1"
                 title={uiLanguage === 'ru' ? 'Поделиться сайтом с друзьями' : uiLanguage === 'en' ? 'Share with friends' : "Saytni do'stlarga ulashish"}
               >
-                <Share2 className="w-3.5 h-3.5 text-amber-400" />
+                <Share2 className="w-3.5 h-3.5 text-amber-500" />
                 <span>{uiLanguage === 'ru' ? 'Поделиться' : uiLanguage === 'en' ? 'Share' : 'Ulashish'}</span>
               </button>
             </div>
           </div>
 
-          {/* Right Side: Language Switcher & Profile Avatar */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right Side: Language Switcher, 2-State Theme Toggle & Profile Avatar */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Quick 2-state Sun/Moon Theme Switcher */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer border border-[var(--sub-alt)]/60"
+              title={theme === 'dark' ? "Oq temaga o'tish (Light)" : "Qora temaga o'tish (Dark)"}
+              aria-label="Toggle Theme"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-sky-600" />
+              )}
+            </button>
+
             <LanguageSwitcher />
 
             {user ? (
@@ -570,9 +563,28 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
                 </button>
               </div>
 
-              {/* Mobile Language Switcher (UZ / RU / EN) */}
-              <div className="pt-2 pb-3">
-                <LanguageSwitcher compact={true} />
+              {/* Mobile Language Switcher & 2-state Theme Switcher */}
+              <div className="pt-2 pb-3 flex items-center justify-between gap-2">
+                <div className="flex-1">
+                  <LanguageSwitcher compact={true} />
+                </div>
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                  title={theme === 'dark' ? "Oq temaga o'tish" : "Qora temaga o'tish"}
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="w-4 h-4 text-amber-400" />
+                      <span>Light</span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-4 h-4 text-sky-500" />
+                      <span>Dark</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Clean Navigation Menu Links */}

@@ -185,15 +185,22 @@ export function calculateWpm(
   const timeInMinutes = elapsedSeconds / 60;
   if (timeInMinutes <= 0) return 0;
 
-  if (totalTypedCharsCount !== undefined && totalTypedCharsCount > 0) {
-    const uncorrectedErrors = Math.max(0, totalTypedCharsCount - correctCharsCount);
-    // Standard Net WPM calculation: (Correct Characters - Uncorrected Errors) / 5 / minutes
-    const netCorrectChars = Math.max(0, correctCharsCount - uncorrectedErrors);
-    const wordsTyped = netCorrectChars / 5;
-    return Math.max(0, Math.round(wordsTyped / timeInMinutes));
-  }
-
+  // Standard Speed Typing Formula (Monkeytype / Uzbektype compliant):
+  // 1 standard word = 5 characters.
+  // Net WPM = (Correct Characters / 5) / (Time in Minutes)
   const wordsTyped = correctCharsCount / 5;
+  return Math.max(0, Math.round(wordsTyped / timeInMinutes));
+}
+
+export function calculateRawWpm(
+  totalTypedCharsCount: number,
+  elapsedSeconds: number
+): number {
+  if (elapsedSeconds <= 0 || totalTypedCharsCount <= 0) return 0;
+  const timeInMinutes = elapsedSeconds / 60;
+  if (timeInMinutes <= 0) return 0;
+
+  const wordsTyped = totalTypedCharsCount / 5;
   return Math.max(0, Math.round(wordsTyped / timeInMinutes));
 }
 
@@ -205,15 +212,15 @@ export function calculateNetWpm(
   return calculateWpm(correctCharsCount, elapsedSeconds, totalTypedCharsCount);
 }
 
-export function calculateCpm(typedCharsCount: number, elapsedSeconds: number): number {
-  if (elapsedSeconds <= 0 || typedCharsCount <= 0) return 0;
+export function calculateCpm(correctCharsCount: number, elapsedSeconds: number): number {
+  if (elapsedSeconds <= 0 || correctCharsCount <= 0) return 0;
   const timeInMinutes = elapsedSeconds / 60;
   if (timeInMinutes <= 0) return 0;
-  return Math.max(0, Math.round(typedCharsCount / timeInMinutes));
+  return Math.max(0, Math.round(correctCharsCount / timeInMinutes));
 }
 
 export function calculateAccuracy(correctChars: number, totalTypedChars: number): number {
-  if (totalTypedChars <= 0) return 0;
+  if (totalTypedChars <= 0) return 100;
   if (correctChars <= 0) return 0;
 
   const acc = (correctChars / totalTypedChars) * 100;

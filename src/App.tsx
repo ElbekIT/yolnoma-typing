@@ -38,8 +38,6 @@ const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m
 const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
-const SentencesPage = React.lazy(() => import('./pages/SentencesPage').then(m => ({ default: m.SentencesPage })));
-const SpaceGamePage = React.lazy(() => import('./pages/SpaceGamePage').then(m => ({ default: m.SpaceGamePage })));
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
 const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
 
@@ -64,7 +62,7 @@ import {
   DifficultyMode,
   TypingResult
 } from './types';
-import { generateTestText, calculateWpm, calculateCpm, calculateAccuracy } from './utils/typingEngine';
+import { generateTestText, calculateWpm, calculateRawWpm, calculateCpm, calculateAccuracy } from './utils/typingEngine';
 import { CodeLanguage } from './data/codeSnippets';
 
 function MainAppContent() {
@@ -78,7 +76,6 @@ function MainAppContent() {
     typing: 'test',
     leaderboard: 'leaderboard',
     languages: 'languages',
-    sentences: 'sentences',
     battle: 'battle',
     lessons: 'lessons',
     statistics: 'statistics',
@@ -90,7 +87,6 @@ function MainAppContent() {
     partners: 'partners',
     owner: 'about',
     dashboard: 'dashboard',
-    space: 'space',
     admin: atob('YWRtaW4=')
   };
 
@@ -99,8 +95,6 @@ function MainAppContent() {
     typing: 'Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing',
     leaderboard: "Peshqadamlar & Milliy Reyting - Yolnoma Typing",
     languages: '125+ Jahon Tillari - Yolnoma Typing',
-    sentences: 'Inglizcha Jumlalar (Learn by Typing) - Yolnoma Typing',
-    space: 'Koinot Jangi (Space Typing Shooter) - Yolnoma Typing',
     battle: 'Speedway Battle Arena - Yolnoma Typing',
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
@@ -137,8 +131,6 @@ function MainAppContent() {
     if (['leaderboard', 'reyting', 'top', 'peshqadamlar', 'rating', 'leaders'].includes(subpath)) return { lang: detectedLang, tab: 'leaderboard' };
     if (['login', 'kirish', 'auth', 'signin', 'signup', 'register'].includes(subpath)) return { lang: detectedLang, tab: 'login' };
     if (['languages', 'tillar', 'language', 'til'].includes(subpath)) return { lang: detectedLang, tab: 'languages' };
-    if (['sentences', 'jumlalar', 'sentences-practice', 'learn', 'gaplar'].includes(subpath)) return { lang: detectedLang, tab: 'sentences' };
-    if (['space', 'koinot', 'space-game', 'ztype', 'shooter', 'kosmos', 'koinot-jangi'].includes(subpath)) return { lang: detectedLang, tab: 'space' };
     if (['battle', 'arena', 'duel', 'jang'].includes(subpath)) return { lang: detectedLang, tab: 'battle' };
     if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
     if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
@@ -173,7 +165,6 @@ function MainAppContent() {
     } catch {}
     return 'home';
   });
-  const [leaderboardCategory, setLeaderboardCategory] = useState<'typing' | 'sentences' | 'space'>('typing');
   const prevUserRef = useRef<string | null>(null);
 
   // Viral challenge link detector (?wpm=85 or ?challenge=85)
@@ -598,6 +589,9 @@ function MainAppContent() {
   const typedInputRef = useRef<string>('');
   const targetTextRef = useRef<string>('');
   const totalMistakesCountRef = useRef<number>(0);
+  const elapsedSecondsRef = useRef<number>(0);
+  const wpmHistoryRef = useRef<{ time: number; wpm: number; rawWpm: number; errors: number }[]>([]);
+  const isFinishingRef = useRef<boolean>(false);
 
   typedInputRef.current = typedInput;
   targetTextRef.current = targetText;
@@ -626,6 +620,9 @@ function MainAppContent() {
     setWpmHistory([]);
     setElapsedSeconds(0);
     startTimeRef.current = 0;
+    elapsedSecondsRef.current = 0;
+    wpmHistoryRef.current = [];
+    isFinishingRef.current = false;
     totalKeystrokesRef.current = 0;
     totalMistakesCountRef.current = 0;
     keyTimestampsRef.current = [];
@@ -688,16 +685,22 @@ function MainAppContent() {
     }
   }, [activeTab]);
 
-  // Handle finish test
-  const finishTest = useCallback(async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+  // Handle finish test (instantly shows result modal, saves in background)
+  const finishTest = useCallback(() => {
+    if (isFinishingRef.current) return;
+    isFinishingRef.current = true;
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setIsTestActive(false);
     setIsTestFinished(true);
 
     const now = Date.now();
     const totalSeconds = startTimeRef.current > 0
       ? Math.max(1, Math.round((now - startTimeRef.current) / 1000))
-      : (elapsedSeconds > 0 ? elapsedSeconds : 1);
+      : (elapsedSecondsRef.current > 0 ? elapsedSecondsRef.current : 1);
 
     const targetChars = targetTextRef.current.split('');
     const typedChars = typedInputRef.current.split('');
@@ -715,13 +718,16 @@ function MainAppContent() {
     });
 
     const totalAttempts = Math.max(typedChars.length, correctCount + totalMistakesCountRef.current);
-    const wpm = calculateWpm(correctCount, totalSeconds, typedChars.length);
-    const cpm = calculateCpm(typedChars.length, totalSeconds);
-    const rawWpm = calculateWpm(typedChars.length, totalSeconds);
-    const accuracy = totalAttempts > 0 ? calculateAccuracy(correctCount, totalAttempts) : 0;
+    const wpm = calculateWpm(correctCount, totalSeconds);
+    const cpm = calculateCpm(correctCount, totalSeconds);
+    const rawWpm = calculateRawWpm(typedChars.length, totalSeconds);
+    const accuracy = totalAttempts > 0 ? calculateAccuracy(correctCount, totalAttempts) : 100;
     const finalErrors = Math.max(wrongCount, totalMistakesCountRef.current);
 
-    const resultObj: Omit<TypingResult, 'userId' | 'username'> = {
+    const currentUserId = user ? user.uid : (localStorage.getItem('yolnoma_guest_id') || 'guest');
+    const currentUsername = profile ? profile.username : (user ? (user.displayName || 'Foydalanuvchi') : 'Mehmon');
+
+    const resultObj: TypingResult = {
       wpm,
       cpm,
       rawWpm,
@@ -739,17 +745,33 @@ function MainAppContent() {
       difficulty,
       language,
       timestamp: Date.now(),
-      wpmHistory,
+      wpmHistory: [...wpmHistoryRef.current],
       charStats: { ...charStatsRef.current },
       quoteMeta,
-      codeLang
+      codeLang,
+      userId: currentUserId,
+      username: currentUsername,
+      isPersonalBest: false
     };
 
-    const saved = await saveTestResult(resultObj);
-    setFinalResult(saved);
-  }, [elapsedSeconds, timeMode, mode, wordCountMode, difficulty, language, wpmHistory, quoteMeta, codeLang, saveTestResult]);
+    // 1. Immediately render ResultModal synchronously with complete computed stats
+    setFinalResult(resultObj);
 
-  // Timer loop (depends ONLY on isTestActive and timeMode)
+    // 2. Background storage and cloud persistence (non-blocking)
+    try {
+      saveTestResult(resultObj).then((saved) => {
+        if (saved) {
+          setFinalResult((prev) => (prev ? { ...prev, ...saved } : saved));
+        }
+      }).catch((err) => {
+        console.warn('Background save notice:', err);
+      });
+    } catch (e) {
+      console.warn('saveTestResult trigger error:', e);
+    }
+  }, [user, profile, mode, timeMode, wordCountMode, difficulty, language, quoteMeta, codeLang, saveTestResult]);
+
+  // Timer loop
   useEffect(() => {
     if (isTestActive) {
       if (startTimeRef.current === 0) {
@@ -760,12 +782,14 @@ function MainAppContent() {
         const now = Date.now();
         const elapsed = Math.max(1, Math.floor((now - startTimeRef.current) / 1000));
         setElapsedSeconds(elapsed);
+        elapsedSecondsRef.current = elapsed;
 
         if (timeMode > 0) {
           const remaining = Math.max(0, timeMode - elapsed);
           setTimeLeft(remaining);
           if (remaining <= 0) {
             finishTest();
+            return;
           }
         }
 
@@ -783,17 +807,19 @@ function MainAppContent() {
           }
         });
 
-        const currentWpm = calculateWpm(currentCorrect, elapsed, typedCharsArr.length);
-        const rawWpm = calculateWpm(typedCharsArr.length, elapsed);
-        setWpmHistory((prev) => [
-          ...prev,
-          { time: elapsed, wpm: currentWpm, rawWpm, errors: currentErrors }
-        ]);
+        const currentWpm = calculateWpm(currentCorrect, elapsed);
+        const rawWpm = calculateRawWpm(typedCharsArr.length, elapsed);
+        const newPoint = { time: elapsed, wpm: currentWpm, rawWpm, errors: currentErrors };
+        wpmHistoryRef.current.push(newPoint);
+        setWpmHistory((prev) => [...prev, newPoint]);
       }, 1000);
     }
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [isTestActive, timeMode, finishTest]);
 
@@ -1051,14 +1077,14 @@ function MainAppContent() {
 
   const totalAttemptedKeystrokes = Math.max(typedInput.length, liveCorrect + totalMistakesCountRef.current);
   const liveWpm = hasStartedTyping && typedInput.length > 0
-    ? calculateWpm(liveCorrect, liveElapsed, typedInput.length)
+    ? calculateWpm(liveCorrect, liveElapsed)
     : 0;
   const liveCpm = hasStartedTyping && typedInput.length > 0
-    ? calculateCpm(typedInput.length, liveElapsed)
+    ? calculateCpm(liveCorrect, liveElapsed)
     : 0;
-  const liveAcc = totalAttemptedKeystrokes > 0 && liveCorrect > 0
+  const liveAcc = totalAttemptedKeystrokes > 0
     ? calculateAccuracy(liveCorrect, totalAttemptedKeystrokes)
-    : (totalAttemptedKeystrokes > 0 && totalMistakesCountRef.current > 0 ? 0 : 0);
+    : 100;
   const progressPercent = Math.min(100, (typedInput.length / Math.max(1, targetText.length)) * 100);
 
   const currentTargetChar = targetText[typedInput.length] || '';
@@ -1126,11 +1152,8 @@ function MainAppContent() {
           <HomePage
             onStartTyping={handleStartHero}
             onGoToBattle={() => setActiveTab('battle')}
-            onGoToSentences={() => setActiveTab('sentences')}
-            onGoToSpace={() => setActiveTab('space')}
             onGoToLessons={() => setActiveTab('lessons')}
             onGoToLeaderboard={() => {
-              setLeaderboardCategory('typing');
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => setActiveTab('login')}
@@ -1173,7 +1196,6 @@ function MainAppContent() {
             onOpenLanguagePage={() => setActiveTab('languages')}
             onGoToLeaderboard={() => {
               setIsTestFinished(false);
-              setLeaderboardCategory('typing');
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => {
@@ -1190,21 +1212,7 @@ function MainAppContent() {
             <LeaderboardPage
               onBackToHome={() => setActiveTab('home')}
               onOpenLogin={() => setActiveTab('login')}
-              onGoToSentences={() => setActiveTab('sentences')}
-              onGoToSpace={() => setActiveTab('space')}
               onGoToTyping={() => setActiveTab('typing')}
-              initialDomain={leaderboardCategory}
-            />
-          )}
-
-          {activeTab === 'space' && (
-            <SpaceGamePage
-              onBackToHome={() => setActiveTab('home')}
-              onGoToTyping={() => setActiveTab('typing')}
-              onGoToLeaderboard={() => {
-                setLeaderboardCategory('space');
-                setActiveTab('leaderboard');
-              }}
             />
           )}
 
@@ -1226,16 +1234,6 @@ function MainAppContent() {
             />
           )}
           {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'sentences' && (
-            <SentencesPage
-              onBackToHome={() => setActiveTab('home')}
-              onGoToLeaderboard={() => {
-                setLeaderboardCategory('sentences');
-                setActiveTab('leaderboard');
-              }}
-              onOpenLogin={() => setActiveTab('login')}
-            />
-          )}
           {activeTab === 'statistics' && <StatisticsView />}
           {activeTab === 'achievements' && <AchievementsView />}
           {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}

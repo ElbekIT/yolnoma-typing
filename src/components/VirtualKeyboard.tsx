@@ -55,7 +55,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = memo(({ activeCha
   const normalizedActive = activeChar ? activeChar.toLowerCase() : '';
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-2 bg-[var(--card-bg)]/40 border border-[var(--sub-alt)] rounded-xl my-3 opacity-85 hover:opacity-100 transition-opacity overflow-x-auto no-scrollbar">
+    <div className="w-full max-w-2xl mx-auto p-2.5 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl my-3 overflow-x-auto no-scrollbar shadow-xs">
       <div className="flex flex-col items-center gap-1 min-w-[320px]">
         <div className="flex gap-1 sm:gap-1.5">
           {row1.map((k) => (

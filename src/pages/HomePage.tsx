@@ -9,21 +9,17 @@ import { SeoArticleSection } from '../components/seo/SeoArticleSection';
 interface HomePageProps {
   onStartTyping: (mode?: string) => void;
   onGoToBattle: () => void;
-  onGoToSentences: () => void;
   onGoToLessons: () => void;
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
-  onGoToSpace?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   onStartTyping,
   onGoToBattle,
-  onGoToSentences,
   onGoToLessons,
   onGoToLeaderboard,
-  onOpenLogin,
-  onGoToSpace
+  onOpenLogin
 }) => {
   const handleThematicAction = (action: ThematicActionType) => {
     if (action === 'battle') {
@@ -39,11 +35,9 @@ export const HomePage: React.FC<HomePageProps> = ({
       <HeroSection
         onStartTyping={() => onStartTyping()}
         onGoToBattle={onGoToBattle}
-        onGoToSentences={onGoToSentences}
         onGoToLessons={onGoToLessons}
         onGoToLeaderboard={onGoToLeaderboard}
         onOpenLogin={onOpenLogin}
-        onGoToSpace={onGoToSpace}
       />
 
       {/* 2. Top 5 Milliy Reyting / Mini Leaderboard Showcase */}

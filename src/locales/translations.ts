@@ -4,7 +4,6 @@ export interface MenuTranslation {
   sections: string;
   home: string;
   typingTest: string;
-  spaceGame: string;
   languages: string;
   lessons: string;
   battleArena: string;
@@ -15,7 +14,6 @@ export interface MenuTranslation {
   milestones: string;
   partners: string;
   about: string;
-  sentences: string;
   close: string;
 }
 
@@ -24,7 +22,6 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     sections: "BO'LIMLAR",
     home: "Bosh Sahifa",
     typingTest: "Yozish Testi",
-    spaceGame: "Koinot Jangi 🚀",
     languages: "Tillar & Lug'atlar",
     lessons: "Saboqlar & Mashqlar",
     battleArena: "Battle Arena",
@@ -35,14 +32,12 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Muvaffaqiyatlar",
     partners: "Hamkor & Homiy",
     about: "Sayt Haqida & Muallif",
-    sentences: "🎓 Inglizcha Jumlalar",
     close: "Yopish"
   },
   ru: {
     sections: "РАЗДЕЛЫ",
     home: "Главная",
     typingTest: "Тест печати",
-    spaceGame: "Космическая битва 🚀",
     languages: "Языки и словари",
     lessons: "Уроки и упражнения",
     battleArena: "Арена битв",
@@ -53,14 +48,12 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Прогресс и успехи",
     partners: "Партнёры и спонсоры",
     about: "О сайте и авторе",
-    sentences: "🎓 Английские предложения",
     close: "Закрыть"
   },
   en: {
     sections: "SECTIONS",
     home: "Home",
     typingTest: "Typing Test",
-    spaceGame: "Space Battle 🚀",
     languages: "Languages & Dicts",
     lessons: "Lessons & Practice",
     battleArena: "Battle Arena",
@@ -71,7 +64,6 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Milestones",
     partners: "Partners & Sponsors",
     about: "About & Author",
-    sentences: "🎓 English Sentences",
     close: "Close"
   }
 };

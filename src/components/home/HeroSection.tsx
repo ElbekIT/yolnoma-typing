@@ -1,25 +1,21 @@
 import React from 'react';
-import { Play, Swords, Sparkles, Zap, Globe, Shield, BookOpen, GraduationCap, ChevronRight, Keyboard, Trophy, Rocket } from 'lucide-react';
+import { Play, Swords, Sparkles, Zap, Globe, Shield, GraduationCap, ChevronRight, Keyboard, Trophy } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
 interface HeroSectionProps {
   onStartTyping: () => void;
   onGoToBattle: () => void;
   onOpenLogin: () => void;
-  onGoToSentences?: () => void;
   onGoToLessons?: () => void;
   onGoToLeaderboard?: () => void;
-  onGoToSpace?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onStartTyping,
   onGoToBattle,
   onOpenLogin,
-  onGoToSentences,
   onGoToLessons,
-  onGoToLeaderboard,
-  onGoToSpace
+  onGoToLeaderboard
 }) => {
   const { t } = useI18n();
 
@@ -110,31 +106,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
             <div className="space-y-2.5">
-              {/* English Sentences Training */}
-              <button
-                type="button"
-                onClick={onGoToSentences || onStartTyping}
-                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Inglizcha Jumlalar</span>
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300">
-                        0 dan IELTS 9
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-[var(--sub-color)]">
-                      Yozib o'rganish, 2 tomonlama tarjima va avto-oqim
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-emerald-400 transition-colors" />
-              </button>
-
               {/* Classic Speed Typing */}
               <button
                 type="button"
@@ -194,33 +165,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-rose-400 transition-colors" />
               </button>
-
-              {/* Koinot Jangi (Space Shooter) */}
-              {onGoToSpace && (
-                <button
-                  type="button"
-                  onClick={onGoToSpace}
-                  className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
-                      <Rocket className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Koinot Jangi (Space Battle)</span>
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300">
-                          ARKADA
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[var(--sub-color)]">
-                        Lazerlar bilan dushman kemalarini portlatish va rekord o'rnatish
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 transition-colors" />
-                </button>
-              )}
 
               {/* Leaderboard / Peshqadamlar */}
               {onGoToLeaderboard && (

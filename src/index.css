@@ -75,6 +75,81 @@
   }
 }
 
+:root {
+  --primary: 48, 96%, 53%;
+}
+
+/* =========================================================
+   UZBEKTYPE / MONKEYTYPE ELASTIC ANIMATIONS & SMOOTH CARET
+   ========================================================= */
+
+/* Harf bosilgandagi elastik pop animatsiyasi */
+@keyframes char-pop {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Yuqoriga va pastga sakrash */
+@keyframes bounceUp {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+@keyframes bounceDown {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+/* Xato bosilganda qaltirash (Shake) */
+@keyframes char-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* Silliq kursor o'tishi va miltillashi */
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Animatsiya klasslari */
+.char-typed-pop {
+  animation: char-pop 0.18s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.char-typed-bounce {
+  animation: bounceUp 0.2s cubic-bezier(0.2, 0, 0.1, 1);
+  display: inline-block;
+  will-change: transform;
+}
+
+.char-typed-bounceDown {
+  animation: bounceDown 0.2s cubic-bezier(0.2, 0, 0.1, 1);
+  display: inline-block;
+  will-change: transform;
+}
+
+.char-error-shake {
+  animation: char-shake 0.2s ease-in-out;
+  display: inline-block;
+  will-change: transform;
+}
+
+.smooth-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 10;
+  will-change: transform;
+}
+
 /* Lightweight Character animations (pure transform, zero text-shadow / filter lag) */
 @keyframes char-jump {
   0%, 100% { transform: translateY(0); }
@@ -106,6 +181,24 @@
   50% { transform: scale(1.08); }
 }
 
+.anim-char-pop {
+  animation: char-pop var(--typing-anim-duration, 180ms) cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.anim-char-bounceUp {
+  animation: bounceUp var(--typing-anim-duration, 200ms) cubic-bezier(0.2, 0, 0.1, 1);
+  display: inline-block;
+  will-change: transform;
+}
+
+.anim-char-bounceDown {
+  animation: bounceDown var(--typing-anim-duration, 200ms) cubic-bezier(0.2, 0, 0.1, 1);
+  display: inline-block;
+  will-change: transform;
+}
+
 .anim-char-jump {
   animation: char-jump var(--typing-anim-duration, 180ms) ease-out;
   display: inline-block;
@@ -113,7 +206,7 @@
 }
 
 .anim-char-bounce {
-  animation: char-bounce var(--typing-anim-duration, 180ms) ease-out;
+  animation: bounceUp var(--typing-anim-duration, 200ms) cubic-bezier(0.2, 0, 0.1, 1);
   display: inline-block;
   will-change: transform;
 }

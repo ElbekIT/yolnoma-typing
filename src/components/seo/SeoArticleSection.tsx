@@ -116,7 +116,7 @@ export const SeoArticleSection: React.FC<{ onStartPractice?: () => void }> = ({ 
 
       {/* 2-Column Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <div className="p-6 rounded-2xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)]/60 backdrop-blur-xs flex flex-col justify-between">
+        <div className="p-6 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between">
           <div>
             <div className="w-10 h-10 rounded-xl bg-[var(--main-color)]/15 text-[var(--main-color)] flex items-center justify-center mb-4">
               <Keyboard className="w-5 h-5" />
@@ -144,7 +144,7 @@ export const SeoArticleSection: React.FC<{ onStartPractice?: () => void }> = ({ 
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)]/60 backdrop-blur-xs flex flex-col justify-between">
+        <div className="p-6 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col justify-between">
           <div>
             <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-4">
               <Gauge className="w-5 h-5" />

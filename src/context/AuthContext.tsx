@@ -816,22 +816,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       rawResult.correctChars
     );
 
-    const safeWpm = isStatisticallyValid ? Math.min(260, Math.max(0, rawResult.wpm)) : 0;
-    const safeAccuracy = isStatisticallyValid ? Math.min(100, Math.max(0, rawResult.accuracy)) : 0;
+    const displayWpm = Math.min(260, Math.max(0, rawResult.wpm));
+    const displayAccuracy = Math.min(100, Math.max(0, rawResult.accuracy));
 
     const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
-    const isPersonalBest = isStatisticallyValid && safeWpm > existingPBest;
+    const isPersonalBest = isStatisticallyValid && displayWpm > existingPBest && displayWpm > 0;
 
     if (isPersonalBest) {
       if (!profile) {
-        localStorage.setItem('yolnoma_guest_best_wpm', String(safeWpm));
+        localStorage.setItem('yolnoma_guest_best_wpm', String(displayWpm));
       }
     }
 
     const fullResult: TypingResult = {
       ...rawResult,
-      wpm: safeWpm,
-      accuracy: safeAccuracy,
+      wpm: displayWpm,
+      accuracy: displayAccuracy,
       userId,
       username,
       isPersonalBest,
@@ -844,7 +844,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveLocalResults(newLocal);
     setUserResultsHistory(newLocal);
 
-    if (!isStatisticallyValid || safeWpm <= 0) {
+    if (!isStatisticallyValid || displayWpm <= 0) {
       return fullResult;
     }
 
@@ -1012,29 +1012,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (rawResult.timeMode === 60) localStorage.setItem('yolnoma_guest_60_wpm', String(guest60));
         if (rawResult.timeMode === 120) localStorage.setItem('yolnoma_guest_120_wpm', String(guest120));
 
-        // Ensure session exists for secure database rules validation
-        await ensureFirebaseAuth();
-
-        await set(ref(rtdb, `leaderboard/${guestId}`), {
-          uid: guestId,
-          displayName: `Mehmon (${guestId.replace('guest_', '').slice(0, 10)})`,
-          username: guestId.slice(0, 25),
-          highestWpm: Math.min(260, Math.max(0, guestBest)),
-          time15Wpm: Math.min(260, Math.max(0, guest15)),
-          time30Wpm: Math.min(260, Math.max(0, guest30)),
-          time60Wpm: Math.min(260, Math.max(0, guest60)),
-          time120Wpm: Math.min(260, Math.max(0, guest120)),
-          highestAccuracy: Math.min(100, Math.max(0, rawResult.accuracy)),
-          country: '🇺🇿 Uzbekistan',
-          level: 1,
-          rankTitle: 'Mehmon Typer',
-          bio: 'Tezkor Mehmon Foydalanuvchi',
-          avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
-          lastActive: Date.now(),
-          totalTests: (getLocalResults().length || 1)
-        });
+        // Background sync to RTDB with secure session, non-blocking for instant UI response
+        void (async () => {
+          try {
+            await ensureFirebaseAuth();
+            await set(ref(rtdb, `leaderboard/${guestId}`), {
+              uid: guestId,
+              displayName: `Mehmon (${guestId.replace('guest_', '').slice(0, 10)})`,
+              username: guestId.slice(0, 25),
+              highestWpm: Math.min(260, Math.max(0, guestBest)),
+              time15Wpm: Math.min(260, Math.max(0, guest15)),
+              time30Wpm: Math.min(260, Math.max(0, guest30)),
+              time60Wpm: Math.min(260, Math.max(0, guest60)),
+              time120Wpm: Math.min(260, Math.max(0, guest120)),
+              highestAccuracy: Math.min(100, Math.max(0, rawResult.accuracy)),
+              country: '🇺🇿 Uzbekistan',
+              level: 1,
+              rankTitle: 'Mehmon Typer',
+              bio: 'Tezkor Mehmon Foydalanuvchi',
+              avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
+              lastActive: Date.now(),
+              totalTests: (getLocalResults().length || 1)
+            });
+          } catch (e) {
+            console.warn('Guest RTDB sync notice:', e);
+          }
+        })();
       } catch (e) {
-        console.warn('Guest RTDB sync error:', e);
+        console.warn('Guest localStorage update error:', e);
       }
     }
 

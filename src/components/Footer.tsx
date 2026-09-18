@@ -46,7 +46,7 @@ export const Footer = React.memo<FooterProps>(({
   };
 
   return (
-    <footer className="w-full mt-auto select-none safe-bottom border-t border-[var(--sub-alt)]/50 bg-[var(--card-bg)]/40 backdrop-blur-xs">
+    <footer className="w-full mt-auto select-none safe-bottom border-t border-[var(--sub-alt)] bg-[var(--card-bg)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 space-y-2 sm:space-y-2.5">
         {/* Top SEO Crawlable Navigation Links */}
         <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2.5 text-[11px] sm:text-xs font-mono text-[var(--sub-color)] border-b border-[var(--sub-alt)]/30 pb-2.5">

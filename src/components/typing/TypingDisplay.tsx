@@ -7,16 +7,10 @@ import { soundSynth } from '../../utils/audio';
 import { antiCheatManager } from '../../utils/antiCheat';
 import { getLockedMinLength, getNextWordStartIndexOnSpace } from '../../utils/typingEngine';
 
-// Memoized Character Component: Only re-renders when its own typed state or caret changes
+// Memoized Character Component: Only re-renders when its own typed state or animation changes
 interface CharItemProps {
   char: string;
   typedChar?: string;
-  isCurrent: boolean;
-  isFocused: boolean;
-  isTestFinished: boolean;
-  isTestActive: boolean;
-  caretStyle: string;
-  smoothCaret: boolean;
   typingAnimation?: string;
   globalIndex: number;
   onRef: (el: HTMLSpanElement | null, idx: number) => void;
@@ -26,12 +20,6 @@ const CharItem = memo<CharItemProps>(
   ({
     char,
     typedChar,
-    isCurrent,
-    isFocused,
-    isTestFinished,
-    isTestActive,
-    caretStyle,
-    smoothCaret,
     typingAnimation,
     globalIndex,
     onRef
@@ -45,53 +33,26 @@ const CharItem = memo<CharItemProps>(
       charClass += 'text-[var(--sub-color)] opacity-85 ';
     } else if (isCorrect) {
       charClass += 'text-[var(--text-color)] font-medium ';
-    } else {
-      charClass += 'text-[var(--error-color,#ef4444)] font-semibold bg-[var(--error-color,#ef4444)]/15 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
-    }
-
-    if (isTyped && typingAnimation && typingAnimation !== 'none') {
-      charClass += `anim-char-${typingAnimation} `;
-    }
-
-    // Hardware accelerated caret element
-    let caretElement = null;
-    if (isCurrent && isFocused && !isTestFinished) {
-      const caretHwStyle: React.CSSProperties = {
-        transform: 'translateZ(0)',
-        willChange: 'transform, opacity'
-      };
-
-      if (caretStyle === 'line' || !caretStyle) {
-        caretElement = (
-          <span
-            style={caretHwStyle}
-            className={`absolute -left-[1px] top-0 bottom-0 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-              smoothCaret ? 'transition-all duration-75' : isTestActive ? '' : 'animate-pulse'
-            }`}
-          />
-        );
-      } else if (caretStyle === 'block') {
-        caretElement = (
-          <span
-            style={caretHwStyle}
-            className={`absolute inset-0 bg-[var(--main-color)]/35 rounded-[2px] ${isTestActive ? '' : 'animate-pulse'}`}
-          />
-        );
-      } else if (caretStyle === 'underline') {
-        caretElement = (
-          <span
-            style={caretHwStyle}
-            className={`absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--main-color)] rounded-full ${isTestActive ? '' : 'animate-pulse'}`}
-          />
-        );
-      } else if (caretStyle === 'outline') {
-        caretElement = (
-          <span
-            style={caretHwStyle}
-            className={`absolute inset-0 border-2 border-[var(--main-color)] rounded-[2px] ${isTestActive ? '' : 'animate-pulse'}`}
-          />
-        );
+      if (typingAnimation === 'pop' || !typingAnimation) {
+        charClass += 'char-typed-pop ';
+      } else if (typingAnimation === 'bounce' || typingAnimation === 'bounceUp') {
+        charClass += 'char-typed-bounce ';
+      } else if (typingAnimation === 'bounceDown') {
+        charClass += 'char-typed-bounceDown ';
+      } else if (typingAnimation === 'jump') {
+        charClass += 'anim-char-jump ';
+      } else if (typingAnimation === 'glow') {
+        charClass += 'anim-char-glow ';
+      } else if (typingAnimation === 'wave') {
+        charClass += 'anim-char-wave ';
+      } else if (typingAnimation === 'slide') {
+        charClass += 'anim-char-slide ';
+      } else if (typingAnimation === 'pulse') {
+        charClass += 'anim-char-pulse ';
       }
+    } else {
+      // Mistyped character - trigger shake & error styling (Uzbektype error reaction)
+      charClass += 'text-[var(--error-color,#ef4444)] font-semibold bg-[var(--error-color,#ef4444)]/15 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs char-error-shake ';
     }
 
     return (
@@ -100,7 +61,6 @@ const CharItem = memo<CharItemProps>(
         className={charClass}
         style={{ transform: 'translateZ(0)' }}
       >
-        {caretElement}
         {char}
       </span>
     );
@@ -109,12 +69,6 @@ const CharItem = memo<CharItemProps>(
     return (
       prev.char === next.char &&
       prev.typedChar === next.typedChar &&
-      prev.isCurrent === next.isCurrent &&
-      prev.isFocused === next.isFocused &&
-      prev.isTestFinished === next.isTestFinished &&
-      prev.isTestActive === next.isTestActive &&
-      prev.caretStyle === next.caretStyle &&
-      prev.smoothCaret === next.smoothCaret &&
       prev.typingAnimation === next.typingAnimation
     );
   }
@@ -124,11 +78,6 @@ const CharItem = memo<CharItemProps>(
 interface SpaceItemProps {
   spaceIdx: number;
   typedSpace?: string;
-  isCurrentSpace: boolean;
-  isFocused: boolean;
-  isTestFinished: boolean;
-  isTestActive: boolean;
-  smoothCaret: boolean;
   typingAnimation?: string;
   onRef: (el: HTMLSpanElement | null, idx: number) => void;
 }
@@ -137,11 +86,6 @@ const SpaceItem = memo<SpaceItemProps>(
   ({
     spaceIdx,
     typedSpace,
-    isCurrentSpace,
-    isFocused,
-    isTestFinished,
-    isTestActive,
-    smoothCaret,
     typingAnimation,
     onRef
   }) => {
@@ -153,24 +97,15 @@ const SpaceItem = memo<SpaceItemProps>(
       spaceClass += 'text-[var(--sub-color)] opacity-70 ';
     } else if (isCorrectSpace) {
       spaceClass += 'text-[var(--text-color)] ';
+      if (typingAnimation === 'pop' || !typingAnimation) {
+        spaceClass += 'char-typed-pop ';
+      } else if (typingAnimation === 'bounce' || typingAnimation === 'bounceUp') {
+        spaceClass += 'char-typed-bounce ';
+      } else if (typingAnimation === 'bounceDown') {
+        spaceClass += 'char-typed-bounceDown ';
+      }
     } else {
-      spaceClass += 'text-[var(--error-color,#ef4444)] bg-red-500/25 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs ';
-    }
-
-    if (isTypedSpace && typingAnimation && typingAnimation !== 'none') {
-      spaceClass += `anim-char-${typingAnimation} `;
-    }
-
-    let spaceCaret = null;
-    if (isCurrentSpace && isFocused && !isTestFinished) {
-      spaceCaret = (
-        <span
-          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-          className={`absolute -left-[1px] top-0 bottom-0 w-[2.5px] bg-[var(--main-color)] rounded-full ${
-            smoothCaret ? 'transition-all duration-75' : isTestActive ? '' : 'animate-pulse'
-          }`}
-        />
-      );
+      spaceClass += 'text-[var(--error-color,#ef4444)] bg-red-500/25 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs char-error-shake ';
     }
 
     return (
@@ -179,7 +114,6 @@ const SpaceItem = memo<SpaceItemProps>(
         className={spaceClass}
         style={{ transform: 'translateZ(0)' }}
       >
-        {spaceCaret}
         {'\u00A0'}
       </span>
     );
@@ -188,11 +122,6 @@ const SpaceItem = memo<SpaceItemProps>(
     return (
       prev.spaceIdx === next.spaceIdx &&
       prev.typedSpace === next.typedSpace &&
-      prev.isCurrentSpace === next.isCurrentSpace &&
-      prev.isFocused === next.isFocused &&
-      prev.isTestFinished === next.isTestFinished &&
-      prev.isTestActive === next.isTestActive &&
-      prev.smoothCaret === next.smoothCaret &&
       prev.typingAnimation === next.typingAnimation
     );
   }
@@ -206,12 +135,6 @@ interface WordItemProps {
     spaceGlobalIndex: number | null;
   };
   typedInput: string;
-  currentTypedLen: number;
-  isFocused: boolean;
-  isTestFinished: boolean;
-  isTestActive: boolean;
-  caretStyle: string;
-  smoothCaret: boolean;
   typingAnimation?: string;
   isTape: boolean;
   onWordRef: (el: HTMLDivElement | null, idx: number) => void;
@@ -222,12 +145,6 @@ const WordItem = memo<WordItemProps>(
   ({
     wordObj,
     typedInput,
-    currentTypedLen,
-    isFocused,
-    isTestFinished,
-    isTestActive,
-    caretStyle,
-    smoothCaret,
     typingAnimation,
     isTape,
     onWordRef,
@@ -243,19 +160,12 @@ const WordItem = memo<WordItemProps>(
       >
         {wordObj.chars.map(({ char, globalIndex }) => {
           const typedChar = typedInput[globalIndex];
-          const isCurrent = globalIndex === currentTypedLen;
 
           return (
             <CharItem
               key={`c-${globalIndex}`}
               char={char}
               typedChar={typedChar}
-              isCurrent={isCurrent}
-              isFocused={isFocused}
-              isTestFinished={isTestFinished}
-              isTestActive={isTestActive}
-              caretStyle={caretStyle}
-              smoothCaret={smoothCaret}
               typingAnimation={typingAnimation}
               globalIndex={globalIndex}
               onRef={onCharRef}
@@ -268,11 +178,6 @@ const WordItem = memo<WordItemProps>(
             key={`s-${wordObj.spaceGlobalIndex}`}
             spaceIdx={wordObj.spaceGlobalIndex}
             typedSpace={typedInput[wordObj.spaceGlobalIndex]}
-            isCurrentSpace={wordObj.spaceGlobalIndex === currentTypedLen}
-            isFocused={isFocused}
-            isTestFinished={isTestFinished}
-            isTestActive={isTestActive}
-            smoothCaret={smoothCaret}
             typingAnimation={typingAnimation}
             onRef={onCharRef}
           />
@@ -281,18 +186,11 @@ const WordItem = memo<WordItemProps>(
     );
   },
   (prev, next) => {
-    // Only re-render word if typing status within this word changed or focus/finish status changed
     const firstIdx = prev.wordObj.chars[0]?.globalIndex ?? 0;
     const lastIdx =
       prev.wordObj.spaceGlobalIndex !== null
         ? prev.wordObj.spaceGlobalIndex
         : prev.wordObj.chars[prev.wordObj.chars.length - 1]?.globalIndex ?? 0;
-
-    const wasActive = prev.currentTypedLen >= firstIdx && prev.currentTypedLen <= lastIdx;
-    const isNowActive = next.currentTypedLen >= firstIdx && next.currentTypedLen <= lastIdx;
-
-    // If it was active or is now active, or if user typed/backspaced across this word
-    if (wasActive || isNowActive) return false;
 
     // Check if typed slice for this word changed
     const prevSlice = prev.typedInput.slice(firstIdx, lastIdx + 1);
@@ -300,11 +198,6 @@ const WordItem = memo<WordItemProps>(
     if (prevSlice !== nextSlice) return false;
 
     return (
-      prev.isFocused === next.isFocused &&
-      prev.isTestFinished === next.isTestFinished &&
-      prev.isTestActive === next.isTestActive &&
-      prev.caretStyle === next.caretStyle &&
-      prev.smoothCaret === next.smoothCaret &&
       prev.typingAnimation === next.typingAnimation &&
       prev.isTape === next.isTape
     );
@@ -335,6 +228,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tapeViewportRef = useRef<HTMLDivElement>(null);
+  const wordsWrapperRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<(HTMLDivElement | null)[]>([]);
   const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -342,6 +236,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const [isFocused, setIsFocused] = useState(true);
   const [mouseHidden, setMouseHidden] = useState(false);
   const mouseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const caretElRef = useRef<HTMLDivElement | null>(null);
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
@@ -660,6 +556,98 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     charRefs.current[idx] = el;
   }, []);
 
+  // Update floating smooth caret position directly on GPU compositor (0ms lag, zero React re-render)
+  const updateCaretPosition = useCallback(() => {
+    const caretEl = caretElRef.current;
+    if (!caretEl) return;
+
+    if (!isFocused || isTestFinished) {
+      caretEl.style.display = 'none';
+      return;
+    }
+
+    const wrapper = wordsWrapperRef.current;
+    if (!wrapper) return;
+
+    let targetEl: HTMLElement | null = null;
+    const isEnd = currentTypedLen >= targetText.length;
+
+    if (!isEnd && charRefs.current[currentTypedLen]) {
+      targetEl = charRefs.current[currentTypedLen];
+    } else if (isEnd && targetText.length > 0 && charRefs.current[targetText.length - 1]) {
+      targetEl = charRefs.current[targetText.length - 1];
+    } else if (charRefs.current[0]) {
+      targetEl = charRefs.current[0];
+    }
+
+    if (targetEl) {
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const charRect = targetEl.getBoundingClientRect();
+
+      let left = charRect.left - wrapperRect.left;
+      const top = charRect.top - wrapperRect.top;
+      const height = charRect.height > 0 ? charRect.height : (measuredLineHeight || 32);
+      const width = charRect.width > 0 ? charRect.width : 16;
+
+      if (isEnd) {
+        left += charRect.width;
+      }
+
+      caretEl.style.display = 'block';
+
+      const baseTransition = smoothCaret && currentTypedLen > 0
+        ? 'transform 0.08s cubic-bezier(0.2, 0, 0, 1)'
+        : 'none';
+      caretEl.style.transition = baseTransition;
+      caretEl.style.animation = isTestActive ? 'none' : 'caret-blink 1s ease-in-out infinite';
+
+      if (caretStyle === 'block') {
+        caretEl.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+        caretEl.style.width = `${width}px`;
+        caretEl.style.height = `${height}px`;
+        caretEl.style.backgroundColor = 'var(--main-color, hsl(var(--primary, 48, 96%, 53%)))';
+        caretEl.style.opacity = '0.35';
+        caretEl.style.border = 'none';
+        caretEl.style.borderRadius = '2px';
+      } else if (caretStyle === 'underline') {
+        caretEl.style.transform = `translate3d(${left}px, ${top + height - 3}px, 0)`;
+        caretEl.style.width = `${width > 2.5 ? width : 14}px`;
+        caretEl.style.height = '2.5px';
+        caretEl.style.backgroundColor = 'var(--main-color, hsl(var(--primary, 48, 96%, 53%)))';
+        caretEl.style.opacity = '1';
+        caretEl.style.border = 'none';
+        caretEl.style.borderRadius = '2px';
+      } else if (caretStyle === 'outline') {
+        caretEl.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+        caretEl.style.width = `${width}px`;
+        caretEl.style.height = `${height}px`;
+        caretEl.style.backgroundColor = 'transparent';
+        caretEl.style.border = '2px solid var(--main-color, hsl(var(--primary, 48, 96%, 53%)))';
+        caretEl.style.opacity = '1';
+        caretEl.style.borderRadius = '2px';
+      } else {
+        // Line caret (Uzbektype standard)
+        caretEl.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+        caretEl.style.width = '2.5px';
+        caretEl.style.height = `${height}px`;
+        caretEl.style.backgroundColor = 'var(--main-color, hsl(var(--primary, 48, 96%, 53%)))';
+        caretEl.style.opacity = '1';
+        caretEl.style.border = 'none';
+        caretEl.style.borderRadius = '2px';
+      }
+    }
+  }, [isFocused, isTestFinished, isTestActive, currentTypedLen, targetText.length, measuredLineHeight, caretStyle, smoothCaret]);
+
+  useLayoutEffect(() => {
+    updateCaretPosition();
+  }, [updateCaretPosition]);
+
+  useEffect(() => {
+    const handleResize = () => updateCaretPosition();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateCaretPosition]);
+
   return (
     <div
       ref={containerRef}
@@ -736,6 +724,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         }}
       >
         <div
+          ref={wordsWrapperRef}
           className={`relative text-left ${
             isTape
               ? 'flex flex-nowrap whitespace-nowrap items-center pl-[28%] sm:pl-[35%]'
@@ -755,17 +744,26 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
             direction: isRtl ? 'rtl' : 'ltr'
           }}
         >
+          {/* Smooth floating caret */}
+          <div
+            ref={caretElRef}
+            className="smooth-caret"
+            style={{
+              display: 'none',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              willChange: 'transform',
+              pointerEvents: 'none',
+              zIndex: 10
+            }}
+          />
+
           {parsedWords.map((wordObj) => (
             <WordItem
               key={`w-${wordObj.wordIdx}`}
               wordObj={wordObj}
               typedInput={typedInput}
-              currentTypedLen={currentTypedLen}
-              isFocused={isFocused}
-              isTestFinished={isTestFinished}
-              isTestActive={isTestActive}
-              caretStyle={caretStyle}
-              smoothCaret={smoothCaret}
               typingAnimation={typingAnimation}
               isTape={isTape}
               onWordRef={handleWordRef}
