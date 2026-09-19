@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ShareModal } from '../share/ShareModal';
 import { ShareResultCertificateModal } from '../share/ShareResultCertificateModal';
 import { KeyboardHeatmap } from './KeyboardHeatmap';
+import { AdBanner } from '../common/AdBanner';
 
 interface ResultModalProps {
   result: TypingResult | null;
@@ -403,6 +404,9 @@ export const ResultModal: React.FC<ResultModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Google AdSense Banner */}
+        <AdBanner format="horizontal" className="my-3 w-full" />
 
         {/* Action Buttons Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[var(--sub-alt)]">
