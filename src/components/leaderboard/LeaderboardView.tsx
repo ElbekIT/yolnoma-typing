@@ -143,53 +143,26 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   // TYPING USERS DATA FETCHING (RTDB - Cached, Resilient & Multi-Source)
   // =========================================================================
   const fetchTypingUsers = useCallback(async (force = false) => {
-    if (!force && cachedTypingUsers && cachedTypingUsers.length > 0 && Date.now() - lastTypingFetchTime < 60000) {
+    if (!force && cachedTypingUsers && cachedTypingUsers.length > 0 && Date.now() - lastTypingFetchTime < 30000) {
       setRawTypingUsers(cachedTypingUsers);
       setLoading(false);
       return;
     }
 
     setLoading(!cachedTypingUsers || cachedTypingUsers.length === 0);
-    try {
-      const [usersSnapResult, lbSnapResult] = await Promise.allSettled([
-        get(ref(rtdb, 'users')),
-        get(ref(rtdb, 'leaderboard'))
-      ]);
 
-      const usersVal =
-        usersSnapResult.status === 'fulfilled' && usersSnapResult.value.exists()
-          ? usersSnapResult.value.val() || {}
-          : {};
+    let parsedList: LeaderboardUser[] = [];
 
-      const lbVal =
-        lbSnapResult.status === 'fulfilled' && lbSnapResult.value.exists()
-          ? lbSnapResult.value.val() || {}
-          : {};
-
-      const bannedSet = new Set<string>();
-      try {
-        const banSnap = await get(ref(rtdb, 'bannedUsers'));
-        if (banSnap.exists()) {
-          const bVal = banSnap.val();
-          if (typeof bVal === 'object' && bVal !== null) {
-            Object.keys(bVal).forEach((k) => bannedSet.add(k));
-          }
-        }
-      } catch {
-        // Safe skip
-      }
-      cachedBannedUids = bannedSet;
-      setBannedUids(bannedSet);
-
-      const allUids = new Set<string>([...Object.keys(usersVal), ...Object.keys(lbVal)]);
+    // Helper: process raw objects into clean LeaderboardUser list
+    const processRawData = (usersVal: any = {}, lbVal: any = {}, bannedSet: Set<string> = new Set()) => {
+      const allUids = new Set<string>([...Object.keys(usersVal || {}), ...Object.keys(lbVal || {})]);
       const list: LeaderboardUser[] = [];
 
       allUids.forEach((uid) => {
-        if (bannedSet.has(uid)) return;
+        if (!uid || bannedSet.has(uid)) return;
 
         // Strictly eliminate any bots, guests, synthetic seed users, or mock users
         if (
-          !uid ||
           uid.startsWith('guest_') ||
           uid.startsWith('bot_') ||
           uid.startsWith('ai_') ||
@@ -201,8 +174,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           return;
         }
 
-        const u = usersVal[uid] || {};
-        const lb = lbVal[uid] || {};
+        const u = (usersVal && usersVal[uid]) || {};
+        const lb = (lbVal && lbVal[uid]) || {};
 
         if (u.isGuest || lb.isGuest || u.isBot || lb.isBot || u.isDummy || lb.isDummy) {
           return;
@@ -228,14 +201,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         // REAL USERS REQUIRE AN ACTUAL VALID WPM RESULT (> 0 and <= 280)
         if (bestWpm <= 0 || bestWpm > 280) return;
 
-        const totalTests = Number(u.totalTests || lb.totalTests || 0);
-        if (totalTests <= 0) return;
+        const totalTests = Math.max(Number(u.totalTests || lb.totalTests || 0), 1);
 
         list.push({
           uid,
           displayName: u.displayName || lb.displayName || u.username || lb.username || 'Foydalanuvchi',
           username: u.username || lb.username || 'user',
-          avatarUrl: u.avatarUrl || lb.avatarUrl,
+          avatarUrl: u.avatarUrl || lb.avatarUrl || u.photoURL,
           country: u.country || lb.country || '🇺🇿 Oʻzbekiston',
           highestWpm: bestWpm,
           highestAccuracy: Math.min(100, Math.max(0, Number(u.highestAccuracy || lb.highestAccuracy || 98))),
@@ -253,17 +225,98 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           isBanned: false,
           isBlocked: false,
           language: u.language || lb.language,
-          rawWpm: Number(u.rawWpm || lb.rawWpm || 0),
-          consistency: Number(u.consistency || lb.consistency || 0)
+          rawWpm: Number(u.rawWpm || lb.rawWpm || Math.round(bestWpm * 1.05)),
+          consistency: Number(u.consistency || lb.consistency || 90)
         });
       });
 
+      return list;
+    };
+
+    try {
+      // Tier 1: Fast internal backend API endpoint (Instant response, cached, no CORS/WebSocket issues)
+      try {
+        const apiRes = await fetch('/api/leaderboard?limit=100');
+        if (apiRes.ok) {
+          const apiJson = await apiRes.json();
+          if (apiJson.success && Array.isArray(apiJson.leaderboard) && apiJson.leaderboard.length > 0) {
+            parsedList = apiJson.leaderboard;
+            cachedTypingUsers = parsedList;
+            lastTypingFetchTime = Date.now();
+            setRawTypingUsers(parsedList);
+            setLoading(false);
+          }
+        }
+      } catch {
+        // Fallback to direct Firebase RTDB
+      }
+
+      // Tier 2: Realtime Database SDK or direct REST with timeout
+      const rtdbPromise = Promise.allSettled([
+        get(ref(rtdb, 'users')),
+        get(ref(rtdb, 'leaderboard')),
+        get(ref(rtdb, 'bannedUsers'))
+      ]);
+
+      const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 4000));
+      const rtdbRace = await Promise.race([rtdbPromise, timeoutPromise]);
+
+      let usersVal: any = {};
+      let lbVal: any = {};
+      let bannedSet = new Set<string>();
+
+      if (rtdbRace !== 'timeout') {
+        const [usersSnapResult, lbSnapResult, banSnapResult] = rtdbRace;
+        usersVal =
+          usersSnapResult.status === 'fulfilled' && usersSnapResult.value.exists()
+            ? usersSnapResult.value.val() || {}
+            : {};
+        lbVal =
+          lbSnapResult.status === 'fulfilled' && lbSnapResult.value.exists()
+            ? lbSnapResult.value.val() || {}
+            : {};
+        if (banSnapResult.status === 'fulfilled' && banSnapResult.value.exists()) {
+          const bVal = banSnapResult.value.val();
+          if (bVal && typeof bVal === 'object') {
+            Object.keys(bVal).forEach((k) => bannedSet.add(k));
+          }
+        }
+      } else {
+        // Direct REST fallback if WebSocket is sluggish
+        try {
+          const [uRes, lRes, bRes] = await Promise.allSettled([
+            fetch('https://typing-euro-default-rtdb.firebaseio.com/users.json'),
+            fetch('https://typing-euro-default-rtdb.firebaseio.com/leaderboard.json'),
+            fetch('https://typing-euro-default-rtdb.firebaseio.com/bannedUsers.json')
+          ]);
+          if (uRes.status === 'fulfilled' && uRes.value.ok) usersVal = await uRes.value.json();
+          if (lRes.status === 'fulfilled' && lRes.value.ok) lbVal = await lRes.value.json();
+          if (bRes.status === 'fulfilled' && bRes.value.ok) {
+            const bVal = await bRes.value.json();
+            if (bVal && typeof bVal === 'object') {
+              Object.keys(bVal).forEach((k) => bannedSet.add(k));
+            }
+          }
+        } catch {
+          // Handled
+        }
+      }
+
+      cachedBannedUids = bannedSet;
+      setBannedUids(bannedSet);
+
+      const freshList = processRawData(usersVal, lbVal, bannedSet);
+      if (freshList.length > 0) {
+        parsedList = freshList;
+      }
+
+      // If current user is logged in, ensure their entry is present
       if (currentUser?.uid && !currentUser.uid.startsWith('guest_') && !currentUser.uid.startsWith('bot_')) {
-        const existingIdx = list.findIndex((x) => x.uid === currentUser.uid);
+        const existingIdx = parsedList.findIndex((x) => x.uid === currentUser.uid);
         const myWpm = Math.max(Number(currentUser.highestWpm || 0), Number(currentUser.averageWpm || 0));
-        const myTests = Number(currentUser.totalTests || 0);
-        if (existingIdx === -1 && myWpm > 0 && myWpm <= 280 && myTests > 0) {
-          list.push({
+        const myTests = Math.max(Number(currentUser.totalTests || 0), 1);
+        if (existingIdx === -1 && myWpm > 0 && myWpm <= 280) {
+          parsedList.push({
             uid: currentUser.uid,
             displayName: currentUser.displayName || currentUser.username || 'Siz',
             username: currentUser.username || 'siz',
@@ -291,13 +344,16 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         }
       }
 
-      // Strictly real data: no mock or seed fallbacks
-      cachedTypingUsers = list;
-      lastTypingFetchTime = Date.now();
-      setRawTypingUsers(list);
+      if (parsedList.length > 0) {
+        cachedTypingUsers = parsedList;
+        lastTypingFetchTime = Date.now();
+        setRawTypingUsers(parsedList);
+      }
     } catch (err) {
       console.error('Leaderboard fetch error:', err);
-      setRawTypingUsers([]);
+      if (!cachedTypingUsers || cachedTypingUsers.length === 0) {
+        setRawTypingUsers([]);
+      }
     } finally {
       setLoading(false);
     }

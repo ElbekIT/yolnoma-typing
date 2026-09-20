@@ -67,7 +67,7 @@ try {
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const rtdb = getDatabase(app);
+export const rtdb = getDatabase(app, firebaseConfig.databaseURL || 'https://typing-euro-default-rtdb.firebaseio.com');
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('profile');

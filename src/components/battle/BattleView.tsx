@@ -170,21 +170,38 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           Object.keys(val).forEach((k) => {
             const p = val[k];
-            if (k !== currentUid && p && !p.isBlocked) {
-              const userWpm = Number(p.highestWpm) || 0;
-              if (userWpm > 0) {
-                items.push({
-                  uid: k,
-                  displayName: p.displayName || p.username || 'Racer',
-                  username: p.username || k.slice(0, 6),
-                  highestWpm: userWpm,
-                  highestAccuracy: Number(p.highestAccuracy) || 98,
-                  avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${k}`,
-                  lastActive: p.lastActive || Date.now(),
-                  country: p.country || '🇺🇿 Uzbekistan',
-                  level: Number(p.level) || 1
-                });
-              }
+            if (
+              !k ||
+              k === currentUid ||
+              !p ||
+              p.isBlocked ||
+              p.isBanned ||
+              p.isGuest ||
+              p.isBot ||
+              p.isDummy ||
+              k.startsWith('guest_') ||
+              k.startsWith('bot_') ||
+              k.startsWith('ai_') ||
+              k.startsWith('seed_') ||
+              k.startsWith('dummy_') ||
+              k.startsWith('fake_') ||
+              k === 'guest'
+            ) {
+              return;
+            }
+            const userWpm = Number(p.highestWpm) || 0;
+            if (userWpm > 0 && userWpm <= 280) {
+              items.push({
+                uid: k,
+                displayName: p.displayName || p.username || 'Racer',
+                username: p.username || k.slice(0, 6),
+                highestWpm: userWpm,
+                highestAccuracy: Number(p.highestAccuracy) || 98,
+                avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${k}`,
+                lastActive: p.lastActive || Date.now(),
+                country: p.country || '🇺🇿 Uzbekistan',
+                level: Number(p.level) || 1
+              });
             }
           });
 

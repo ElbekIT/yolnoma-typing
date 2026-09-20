@@ -14,14 +14,6 @@ interface LeaderboardEntry {
   accuracy: number;
 }
 
-const DEFAULT_CHAMPIONS: LeaderboardEntry[] = [
-  { uid: 'u1', name: 'Jasur_Dev', username: 'jasur_dev', wpm: 136, accuracy: 99 },
-  { uid: 'u2', name: 'CyberUz', username: 'cyber_uz', wpm: 124, accuracy: 98 },
-  { uid: 'u3', name: 'Alisher_K', username: 'alisher_k', wpm: 115, accuracy: 97 },
-  { uid: 'u4', name: 'Shahzoda_T', username: 'shahzoda_t', wpm: 108, accuracy: 98 },
-  { uid: 'u5', name: 'Bekzod_Speed', username: 'bekzod_speed', wpm: 99, accuracy: 96 }
-];
-
 let cachedMiniList: LeaderboardEntry[] | null = null;
 let lastMiniFetchTime = 0;
 
@@ -36,7 +28,8 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
 }) => {
   const { user, profile, signInWithGoogle } = useAuth();
   const { t } = useI18n();
-  const [topUsers, setTopUsers] = useState<LeaderboardEntry[]>(() => cachedMiniList || DEFAULT_CHAMPIONS);
+  const [topUsers, setTopUsers] = useState<LeaderboardEntry[]>(() => cachedMiniList || []);
+  const [isLoading, setIsLoading] = useState<boolean>(() => !cachedMiniList);
 
   useEffect(() => {
     // If cached in last 2 minutes, use cache directly
@@ -47,43 +40,173 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
     let isMounted = true;
     const fetchTop = async () => {
       try {
-        const usersSnap = await get(ref(rtdb, 'users'));
+        // Fast Tier 1: /api/leaderboard endpoint (server-cached and synchronized with RTDB)
+        try {
+          const apiRes = await fetch('/api/leaderboard?limit=5');
+          if (apiRes.ok) {
+            const apiJson = await apiRes.json();
+            if (apiJson.success && Array.isArray(apiJson.leaderboard) && apiJson.leaderboard.length > 0) {
+              const formatted: LeaderboardEntry[] = apiJson.leaderboard.slice(0, 5).map((u: any) => ({
+                uid: u.uid,
+                name: u.displayName || u.username || 'Foydalanuvchi',
+                username: u.username || 'user',
+                avatar: u.avatarUrl || u.photoURL,
+                wpm: u.highestWpm,
+                accuracy: u.highestAccuracy || 98
+              }));
+              cachedMiniList = formatted;
+              lastMiniFetchTime = Date.now();
+              if (isMounted) {
+                setTopUsers(formatted);
+                setIsLoading(false);
+              }
+            }
+          }
+        } catch {
+          // Continue to RTDB fetch
+        }
+
+        // Tier 2: RTDB fetch with timeout
+        const rtdbPromise = Promise.allSettled([
+          get(ref(rtdb, 'users')),
+          get(ref(rtdb, 'leaderboard')),
+          get(ref(rtdb, 'bannedUsers'))
+        ]);
+        const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 4000));
+        const rtdbRace = await Promise.race([rtdbPromise, timeoutPromise]);
+
         if (!isMounted) return;
 
-        if (usersSnap.exists()) {
-          const data = usersSnap.val();
-          const list: LeaderboardEntry[] = [];
+        let usersVal: any = {};
+        let lbVal: any = {};
+        let bannedSet = new Set<string>();
 
-          Object.keys(data).forEach((key) => {
-            const u = data[key];
-            if (!u || u.isBanned || u.isBlocked) return;
-            const wpm = Number(u.highestWpm) || Number(u.wpm) || 0;
-            if (wpm > 0 && wpm <= 260) {
-              list.push({
-                uid: u.uid || key,
-                name: u.displayName || u.username || 'Foydalanuvchi',
-                username: u.username || 'foydalanuvchi',
-                avatar: u.avatarUrl || u.photoURL,
-                wpm: Math.min(wpm, 260),
-                accuracy: Math.min(100, Number(u.highestAccuracy) || 97)
-              });
+        if (rtdbRace !== 'timeout') {
+          const [usersSnapResult, lbSnapResult, banSnapResult] = rtdbRace;
+          usersVal =
+            usersSnapResult.status === 'fulfilled' && usersSnapResult.value.exists()
+              ? usersSnapResult.value.val() || {}
+              : {};
+          lbVal =
+            lbSnapResult.status === 'fulfilled' && lbSnapResult.value.exists()
+              ? lbSnapResult.value.val() || {}
+              : {};
+          if (banSnapResult.status === 'fulfilled' && banSnapResult.value.exists()) {
+            const bVal = banSnapResult.value.val();
+            if (bVal && typeof bVal === 'object') {
+              Object.keys(bVal).forEach((k) => bannedSet.add(k));
             }
-          });
+          }
+        } else {
+          // Direct REST fallback
+          try {
+            const [uRes, lRes, bRes] = await Promise.allSettled([
+              fetch('https://typing-euro-default-rtdb.firebaseio.com/users.json'),
+              fetch('https://typing-euro-default-rtdb.firebaseio.com/leaderboard.json'),
+              fetch('https://typing-euro-default-rtdb.firebaseio.com/bannedUsers.json')
+            ]);
+            if (uRes.status === 'fulfilled' && uRes.value.ok) usersVal = await uRes.value.json();
+            if (lRes.status === 'fulfilled' && lRes.value.ok) lbVal = await lRes.value.json();
+            if (bRes.status === 'fulfilled' && bRes.value.ok) {
+              const bVal = await bRes.value.json();
+              if (bVal && typeof bVal === 'object') {
+                Object.keys(bVal).forEach((k) => bannedSet.add(k));
+              }
+            }
+          } catch {
+            // Handled
+          }
+        }
 
-          list.sort((a, b) => b.wpm - a.wpm);
-          const finalList = list.length >= 5 ? list.slice(0, 5) : [...list, ...DEFAULT_CHAMPIONS.slice(list.length)].slice(0, 5);
+        const allUids = new Set<string>([...Object.keys(usersVal || {}), ...Object.keys(lbVal || {})]);
+        const list: LeaderboardEntry[] = [];
+
+        allUids.forEach((uid) => {
+          if (!uid || bannedSet.has(uid)) return;
+
+          // Strictly filter out any bots, guests, synthetic seed users, or fake accounts
+          if (
+            uid.startsWith('guest_') ||
+            uid.startsWith('bot_') ||
+            uid.startsWith('ai_') ||
+            uid.startsWith('seed_') ||
+            uid.startsWith('dummy_') ||
+            uid.startsWith('fake_') ||
+            uid === 'guest'
+          ) {
+            return;
+          }
+
+          const u = (usersVal && usersVal[uid]) || {};
+          const lb = (lbVal && lbVal[uid]) || {};
+
+          if (u.isGuest || lb.isGuest || u.isBot || lb.isBot || u.isDummy || lb.isDummy) {
+            return;
+          }
+
+          if (u.isBanned || u.isBlocked || lb.isBanned || lb.isBlocked) return;
+
+          const wpm = Math.max(
+            Number(u.highestWpm || 0),
+            Number(lb.highestWpm || 0),
+            Number(u.time15Wpm || lb.time15Wpm || 0),
+            Number(u.time30Wpm || lb.time30Wpm || 0),
+            Number(u.time60Wpm || lb.time60Wpm || 0),
+            Number(u.averageWpm || 0),
+            Number(lb.averageWpm || 0)
+          );
+
+          // Real user must have legitimate speed (> 0 and <= 280)
+          if (wpm <= 0 || wpm > 280) return;
+
+          list.push({
+            uid,
+            name: u.displayName || lb.displayName || u.username || lb.username || 'Foydalanuvchi',
+            username: u.username || lb.username || 'user',
+            avatar: u.avatarUrl || lb.avatarUrl || u.photoURL,
+            wpm,
+            accuracy: Math.min(100, Math.max(0, Number(u.highestAccuracy || lb.highestAccuracy || 98)))
+          });
+        });
+
+        // Also ensure current user is represented if eligible
+        if (user?.uid && !user.uid.startsWith('guest_') && !user.uid.startsWith('bot_')) {
+          const existingIdx = list.findIndex((x) => x.uid === user.uid);
+          const myWpm = Math.max(Number(profile?.highestWpm || 0), Number(profile?.averageWpm || 0));
+          if (existingIdx === -1 && myWpm > 0 && myWpm <= 280) {
+            list.push({
+              uid: user.uid,
+              name: profile?.displayName || profile?.username || 'Siz',
+              username: profile?.username || 'siz',
+              avatar: profile?.avatarUrl || profile?.photoURL,
+              wpm: myWpm,
+              accuracy: Math.min(100, Math.max(0, Number(profile?.highestAccuracy || 98)))
+            });
+          }
+        }
+
+        list.sort((a, b) => b.wpm - a.wpm);
+        const finalList = list.slice(0, 5);
+
+        if (finalList.length > 0) {
           cachedMiniList = finalList;
           lastMiniFetchTime = Date.now();
-          setTopUsers(finalList);
+          if (isMounted) {
+            setTopUsers(finalList);
+          }
         }
       } catch (err) {
-        console.warn('MiniLeaderboard fetch note:', err);
+        console.error('MiniLeaderboard fetch error:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchTop();
     return () => { isMounted = false; };
-  }, []);
+  }, [user, profile]);
 
   const getRankBadge = (index: number) => {
     switch (index) {
@@ -145,62 +268,76 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
       </div>
 
       {/* Top 5 List */}
-      <div className="py-2.5 space-y-1.5">
-        {topUsers.map((item, idx) => {
-          const isCurrentUser = user && (user.uid === item.uid);
-          return (
-            <div
-              key={item.uid || idx}
-              className={`flex items-center justify-between p-2 rounded-xl border transition-colors ${
-                isCurrentUser
-                  ? 'bg-[var(--main-color)]/10 border-[var(--main-color)]/40'
-                  : 'bg-[var(--bg-color)]/80 hover:bg-[var(--sub-alt)]/40 border-[var(--sub-alt)]/40'
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {getRankBadge(idx)}
+      {topUsers.length === 0 ? (
+        <div className="py-7 px-4 my-2 rounded-xl bg-[var(--bg-color)]/50 border border-dashed border-[var(--sub-alt)]/60 flex flex-col items-center justify-center text-center">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-2">
+            <Trophy className="w-4 h-4" />
+          </div>
+          <h4 className="text-xs sm:text-sm font-bold text-[var(--text-color)] font-mono">
+            Hozircha natijalar yo'q
+          </h4>
+          <p className="text-[11px] text-[var(--sub-color)] max-w-xs mt-0.5 leading-relaxed">
+            Test topshiring va birinchi bo'lib milliy reytingda o'rin egallang!
+          </p>
+        </div>
+      ) : (
+        <div className="py-2.5 space-y-1.5">
+          {topUsers.map((item, idx) => {
+            const isCurrentUser = user && (user.uid === item.uid);
+            return (
+              <div
+                key={item.uid || idx}
+                className={`flex items-center justify-between p-2 rounded-xl border transition-colors ${
+                  isCurrentUser
+                    ? 'bg-[var(--main-color)]/10 border-[var(--main-color)]/40'
+                    : 'bg-[var(--bg-color)]/80 hover:bg-[var(--sub-alt)]/40 border-[var(--sub-alt)]/40'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {getRankBadge(idx)}
 
-                {/* Avatar */}
-                <div className="w-6 h-6 rounded-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] overflow-hidden flex items-center justify-center text-[10px] font-bold text-[var(--main-color)] shrink-0">
-                  {item.avatar ? (
-                    <img
-                      src={item.avatar}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span>{item.name.slice(0, 1).toUpperCase()}</span>
-                  )}
-                </div>
-
-                {/* User details */}
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-[var(--text-color)] truncate flex items-center gap-1">
-                    <span>{item.name}</span>
-                    {idx === 0 && (
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">
-                        TOP 1
-                      </span>
+                  {/* Avatar */}
+                  <div className="w-6 h-6 rounded-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] overflow-hidden flex items-center justify-center text-[10px] font-bold text-[var(--main-color)] shrink-0">
+                    {item.avatar ? (
+                      <img
+                        src={item.avatar}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span>{item.name.slice(0, 1).toUpperCase()}</span>
                     )}
                   </div>
-                  <div className="text-[10px] text-[var(--sub-color)] font-mono">
-                    @{item.username.replace('@', '')} • {item.accuracy}%
+
+                  {/* User details */}
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-[var(--text-color)] truncate flex items-center gap-1">
+                      <span>{item.name}</span>
+                      {idx === 0 && (
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">
+                          TOP 1
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-[var(--sub-color)] font-mono">
+                      @{item.username.replace('@', '')} • {item.accuracy}%
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* WPM badge */}
-              <div className="flex items-center gap-1 shrink-0 pl-2 font-mono">
-                <Flame className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-xs sm:text-sm font-extrabold text-[var(--main-color)]">{item.wpm}</span>
-                <span className="text-[9px] text-[var(--sub-color)]">WPM</span>
+                {/* WPM badge */}
+                <div className="flex items-center gap-1 shrink-0 pl-2 font-mono">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs sm:text-sm font-extrabold text-[var(--main-color)]">{item.wpm}</span>
+                  <span className="text-[9px] text-[var(--sub-color)]">WPM</span>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Bottom Action / User Status */}
       <div className="pt-2.5 border-t border-[var(--sub-alt)]/40">

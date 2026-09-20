@@ -243,11 +243,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const isRtl = langInfo.dir === 'rtl';
   const isTestActive = typedInput.length > 0 && !isTestFinished;
 
-  // Initialize anti-cheat
+  // Initialize anti-cheat safely without recursive ban loop
   useEffect(() => {
     antiCheatManager.init((reason) => {
-      antiCheatManager.banDeviceAndUser(reason);
-      window.location.reload();
+      console.warn('Anti-cheat triggered:', reason);
     }, user?.uid);
   }, [user]);
 
@@ -319,12 +318,10 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // HARD SECURITY CHECK: Only genuine hardware keystrokes allowed (e.isTrusted === true)
-    if (!e.isTrusted) {
+    // Only genuine hardware keystrokes allowed
+    if (e.isTrusted === false) {
       e.preventDefault();
       e.stopPropagation();
-      antiCheatManager.banDeviceAndUser("Konsol skripti yoki sun'iy sintetik hodisa (isTrusted=false) aniqlandi!");
-      window.location.reload();
       return;
     }
 
@@ -370,17 +367,17 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       }
     }
 
-    // Anti-cheat keystroke check
+    // Anti-cheat keystroke check (ultra-fast, allows natural human typing up to 320 WPM)
     const isValid = antiCheatManager.registerKeystroke(e, typedInput.length);
     if (!isValid) {
       e.preventDefault();
       return;
     }
 
-    // Audio feedback (Zero latency async)
-    if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
-      const charAtPress = typedInput.length;
-      setTimeout(() => {
+    // Audio feedback (Instant low-overhead sound)
+    if (soundProfile !== 'off' && (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ')) {
+      try {
+        const charAtPress = typedInput.length;
         if (e.key !== 'Backspace' && charAtPress < targetText.length) {
           const targetChar = targetText[charAtPress];
           if (e.key === targetChar) {
@@ -391,7 +388,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         } else {
           soundSynth.playKeyPress(soundProfile);
         }
-      }, 0);
+      } catch {}
     }
   };
 
@@ -399,20 +396,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (isTestFinished) return;
 
-      if (e.nativeEvent && e.nativeEvent.isTrusted === false) {
-        antiCheatManager.banDeviceAndUser('Avto-Typer kengaytmasi aniqlandi va bloklandi!');
-        window.location.reload();
-        return;
-      }
-
       const newValue = e.target.value;
-
-      // Inhuman burst injection (human keystrokes cannot generate 3+ chars in one tick)
-      if (newValue.length - typedInput.length > 2) {
-        antiCheatManager.banDeviceAndUser('Noxolis kiritish yoki Avto-Typer Bot aniqlandi va bloklandi!');
-        window.location.reload();
-        return;
-      }
 
       const minLen = getLockedMinLength(targetText, typedInput);
       if (newValue.length < minLen) {
@@ -509,15 +493,16 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     const topDiff = activeEl.offsetTop - firstEl.offsetTop;
     const effLineHeight = measuredLineHeight > 0 ? measuredLineHeight : 36;
 
+    let targetOffset = 0;
     if (topDiff < effLineHeight * 0.75) {
-      setScrollOffset(0);
+      targetOffset = 0;
     } else if (topDiff < effLineHeight * 1.75) {
-      setScrollOffset(0);
+      targetOffset = 0;
     } else {
-      const targetOffset = topDiff - effLineHeight;
-      setScrollOffset(Math.max(0, targetOffset));
+      targetOffset = Math.max(0, topDiff - effLineHeight);
     }
-  }, [activeWordIdx, measuredLineHeight, tapeMode, targetText]);
+    setScrollOffset((prev) => (prev !== targetOffset ? targetOffset : prev));
+  }, [activeWordIdx, measuredLineHeight, tapeMode]);
 
   // Smooth horizontal scrolling for Tape mode
   useLayoutEffect(() => {
@@ -532,8 +517,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       const activeCharEl = charRefs.current[currentTypedLen];
       if (activeCharEl) {
         const charCenter = activeCharEl.offsetLeft + activeCharEl.offsetWidth / 2;
-        const targetOffset = charCenter - anchorX;
-        setTapeOffset(Math.max(0, targetOffset));
+        const targetOffset = Math.max(0, charCenter - anchorX);
+        setTapeOffset((prev) => (prev !== targetOffset ? targetOffset : prev));
       } else if (currentTypedLen === 0) {
         setTapeOffset(0);
       }
@@ -541,13 +526,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
       const activeWordEl = wordRefs.current[activeWordIdx];
       if (activeWordEl) {
         const wordCenter = activeWordEl.offsetLeft + activeWordEl.offsetWidth / 2;
-        const targetOffset = wordCenter - anchorX;
-        setTapeOffset(Math.max(0, targetOffset));
+        const targetOffset = Math.max(0, wordCenter - anchorX);
+        setTapeOffset((prev) => (prev !== targetOffset ? targetOffset : prev));
       } else if (activeWordIdx === 0) {
         setTapeOffset(0);
       }
     }
-  }, [tapeMode, currentTypedLen, activeWordIdx, targetText]);
+  }, [tapeMode, currentTypedLen, activeWordIdx]);
 
   const baseFontSize = Math.max(20, fontSize || 28);
   const lineHeightMultiplier = 1.55;

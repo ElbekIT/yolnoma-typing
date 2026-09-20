@@ -321,7 +321,7 @@ function MainAppContent() {
     };
 
     pollMaintenance();
-    const maintInterval = setInterval(pollMaintenance, 3000);
+    const maintInterval = setInterval(pollMaintenance, 25000);
     return () => {
       isMounted = false;
       clearInterval(maintInterval);
@@ -438,7 +438,7 @@ function MainAppContent() {
     };
 
     checkUserBanStatus();
-    const banInterval = setInterval(checkUserBanStatus, 3000);
+    const banInterval = setInterval(checkUserBanStatus, 25000);
     return () => {
       isMounted = false;
       clearInterval(banInterval);
@@ -483,7 +483,7 @@ function MainAppContent() {
     };
 
     verifySecurity();
-    const interval = setInterval(verifySecurity, 20000);
+    const interval = setInterval(verifySecurity, 30000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -942,9 +942,20 @@ function MainAppContent() {
   }
 
   // Blocked / Banned User Gate (Cloud & Device Local Anti-Cheat)
-  const deviceBan = antiCheatManager.isDeviceBanned();
-  if (profile && !profile.isBanned && deviceBan.banned) {
-    antiCheatManager.clearDeviceBan();
+  let deviceBan = antiCheatManager.isDeviceBanned();
+  if (deviceBan.banned) {
+    const reason = (deviceBan.reason || '').toLowerCase();
+    if (
+      (profile && !profile.isBanned) ||
+      reason.includes('wpm') ||
+      reason.includes('tezlik') ||
+      reason.includes('robotik') ||
+      reason.includes('15ms') ||
+      reason.includes('insoniy')
+    ) {
+      antiCheatManager.clearDeviceBan();
+      deviceBan = { banned: false, reason: null };
+    }
   }
 
   const isAccountBanned = Boolean(
