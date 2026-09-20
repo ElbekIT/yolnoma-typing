@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="2.0" 
+<xsl:stylesheet version="1.0" 
   xmlns:html="http://www.w3.org/TR/REC-html40"
   xmlns:sitemap="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -94,14 +94,14 @@
               </tr>
             </thead>
             <tbody>
-              <xsl:for-each select="sitemap:urlset/sitemap:url">
+              <xsl:for-each select="//*[local-name()='url']">
                 <tr>
                   <td>
-                    <a href="{sitemap:loc}"><xsl:value-of select="sitemap:loc"/></a>
+                    <a href="{*[local-name()='loc']}"><xsl:value-of select="*[local-name()='loc']"/></a>
                   </td>
-                  <td><xsl:value-of select="sitemap:changefreq"/></td>
+                  <td><xsl:value-of select="*[local-name()='changefreq']"/></td>
                   <td>
-                    <span class="badge"><xsl:value-of select="sitemap:priority"/></span>
+                    <span class="badge"><xsl:value-of select="*[local-name()='priority']"/></span>
                   </td>
                 </tr>
               </xsl:for-each>
