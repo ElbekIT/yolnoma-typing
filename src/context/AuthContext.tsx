@@ -658,11 +658,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           uid: user.uid,
           displayName: updated.displayName,
           username: updated.username,
-          highestWpm: Math.min(260, Math.max(0, updated.highestWpm || 0)),
-          time15Wpm: Math.min(260, Math.max(0, updated.time15Wpm || 0)),
-          time30Wpm: Math.min(260, Math.max(0, updated.time30Wpm || 0)),
-          time60Wpm: Math.min(260, Math.max(0, updated.time60Wpm || 0)),
-          time120Wpm: Math.min(260, Math.max(0, updated.time120Wpm || 0)),
+          highestWpm: Math.min(280, Math.max(0, updated.highestWpm || 0)),
+          time15Wpm: Math.min(280, Math.max(0, updated.time15Wpm || 0)),
+          time30Wpm: Math.min(280, Math.max(0, updated.time30Wpm || 0)),
+          time60Wpm: Math.min(280, Math.max(0, updated.time60Wpm || 0)),
+          time120Wpm: Math.min(280, Math.max(0, updated.time120Wpm || 0)),
           highestAccuracy: Math.min(100, Math.max(0, updated.highestAccuracy || 0)),
           country: updated.country || '🇺🇿 Uzbekistan',
           level: Math.min(100, Math.max(1, updated.level || 1)),
@@ -809,14 +809,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userId = user ? user.uid : guestId;
     const username = profile ? profile.username : `guest_${guestId.replace('guest_', '')}`;
 
-    const isStatisticallyValid = antiCheatManager.validateTypingResult(
+    const isStatisticallyValid = antiCheatManager.isTestLegitimate() && antiCheatManager.validateTypingResult(
       rawResult.wpm,
       rawResult.accuracy,
       rawResult.testTimeSeconds,
       rawResult.correctChars
     );
 
-    const displayWpm = Math.min(260, Math.max(0, rawResult.wpm));
+    const displayWpm = Math.min(280, Math.max(0, rawResult.wpm));
     const displayAccuracy = Math.min(100, Math.max(0, rawResult.accuracy));
 
     const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
@@ -867,7 +867,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
       const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-      const newHighestWpm = Math.min(260, Math.max(profile.highestWpm || 0, fullResult.wpm));
+      const newHighestWpm = Math.min(280, Math.max(profile.highestWpm || 0, fullResult.wpm));
 
       const sanitizedCurrent15 = Math.min(profile.highestWpm || fullResult.wpm, profile.time15Wpm || 0);
       const sanitizedCurrent30 = Math.min(profile.highestWpm || fullResult.wpm, profile.time30Wpm || 0);
@@ -880,7 +880,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTime120 = fullResult.timeMode === 120 ? Math.min(newHighestWpm, Math.max(sanitizedCurrent120, fullResult.wpm)) : sanitizedCurrent120;
 
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
-      const newAvgWpm = Math.min(260, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
+      const newAvgWpm = Math.min(280, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
 
       const profileUpdates: Partial<UserProfile> = {
         totalTests: newTotalTests,

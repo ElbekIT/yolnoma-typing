@@ -319,6 +319,15 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // HARD SECURITY CHECK: Only genuine hardware keystrokes allowed (e.isTrusted === true)
+    if (!e.isTrusted) {
+      e.preventDefault();
+      e.stopPropagation();
+      antiCheatManager.banDeviceAndUser("Konsol skripti yoki sun'iy sintetik hodisa (isTrusted=false) aniqlandi!");
+      window.location.reload();
+      return;
+    }
+
     if (e.key === 'Tab') {
       e.preventDefault();
       onRestart();

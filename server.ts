@@ -1221,14 +1221,14 @@ app.post('/api/typing/submit', (req, res) => {
     return res.status(400).json({ success: false, error: 'Yaroqsiz test ma\'lumotlari' });
   }
 
-  // Anti-Cheat Check 1: Inhuman speed detection (World record is ~240-250 WPM)
-  if (wpm < 0 || wpm > 260) {
+  // Anti-Cheat Check 1: Inhuman speed detection (World record is ~240-250 WPM, capped at 280)
+  if (wpm < 0 || wpm > 280) {
     serverStats.suspiciousTestsBlocked += 1;
     return res.status(422).json({
       success: false,
       isVerified: false,
       flagged: true,
-      error: 'Anti-Cheat: Natija insoniy chegaradan yuqori (260+ WPM) deb topildi va rad etildi.'
+      error: 'Anti-Cheat: Natija insoniy chegaradan yuqori (280+ WPM) deb topildi va rad etildi.'
     });
   }
 

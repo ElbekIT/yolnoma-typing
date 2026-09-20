@@ -14,7 +14,7 @@ service cloud.firestore {
     }
 
     function isValidWpm(val) {
-      return val is number && val >= 0 && val <= 260;
+      return val is number && val >= 0 && val <= 280;
     }
 
     function isValidAccuracy(val) {
@@ -154,7 +154,23 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------
-    // 6. DEFAULT DENY ALL OTHER ACCESS
+    // 6. LEADERBOARD SCORES (IRONCLAD ANTI-CHEAT BOUNDS)
+    // -------------------------------------------------------------
+    match /leaderboard/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null 
+                   && request.auth.uid == request.resource.data.userId
+                   && request.resource.data.wpm is number
+                   && request.resource.data.wpm >= 0 
+                   && request.resource.data.wpm <= 280 // Inson rekordidan yuqori WPM yozib bo'lmasin
+                   && request.resource.data.accuracy is number
+                   && request.resource.data.accuracy >= 0 
+                   && request.resource.data.accuracy <= 100
+                   && request.resource.data.timestamp == request.time;
+    }
+
+    // -------------------------------------------------------------
+    // 7. DEFAULT DENY ALL OTHER ACCESS
     // -------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
