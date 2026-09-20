@@ -1221,6 +1221,25 @@ app.post('/api/typing/submit', (req, res) => {
     return res.status(400).json({ success: false, error: 'Yaroqsiz test ma\'lumotlari' });
   }
 
+  // Anti-Cheat Check 0: Authentic Google User Requirement (No bots, seed accounts, or fake guests in official registry)
+  const rawUserId = String(userId || '').trim();
+  if (
+    !rawUserId ||
+    rawUserId === 'guest' ||
+    rawUserId.startsWith('guest_') ||
+    rawUserId.startsWith('bot_') ||
+    rawUserId.startsWith('ai_') ||
+    rawUserId.startsWith('seed_') ||
+    rawUserId.startsWith('dummy_') ||
+    rawUserId.startsWith('fake_')
+  ) {
+    return res.status(403).json({
+      success: false,
+      isVerified: false,
+      error: 'Reytingga faqat Google orqali kirgan haqiqiy foydalanuvchilar qabul qilinadi.'
+    });
+  }
+
   // Anti-Cheat Check 1: Inhuman speed detection (World record is ~240-250 WPM, capped at 280)
   if (wpm < 0 || wpm > 280) {
     serverStats.suspiciousTestsBlocked += 1;

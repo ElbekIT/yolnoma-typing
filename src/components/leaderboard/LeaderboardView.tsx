@@ -81,194 +81,6 @@ export interface LeaderboardViewProps {
   defaultScope?: ScopeCategory;
 }
 
-// Resilient community champions seed data to ensure ranking is always live and never blank
-const SEED_TYPING_USERS: LeaderboardUser[] = [
-  {
-    uid: 'seed_1',
-    displayName: 'Jahongir_Dev',
-    username: 'jahongir_dev',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 158,
-    highestAccuracy: 99,
-    time15Wpm: 165,
-    time30Wpm: 158,
-    time60Wpm: 152,
-    time120Wpm: 144,
-    totalTests: 1420,
-    level: 48,
-    xp: 28400,
-    rankTitle: 'Klaviatura Grossmeysteri',
-    lastActive: Date.now() - 1000 * 60 * 15,
-    isVerified: true,
-    bio: 'Dasturchi va tez yozish ishqibozi. Custom keyboard builder.',
-    language: 'uz',
-    rawWpm: 164,
-    consistency: 96
-  },
-  {
-    uid: 'seed_2',
-    displayName: 'Aziza_TypeMaster',
-    username: 'aziza_tm',
-    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 149,
-    highestAccuracy: 99,
-    time15Wpm: 154,
-    time30Wpm: 149,
-    time60Wpm: 143,
-    time120Wpm: 136,
-    totalTests: 1190,
-    level: 42,
-    xp: 23800,
-    rankTitle: 'Tezkor Afsona',
-    lastActive: Date.now() - 1000 * 60 * 45,
-    isVerified: true,
-    bio: '10 barmoqli ko‘r-ko‘rona yozish bo‘yicha O‘zbekiston chempionati g‘olibi.',
-    language: 'uz',
-    rawWpm: 153,
-    consistency: 95
-  },
-  {
-    uid: 'seed_3',
-    displayName: 'Sardor_FastFingers',
-    username: 'sardor_ff',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 142,
-    highestAccuracy: 98,
-    time15Wpm: 148,
-    time30Wpm: 142,
-    time60Wpm: 138,
-    time120Wpm: 130,
-    totalTests: 980,
-    level: 37,
-    xp: 19600,
-    rankTitle: 'Superstar Typist',
-    lastActive: Date.now() - 1000 * 60 * 90,
-    isVerified: false,
-    bio: 'Hali rekordlarim oldinda! Qat’iyat va mashq.',
-    language: 'uz',
-    rawWpm: 146,
-    consistency: 93
-  },
-  {
-    uid: 'seed_4',
-    displayName: 'Malika_Speed',
-    username: 'malika_speed',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 136,
-    highestAccuracy: 97,
-    time15Wpm: 141,
-    time30Wpm: 136,
-    time60Wpm: 131,
-    time120Wpm: 124,
-    totalTests: 840,
-    level: 33,
-    xp: 16800,
-    rankTitle: 'Tezlik Shahzodasi',
-    lastActive: Date.now() - 1000 * 60 * 180,
-    isVerified: true,
-    bio: 'Kopirayter va matn muharriri.',
-    language: 'uz',
-    rawWpm: 140,
-    consistency: 92
-  },
-  {
-    uid: 'seed_5',
-    displayName: 'Bobur_Tashkent',
-    username: 'bobur_tash',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 131,
-    highestAccuracy: 98,
-    time15Wpm: 137,
-    time30Wpm: 131,
-    time60Wpm: 126,
-    time120Wpm: 119,
-    totalTests: 760,
-    level: 30,
-    xp: 15200,
-    rankTitle: 'Usta Kotib',
-    lastActive: Date.now() - 1000 * 60 * 300,
-    isVerified: false,
-    bio: 'Toshkent IT akademiyasi talabasi.',
-    language: 'uz',
-    rawWpm: 135,
-    consistency: 91
-  },
-  {
-    uid: 'seed_6',
-    displayName: 'Gulnoza_Cyber',
-    username: 'gulnoza_c',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 127,
-    highestAccuracy: 99,
-    time15Wpm: 132,
-    time30Wpm: 127,
-    time60Wpm: 122,
-    time120Wpm: 115,
-    totalTests: 690,
-    level: 28,
-    xp: 13800,
-    rankTitle: 'Mohir Yozuvchi',
-    lastActive: Date.now() - 1000 * 60 * 420,
-    isVerified: false,
-    bio: 'Aniqlik va tezlik mutanosibligi.',
-    language: 'uz',
-    rawWpm: 130,
-    consistency: 94
-  },
-  {
-    uid: 'seed_7',
-    displayName: 'Temur_Vortex',
-    username: 'temur_v',
-    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 122,
-    highestAccuracy: 96,
-    time15Wpm: 128,
-    time30Wpm: 122,
-    time60Wpm: 118,
-    time120Wpm: 110,
-    totalTests: 620,
-    level: 25,
-    xp: 12400,
-    rankTitle: 'Yashin Tezligida',
-    lastActive: Date.now() - 1000 * 60 * 600,
-    isVerified: false,
-    bio: 'Front-end developer.',
-    language: 'uz',
-    rawWpm: 126,
-    consistency: 89
-  },
-  {
-    uid: 'seed_8',
-    displayName: 'Diyorbek_Pro',
-    username: 'diyorbek_pro',
-    avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&auto=format&fit=crop&q=80',
-    country: '🇺🇿 Uzbekistan',
-    highestWpm: 118,
-    highestAccuracy: 97,
-    time15Wpm: 123,
-    time30Wpm: 118,
-    time60Wpm: 114,
-    time120Wpm: 106,
-    totalTests: 550,
-    level: 23,
-    xp: 11000,
-    rankTitle: 'Tajribali Mergan',
-    lastActive: Date.now() - 1000 * 60 * 720,
-    isVerified: false,
-    bio: 'Har kuni 30 daqiqa mashq qilaman.',
-    language: 'uz',
-    rawWpm: 121,
-    consistency: 90
-  }
-];
-
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   onOpenLogin,
   onGoToTyping,
@@ -286,8 +98,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const [pageSize, setPageSize] = useState<number>(15);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Raw Data from Firebase RTDB for typing
-  const [rawTypingUsers, setRawTypingUsers] = useState<LeaderboardUser[]>(() => cachedTypingUsers || SEED_TYPING_USERS);
+  // Raw Data from Firebase RTDB for typing (Only 100% genuine real authenticated users)
+  const [rawTypingUsers, setRawTypingUsers] = useState<LeaderboardUser[]>(() => cachedTypingUsers || []);
   const [bannedUids, setBannedUids] = useState<Set<string>>(() => cachedBannedUids);
   const [loading, setLoading] = useState(() => !cachedTypingUsers);
 
@@ -375,11 +187,26 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       allUids.forEach((uid) => {
         if (bannedSet.has(uid)) return;
 
+        // Strictly eliminate any bots, guests, synthetic seed users, or mock users
+        if (
+          !uid ||
+          uid.startsWith('guest_') ||
+          uid.startsWith('bot_') ||
+          uid.startsWith('ai_') ||
+          uid.startsWith('seed_') ||
+          uid.startsWith('dummy_') ||
+          uid.startsWith('fake_') ||
+          uid === 'guest'
+        ) {
+          return;
+        }
+
         const u = usersVal[uid] || {};
         const lb = lbVal[uid] || {};
 
-        const isGuest = uid.startsWith('guest_') || u.isGuest || lb.isGuest;
-        if (isGuest) return;
+        if (u.isGuest || lb.isGuest || u.isBot || lb.isBot || u.isDummy || lb.isDummy) {
+          return;
+        }
 
         if (u.isBanned || u.isBlocked || lb.isBanned || lb.isBlocked) return;
 
@@ -398,7 +225,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           Number(lb.averageWpm || 0)
         );
 
-        if (bestWpm <= 0 && !u.displayName && !lb.displayName) return;
+        // REAL USERS REQUIRE AN ACTUAL VALID WPM RESULT (> 0 and <= 280)
+        if (bestWpm <= 0 || bestWpm > 280) return;
+
+        const totalTests = Number(u.totalTests || lb.totalTests || 0);
+        if (totalTests <= 0) return;
 
         list.push({
           uid,
@@ -406,13 +237,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           username: u.username || lb.username || 'user',
           avatarUrl: u.avatarUrl || lb.avatarUrl,
           country: u.country || lb.country || '🇺🇿 Oʻzbekiston',
-          highestWpm: bestWpm > 0 ? bestWpm : (Number(u.wpm) || Number(lb.wpm) || 45),
-          highestAccuracy: Number(u.highestAccuracy || lb.highestAccuracy || 98),
-          time15Wpm: wpm15 || (bestWpm > 0 ? bestWpm : 0),
-          time30Wpm: wpm30 || (bestWpm > 0 ? Math.round(bestWpm * 0.95) : 0),
-          time60Wpm: wpm60 || (bestWpm > 0 ? Math.round(bestWpm * 0.9) : 0),
-          time120Wpm: wpm120 || (bestWpm > 0 ? Math.round(bestWpm * 0.85) : 0),
-          totalTests: Number(u.totalTests || lb.totalTests || 1),
+          highestWpm: bestWpm,
+          highestAccuracy: Math.min(100, Math.max(0, Number(u.highestAccuracy || lb.highestAccuracy || 98))),
+          time15Wpm: wpm15,
+          time30Wpm: wpm30,
+          time60Wpm: wpm60,
+          time120Wpm: wpm120,
+          totalTests: totalTests,
           level: Number(u.level || lb.level || 1),
           xp: Number(u.xp || lb.xp || 100),
           rankTitle: u.rankTitle || lb.rankTitle || 'Typing Novice',
@@ -427,23 +258,24 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         });
       });
 
-      if (currentUser?.uid) {
+      if (currentUser?.uid && !currentUser.uid.startsWith('guest_') && !currentUser.uid.startsWith('bot_')) {
         const existingIdx = list.findIndex((x) => x.uid === currentUser.uid);
         const myWpm = Math.max(Number(currentUser.highestWpm || 0), Number(currentUser.averageWpm || 0));
-        if (existingIdx === -1 && myWpm > 0) {
+        const myTests = Number(currentUser.totalTests || 0);
+        if (existingIdx === -1 && myWpm > 0 && myWpm <= 280 && myTests > 0) {
           list.push({
             uid: currentUser.uid,
-            displayName: currentUser.displayName || 'Siz',
+            displayName: currentUser.displayName || currentUser.username || 'Siz',
             username: currentUser.username || 'siz',
             avatarUrl: currentUser.avatarUrl,
             country: currentUser.country || '🇺🇿 Oʻzbekiston',
             highestWpm: myWpm,
-            highestAccuracy: Number(currentUser.highestAccuracy || 98),
+            highestAccuracy: Math.min(100, Math.max(0, Number(currentUser.highestAccuracy || 98))),
             time15Wpm: Number(currentUser.time15Wpm || myWpm),
             time30Wpm: Number(currentUser.time30Wpm || myWpm),
             time60Wpm: Number(currentUser.time60Wpm || myWpm),
             time120Wpm: Number(currentUser.time120Wpm || myWpm),
-            totalTests: Number(currentUser.totalTests || 1),
+            totalTests: myTests,
             level: Number(currentUser.level || 1),
             xp: Number(currentUser.xp || 150),
             rankTitle: currentUser.rankTitle || 'Typing Novice',
@@ -459,18 +291,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         }
       }
 
-      if (list.length === 0) {
-        list.push(...SEED_TYPING_USERS);
-      }
-
+      // Strictly real data: no mock or seed fallbacks
       cachedTypingUsers = list;
       lastTypingFetchTime = Date.now();
       setRawTypingUsers(list);
     } catch (err) {
       console.error('Leaderboard fetch error:', err);
-      if (!cachedTypingUsers || cachedTypingUsers.length === 0) {
-        setRawTypingUsers(SEED_TYPING_USERS);
-      }
+      setRawTypingUsers([]);
     } finally {
       setLoading(false);
     }
@@ -1062,16 +889,24 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 <tbody className="divide-y divide-[var(--sub-alt)]/40 font-mono">
                   {pageItems.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-[var(--sub-color)]">
-                        <div className="max-w-md mx-auto flex flex-col items-center space-y-2">
-                          <Trophy className="w-8 h-8 text-[var(--sub-color)]/50" />
-                          <p className="text-xs">Hech qanday natija topilmadi</p>
+                      <td colSpan={7} className="py-16 text-center text-[var(--sub-color)]">
+                        <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3 px-4">
+                          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-1">
+                            <Trophy className="w-7 h-7" />
+                          </div>
+                          <h4 className="text-base font-bold text-[var(--text-color)] font-mono">
+                            Hozircha natijalar yo'q.
+                          </h4>
+                          <p className="text-xs sm:text-sm text-[var(--sub-color)] max-w-sm leading-relaxed">
+                            Test topshiring va birinchi bo'lib milliy reytingda o'rin egallang!
+                          </p>
                           {onGoToTyping && (
                             <button
                               onClick={onGoToTyping}
-                              className="mt-2 px-4 py-2 rounded-xl bg-[var(--main-color)] text-[var(--bg-color,#090d16)] font-bold text-xs"
+                              className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--main-color)] hover:opacity-90 text-[var(--bg-color,#090d16)] font-bold text-xs sm:text-sm transition-transform active:scale-95 shadow-md shadow-[var(--main-color)]/20 cursor-pointer"
                             >
-                              Birinchi bo'lib test topshiring
+                              <Zap className="w-4 h-4" />
+                              <span>Test topshirish</span>
                             </button>
                           )}
                         </div>

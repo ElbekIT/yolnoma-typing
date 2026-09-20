@@ -956,50 +956,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch {}
       } catch {}
     } else {
-      // Guest User - Push live score to RTDB Leaderboard
-      try {
-        // Backend Anti-Cheat & Cryptographic Verification Submission for Guest
-        fetch('/api/typing/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: guestId,
-            username: `guest_${guestId.replace('guest_', '')}`,
-            displayName: `Mehmon (${guestId.replace('guest_', '')})`,
-            wpm: rawResult.wpm,
-            rawWpm: rawResult.rawWpm,
-            accuracy: rawResult.accuracy,
-            consistency: rawResult.consistency || 100,
-            testTimeSeconds: rawResult.testTimeSeconds,
-            timeMode: rawResult.timeMode,
-            mode: rawResult.mode,
-            language: rawResult.language,
-            correctChars: rawResult.correctChars,
-            errorCount: rawResult.errors || 0
-          })
-        }).catch(() => {});
-
-        // Determine live guest rank in RTDB Leaderboard
-        let guestRank: number | undefined = undefined;
-        try {
-          const lbSnap = await get(ref(rtdb, 'leaderboard'));
-          if (lbSnap.exists()) {
-            const lbData = lbSnap.val();
-            let higherCount = 0;
-            Object.keys(lbData).forEach((k) => {
-              if (k !== guestId) {
-                const otherScore = Number(lbData[k]?.highestWpm) || 0;
-                if (otherScore > rawResult.wpm) {
-                  higherCount++;
-                }
-              }
-            });
-            guestRank = higherCount + 1;
-          } else {
-            guestRank = 1;
-          }
-        } catch {}
-      } catch {}
+      // Guest User - Only save to local session storage; do NOT push to global Leaderboard
       try {
         const guestBest = Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0));
         const guest15 = rawResult.timeMode === 15 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_15_wpm') || 0);
@@ -1007,37 +964,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const guest60 = rawResult.timeMode === 60 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_60_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_60_wpm') || 0);
         const guest120 = rawResult.timeMode === 120 ? Math.max(rawResult.wpm, Number(localStorage.getItem('yolnoma_guest_120_wpm') || 0)) : Number(localStorage.getItem('yolnoma_guest_120_wpm') || 0);
 
+        localStorage.setItem('yolnoma_guest_best_wpm', String(guestBest));
         if (rawResult.timeMode === 15) localStorage.setItem('yolnoma_guest_15_wpm', String(guest15));
         if (rawResult.timeMode === 30) localStorage.setItem('yolnoma_guest_30_wpm', String(guest30));
         if (rawResult.timeMode === 60) localStorage.setItem('yolnoma_guest_60_wpm', String(guest60));
         if (rawResult.timeMode === 120) localStorage.setItem('yolnoma_guest_120_wpm', String(guest120));
-
-        // Background sync to RTDB with secure session, non-blocking for instant UI response
-        void (async () => {
-          try {
-            await ensureFirebaseAuth();
-            await set(ref(rtdb, `leaderboard/${guestId}`), {
-              uid: guestId,
-              displayName: `Mehmon (${guestId.replace('guest_', '').slice(0, 10)})`,
-              username: guestId.slice(0, 25),
-              highestWpm: Math.min(260, Math.max(0, guestBest)),
-              time15Wpm: Math.min(260, Math.max(0, guest15)),
-              time30Wpm: Math.min(260, Math.max(0, guest30)),
-              time60Wpm: Math.min(260, Math.max(0, guest60)),
-              time120Wpm: Math.min(260, Math.max(0, guest120)),
-              highestAccuracy: Math.min(100, Math.max(0, rawResult.accuracy)),
-              country: '🇺🇿 Uzbekistan',
-              level: 1,
-              rankTitle: 'Mehmon Typer',
-              bio: 'Tezkor Mehmon Foydalanuvchi',
-              avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${guestId}`,
-              lastActive: Date.now(),
-              totalTests: (getLocalResults().length || 1)
-            });
-          } catch (e) {
-            console.warn('Guest RTDB sync notice:', e);
-          }
-        })();
       } catch (e) {
         console.warn('Guest localStorage update error:', e);
       }
