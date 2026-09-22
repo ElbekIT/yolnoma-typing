@@ -10,7 +10,22 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && (request.auth.uid == userId || isRootOwner());
+    }
+
+    function isRootOwner() {
+      return isAuthenticated() && request.auth.token.email == 'yuldashivagavharoy@gmail.com';
+    }
+
+    function isNotBanned() {
+      return isAuthenticated() && !exists(/databases/$(database)/documents/bannedUsers/$(request.auth.uid));
+    }
+
+    function isGoogleAuth() {
+      return isAuthenticated() && (
+        request.auth.token.firebase.sign_in_provider == 'google.com' ||
+        isRootOwner()
+      );
     }
 
     function isValidWpm(val) {
@@ -33,12 +48,13 @@ service cloud.firestore {
     // 1. USERS COLLECTION
     // -------------------------------------------------------------
     match /users/{userId} {
-      // Public profile data is readable for leaderboards & user lookups
       allow read: if true;
 
-      // Users can only create and mutate their own profile with strict sanity checks
       allow create: if isOwner(userId)
+        && isNotBanned()
         && request.resource.data.uid == userId
+        && (!('role' in request.resource.data) || request.resource.data.role != 'admin' || isRootOwner())
+        && (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin != true || isRootOwner())
         && (!('highestWpm' in request.resource.data) || isValidWpm(request.resource.data.highestWpm))
         && (!('averageWpm' in request.resource.data) || isValidWpm(request.resource.data.averageWpm))
         && (!('highestAccuracy' in request.resource.data) || isValidAccuracy(request.resource.data.highestAccuracy))
@@ -47,7 +63,10 @@ service cloud.firestore {
         && (!('totalTests' in request.resource.data) || (request.resource.data.totalTests is number && request.resource.data.totalTests >= 0));
 
       allow update: if isOwner(userId)
+        && isNotBanned()
         && request.resource.data.uid == userId
+        && (!('role' in request.resource.data) || request.resource.data.role != 'admin' || (resource.data != null && resource.data.role == 'admin') || isRootOwner())
+        && (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin != true || (resource.data != null && resource.data.isAdmin == true) || isRootOwner())
         && (!('highestWpm' in request.resource.data) || isValidWpm(request.resource.data.highestWpm))
         && (!('averageWpm' in request.resource.data) || isValidWpm(request.resource.data.averageWpm))
         && (!('highestAccuracy' in request.resource.data) || isValidAccuracy(request.resource.data.highestAccuracy))
@@ -55,16 +74,24 @@ service cloud.firestore {
         && (!('xp' in request.resource.data) || (request.resource.data.xp is number && request.resource.data.xp >= 0 && request.resource.data.xp <= 5000000))
         && (!('totalTests' in request.resource.data) || (request.resource.data.totalTests is number && request.resource.data.totalTests >= 0));
 
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) || isRootOwner();
     }
 
     // -------------------------------------------------------------
-    // 2. 1V1 BATTLE ROOMS
+    // 2. BANNED USERS
+    // -------------------------------------------------------------
+    match /bannedUsers/{bannedId} {
+      allow read: if true;
+      allow write: if isRootOwner();
+    }
+
+    // -------------------------------------------------------------
+    // 3. 1V1 BATTLE ROOMS
     // -------------------------------------------------------------
     match /battle_rooms/{roomId} {
       allow read: if isAuthenticated();
 
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && (
           (request.resource.data.host is map && request.resource.data.host.id == request.auth.uid) ||
           (request.resource.data.hostId == request.auth.uid)
@@ -73,7 +100,7 @@ service cloud.firestore {
         && (!('host' in request.resource.data) || !('wpm' in request.resource.data.host) || isValidWpm(request.resource.data.host.wpm))
         && (!('host' in request.resource.data) || !('accuracy' in request.resource.data.host) || isValidAccuracy(request.resource.data.host.accuracy));
 
-      allow update: if isAuthenticated()
+      allow update: if isAuthenticated() && isNotBanned()
         && (
           (resource.data.host is map && resource.data.host.id == request.auth.uid) ||
           (resource.data.hostId == request.auth.uid) ||
@@ -87,18 +114,18 @@ service cloud.firestore {
 
       allow delete: if isAuthenticated() && (
         (resource.data.host is map && resource.data.host.id == request.auth.uid) ||
-        (resource.data.hostId == request.auth.uid)
+        (resource.data.hostId == request.auth.uid) ||
+        isRootOwner()
       );
     }
 
     // -------------------------------------------------------------
-    // 3. SPACE BATTLE LEADERBOARD SCORES
+    // 4. SPACE BATTLE LEADERBOARD SCORES
     // -------------------------------------------------------------
     match /space_scores/{scoreId} {
       allow read: if true;
 
-      // Only authenticated users can submit their own score with anti-cheat bounds
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.uid == request.auth.uid
         && isValidScore(request.resource.data.score)
         && request.resource.data.wave is number && request.resource.data.wave >= 1 && request.resource.data.wave <= 200
@@ -107,17 +134,16 @@ service cloud.firestore {
         && (!('enemiesKilled' in request.resource.data) || (request.resource.data.enemiesKilled is number && request.resource.data.enemiesKilled >= 0))
         && (!('createdAt' in request.resource.data) || isRecentTimestamp(request.resource.data.createdAt));
 
-      // Leaderboard score history records are strictly immutable
-      allow update, delete: if false;
+      allow update, delete: if isRootOwner();
     }
 
     // -------------------------------------------------------------
-    // 4. SENTENCE TRAINER SCORES
+    // 5. SENTENCE TRAINER SCORES
     // -------------------------------------------------------------
     match /sentence_scores/{scoreId} {
       allow read: if true;
 
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.uid == request.auth.uid
         && isValidScore(request.resource.data.score)
         && isValidWpm(request.resource.data.wpm)
@@ -125,20 +151,20 @@ service cloud.firestore {
         && (!('sentencesCompleted' in request.resource.data) || (request.resource.data.sentencesCompleted is number && request.resource.data.sentencesCompleted >= 0))
         && (!('createdAt' in request.resource.data) || isRecentTimestamp(request.resource.data.createdAt));
 
-      // Immutable score entries
-      allow update, delete: if false;
+      allow update, delete: if isRootOwner();
     }
 
     // -------------------------------------------------------------
-    // 5. INDIVIDUAL TEST RESULTS
+    // 6. INDIVIDUAL TEST RESULTS
     // -------------------------------------------------------------
     match /test_results/{resultId} {
       allow read: if isAuthenticated() && (
         (resource.data.userId == request.auth.uid) ||
-        (resource.data.uid == request.auth.uid)
+        (resource.data.uid == request.auth.uid) ||
+        isRootOwner()
       );
 
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && (
           request.resource.data.userId == request.auth.uid ||
           request.resource.data.uid == request.auth.uid
@@ -149,28 +175,28 @@ service cloud.firestore {
 
       allow update, delete: if isAuthenticated() && (
         (resource.data.userId == request.auth.uid) ||
-        (resource.data.uid == request.auth.uid)
+        (resource.data.uid == request.auth.uid) ||
+        isRootOwner()
       );
     }
 
     // -------------------------------------------------------------
-    // 6. LEADERBOARD SCORES (IRONCLAD ANTI-CHEAT BOUNDS)
+    // 7. LEADERBOARD SCORES (IRONCLAD ANTI-CHEAT BOUNDS)
     // -------------------------------------------------------------
     match /leaderboard/{docId} {
       allow read: if true;
-      allow write: if request.auth != null 
+      allow write: if isAuthenticated() && isNotBanned() && isGoogleAuth()
                    && request.auth.uid == request.resource.data.userId
                    && request.resource.data.wpm is number
                    && request.resource.data.wpm >= 0 
-                   && request.resource.data.wpm <= 280 // Inson rekordidan yuqori WPM yozib bo'lmasin
+                   && request.resource.data.wpm <= 280
                    && request.resource.data.accuracy is number
                    && request.resource.data.accuracy >= 0 
-                   && request.resource.data.accuracy <= 100
-                   && request.resource.data.timestamp == request.time;
+                   && request.resource.data.accuracy <= 100;
     }
 
     // -------------------------------------------------------------
-    // 7. DEFAULT DENY ALL OTHER ACCESS
+    // 8. DEFAULT DENY ALL OTHER ACCESS
     // -------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;

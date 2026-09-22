@@ -160,8 +160,23 @@ class AntiCheatSystem {
     }
 
     // Measure keystroke intervals across recent keystrokes
-    if (this.keyTimes.length >= 20) {
-      const recent = this.keyTimes.slice(-20);
+    if (this.keyTimes.length >= 2) {
+      const lastInterval = now - this.keyTimes[this.keyTimes.length - 2];
+      // Keystroke interval < 15ms is below biological limit
+      if (lastInterval < 15) {
+        this.fastDeltaCounter++;
+        if (this.fastDeltaCounter >= 2 || lastInterval < 5) {
+          this.isFlagged = true;
+          this.flagReason = "Biologik imkoniyatdan past harflararo interval (<15ms) yoki avtomatik bot aniqlandi!";
+          return false;
+        }
+      } else {
+        this.fastDeltaCounter = Math.max(0, this.fastDeltaCounter - 1);
+      }
+    }
+
+    if (this.keyTimes.length >= 15) {
+      const recent = this.keyTimes.slice(-15);
       const diffs: number[] = [];
       for (let i = 1; i < recent.length; i++) {
         diffs.push(recent[i] - recent[i - 1]);
@@ -169,33 +184,29 @@ class AntiCheatSystem {
       const mean = diffs.reduce((a, b) => a + b, 0) / diffs.length;
       const variance = diffs.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / diffs.length;
 
-      // Bot rule 1: Constant identical intervals across 20 keystrokes (e.g. setInterval(type, 10))
-      // Pure human typing always has jitter (variance > 1.5ms). Robotic loop has variance < 0.1ms.
+      // Bot rule 1: Identical intervals across keystrokes (robotic loop has variance < 0.1ms)
       if (variance < 0.1 && mean < 120) {
         this.isFlagged = true;
         this.flagReason = 'Avtomatlashtirilgan doimiy ritmli bot (Scripted Keystroke Generator) aniqlandi!';
-        this.banDeviceAndUser(this.flagReason);
         return false;
       }
 
-      // Bot rule 2: Sustained inhuman speed (< 8ms average across 20 keys = > 1500 WPM)
-      if (mean < 8) {
+      // Bot rule 2: Inhuman average speed (< 15ms average across keys = > 800 WPM)
+      if (mean < 15) {
         this.isFlagged = true;
-        this.flagReason = "G'ayritabiiy robotik tezlik aniqlandi!";
-        this.banDeviceAndUser(this.flagReason);
+        this.flagReason = "G'ayritabiiy robotik interval (<15ms o'rtacha) aniqlandi!";
         return false;
       }
     }
 
-    // Instantaneous human ceiling check: only flag sustained WPM > 320 after at least 25 characters
-    if (typedLength > 25 && this.testStartTime > 0) {
+    // Biologik WPM cheklovi: WPM > 280 aniqlansa natija qabul qilinmasin va bekor qilinsin
+    if (typedLength > 15 && this.testStartTime > 0) {
       const elapsedMinutes = (now - this.testStartTime) / 60000;
-      if (elapsedMinutes > 0.05) {
+      if (elapsedMinutes > 0.03) {
         const instantWpm = (typedLength / 5) / elapsedMinutes;
-        if (instantWpm > 320) {
+        if (instantWpm > 280) {
           this.isFlagged = true;
-          this.flagReason = `Insoniy rekorddan yuqori tezlik (${Math.round(instantWpm)} WPM > 320) aniqlandi va bekor qilindi!`;
-          this.banDeviceAndUser(this.flagReason);
+          this.flagReason = `Biologik WPM cheklovi buzildi: ${Math.round(instantWpm)} WPM > 280 WPM insoniy me'yordan oshib ketdi!`;
           return false;
         }
       }
@@ -207,36 +218,61 @@ class AntiCheatSystem {
   /**
    * Validates typing score before submission to prevent console tampering and bans if illegal
    */
-  public validateTypingResult(wpm: number, accuracy: number, durationSeconds: number, charCount: number): boolean {
+  public validateTypingResult(
+    wpm: number,
+    accuracy: number,
+    durationSeconds: number,
+    charCount: number,
+    errorCount: number = 0
+  ): boolean {
     if (this.isFlagged) {
       return false;
     }
     if (durationSeconds < 5) {
       return false; // Test must run at least 5 seconds for valid statistical measurement
     }
-    if (wpm < 0 || wpm > 320) {
+
+    // 1. Biologik WPM cheklovi (0 - 280 WPM)
+    if (wpm < 0 || wpm > 280) {
       this.isFlagged = true;
-      this.banDeviceAndUser(`Insoniy imkoniyatdan yuqori soxta WPM (${Math.round(wpm)} WPM) aniqlandi!`);
+      this.flagReason = `Biologik WPM cheklovi: ${Math.round(wpm)} WPM > 280 WPM insoniy me'yordan yuqori!`;
       return false;
     }
+
+    // 2. Aniqlik (Accuracy) tekshiruvi (0 - 100%)
     if (accuracy < 0 || accuracy > 100) {
       this.isFlagged = true;
-      this.banDeviceAndUser('Soxta aniqlik ko\'rsatkichi (Accuracy) kiritish urinishi aniqlandi!');
+      this.flagReason = 'Soxta aniqlik ko\'rsatkichi (Accuracy) kiritish urinishi aniqlandi!';
       return false;
     }
-    const maxPossibleChars = durationSeconds * 35; // 35 chars/sec = max ~420 WPM burst
-    if (charCount > maxPossibleChars && durationSeconds >= 5) {
+
+    // 3. Vaqt va hajm tekshiruvi: 280 WPM = maksimal ~23.3 belgi/soniya
+    // Masalan, 1 soniyada 50 ta belgi kiritish inson uchun mutlaqo imkonsiz
+    const maxBiologicalChars = Math.ceil(durationSeconds * 23.5);
+    if (charCount > maxBiologicalChars && durationSeconds >= 5) {
       this.isFlagged = true;
-      this.banDeviceAndUser('Belgilar soni va test vaqti mutanosibligi buzilgan (Soxta ma\'lumot)!');
+      this.flagReason = `Vaqt va hajm nomutanosibligi: ${durationSeconds} soniyada ${charCount} ta belgi kiritish biologik imkonsiz!`;
       return false;
     }
-    // Cross-check WPM calculation consistency
+
+    // 4. Bosilgan belgilar, xatolar soni va WPM o'rtasidagi matematik bog'liqlik
     const calculatedExpectedWpm = (charCount / 5) / (durationSeconds / 60);
-    if (wpm > calculatedExpectedWpm + 50 && wpm > 100) {
+    if (Math.abs(wpm - calculatedExpectedWpm) > 25 && wpm > 80) {
       this.isFlagged = true;
-      this.banDeviceAndUser('WPM va kiritilgan belgilar matematik nomuvofiqligi aniqlandi!');
+      this.flagReason = 'WPM va sarflangan vaqt o\'rtasidagi matematik bog\'liqlik soxtalashtirilgan!';
       return false;
     }
+
+    // 5. Xatolar soni va aniqlik mutanosibligi
+    if (charCount > 0 && errorCount >= 0) {
+      const expectedAccuracy = Math.max(0, Math.min(100, Math.round(((charCount - errorCount) / charCount) * 100)));
+      if (Math.abs(accuracy - expectedAccuracy) > 20) {
+        this.isFlagged = true;
+        this.flagReason = 'Aniqlik va xatolar nisbati matematik tekshiruvdan o\'tmadi!';
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -263,9 +299,9 @@ class AntiCheatSystem {
       return false;
     }
 
-    // 3. Check WPM sanity
-    if ((profile.highestWpm || 0) > 320) {
-      this.banDeviceAndUser(`Soxta rekord tezlik (${profile.highestWpm} WPM) aniqlandi!`);
+    // 3. Biologik WPM cheklovi (maksimal 280 WPM)
+    if ((profile.highestWpm || 0) > 280) {
+      this.banDeviceAndUser(`Soxta rekord tezlik (${profile.highestWpm} WPM > 280) aniqlandi!`);
       return false;
     }
 
@@ -420,7 +456,16 @@ if (typeof window !== 'undefined') {
       'hackWpm',
       'fakeScore',
       'db',
-      'auth'
+      'auth',
+      'rtdb',
+      'saveTestResult',
+      'setUserScore',
+      'currentWpm',
+      'setXp',
+      'setLevel',
+      'giveAdmin',
+      'bypassAntiCheat',
+      'hackAdmin'
     ];
 
     forbiddenGlobals.forEach((prop) => {

@@ -705,12 +705,12 @@ app.use((req, res, next) => {
 
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com https://accounts.google.com https://ssl.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com https://accounts.google.com https://ssl.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://api.dicebear.com https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.firebasestorage.googleapis.com https://*.firebase.com https://*.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://ep2.adtrafficquality.google",
-    "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://*.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com",
+    "img-src 'self' data: blob: https://api.dicebear.com https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.firebasestorage.googleapis.com https://*.firebase.com https://*.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://ep2.adtrafficquality.google https://www.highrevenueformat.com https://*.highrevenueformat.com",
+    "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://*.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
     "media-src 'self' data: blob:",
     frameAncestors,
     "object-src 'none'",

@@ -6,25 +6,55 @@
     "users": {
       ".read": true,
       "$uid": {
-        ".write": "auth != null && (auth.uid === $uid || auth.uid === 'root_owner_gavharoy')",
-        ".validate": "newData.hasChildren([])"
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy') && !root.child('bannedUsers').child(auth.uid).exists() && (auth.token.firebase.sign_in_provider === 'google.com' || auth.provider === 'google' || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')",
+        ".validate": "(!newData.child('highestWpm').exists() || (newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() >= 0 && newData.child('highestWpm').val() <= 280)) && (!newData.child('accuracy').exists() || (newData.child('accuracy').isNumber() && newData.child('accuracy').val() >= 0 && newData.child('accuracy').val() <= 100)) && (!newData.child('highestAccuracy').exists() || (newData.child('highestAccuracy').isNumber() && newData.child('highestAccuracy').val() >= 0 && newData.child('highestAccuracy').val() <= 100)) && (!newData.child('xp').exists() || (newData.child('xp').isNumber() && newData.child('xp').val() >= 0)) && (!newData.child('level').exists() || (newData.child('level').isNumber() && newData.child('level').val() >= 1))",
+
+        "highestWpm": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 280"
+        },
+        "accuracy": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "highestAccuracy": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "xp": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "level": {
+          ".validate": "newData.isNumber() && newData.val() >= 1"
+        },
+        "role": {
+          ".validate": "newData.val() != 'admin' && newData.val() != 'owner' || data.val() === 'admin' || data.val() === 'owner' || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy'"
+        },
+        "isAdmin": {
+          ".validate": "newData.val() != true || data.val() === true || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy'"
+        }
+      }
+    },
+
+    "bannedUsers": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')",
+      "$bannedUid": {
+        ".validate": "newData.hasChildren(['reason'])"
       }
     },
 
     "leaderboard": {
       ".read": true,
       "$uid": {
-        ".write": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
-        ".validate": "newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() <= 260 && newData.child('highestWpm').val() >= 0"
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy') && !root.child('bannedUsers').child(auth.uid).exists() && (auth.token.firebase.sign_in_provider === 'google.com' || auth.provider === 'google' || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')",
+        ".validate": "newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() <= 280 && newData.child('highestWpm').val() >= 0 && (!newData.child('highestAccuracy').exists() || (newData.child('highestAccuracy').isNumber() && newData.child('highestAccuracy').val() <= 100 && newData.child('highestAccuracy').val() >= 0))"
       }
     },
 
     "results": {
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
+        ".read": "auth != null && (auth.uid === $uid || auth.uid === 'root_owner_gavharoy')",
         "$resultId": {
-          ".write": "auth != null && (auth.uid === $uid || $uid.beginsWith('guest_') || auth.uid === 'root_owner_gavharoy')",
-          ".validate": "newData.child('wpm').isNumber() && newData.child('wpm').val() <= 260 && newData.child('wpm').val() >= 0"
+          ".write": "auth != null && (auth.uid === $uid || auth.uid === 'root_owner_gavharoy') && !root.child('bannedUsers').child(auth.uid).exists()",
+          ".validate": "newData.child('wpm').isNumber() && newData.child('wpm').val() <= 280 && newData.child('wpm').val() >= 0 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() <= 100 && newData.child('accuracy').val() >= 0"
         }
       }
     },
@@ -32,23 +62,23 @@
     "space_scores": {
       ".read": true,
       "$scoreId": {
-        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
-        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 5000000 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() <= 100"
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid) && !root.child('bannedUsers').child(auth.uid).exists()",
+        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 5000000 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() <= 100 && newData.child('accuracy').val() >= 0"
       }
     },
 
     "sentence_scores": {
       ".read": true,
       "$scoreId": {
-        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
-        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 2000000 && newData.child('wpm').isNumber() && newData.child('wpm').val() <= 260"
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid) && !root.child('bannedUsers').child(auth.uid).exists()",
+        ".validate": "newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 2000000 && newData.child('wpm').isNumber() && newData.child('wpm').val() <= 280 && newData.child('wpm').val() >= 0"
       }
     },
 
     "battle_rooms": {
       ".read": "auth != null",
       "$roomId": {
-        ".write": "auth != null",
+        ".write": "auth != null && !root.child('bannedUsers').child(auth.uid).exists()",
         ".validate": "newData.child('status').isString()"
       }
     },
@@ -56,21 +86,21 @@
     "private_battle_rooms": {
       ".read": "auth != null",
       "$roomId": {
-        ".write": "auth != null"
+        ".write": "auth != null && !root.child('bannedUsers').child(auth.uid).exists()"
       }
     },
 
     "battles": {
       ".read": "auth != null",
       "$roomId": {
-        ".write": "auth != null"
+        ".write": "auth != null && !root.child('bannedUsers').child(auth.uid).exists()"
       }
     },
 
     "online_players": {
       ".read": true,
       "$playerId": {
-        ".write": "auth != null && (auth.uid === $playerId || $playerId.beginsWith('guest_'))"
+        ".write": "auth != null && (auth.uid === $playerId || auth.token.email === 'yuldashivagavharoy@gmail.com') && !root.child('bannedUsers').child(auth.uid).exists()"
       }
     },
 
@@ -90,11 +120,11 @@
 
     "global_announcements": {
       ".read": true,
-      ".write": "auth != null && auth.uid === 'root_owner_gavharoy'"
+      ".write": "auth != null && (auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')"
     },
 
     "contactMessages": {
-      ".read": "auth != null && auth.uid === 'root_owner_gavharoy'",
+      ".read": "auth != null && (auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')",
       "$msgId": {
         ".write": true,
         ".validate": "newData.child('message').isString() && newData.child('message').val().length <= 3000"
@@ -103,12 +133,12 @@
 
     "maintenance": {
       ".read": true,
-      ".write": "auth != null && auth.uid === 'root_owner_gavharoy'"
+      ".write": "auth != null && (auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')"
     },
 
     "sponsors": {
       ".read": true,
-      ".write": "auth != null && auth.uid === 'root_owner_gavharoy'"
+      ".write": "auth != null && (auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy')"
     }
   }
 }

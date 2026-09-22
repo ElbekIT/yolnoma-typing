@@ -806,18 +806,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userId = user ? user.uid : guestId;
     const username = profile ? profile.username : `guest_${guestId.replace('guest_', '')}`;
 
-    const isStatisticallyValid = antiCheatManager.isTestLegitimate() && antiCheatManager.validateTypingResult(
-      rawResult.wpm,
-      rawResult.accuracy,
-      rawResult.testTimeSeconds,
-      rawResult.correctChars
-    );
+    const isStatisticallyValid = 
+      rawResult.wpm <= 280 &&
+      antiCheatManager.isTestLegitimate() && 
+      antiCheatManager.validateTypingResult(
+        rawResult.wpm,
+        rawResult.accuracy,
+        rawResult.testTimeSeconds,
+        rawResult.correctChars,
+        rawResult.errors || 0
+      );
 
-    const displayWpm = Math.min(320, Math.max(0, rawResult.wpm));
+    // Biologik WPM cheklovi: 280 WPM maksimal chegara
+    const displayWpm = Math.min(280, Math.max(0, rawResult.wpm));
     const displayAccuracy = Math.min(100, Math.max(0, rawResult.accuracy));
 
     const existingPBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
-    const isPersonalBest = isStatisticallyValid && displayWpm > existingPBest && displayWpm > 0;
+    const isPersonalBest = isStatisticallyValid && displayWpm > existingPBest && displayWpm > 0 && displayWpm <= 280;
 
     if (isPersonalBest) {
       if (!profile) {
@@ -841,11 +846,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveLocalResults(newLocal);
     setUserResultsHistory(newLocal);
 
-    if (!isStatisticallyValid || displayWpm <= 0) {
+    if (!isStatisticallyValid || displayWpm <= 0 || rawResult.wpm > 280) {
       return fullResult;
     }
 
-    if (user && profile) {
+    // Google Auth tekshiruvi: Reytingga faqat Google hisobi bilan kirgan foydalanuvchilar kiritilsin
+    const isGoogleAuthUser = Boolean(
+      user &&
+      !user.isAnonymous &&
+      (
+        user.providerData.some((p) => p.providerId === 'google.com') ||
+        (user.email && user.email.includes('@'))
+      )
+    );
+
+    if (user && profile && isGoogleAuthUser) {
       // Calculate updated stats
       const xpEarned = Math.round(fullResult.wpm * (fullResult.accuracy / 100) * 2) + 25;
       const newXp = Math.min(250000, profile.xp + xpEarned);
@@ -864,7 +879,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTimeTyped = profile.totalTimeTypedSeconds + fullResult.testTimeSeconds;
       const newWordsTyped = profile.totalWordsTyped + Math.round(fullResult.correctChars / 5);
       const newCharsTyped = profile.totalCharsTyped + fullResult.correctChars;
-      const newHighestWpm = Math.min(320, Math.max(profile.highestWpm || 0, fullResult.wpm));
+      const newHighestWpm = Math.min(280, Math.max(profile.highestWpm || 0, fullResult.wpm));
 
       const sanitizedCurrent15 = Math.min(profile.highestWpm || fullResult.wpm, profile.time15Wpm || 0);
       const sanitizedCurrent30 = Math.min(profile.highestWpm || fullResult.wpm, profile.time30Wpm || 0);
@@ -877,7 +892,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newTime120 = fullResult.timeMode === 120 ? Math.min(newHighestWpm, Math.max(sanitizedCurrent120, fullResult.wpm)) : sanitizedCurrent120;
 
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
-      const newAvgWpm = Math.min(320, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
+      const newAvgWpm = Math.min(280, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
 
       const profileUpdates: Partial<UserProfile> = {
         totalTests: newTotalTests,

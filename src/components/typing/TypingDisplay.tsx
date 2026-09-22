@@ -396,6 +396,11 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (isTestFinished) return;
 
+      // Reject synthetic input events (scripts, console dispatchEvent)
+      if (e.nativeEvent && (e.nativeEvent as any).isTrusted === false) {
+        return;
+      }
+
       const newValue = e.target.value;
 
       const minLen = getLockedMinLength(targetText, typedInput);
@@ -670,6 +675,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         onBlur={() => setIsFocused(false)}
         onCopy={(e) => e.preventDefault()}
         onPaste={(e) => e.preventDefault()}
+        onDrop={(e) => e.preventDefault()}
         autoCapitalize="none"
         autoCorrect="off"
         autoComplete="off"
