@@ -5,6 +5,7 @@ import { I18nProvider, useI18n } from './context/I18nContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdBanner } from './components/common/AdBanner';
+import { AdsterraBanner } from './components/AdsterraBanner';
 import { AuthModal } from './components/AuthModal';
 import { AboutModal } from './components/about/AboutModal';
 import { LoginPage } from './components/LoginPage';
@@ -1281,8 +1282,8 @@ function MainAppContent() {
         </React.Suspense>
       </main>
 
-      {/* Google AdSense Banner (Bosh sahifa / Footer usti) */}
-      <AdBanner className="my-6 max-w-5xl mx-auto px-4" isTyping={isTestActive} />
+      {/* Adsterra 728x90 Banner (Markazlashgan, Footer usti, Layout Shift-Free) */}
+      <AdsterraBanner className="my-6 max-w-5xl mx-auto px-4" isTyping={isTestActive} />
 
       <Footer
         onOpenAbout={() => {
