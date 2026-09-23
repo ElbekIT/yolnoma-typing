@@ -735,6 +735,16 @@ app.get(['/.well-known/security.txt', '/security.txt'], (req, res) => {
   res.send(SECURITY_TXT_CONTENT);
 });
 
+app.get('/ads.txt', (req, res) => {
+  const adsTxtPath = path.resolve(process.cwd(), 'public/ads.txt');
+  if (fs.existsSync(adsTxtPath)) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(adsTxtPath);
+  }
+  res.status(404).send('ads.txt not found');
+});
+
 // Security & Body parsing with strict size limits
 app.use(cookieParser());
 app.use(express.json({ limit: '16kb' }));
