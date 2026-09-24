@@ -4,6 +4,41 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     
+    <!-- Ad Networks Diagnostic & Crash Shield -->
+    <script>
+      (function() {
+        var origConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var msg = args.map(function(a) {
+            return (typeof a === 'object' && a !== null) ? (a.message || a.text || a.code || JSON.stringify(a)) : String(a);
+          }).join(' ');
+
+          if (
+            msg.indexOf('highrevenueformat') !== -1 ||
+            msg.indexOf('adsbygoogle') !== -1
+          ) {
+            if (console.debug) {
+              console.debug('[Ad Diagnostic Notice]:', ...args);
+            }
+            return;
+          }
+          return origConsoleError.apply(console, arguments);
+        };
+
+        window.addEventListener('error', function(e) {
+          var filename = (e && e.filename) ? String(e.filename) : '';
+          if (
+            filename.indexOf('highrevenueformat') !== -1
+          ) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
+
     <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-9645960579894278" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9645960579894278" crossorigin="anonymous"></script>
@@ -191,12 +226,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://www.highrevenueformat.com" />
-    <link rel="dns-prefetch" href="https://yandex.ru" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-    <!-- Yandex.RTB -->
-    <script>window.yaContextCb=window.yaContextCb||[]</script>
-    <script src="https://yandex.ru/ads/system/context.js" async></script>
   </head>
   <body style="background-color: #090d16; color: #ffffff; margin: 0; min-height: 100vh;">
     <div id="root"></div>
