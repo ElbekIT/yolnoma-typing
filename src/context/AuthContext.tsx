@@ -582,48 +582,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const registerWithEmail = async (email: string, pass: string, username: string) => {
-    const res = await createUserWithEmailAndPassword(auth, email, pass);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanUsername = username.trim();
+    const cleanPass = pass;
+
+    if (!cleanEmail) {
+      throw new Error('Iltimos, email pochtangizni kiriting.');
+    }
+    if (!cleanUsername) {
+      throw new Error('Iltimos, taxallus (username) kiriting.');
+    }
+    if (cleanUsername.length < 3) {
+      throw new Error('Taxallus kamida 3 ta belgidan iborat bo\'lishi kerak.');
+    }
+    if (!cleanPass || cleanPass.length < 6) {
+      throw new Error('Parol kamida 6 ta belgidan iborat bo\'lishi shart.');
+    }
+
+    const res = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass);
     if (res.user) {
-      await updateProfile(res.user, { displayName: username });
+      await updateProfile(res.user, { displayName: cleanUsername }).catch(() => {});
       const p = createDefaultProfile(res.user);
-      p.username = username;
-      p.displayName = username;
+      p.username = cleanUsername;
+      p.displayName = cleanUsername;
+      p.email = cleanEmail;
       saveLocalProfile(res.user.uid, p);
+      try {
+        localStorage.setItem('yolnoma_user', JSON.stringify(p));
+      } catch {}
       setProfile(p);
 
       // Async write to RTDB
-      set(ref(rtdb, `users/${res.user.uid}`), p).catch(() => {});
-      set(ref(rtdb, `leaderboard/${res.user.uid}`), {
-        uid: p.uid,
-        displayName: p.displayName,
-        username: p.username,
-        highestWpm: 0,
-        highestAccuracy: 0,
-        country: p.country,
-        level: p.level,
-        rankTitle: p.rankTitle,
-        bio: p.bio,
-        avatarUrl: p.avatarUrl,
-        totalTests: 0,
-        lastActive: Date.now()
-      }).catch(() => {});
+      try {
+        set(ref(rtdb, `users/${res.user.uid}`), p).catch(() => {});
+        set(ref(rtdb, `leaderboard/${res.user.uid}`), {
+          uid: p.uid,
+          displayName: p.displayName,
+          username: p.username,
+          highestWpm: 0,
+          highestAccuracy: 0,
+          country: p.country,
+          level: p.level,
+          rankTitle: p.rankTitle,
+          bio: p.bio,
+          avatarUrl: p.avatarUrl,
+          totalTests: 0,
+          lastActive: Date.now()
+        }).catch(() => {});
+      } catch (dbErr) {
+        console.warn('RTDB sync notice:', dbErr);
+      }
 
-      addNotification('Ro\'yhatdan o\'tildi!', `Xush kelibsiz, @${username}!`);
+      addNotification('Ro\'yxatdan o\'tildi! 🎉', `Xush kelibsiz, @${cleanUsername}!`);
     }
   };
 
   const loginWithEmail = async (email: string, pass: string) => {
-    const res = await signInWithEmailAndPassword(auth, email, pass);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = pass;
+
+    if (!cleanEmail) {
+      throw new Error('Iltimos, email pochtangizni kiriting.');
+    }
+    if (!cleanPass) {
+      throw new Error('Iltimos, parolingizni kiriting.');
+    }
+
+    const res = await signInWithEmailAndPassword(auth, cleanEmail, cleanPass);
     if (res.user) {
       const p = await fetchOrCreateProfile(res.user);
+      p.email = cleanEmail;
+      saveLocalProfile(res.user.uid, p);
+      try {
+        localStorage.setItem('yolnoma_user', JSON.stringify(p));
+      } catch {}
       setProfile(p);
-      addNotification('Xush kelibsiz!', `Tizimga kirdingiz: ${p.displayName}`);
+      addNotification('Xush kelibsiz! 👋', `Tizimga kirdingiz: ${p.displayName}`);
     }
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
-    addNotification('Parol tiklash yuborildi', `${email} pochtangizni tekshiring.`);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      throw new Error('Iltimos, email pochtangizni kiriting.');
+    }
+    await sendPasswordResetEmail(auth, cleanEmail);
+    addNotification('Parol tiklash yuborildi', `${cleanEmail} pochtangizga tiklash xati yuborildi. Xatni tekshiring.`);
   };
 
   const logout = async () => {

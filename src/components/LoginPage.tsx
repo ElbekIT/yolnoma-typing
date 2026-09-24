@@ -16,7 +16,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { formatAuthError } from '../utils/authErrorHelper';
+import { formatAuthError, FormattedAuthError } from '../utils/authErrorHelper';
 
 interface LoginPageProps {
   onSuccess?: () => void;
@@ -42,9 +42,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
   const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [actionHint, setActionHint] = useState<string | null>(null);
-  const [isIframeBlocked, setIsIframeBlocked] = useState(false);
+  const [formattedError, setFormattedError] = useState<FormattedAuthError | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // If already logged in, redirect immediately
@@ -66,45 +64,34 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onBackToTyping]);
 
-  const handleGoogleSignIn = async () => {
-    setError(null);
-    setActionHint(null);
-    setIsIframeBlocked(false);
+  const resetMessages = () => {
+    setFormattedError(null);
     setSuccessMessage(null);
+  };
+
+  const handleGoogleSignIn = async () => {
+    resetMessages();
     setLoading(true);
     try {
       await signInWithGoogle();
       localStorage.setItem('yolnoma_auth_completed', 'true');
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      const formatted = formatAuthError(err);
-      setError(formatted.userMessage);
-      setActionHint(formatted.actionHint || null);
-      if (formatted.isIframeBlocked) {
-        setIsIframeBlocked(true);
-      }
+      setFormattedError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const handleGithubSignIn = async () => {
-    setError(null);
-    setActionHint(null);
-    setIsIframeBlocked(false);
-    setSuccessMessage(null);
+    resetMessages();
     setLoading(true);
     try {
       await signInWithGithub();
       localStorage.setItem('yolnoma_auth_completed', 'true');
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      const formatted = formatAuthError(err);
-      setError(formatted.userMessage);
-      setActionHint(formatted.actionHint || null);
-      if (formatted.isIframeBlocked) {
-        setIsIframeBlocked(true);
-      }
+      setFormattedError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -112,57 +99,71 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
+    resetMessages();
 
-    if (!email.trim()) {
-      setError('Iltimos, pochtangizni (email) kiriting');
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
+    const cleanUsername = username.trim();
+
+    if (!cleanEmail) {
+      setFormattedError({
+        code: 'auth/missing-email',
+        userMessage: 'Iltimos, pochtangizni (email) kiriting'
+      });
       return;
     }
 
     if (mode === 'forgot') {
       setLoading(true);
       try {
-        await resetPassword(email.trim());
-        setSuccessMessage('Parolni tiklash havolasi pochtangizga yuborildi! Xatni tekshiring.');
+        await resetPassword(cleanEmail);
+        setSuccessMessage(`${cleanEmail} pochtangizga parolni tiklash havolasi yuborildi! Xatni tekshiring.`);
       } catch (err: unknown) {
-        const formatted = formatAuthError(err);
-        setError(formatted.userMessage);
-        setActionHint(formatted.actionHint || null);
+        setFormattedError(formatAuthError(err));
       } finally {
         setLoading(false);
       }
       return;
     }
 
-    if (!password) {
-      setError('Iltimos, parolingizni kiriting');
+    if (!cleanPassword) {
+      setFormattedError({
+        code: 'auth/missing-password',
+        userMessage: 'Iltimos, parolingizni kiriting'
+      });
       return;
     }
 
     if (mode === 'register') {
-      if (!username.trim()) {
-        setError('Iltimos, taxallus (username) kiriting');
+      if (!cleanUsername) {
+        setFormattedError({
+          code: 'validation/missing-username',
+          userMessage: 'Iltimos, taxallus (username) kiriting'
+        });
         return;
       }
-      if (password.length < 6) {
-        setError('Parol kamida 6 ta belgidan iborat bo\'lishi shart');
+      if (cleanPassword.length < 6) {
+        setFormattedError({
+          code: 'auth/weak-password',
+          userMessage: 'Parol kamida 6 ta belgidan iborat bo\'lishi shart'
+        });
         return;
       }
-      if (verifyPassword && password !== verifyPassword) {
-        setError('Kiritilgan parollar bir-biriga mos kelmadi');
+      if (verifyPassword && cleanPassword !== verifyPassword) {
+        setFormattedError({
+          code: 'validation/password-mismatch',
+          userMessage: 'Kiritilgan parollar bir-biriga mos kelmadi'
+        });
         return;
       }
 
       setLoading(true);
       try {
-        await registerWithEmail(email.trim(), password, username.trim());
+        await registerWithEmail(cleanEmail, cleanPassword, cleanUsername);
         localStorage.setItem('yolnoma_auth_completed', 'true');
         if (onSuccess) onSuccess();
       } catch (err: unknown) {
-        const formatted = formatAuthError(err);
-        setError(formatted.userMessage);
-        setActionHint(formatted.actionHint || null);
+        setFormattedError(formatAuthError(err));
       } finally {
         setLoading(false);
       }
@@ -172,13 +173,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
     // Login mode
     setLoading(true);
     try {
-      await loginWithEmail(email.trim(), password);
+      await loginWithEmail(cleanEmail, cleanPassword);
       localStorage.setItem('yolnoma_auth_completed', 'true');
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      const formatted = formatAuthError(err);
-      setError(formatted.userMessage);
-      setActionHint(formatted.actionHint || null);
+      setFormattedError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -261,26 +260,76 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
         )}
 
         {/* Feedback Messages */}
-        {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono space-y-1.5">
+        {formattedError && (
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono space-y-2">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="space-y-1 flex-1">
-                <span className="font-semibold block">{error}</span>
-                {actionHint && (
-                  <p className="text-zinc-400 text-[11px] leading-relaxed">{actionHint}</p>
-                )}
-                {isIframeBlocked && (
-                  <button
-                    type="button"
-                    onClick={() => window.open(window.location.href, '_blank')}
-                    className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg text-[11px] transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Yangi tabda ochish</span>
-                  </button>
+                <span className="font-semibold block">{formattedError.userMessage}</span>
+                {formattedError.actionHint && (
+                  <p className="text-zinc-400 text-[11px] leading-relaxed">{formattedError.actionHint}</p>
                 )}
               </div>
+            </div>
+
+            {/* Smart Recovery Actions */}
+            <div className="pt-1 flex flex-wrap gap-2 border-t border-rose-500/20">
+              {formattedError.suggestRegister && mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('register');
+                    if (!username && email) {
+                      const suggested = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 16);
+                      setUsername(suggested || 'typer');
+                    }
+                    resetMessages();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] text-[11px] font-semibold transition-colors cursor-pointer"
+                >
+                  <UserPlus className="w-3 h-3" />
+                  <span>Ushbu email bilan ro'yxatdan o'tish</span>
+                </button>
+              )}
+
+              {formattedError.suggestLogin && mode === 'register' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('login');
+                    resetMessages();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-semibold transition-colors cursor-pointer"
+                >
+                  <LogIn className="w-3 h-3" />
+                  <span>Kirish bo'limiga o'tish</span>
+                </button>
+              )}
+
+              {formattedError.suggestReset && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('forgot');
+                    resetMessages();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--sub-color)]/20 text-[var(--text-color)] text-[11px] font-medium transition-colors cursor-pointer"
+                >
+                  <KeyRound className="w-3 h-3" />
+                  <span>Parolni tiklash</span>
+                </button>
+              )}
+
+              {formattedError.isIframeBlocked && (
+                <button
+                  type="button"
+                  onClick={() => window.open(window.location.href, '_blank')}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded-lg text-[11px] transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Yangi tabda ochish</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -408,8 +457,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
               <button
                 type="button"
                 onClick={() => {
-                  setError(null);
-                  setSuccessMessage(null);
+                  resetMessages();
                   setMode('forgot');
                 }}
                 className="hover:text-[var(--text-color)] transition-colors cursor-pointer"
@@ -422,8 +470,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
                 <button
                   type="button"
                   onClick={() => {
-                    setError(null);
-                    setSuccessMessage(null);
+                    resetMessages();
                     setMode('register');
                   }}
                   className="text-[var(--main-color)] font-bold hover:underline cursor-pointer"
@@ -438,8 +485,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
               <button
                 type="button"
                 onClick={() => {
-                  setError(null);
-                  setSuccessMessage(null);
+                  resetMessages();
                   setMode('login');
                 }}
                 className="text-[var(--main-color)] font-bold hover:underline cursor-pointer"
@@ -451,8 +497,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
             <button
               type="button"
               onClick={() => {
-                setError(null);
-                setSuccessMessage(null);
+                resetMessages();
                 setMode('login');
               }}
               className="hover:text-[var(--text-color)] transition-colors cursor-pointer flex items-center gap-1"
