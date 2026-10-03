@@ -1353,6 +1353,184 @@ app.post('/api/typing/submit', (req, res) => {
   });
 });
 
+// -------------------------------------------------------------
+// REAL-TIME BATTLE ARENA ROOM ENGINE & MULTIPLAYER API
+// -------------------------------------------------------------
+interface ServerBattleRacer {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  progressPercent: number;
+  wpm: number;
+  accuracy: number;
+  carColor: string;
+  isWinner: boolean;
+  isBot?: boolean;
+}
+
+interface ServerBattleRoom {
+  code: string;
+  roomId: string;
+  gameType: string;
+  text: string;
+  selectedText: string;
+  status: 'waiting' | 'ready' | 'countdown' | 'racing' | 'finished';
+  createdAt: number;
+  duration: number;
+  language: string;
+  host: ServerBattleRacer;
+  guest: ServerBattleRacer | null;
+  winner: string | null;
+  lastUpdated: number;
+}
+
+const activeBattleRooms = new Map<string, ServerBattleRoom>();
+
+// Clean up stale battle rooms older than 3 hours
+setInterval(() => {
+  const threeHoursAgo = Date.now() - 3 * 3600 * 1000;
+  for (const [code, room] of activeBattleRooms.entries()) {
+    if (room.createdAt < threeHoursAgo) {
+      activeBattleRooms.delete(code);
+    }
+  }
+}, 10 * 60 * 1000);
+
+// 1. Create Battle Room
+app.post('/api/battle/create-room', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const { code, text, host, duration, language, gameType } = req.body || {};
+    const safeCode = String(code || '').trim().toUpperCase();
+
+    if (!safeCode || safeCode.length < 4) {
+      return res.status(400).json({ success: false, error: 'Yaroqsiz xona kodi' });
+    }
+
+    const newRoom: ServerBattleRoom = {
+      code: safeCode,
+      roomId: safeCode,
+      gameType: String(gameType || 'speedway'),
+      text: String(text || 'Tez yozish musobaqasi'),
+      selectedText: String(text || 'Tez yozish musobaqasi'),
+      status: 'waiting',
+      createdAt: Date.now(),
+      duration: Number(duration || 30),
+      language: String(language || 'uz-latn'),
+      host: {
+        id: String(host?.id || 'host'),
+        name: escapeHtmlSafe(host?.name || 'Racer Host', 30),
+        avatarUrl: host?.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${safeCode}`,
+        progressPercent: 0,
+        wpm: 0,
+        accuracy: 100,
+        carColor: host?.carColor || 'blue',
+        isWinner: false,
+        isBot: false
+      },
+      guest: null,
+      winner: null,
+      lastUpdated: Date.now()
+    };
+
+    activeBattleRooms.set(safeCode, newRoom);
+    return res.json({ success: true, room: newRoom });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Server xatosi' });
+  }
+});
+
+// 2. Join Battle Room
+app.post('/api/battle/join-room', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const { code, guest } = req.body || {};
+    const safeCode = String(code || '').trim().toUpperCase();
+
+    const room = activeBattleRooms.get(safeCode);
+    if (!room) {
+      return res.status(404).json({ success: false, error: `"${safeCode}" kodli xona topilmadi.` });
+    }
+
+    if (room.status !== 'waiting' && room.status !== 'ready') {
+      return res.status(409).json({ success: false, error: 'Xonadagi oʻyin allaqachon boshlangan.' });
+    }
+
+    const guestRacer: ServerBattleRacer = {
+      id: String(guest?.id || `guest_${Date.now()}`),
+      name: escapeHtmlSafe(guest?.name || 'Raqib', 30),
+      avatarUrl: guest?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${safeCode}`,
+      progressPercent: 0,
+      wpm: 0,
+      accuracy: 100,
+      carColor: guest?.carColor || 'red',
+      isWinner: false,
+      isBot: false
+    };
+
+    room.guest = guestRacer;
+    room.status = 'ready';
+    room.lastUpdated = Date.now();
+
+    activeBattleRooms.set(safeCode, room);
+    return res.json({ success: true, room });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Server xatosi' });
+  }
+});
+
+// 3. Get Room State
+app.get('/api/battle/room/:code', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const safeCode = String(req.params.code || '').trim().toUpperCase();
+  const room = activeBattleRooms.get(safeCode);
+
+  if (!room) {
+    return res.status(404).json({ success: false, error: 'Xona topilmadi' });
+  }
+
+  return res.json({ success: true, room });
+});
+
+// 4. Update Racer Progress & Status
+app.post('/api/battle/update-progress', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const { code, role, progress, status, winner } = req.body || {};
+    const safeCode = String(code || '').trim().toUpperCase();
+    const room = activeBattleRooms.get(safeCode);
+
+    if (!room) {
+      return res.status(404).json({ success: false, error: 'Xona topilmadi' });
+    }
+
+    if (role === 'host' && progress) {
+      room.host = { ...room.host, ...progress };
+    } else if (role === 'guest' && progress) {
+      if (room.guest) {
+        room.guest = { ...room.guest, ...progress };
+      }
+    }
+
+    if (status) {
+      room.status = status;
+    }
+
+    if (winner) {
+      room.winner = winner;
+      room.status = 'finished';
+    }
+
+    room.lastUpdated = Date.now();
+    activeBattleRooms.set(safeCode, room);
+
+    return res.json({ success: true, room });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Server xatosi' });
+  }
+});
+
 // Endpoint: Verified Leaderboard API (Real-time Firebase RTDB Sync + Anti-Cheat Verified)
 let cachedServerLeaderboard: any[] = [];
 let lastLeaderboardSyncTime = 0;

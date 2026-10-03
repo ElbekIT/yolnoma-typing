@@ -20,6 +20,48 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
+/**
+ * Strict validator to guarantee that every generated typing word is meaningful,
+ * natural, pronounceable and free of random keyboard mash (e.g. "jdhjshd", "asdfgh").
+ */
+export function isMeaningfulWord(word: string): boolean {
+  if (!word || typeof word !== 'string') return false;
+  const clean = word.trim().toLowerCase();
+  if (clean.length < 2 || clean.length > 16) return false;
+
+  // 1. Natural language letter validation (Latin or Cyrillic with valid apostrophes)
+  if (!/^[a-zA-Zʻʼ'`а-яА-ЯўЎқҚғҒҳҲёЁ]+$/.test(clean)) {
+    return false;
+  }
+
+  // 2. Reject obvious repeated character mash (e.g. "aaaaa", "zzzzz")
+  if (/(.)\1{2,}/.test(clean)) {
+    return false;
+  }
+
+  // 3. Reject obvious keyboard row/cluster mash (e.g. "asdf", "hjkl", "jdhjshd", "fjdk")
+  const keyboardMashes = ['asdf', 'fdsa', 'hjkl', 'lkjh', 'qwer', 'rewq', 'zxcv', 'vcxz', 'jdhj', 'shd', 'fjdk', 'dksl'];
+  if (keyboardMashes.some(m => clean.includes(m))) {
+    return false;
+  }
+
+  // 4. Must contain at least one vowel
+  const hasLatinVowel = /[aeiouy]/.test(clean);
+  const hasCyrillicVowel = /[аеёиоуыэюяў]/.test(clean);
+  if (!hasLatinVowel && !hasCyrillicVowel) {
+    return false;
+  }
+
+  // 5. Reject 4 or more consecutive consonants (unnatural letter soup like "jdhjshd")
+  const latinConsonantClustering = /[bcdfghjklmnpqrstvwxz]{4,}/i.test(clean);
+  const cyrillicConsonantClustering = /[бвгджзйклмнпрстфхцчшщ]{4,}/i.test(clean);
+  if (latinConsonantClustering || cyrillicConsonantClustering) {
+    return false;
+  }
+
+  return true;
+}
+
 export function generateTestText(
   mode: TextMode,
   language: LanguageCode,
@@ -134,6 +176,12 @@ export function generateTestText(
   } else if (mode === 'symbols') {
     const syms = ['!@#$', '%^&*', '()_+', '{}[]', ':;"\'', '<>,.?', '/|\\-'];
     wordsPool = wordsPool.map((w, idx) => (idx % 2 === 0 ? w + syms[idx % syms.length] : w));
+  } else {
+    // Strictly filter out any meaningless words or keyboard mash (e.g. jdhjshd)
+    const validWords = wordsPool.filter(isMeaningfulWord);
+    if (validWords.length >= 10) {
+      wordsPool = validWords;
+    }
   }
 
   // Difficulty adjustment

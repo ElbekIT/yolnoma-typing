@@ -89,34 +89,17 @@ service cloud.firestore {
     // 3. 1V1 BATTLE ROOMS
     // -------------------------------------------------------------
     match /battle_rooms/{roomId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
 
-      allow create: if isAuthenticated() && isNotBanned()
-        && (
-          (request.resource.data.host is map && request.resource.data.host.id == request.auth.uid) ||
-          (request.resource.data.hostId == request.auth.uid)
-        )
-        && request.resource.data.status in ['waiting', 'ready', 'racing', 'finished']
+      allow create: if request.resource.data.status in ['waiting', 'ready', 'countdown', 'racing', 'finished']
         && (!('host' in request.resource.data) || !('wpm' in request.resource.data.host) || isValidWpm(request.resource.data.host.wpm))
         && (!('host' in request.resource.data) || !('accuracy' in request.resource.data.host) || isValidAccuracy(request.resource.data.host.accuracy));
 
-      allow update: if isAuthenticated() && isNotBanned()
-        && (
-          (resource.data.host is map && resource.data.host.id == request.auth.uid) ||
-          (resource.data.hostId == request.auth.uid) ||
-          (resource.data.guest == null) ||
-          (resource.data.guestId == null) ||
-          (resource.data.guest is map && resource.data.guest.id == request.auth.uid) ||
-          (resource.data.guestId == request.auth.uid)
-        )
+      allow update: if request.resource.data.status in ['waiting', 'ready', 'countdown', 'racing', 'finished']
         && (!('host' in request.resource.data) || !('wpm' in request.resource.data.host) || isValidWpm(request.resource.data.host.wpm))
         && (!('guest' in request.resource.data) || request.resource.data.guest == null || !('wpm' in request.resource.data.guest) || isValidWpm(request.resource.data.guest.wpm));
 
-      allow delete: if isAuthenticated() && (
-        (resource.data.host is map && resource.data.host.id == request.auth.uid) ||
-        (resource.data.hostId == request.auth.uid) ||
-        isRootOwner()
-      );
+      allow delete: if isAuthenticated() || isRootOwner();
     }
 
     // -------------------------------------------------------------

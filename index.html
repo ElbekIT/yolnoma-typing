@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     
-    <!-- Ad Networks Diagnostic & Crash Shield -->
+    <!-- Ad Networks Diagnostic & Script Error Crash Shield -->
     <script>
       (function() {
+        // 1. Mute noisy 3rd-party ad network and opaque cross-origin script errors
         var origConsoleError = console.error;
         console.error = function() {
           var args = Array.prototype.slice.call(arguments);
@@ -16,7 +17,10 @@
 
           if (
             msg.indexOf('highrevenueformat') !== -1 ||
-            msg.indexOf('adsbygoogle') !== -1
+            msg.indexOf('adsbygoogle') !== -1 ||
+            msg.indexOf('googlesyndication') !== -1 ||
+            msg.indexOf('pagead2') !== -1 ||
+            msg.indexOf('Script error') !== -1
           ) {
             if (console.debug) {
               console.debug('[Ad Diagnostic Notice]:', ...args);
@@ -26,14 +30,66 @@
           return origConsoleError.apply(console, arguments);
         };
 
+        // 2. Global window.onerror hook (Suppresses cross-origin "Script error." from 3rd-party ads)
+        var origOnError = window.onerror;
+        window.onerror = function(message, source, lineno, colno, error) {
+          var msgStr = String(message || '');
+          var srcStr = String(source || '');
+          if (
+            msgStr === 'Script error.' ||
+            msgStr === 'Script error' ||
+            msgStr.indexOf('Script error') !== -1 ||
+            !srcStr ||
+            srcStr === '' ||
+            srcStr.indexOf('highrevenueformat') !== -1 ||
+            srcStr.indexOf('pagead2') !== -1 ||
+            srcStr.indexOf('googlesyndication') !== -1 ||
+            srcStr.indexOf('googleads') !== -1 ||
+            srcStr.indexOf('doubleclick') !== -1
+          ) {
+            // Error was handled safely
+            return true;
+          }
+          if (typeof origOnError === 'function') {
+            return origOnError.apply(window, arguments);
+          }
+          return false;
+        };
+
+        // 3. Capturing error listener for window
         window.addEventListener('error', function(e) {
+          var msg = (e && e.message) ? String(e.message) : '';
           var filename = (e && e.filename) ? String(e.filename) : '';
           if (
-            filename.indexOf('highrevenueformat') !== -1
+            msg === 'Script error.' ||
+            msg === 'Script error' ||
+            msg.indexOf('Script error') !== -1 ||
+            !filename ||
+            filename === '' ||
+            filename.indexOf('highrevenueformat') !== -1 ||
+            filename.indexOf('pagead2') !== -1 ||
+            filename.indexOf('googlesyndication') !== -1 ||
+            filename.indexOf('googleads') !== -1 ||
+            filename.indexOf('doubleclick') !== -1
           ) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
             return true;
+          }
+        }, true);
+
+        // 4. Capturing unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(e) {
+          var reason = (e && e.reason) ? String(e.reason.message || e.reason) : '';
+          if (
+            reason.indexOf('Script error') !== -1 ||
+            reason.indexOf('highrevenueformat') !== -1 ||
+            reason.indexOf('adsbygoogle') !== -1 ||
+            reason.indexOf('googlesyndication') !== -1 ||
+            reason.indexOf('pagead2') !== -1
+          ) {
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
           }
         }, true);
       })();

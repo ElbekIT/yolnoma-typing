@@ -101,7 +101,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (localStorage.getItem('yolnoma_mode_bar_scale') as ModeBarScale) || 'medium';
   });
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('yolnoma_lang') as LanguageCode) || 'en';
+    return (localStorage.getItem('yolnoma_lang') as LanguageCode) || 'uz-latn';
   });
   const [showKeyboard, setShowKeyboardState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_keyboard') === 'true';

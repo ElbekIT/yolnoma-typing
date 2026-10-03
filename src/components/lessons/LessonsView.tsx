@@ -28,15 +28,15 @@ const LESSONS_DATA: Lesson[] = [
     id: 1,
     title: '1-DARS: Asosiy Qatlam (Home Row)',
     description: 'Boshlangʻich holat: Barmoqlaringizni F va J boʻrtiqchalariga joylashtiring.',
-    targetText: 'fj dk sl a; fj dk sl a; fjdk sl a; fjdk sl a;',
-    focusKeys: ['f', 'j', 'd', 'k', 's', 'l', 'a', ';'],
-    fingerGuide: 'Chap koʻrsatkich F da, Oʻng koʻrsatkich J da boʻlishi shart!'
+    targetText: 'dala asal safar fasl falsafa sadaf saf dala asal fasl',
+    focusKeys: ['f', 'j', 'd', 'k', 's', 'l', 'a'],
+    fingerGuide: 'Chap koʻrsatkich F da, Oʻng koʻrsatkich J da boʻlishi shart! Haqiqiy soʻzlarni barmoqlar bilan his qiling.'
   },
   {
     id: 2,
     title: '2-DARS: Yuqori Qatlam (Top Row)',
     description: 'Koʻrsatkich va oʻrta barmoqlarni yuqoriga choʻzib yozishni oʻrganing.',
-    targetText: 'ru ei wo qp ru ei wo qp f j r u e i w o q p',
+    targetText: 'orzu yurt qor teran fikr quyosh daryo toza quyosh yurt',
     focusKeys: ['r', 'u', 'e', 'i', 'w', 'o', 'q', 'p'],
     fingerGuide: 'Har bir barmoq faqat oʻz ustunidagi harfga javob beradi.'
   },
@@ -44,7 +44,7 @@ const LESSONS_DATA: Lesson[] = [
     id: 3,
     title: '3-DARS: Pastki Qatlam (Bottom Row)',
     description: 'Pastki qatlam harflarini klaviaturaga qaramasdan topish.',
-    targetText: 'vm cn x b z vm cn x b z f j v m c n x b z',
+    targetText: 'zamon vatan chora meva bizlar bahor xalq sabr vatan zamon',
     focusKeys: ['v', 'm', 'c', 'n', 'x', 'b', 'z'],
     fingerGuide: 'Pastga tushganda barmoq tirsagidan yengil harakatlanadi.'
   },
@@ -52,15 +52,15 @@ const LESSONS_DATA: Lesson[] = [
     id: 4,
     title: '4-DARS: Bosh Harflar & Shift',
     description: 'Shift tugmasi va bosh harflarni toʻgʻri bosish usuli.',
-    targetText: 'Fj Dk Sl A; Ru Ei Wo Qp Vm Cn Xb Z',
-    focusKeys: ['Shift', 'F', 'J', 'D', 'K', 'S', 'L'],
+    targetText: 'Toshkent Samarqand Buxoro Xiva Navoiy Fargona Andijon Termiz',
+    focusKeys: ['Shift', 'T', 'S', 'B', 'X', 'N', 'F', 'A'],
     fingerGuide: 'Oʻng harf uchun chap Shift, Chap harf uchun oʻng Shift bosiladi.'
   },
   {
     id: 5,
     title: '5-DARS: Soʻzlar Mashqi (Soʻz birikmalari)',
-    description: 'Kichik soʻzlarni barmoqlar xotirasi bilan tezkor yozish.',
-    targetText: 'dunyo bilak ilm ziyo qalam kitob vatan navo safo',
+    description: 'Maʼnoli soʻzlarni barmoqlar xotirasi bilan tezkor yozish.',
+    targetText: 'dunyo bilak ilm ziyo qalam kitob vatan navo safo baxt omad',
     focusKeys: ['d', 'u', 'n', 'y', 'o', 'b', 'i', 'l', 'a', 'k'],
     fingerGuide: 'Klaviaturaga mutlaqo qaramang, ekrandagi harflarga diqqat qiling!'
   },
@@ -68,7 +68,7 @@ const LESSONS_DATA: Lesson[] = [
     id: 6,
     title: '6-DARS: Mukammal Yozish (Toʻliq Jumla)',
     description: 'Barcha qoidalar asosida mukammal Oʻzbekcha matn yozish.',
-    targetText: 'Bilim va maʼrifat insonning eng buyuk boyligidir.',
+    targetText: 'Bilim va marifat insonning eng buyuk boyligidir. Mehnat bilan erishilgan har bir yutuq sharaf keltirur.',
     focusKeys: ['all'],
     fingerGuide: 'Tabriklaymiz! Siz haqiqiy Pro yozuvchiga aylanasiz.'
   }

@@ -76,24 +76,24 @@
     },
 
     "battle_rooms": {
-      ".read": "auth != null",
+      ".read": true,
       "$roomId": {
-        ".write": "auth != null && !root.child('bannedUsers').child(auth.uid).exists()",
-        ".validate": "newData.child('status').isString()"
+        ".write": "auth == null || !root.child('bannedUsers').child(auth.uid).exists()",
+        ".validate": "newData.hasChildren(['status'])"
       }
     },
 
     "private_battle_rooms": {
-      ".read": "auth != null",
+      ".read": true,
       "$roomId": {
-        ".write": "auth != null && !root.child('bannedUsers').child(auth.uid).exists()"
+        ".write": "auth == null || !root.child('bannedUsers').child(auth.uid).exists()"
       }
     },
 
     "battles": {
-      ".read": "auth != null",
+      ".read": true,
       "$roomId": {
-        ".write": "auth != null && !root.child('bannedUsers').child(auth.uid).exists()"
+        ".write": "auth == null || !root.child('bannedUsers').child(auth.uid).exists()"
       }
     },
 

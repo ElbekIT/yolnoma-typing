@@ -147,6 +147,17 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const botTimerRef = useRef<any>(null);
   const roomUnsubRef = useRef<any>(null);
   const countdownTimerRef = useRef<any>(null);
+  const pollIntervalRef = useRef<any>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (roomUnsubRef.current) roomUnsubRef.current();
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (botTimerRef.current) clearInterval(botTimerRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    };
+  }, []);
 
   // Auto handle deep link / URL room code
   useEffect(() => {
@@ -220,6 +231,29 @@ export const BattleView: React.FC<BattleViewProps> = ({
     };
   }, [currentUid]);
 
+  // Apply Room Update from either RTDB, Firestore, or Server REST API
+  const applyRoomUpdate = (data: any, amIHost: boolean) => {
+    if (!data) return;
+
+    if (data.text) setBattleText(data.text);
+
+    const opponentRoleData = amIHost ? data.guest : data.host;
+    if (opponentRoleData) {
+      setOpponentProgress(opponentRoleData);
+    }
+
+    // Check for start countdown
+    if (data.status === 'countdown' && gameState !== 'countdown' && gameState !== 'racing' && gameState !== 'finished') {
+      startCountdownSequence();
+    }
+
+    // Check for Winner
+    if (data.winner) {
+      setWinnerId(data.winner);
+      setGameState('finished');
+    }
+  };
+
   // Create a new Multiplayer Room
   const handleCreateRoom = async () => {
     if (!auth.currentUser) {
@@ -279,16 +313,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
     };
 
     let isCreated = false;
-    let detailedError: any = null;
 
     // 1. Try Firestore
     try {
       await setDoc(doc(db, 'battle_rooms', code), roomPayload);
       isCreated = true;
-      console.log('[Firestore Battle Room Created]:', code);
     } catch (err: any) {
-      console.error('[Firestore Create Room Error Details]:', err);
-      detailedError = err;
+      console.warn('[Firestore Create Room Warning]:', err?.message);
     }
 
     // 2. Try RTDB
@@ -296,18 +327,29 @@ export const BattleView: React.FC<BattleViewProps> = ({
       const roomRef = ref(rtdb, `battle_rooms/${code}`);
       await set(roomRef, roomPayload);
       isCreated = true;
-      console.log('[RTDB Battle Room Created]:', code);
     } catch (err: any) {
-      console.error('[RTDB Create Room Error Details]:', err);
-      if (!detailedError) detailedError = err;
+      console.warn('[RTDB Create Room Warning]:', err?.message);
+    }
+
+    // 3. Always sync to Server API for 100% reliability
+    try {
+      const apiRes = await fetch('/api/battle/create-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(roomPayload)
+      });
+      if (apiRes.ok) {
+        isCreated = true;
+      }
+    } catch (err: any) {
+      console.warn('[Server Battle API Create Warning]:', err?.message);
     }
 
     if (isCreated) {
       setGameState('ready_screen');
       listenToRoom(code, true);
     } else {
-      console.error('[BattleView Error] Xona yaratishda xatolik yuz berdi:', detailedError);
-      setJoinError(`Xona yaratishda xatolik yuz berdi (${detailedError?.code || detailedError?.message || 'Tarmoq xatosi'}). Qayta urinib ko'ring.`);
+      setJoinError("Xona yaratishda xatolik yuz berdi. Qayta urinib ko'ring.");
     }
   };
 
@@ -336,16 +378,29 @@ export const BattleView: React.FC<BattleViewProps> = ({
     try {
       let roomVal: any = null;
 
+      // A. Try RTDB
       try {
         const roomRef = ref(rtdb, `battle_rooms/${code}`);
         const snap = await get(roomRef);
         if (snap.exists()) roomVal = snap.val();
       } catch (e) {}
 
+      // B. Try Firestore
       if (!roomVal) {
         try {
           const fSnap = await getDoc(doc(db, 'battle_rooms', code));
           if (fSnap.exists()) roomVal = fSnap.data();
+        } catch (e) {}
+      }
+
+      // C. Try Server REST API
+      if (!roomVal) {
+        try {
+          const sRes = await fetch(`/api/battle/room/${code}`);
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (sData.success && sData.room) roomVal = sData.room;
+          }
         } catch (e) {}
       }
 
@@ -390,6 +445,14 @@ export const BattleView: React.FC<BattleViewProps> = ({
         await updateDoc(doc(db, 'battle_rooms', code), guestUpdate);
       } catch {}
 
+      try {
+        await fetch('/api/battle/join-room', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, guest: guestData })
+        });
+      } catch {}
+
       setGameState('ready_screen');
       listenToRoom(code, false);
     } catch (err) {
@@ -398,33 +461,35 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
-  // Listen to Firebase RTDB Room updates
+  // Listen to Room updates via RTDB & Server Polling Fallback
   const listenToRoom = (code: string, amIHost: boolean) => {
     if (roomUnsubRef.current) roomUnsubRef.current();
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
-    const roomRef = ref(rtdb, `battle_rooms/${code}`);
-    roomUnsubRef.current = onValue(roomRef, (snapshot) => {
-      if (!snapshot.exists()) return;
-      const data = snapshot.val();
+    // 1. RTDB live listener
+    try {
+      const roomRef = ref(rtdb, `battle_rooms/${code}`);
+      roomUnsubRef.current = onValue(roomRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+        const data = snapshot.val();
+        applyRoomUpdate(data, amIHost);
+      });
+    } catch (e) {
+      console.warn('RTDB onValue listener error:', e);
+    }
 
-      if (data.text) setBattleText(data.text);
-
-      const opponentRoleData = amIHost ? data.guest : data.host;
-      if (opponentRoleData) {
-        setOpponentProgress(opponentRoleData);
-      }
-
-      // Check for start countdown
-      if (data.status === 'countdown' && gameState !== 'countdown' && gameState !== 'racing' && gameState !== 'finished') {
-        startCountdownSequence();
-      }
-
-      // Check for Winner
-      if (data.winner) {
-        setWinnerId(data.winner);
-        setGameState('finished');
-      }
-    });
+    // 2. Continuous server polling (every 700ms) to ensure instant updates
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const sRes = await fetch(`/api/battle/room/${code}`);
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          if (sData.success && sData.room) {
+            applyRoomUpdate(sData.room, amIHost);
+          }
+        }
+      } catch {}
+    }, 700);
   };
 
   // Send Direct Invitation to an Online Player
@@ -528,8 +593,21 @@ export const BattleView: React.FC<BattleViewProps> = ({
   // Start Countdown Sequence
   const handleTriggerStartMatch = async () => {
     if (!isBotMatch && activeRoomCode) {
-      const roomRef = ref(rtdb, `battle_rooms/${activeRoomCode}`);
-      await update(roomRef, { status: 'countdown' });
+      try {
+        const roomRef = ref(rtdb, `battle_rooms/${activeRoomCode}`);
+        await update(roomRef, { status: 'countdown' });
+      } catch {}
+
+      try {
+        await fetch('/api/battle/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: activeRoomCode,
+            status: 'countdown'
+          })
+        });
+      } catch {}
     }
     startCountdownSequence();
   };
@@ -616,11 +694,25 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     setMyProgress(updatedMyState);
 
-    // Sync progress with RTDB
+    // Sync progress with RTDB and Server API
     if (!isBotMatch && activeRoomCode) {
       const field = isHost ? 'host' : 'guest';
-      const progressRef = ref(rtdb, `battle_rooms/${activeRoomCode}/${field}`);
-      update(progressRef, updatedMyState);
+      try {
+        const progressRef = ref(rtdb, `battle_rooms/${activeRoomCode}/${field}`);
+        update(progressRef, updatedMyState);
+      } catch {}
+
+      try {
+        fetch('/api/battle/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: activeRoomCode,
+            role: field,
+            progress: updatedMyState
+          })
+        }).catch(() => {});
+      } catch {}
     }
 
     // Check if user won
@@ -646,11 +738,25 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }
 
       if (!isBotMatch && activeRoomCode) {
-        const roomRef = ref(rtdb, `battle_rooms/${activeRoomCode}`);
-        update(roomRef, {
-          winner: currentUid,
-          status: 'finished'
-        });
+        try {
+          const roomRef = ref(rtdb, `battle_rooms/${activeRoomCode}`);
+          update(roomRef, {
+            winner: currentUid,
+            status: 'finished'
+          });
+        } catch {}
+
+        try {
+          fetch('/api/battle/update-progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: activeRoomCode,
+              winner: currentUid,
+              status: 'finished'
+            })
+          }).catch(() => {});
+        } catch {}
       }
     }
   };

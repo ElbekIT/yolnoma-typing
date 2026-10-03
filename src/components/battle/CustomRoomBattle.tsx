@@ -104,15 +104,15 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
   const timerRef = useRef<any>(null);
   const rtdbUnsubRef = useRef<(() => void) | null>(null);
   const firestoreUnsubRef = useRef<(() => void) | null>(null);
+  const pollTimerRef = useRef<any>(null);
 
   // Ensure Firebase Auth session for Guest and logged-in racers
   const ensureFirebaseAuth = async () => {
     if (!auth.currentUser) {
       try {
         await signInAnonymously(auth);
-        console.log('[Firebase Auth] Guest anonim muvaffaqiyatli autentifikatsiyadan oʻtdi:', auth.currentUser?.uid);
       } catch (err: any) {
-        console.warn('[Firebase Auth Warning]:', err?.code, err?.message);
+        console.warn('[Firebase Auth Warning]:', err?.code);
       }
     }
   };
@@ -122,6 +122,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     return () => {
       if (rtdbUnsubRef.current) rtdbUnsubRef.current();
       if (firestoreUnsubRef.current) firestoreUnsubRef.current();
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
@@ -188,35 +189,43 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     };
 
     let saveSuccess = false;
-    let detailedError: any = null;
 
     // 1. Write to RTDB (both battle_rooms and private_battle_rooms)
     try {
       await set(ref(rtdb, `battle_rooms/${code}`), roomData);
       await set(ref(rtdb, `private_battle_rooms/${code}`), roomData);
       saveSuccess = true;
-      console.log('[RTDB Room Created]:', code);
     } catch (err: any) {
-      console.warn('[RTDB Write Warning]:', err?.code || err?.message || err);
-      detailedError = err;
+      console.warn('[RTDB Write Warning]:', err?.message);
     }
 
-    // 2. Write to Firestore as dual resilient synchronization
+    // 2. Write to Firestore
     try {
       await setDoc(doc(db, 'battle_rooms', code), roomData);
       saveSuccess = true;
-      console.log('[Firestore Room Created]:', code);
     } catch (err: any) {
-      console.warn('[Firestore Write Warning]:', err?.code || err?.message || err);
-      if (!detailedError) detailedError = err;
+      console.warn('[Firestore Write Warning]:', err?.message);
+    }
+
+    // 3. Dual-sync with Server API for 100% reliability
+    try {
+      const apiRes = await fetch('/api/battle/create-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(roomData)
+      });
+      if (apiRes.ok) {
+        saveSuccess = true;
+      }
+    } catch (err: any) {
+      console.warn('[Server Battle API Create Warning]:', err?.message);
     }
 
     if (saveSuccess) {
       setStep('waiting_friend');
       listenToRoom(code, true);
     } else {
-      console.error('[Create Room Error Details]:', detailedError);
-      setJoinError(`Xona yaratishda xatolik yuz berdi (${detailedError?.code || 'Tarmoq/Baza xatosi'}). Iltimos qayta urining.`);
+      setJoinError("Xona yaratishda xatolik yuz berdi. Iltimos qayta urining.");
     }
   };
 
@@ -246,7 +255,7 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
         if (snap2.exists()) roomData = snap2.val();
       }
     } catch (err) {
-      console.warn('RTDB read fallback to Firestore:', err);
+      console.warn('RTDB read fallback:', err);
     }
 
     // 2. Check Firestore
@@ -261,8 +270,20 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
       }
     }
 
+    // 3. Check Server REST API
     if (!roomData) {
-      console.warn('[Join Room Not Found]:', code);
+      try {
+        const sRes = await fetch(`/api/battle/room/${code}`);
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          if (sData.success && sData.room) roomData = sData.room;
+        }
+      } catch (err) {
+        console.warn('Server API read error:', err);
+      }
+    }
+
+    if (!roomData) {
       setJoinError(`"${code}" kodli xona topilmadi yoki yopilgan.`);
       return;
     }
@@ -308,14 +329,24 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
       await updateDoc(doc(db, 'battle_rooms', code), updatePayload);
     } catch {}
 
+    // Update in Server API
+    try {
+      await fetch('/api/battle/join-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, guest: guestData })
+      });
+    } catch {}
+
     setStep('waiting_friend');
     listenToRoom(code, false);
   };
 
-  // Real-time listener for room events (Dual Engine RTDB + Firestore)
+  // Real-time listener for room events (Dual Engine RTDB + Firestore + Server Polling)
   const listenToRoom = (code: string, amHost: boolean) => {
     if (rtdbUnsubRef.current) rtdbUnsubRef.current();
     if (firestoreUnsubRef.current) firestoreUnsubRef.current();
+    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
 
     const handleDataUpdate = (val: any) => {
       if (!val) return;
@@ -366,6 +397,19 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
     } catch (e) {
       console.warn('RTDB listen error:', e);
     }
+
+    // 2. Poll server API every 700ms as reliable fallback
+    pollTimerRef.current = setInterval(async () => {
+      try {
+        const sRes = await fetch(`/api/battle/room/${code}`);
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          if (sData.success && sData.room) {
+            handleDataUpdate(sData.room);
+          }
+        }
+      } catch {}
+    }, 700);
 
     // 2. Listen via Firestore
     try {
@@ -445,6 +489,19 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
       try {
         updateDoc(doc(db, 'battle_rooms', roomCode), syncPayload);
       } catch {}
+
+      try {
+        fetch('/api/battle/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: roomCode,
+            role: myRole,
+            progress: updatedMyProgress,
+            status: 'racing'
+          })
+        }).catch(() => {});
+      } catch {}
     }
 
     // Check if reached finish line
@@ -471,6 +528,18 @@ export const CustomRoomBattle: React.FC<CustomRoomBattleProps> = ({
 
       try {
         updateDoc(doc(db, 'battle_rooms', roomCode), finishPayload);
+      } catch {}
+
+      try {
+        fetch('/api/battle/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: roomCode,
+            status: 'finished',
+            winner: winName
+          })
+        }).catch(() => {});
       } catch {}
     }
 

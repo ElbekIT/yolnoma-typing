@@ -16,10 +16,19 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        const isDevOrPreview =
+          window.location.hostname.includes('run.app') ||
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname.includes('webcontainer') ||
+          window.location.hostname.includes('google');
+
+        if (!isDevOrPreview) {
+          ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        }
       }
-    } catch (err) {
-      console.error('AdSense error:', err);
+    } catch {
+      // Safe fallback
     }
   }, []);
 
