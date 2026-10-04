@@ -928,11 +928,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           </div>
 
           {/* Typing Leaderboard Table */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-[var(--card-bg)]/90 backdrop-blur-md border border-[var(--sub-alt)] rounded-2xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-[var(--sub-alt)] text-[var(--sub-color)] text-[11px] uppercase tracking-wider font-mono bg-[var(--sub-alt)]/30">
+                  <tr className="border-b border-[var(--sub-alt)] text-[var(--sub-color)] text-[11px] uppercase tracking-wider font-mono bg-[var(--sub-alt)]/25">
                     <th className="py-3 px-3 sm:px-4 w-12 text-center">#</th>
                     <th className="py-3 px-3 sm:px-4">Ishtirokchi</th>
                     <th className="py-3 px-3 sm:px-4 text-right">WPM</th>
@@ -976,8 +976,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                           key={item.uid}
                           id={`typing-rank-row-${item.uid}`}
                           onClick={() => openUserProfile(item)}
-                          className={`hover:bg-[var(--sub-alt)]/40 transition-colors cursor-pointer ${
-                            isMe ? 'bg-[var(--main-color)]/10 font-bold' : ''
+                          className={`hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer ${
+                            isMe ? 'bg-[var(--main-color)]/10 font-bold border-l-2 border-[var(--main-color)]' : ''
                           }`}
                         >
                           {/* Rank */}

@@ -95,8 +95,8 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             : 'opacity-100'
         }`}
       >
-        {/* Monkeytype Style Minimal Floating Pill Bar */}
-        <div className={`w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar shadow-xs`}>
+        {/* Monkeytype Style Minimal Floating Command Bar */}
+        <div className={`w-full bg-[var(--card-bg)]/90 backdrop-blur-md border border-[var(--sub-alt)] rounded-2xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar shadow-xs transition-colors`}>
           {/* Modes List */}
           <div className="flex items-center gap-1 sm:gap-1.5">
             {modesList.map((m) => {
@@ -109,10 +109,10 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setMode(m.id);
                     onReset();
                   }}
-                  className={`flex items-center ${scaleConfig.button} rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`flex items-center ${scaleConfig.button} rounded-xl transition-all whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'text-[var(--main-color)] font-bold'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                      ? 'text-[var(--main-color)] font-bold bg-[var(--main-color)]/15 border border-[var(--main-color)]/25'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 border border-transparent'
                   }`}
                 >
                   <Icon className={scaleConfig.icon} />
@@ -136,10 +136,10 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setWordCountMode(0);
                     onReset();
                   }}
-                  className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
                     timeMode === tVal && wordCountMode === 0
-                      ? 'text-[var(--main-color)] font-bold'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                      ? 'text-[var(--main-color)] font-bold bg-[var(--main-color)]/15 border border-[var(--main-color)]/25'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 border border-transparent'
                   }`}
                 >
                   {tVal}
@@ -160,10 +160,10 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                     setTimeMode(0);
                     onReset();
                   }}
-                  className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
                     wordCountMode === wVal && timeMode === 0
-                      ? 'text-[var(--main-color)] font-bold'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                      ? 'text-[var(--main-color)] font-bold bg-[var(--main-color)]/15 border border-[var(--main-color)]/25'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 border border-transparent'
                   }`}
                 >
                   {wVal}
@@ -187,7 +187,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                   }
                   onReset();
                 }}
-                className="text-[10px] text-[var(--sub-color)] hover:text-[var(--main-color)] px-1 py-0.5 rounded transition-colors cursor-pointer"
+                className="text-[10px] text-[var(--sub-color)] hover:text-[var(--main-color)] px-1.5 py-0.5 rounded-md hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
                 title="Vaqt / So'z soni rejimini almashtirish"
               >
                 {timeMode > 0 ? 'vaqt' : "so'z"}

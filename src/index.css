@@ -80,62 +80,61 @@
 }
 
 /* =========================================================
-   UZBEKTYPE / MONKEYTYPE ELASTIC ANIMATIONS & SMOOTH CARET
+   UZBEKTYPE / MONKEYTYPE ULTRA-LIGHTWEIGHT TYPING & SMOOTH CARET
+   Ultra-fast, zero-lag character rendering, no heavy bouncy delays
    ========================================================= */
 
-/* Harf bosilgandagi elastik pop animatsiyasi */
+/* Harf bosilgandagi yengil, tezkor mikro-render */
 @keyframes char-pop {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); opacity: 1; }
+  0% { opacity: 0.85; }
+  100% { opacity: 1; }
 }
 
-/* Yuqoriga va pastga sakrash */
 @keyframes bounceUp {
   0% { transform: translateY(0); }
-  25% { transform: translateY(-4px); }
+  50% { transform: translateY(-1px); }
   100% { transform: translateY(0); }
 }
 @keyframes bounceDown {
   0% { transform: translateY(0); }
-  25% { transform: translateY(4px); }
+  50% { transform: translateY(1px); }
   100% { transform: translateY(0); }
 }
 
-/* Xato bosilganda qaltirash (Shake) */
+/* Xato bosilganda mikro-reaksiya */
 @keyframes char-shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
+  33% { transform: translateX(-2px); }
+  66% { transform: translateX(2px); }
 }
 
 /* Silliq kursor o'tishi va miltillashi */
 @keyframes caret-blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  50% { opacity: 0.1; }
 }
 
-/* Animatsiya klasslari */
+/* Animatsiya klasslari (Tezkor va yengil) */
 .char-typed-pop {
-  animation: char-pop 0.18s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: char-pop 0.08s ease-out;
   display: inline-block;
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 
 .char-typed-bounce {
-  animation: bounceUp 0.2s cubic-bezier(0.2, 0, 0.1, 1);
+  animation: bounceUp 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .char-typed-bounceDown {
-  animation: bounceDown 0.2s cubic-bezier(0.2, 0, 0.1, 1);
+  animation: bounceDown 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .char-error-shake {
-  animation: char-shake 0.2s ease-in-out;
+  animation: char-shake 0.12s ease-in-out;
   display: inline-block;
   will-change: transform;
 }
@@ -150,93 +149,92 @@
   will-change: transform;
 }
 
-/* Lightweight Character animations (pure transform, zero text-shadow / filter lag) */
+/* Yengil va tejamkor Character animations */
 @keyframes char-jump {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(-1px); }
 }
 
 @keyframes char-bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
 }
 
 @keyframes char-glow {
-  0%, 100% { opacity: 0.9; }
+  0%, 100% { opacity: 0.95; }
   50% { opacity: 1; }
 }
 
 @keyframes char-wave {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+  50% { transform: translateY(-1px); }
 }
 
 @keyframes char-slide {
-  0% { opacity: 0.7; }
+  0% { opacity: 0.85; }
   100% { opacity: 1; }
 }
 
 @keyframes char-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
 }
 
 .anim-char-pop {
-  animation: char-pop var(--typing-anim-duration, 180ms) cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: char-pop 0.08s ease-out;
   display: inline-block;
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 
 .anim-char-bounceUp {
-  animation: bounceUp var(--typing-anim-duration, 200ms) cubic-bezier(0.2, 0, 0.1, 1);
+  animation: bounceUp 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-bounceDown {
-  animation: bounceDown var(--typing-anim-duration, 200ms) cubic-bezier(0.2, 0, 0.1, 1);
+  animation: bounceDown 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-jump {
-  animation: char-jump var(--typing-anim-duration, 180ms) ease-out;
+  animation: char-jump 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-bounce {
-  animation: bounceUp var(--typing-anim-duration, 200ms) cubic-bezier(0.2, 0, 0.1, 1);
+  animation: bounceUp 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-glow {
-  animation: char-glow var(--typing-anim-duration, 180ms) ease-out;
+  animation: char-glow 0.1s ease-out;
   display: inline-block;
 }
 
 .anim-char-wave {
-  animation: char-wave var(--typing-anim-duration, 180ms) ease-out;
+  animation: char-wave 0.1s ease-out;
   display: inline-block;
   will-change: transform;
 }
 
 .anim-char-slide {
-  animation: char-slide var(--typing-anim-duration, 180ms) ease-out;
+  animation: char-slide 0.08s ease-out;
   display: inline-block;
 }
 
 .anim-char-pulse {
-  animation: char-pulse var(--typing-anim-duration, 180ms) ease-out;
+  animation: char-pulse 0.08s ease-out;
   display: inline-block;
-  will-change: transform;
 }
 
 @keyframes shake-anim {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 .animate-shake {

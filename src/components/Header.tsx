@@ -101,6 +101,7 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
 
   const navItems = [
     { id: 'home', label: currMenu.home, icon: Home },
+    { id: 'design', label: 'Elbek Design (Buyurtma)', icon: Palette },
     { id: 'typing', label: currMenu.typingTest, icon: Keyboard },
     { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
     { id: 'languages', label: currMenu.languages, icon: Globe },
@@ -125,7 +126,7 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)] border-b border-[var(--sub-alt)] px-3 sm:px-4 py-2.5 safe-top transition-colors duration-150">
+      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/90 backdrop-blur-md border-b border-[var(--sub-alt)] px-3 sm:px-4 py-2.5 safe-top transition-colors duration-150 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Side: Brand Logo & Navigation Icons */}
           <div className="flex items-center gap-3 sm:gap-6">
@@ -166,6 +167,16 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
                 title={currMenu.home}
               >
                 <Home className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('design')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'design' ? 'text-amber-400 bg-amber-500/20 border border-amber-500/40 shadow-xs' : 'text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10'
+                }`}
+                title="Elbek Design — Grafik dizayn buyurtma qilish"
+              >
+                <Palette className={iconDimensions} />
               </button>
 
               <button

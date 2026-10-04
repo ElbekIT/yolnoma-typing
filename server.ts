@@ -745,10 +745,10 @@ app.get('/ads.txt', (req, res) => {
   res.status(404).send('ads.txt not found');
 });
 
-// Security & Body parsing with strict size limits
+// Security & Body parsing with receipt photo support
 app.use(cookieParser());
-app.use(express.json({ limit: '16kb' }));
-app.use(express.urlencoded({ extended: true, limit: '16kb' }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 const SECRET_SALT = process.env.SECURITY_SALT || 'yolnoma_typing_sec_salt_2026';
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_admin_jwt_secret_98234791';
@@ -2753,6 +2753,223 @@ app.get('/api/user/ban-status', (req, res) => {
   return res.json({
     isBanned: false,
     banInfo: null
+  });
+});
+
+// -------------------------------------------------------------
+// SECURE ELBEK DESIGN STUDIO ORDERS & TELEGRAM BOT DISPATCH
+// -------------------------------------------------------------
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8962165787:AAFMUNn8hYofaywR86JR4LwNUd5Wah1m1sE';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8269163077';
+
+export interface StoredDesignOrder {
+  id: string;
+  category: string;
+  serviceName: string;
+  price: number;
+  clientName: string;
+  clientPhone: string;
+  clientTelegram: string;
+  notes?: string;
+  location?: string;
+  hasReceipt: boolean;
+  createdAt: number;
+  ip: string;
+  telegramDelivered: boolean;
+  telegramError?: string;
+}
+
+const storedDesignOrders: StoredDesignOrder[] = [];
+const orderIpCooldownMap = new Map<string, number>();
+
+// Rate-limited POST endpoint to receive design orders & send to Telegram Bot
+app.post('/api/design-order', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const clientIp = getClientIp(req);
+  const now = Date.now();
+
+  // 1. Enforce 20-second cooldown per IP against spamming
+  const lastOrderTime = orderIpCooldownMap.get(clientIp) || 0;
+  if (now - lastOrderTime < 20000) {
+    const remainingSecs = Math.ceil((20000 - (now - lastOrderTime)) / 1000);
+    return res.status(429).json({
+      success: false,
+      error: `Iltimos, keyingi buyurtmani yuborish uchun ${remainingSecs} soniya kuting.`
+    });
+  }
+
+  const {
+    category,
+    serviceName,
+    price,
+    clientName,
+    clientPhone,
+    clientTelegram,
+    notes,
+    location,
+    receiptImage,
+    userId,
+    userEmail,
+    authProvider
+  } = req.body || {};
+
+  if (!category || !serviceName || !clientName || !clientPhone || !location || !String(location).trim()) {
+    return res.status(400).json({
+      success: false,
+      error: "Barcha majburiy maydonlarni (xizmat turi, ism, telefon va geolokatsiya) to'ldiring. Lokatsiyani qo'shish majburiydir!"
+    });
+  }
+
+  // Update cooldown timestamp
+  orderIpCooldownMap.set(clientIp, now);
+
+  const orderId = `ED-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  // Clean and escape input text for Telegram HTML parse_mode
+  const escapeTgHtml = (str: string = '') =>
+    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const formattedDate = new Date().toLocaleString('uz-UZ', {
+    timeZone: 'Asia/Tashkent',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const tgUser = (clientTelegram || '').replace(/^@+/, '').trim();
+  const tgUserLink = tgUser ? `<a href="https://t.me/${tgUser}">@${escapeTgHtml(tgUser)}</a>` : 'Kiritilmagan';
+
+  const providerLabel = authProvider === 'github' || authProvider === 'GitHub' ? 'GitHub' : 'Google';
+  const accountLine = userEmail ? `📧 <b>Akkount:</b> ${escapeTgHtml(userEmail)} (${providerLabel} ✓)\n` : '';
+
+  const captionText =
+`🎨 <b>YANGI DIZAYN BUYURTMASI (Elbek Design)</b>
+━━━━━━━━━━━━━━━━━━━━━
+📦 <b>Kategoriya:</b> ${escapeTgHtml(category)}
+🎯 <b>Xizmat:</b> ${escapeTgHtml(serviceName)}
+💰 <b>Narxi:</b> ${Number(price || 0).toLocaleString('uz-UZ')} so'm
+━━━━━━━━━━━━━━━━━━━━━
+👤 <b>Mijoz:</b> ${escapeTgHtml(clientName)}
+${accountLine}📞 <b>Telefon:</b> <a href="tel:${escapeTgHtml(clientPhone)}">${escapeTgHtml(clientPhone)}</a>
+💬 <b>Telegram:</b> ${tgUserLink}
+${location ? `📍 <b>Geolokatsiya:</b> <a href="${escapeTgHtml(location)}">Xaritada ochish</a>\n` : ''}━━━━━━━━━━━━━━━━━━━━━
+📝 <b>Mijoz fikri va talablari:</b>
+<i>${escapeTgHtml(notes || "Qo'shimcha talab kiritilmadi")}</i>
+━━━━━━━━━━━━━━━━━━━━━
+💳 <b>Karta:</b> <code>4073 4200 8456 9577</code> (Elbek Qoriyev)
+⏰ <b>Vaqt:</b> ${formattedDate}
+🆔 <b>Buyurtma ID:</b> <code>#${orderId}</code>`;
+
+  let telegramDelivered = false;
+  let telegramError: string | undefined;
+
+  // Dispatch to Telegram Bot
+  try {
+    if (receiptImage && typeof receiptImage === 'string' && receiptImage.startsWith('data:image/')) {
+      const matches = receiptImage.match(/^data:image\/(\w+);base64,(.+)$/);
+      if (matches) {
+        const ext = matches[1] || 'jpeg';
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const blob = new Blob([buffer], { type: `image/${ext}` });
+
+        const formData = new FormData();
+        formData.append('chat_id', TELEGRAM_CHAT_ID);
+        formData.append('photo', blob, `receipt_${orderId}.${ext}`);
+        formData.append('caption', captionText);
+        formData.append('parse_mode', 'HTML');
+
+        const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+          method: 'POST',
+          body: formData,
+          signal: AbortSignal.timeout(4000)
+        });
+        const tgData: any = await tgRes.json();
+        if (tgData.ok) {
+          telegramDelivered = true;
+        } else {
+          telegramError = tgData.description || 'sendPhoto failed';
+          // Fallback: If not "chat not found", try sendMessage text
+          if (!String(telegramError).includes('chat not found')) {
+            const fallbackRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: `${captionText}\n\n⚠️ <i>(Chek rasmi ilova qilingan, buyurtma ID: #${orderId})</i>`,
+                parse_mode: 'HTML'
+              }),
+              signal: AbortSignal.timeout(4000)
+            });
+            const fallbackData: any = await fallbackRes.json();
+            if (fallbackData.ok) {
+              telegramDelivered = true;
+            }
+          }
+        }
+      }
+    } else {
+      const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: captionText,
+          parse_mode: 'HTML'
+        }),
+        signal: AbortSignal.timeout(4000)
+      });
+      const tgData: any = await tgRes.json();
+      if (tgData.ok) {
+        telegramDelivered = true;
+      } else {
+        telegramError = tgData.description || 'sendMessage failed';
+      }
+    }
+  } catch (err: any) {
+    telegramError = err?.message || 'Telegram connection error';
+  }
+
+  // Persist order in server memory (retaining last 500 orders)
+  const orderRecord: StoredDesignOrder = {
+    id: orderId,
+    category,
+    serviceName,
+    price: Number(price) || 0,
+    clientName,
+    clientPhone,
+    clientTelegram: clientTelegram || '',
+    notes: notes || '',
+    location: location || '',
+    hasReceipt: Boolean(receiptImage),
+    createdAt: now,
+    ip: clientIp,
+    telegramDelivered,
+    telegramError
+  };
+
+  storedDesignOrders.unshift(orderRecord);
+  if (storedDesignOrders.length > 500) {
+    storedDesignOrders.pop();
+  }
+
+  return res.json({
+    success: true,
+    orderId,
+    telegramDelivered,
+    message: "Buyurtmangiz muvaffaqiyatli qabul qilindi!"
+  });
+});
+
+// Admin endpoint to view all design orders
+app.get('/api/admin/design-orders', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  return res.json({
+    success: true,
+    orders: storedDesignOrders,
+    count: storedDesignOrders.length
   });
 });
 

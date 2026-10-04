@@ -14,7 +14,8 @@ import {
   Send,
   ChevronDown,
   ChevronUp,
-  Rocket
+  Rocket,
+  Palette
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -59,6 +60,16 @@ export const Footer = React.memo<FooterProps>(({
             >
               <Keyboard className="w-3.5 h-3.5 text-[var(--main-color)]" />
               <span>{t('navTyping')}</span>
+            </a>
+
+            <a
+              href="/design"
+              onClick={(e) => handleNav('design', e)}
+              className="hover:text-amber-300 text-amber-400 font-bold transition-colors flex items-center gap-1.5 py-0.5"
+              title="Elbek Design — Grafik dizayn xizmatlari"
+            >
+              <Palette className="w-3.5 h-3.5 text-amber-400" />
+              <span>Elbek Design</span>
             </a>
 
             <a

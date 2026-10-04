@@ -42,16 +42,14 @@ const LanguageSelectView = React.lazy(() => import('./components/languages/Langu
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
 const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
+const ElbekDesignView = React.lazy(() => import('./components/design/ElbekDesignView').then(m => ({ default: m.ElbekDesignView })));
 
 function ViewLoadingFallback() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[380px] w-full py-16 text-center animate-fade-in">
-      <div className="relative w-12 h-12 mb-4">
-        <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20 animate-ping" />
-        <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-cyan-400 border-r-cyan-500 animate-spin" />
-      </div>
-      <p className="text-xs font-mono font-bold tracking-widest text-cyan-400/90 uppercase">
-        Yolnoma Yuklanmoqda...
+    <div className="flex flex-col items-center justify-center min-h-[300px] w-full py-12 text-center">
+      <div className="w-8 h-8 rounded-full border-2 border-[var(--sub-alt)] border-t-amber-400 animate-spin mb-3" />
+      <p className="text-xs font-mono font-bold tracking-wider text-[var(--sub-color)] uppercase">
+        Yuklanmoqda...
       </p>
     </div>
   );
@@ -89,12 +87,14 @@ function MainAppContent() {
     partners: 'partners',
     owner: 'about',
     dashboard: 'dashboard',
+    design: 'design',
     admin: atob('YWRtaW4=')
   };
 
   const TAB_TITLES: Record<string, string> = {
     home: "Yolnoma Typing - O'zbekistonda №1 Tez Yozish Platformasi",
     typing: 'Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing',
+    design: 'Elbek Design - Professional Grafik Dizayn & Buyurtma Studiyasi',
     leaderboard: "Peshqadamlar & Milliy Reyting - Yolnoma Typing",
     languages: '125+ Jahon Tillari - Yolnoma Typing',
     battle: 'Speedway Battle Arena - Yolnoma Typing',
@@ -143,6 +143,7 @@ function MainAppContent() {
     if (['partners', 'hamkorlar'].includes(subpath)) return { lang: detectedLang, tab: 'partners' };
     if (['about', 'owner', 'haqida'].includes(subpath)) return { lang: detectedLang, tab: 'owner' };
     if (['dashboard'].includes(subpath)) return { lang: detectedLang, tab: 'dashboard' };
+    if (['design', 'dizayn', 'buyurtma', 'order'].includes(subpath)) return { lang: detectedLang, tab: 'design' };
     return { lang: detectedLang, tab: 'home' };
   }, []);
 
@@ -1143,7 +1144,14 @@ function MainAppContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-200 overflow-x-clip w-full">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-150 overflow-x-clip w-full relative selection:bg-[var(--main-color)]/30 selection:text-[var(--text-color)]">
+      {/* Ultra-lightweight ambient atmospheric backdrop */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-70"
+        style={{
+          background: 'radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05), transparent 65%)'
+        }}
+      />
       {/* Whitelisted Owner Notice during Active Maintenance */}
       {maintenanceInfo.active && isOwnerWhitelisted && (
         <div className="bg-rose-600 text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-lg border-b border-rose-700">
@@ -1170,6 +1178,7 @@ function MainAppContent() {
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => setActiveTab('login')}
+            onGoToDesign={() => setActiveTab('design')}
           />
         )}
 
@@ -1221,6 +1230,14 @@ function MainAppContent() {
         )}
 
         <React.Suspense fallback={<ViewLoadingFallback />}>
+          {activeTab === 'design' && (
+            <ElbekDesignView
+              onBackToHome={() => setActiveTab('home')}
+              onGoToTyping={() => setActiveTab('typing')}
+              onOpenAuth={() => setIsAuthOpen(true)}
+            />
+          )}
+
           {activeTab === 'leaderboard' && (
             <LeaderboardPage
               onBackToHome={() => setActiveTab('home')}
