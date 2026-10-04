@@ -361,8 +361,60 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
     setCurrentStep(4);
   };
 
-  // Receipt File upload handler
-  const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress receipt image to lightweight JPEG (max 1280px, ~150-250KB) for instant, fail-proof upload
+  const compressReceiptImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const rawDataUrl = e.target?.result as string;
+        if (!rawDataUrl) {
+          resolve('');
+          return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const MAX_DIM = 1280;
+
+            if (width > MAX_DIM || height > MAX_DIM) {
+              if (width > height) {
+                height = Math.round((height * MAX_DIM) / width);
+                width = MAX_DIM;
+              } else {
+                width = Math.round((width * MAX_DIM) / height);
+                height = MAX_DIM;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(rawDataUrl);
+              return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.82);
+            resolve(compressed);
+          } catch {
+            resolve(rawDataUrl);
+          }
+        };
+        img.onerror = () => resolve(rawDataUrl);
+        img.src = rawDataUrl;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Receipt File upload handler with automatic compression
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -371,17 +423,22 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      alert("Rasm hajmi 8 MB dan oshmasligi kerak.");
+    if (file.size > 15 * 1024 * 1024) {
+      alert("Rasm hajmi 15 MB dan oshmasligi kerak.");
       return;
     }
 
     setReceiptFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setReceiptImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedData = await compressReceiptImage(file);
+      setReceiptImage(compressedData);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReceiptImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Submit Order to Server -> Telegram Bot
@@ -415,6 +472,9 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
     setSubmitError(null);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
       const response = await fetch('/api/design-order', {
         method: 'POST',
         headers: {
@@ -433,14 +493,22 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           userId: user?.uid || undefined,
           userEmail: user?.email || undefined,
           authProvider: user ? userProvider : undefined
-        })
+        }),
+        signal: controller.signal
       });
 
-      const data = await response.json();
+      clearTimeout(timeoutId);
 
-      if (data.success) {
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(`Server javobi xato formatda bo'ldi (${response.status})`);
+      }
+
+      if (response.ok && data.success) {
         setOrderSuccessId(data.orderId || `ED-${Math.floor(1000 + Math.random() * 9000)}`);
-        setCooldownRemaining(30);
+        setCooldownRemaining(10);
         if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
         cooldownTimerRef.current = setInterval(() => {
           setCooldownRemaining((prev) => {
@@ -452,10 +520,15 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           });
         }, 1000);
       } else {
-        setSubmitError(data.error || "Buyurtmani yuborishda xatolik yuz berdi.");
+        setSubmitError(data.error || `Server xatolik qaytardi (${response.status}). Iltimos qayta urinib ko'ring.`);
       }
-    } catch {
-      setSubmitError("Server bilan bog'lanishda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+    } catch (err: any) {
+      console.error("Design order submission error:", err);
+      if (err.name === 'AbortError') {
+        setSubmitError("So'rov vaqti tugadi (Timeout). Iltimos internetingizni tekshirib qayta urinib ko'ring.");
+      } else {
+        setSubmitError(err?.message || "Server bilan bog'lanishda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+      }
     } finally {
       setIsSubmitting(false);
     }

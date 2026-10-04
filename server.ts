@@ -747,8 +747,8 @@ app.get('/ads.txt', (req, res) => {
 
 // Security & Body parsing with receipt photo support
 app.use(cookieParser());
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+app.use(express.json({ limit: '30mb' }));
+app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 
 const SECRET_SALT = process.env.SECURITY_SALT || 'yolnoma_typing_sec_salt_2026';
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'yolnoma_super_secure_admin_jwt_secret_98234791';
@@ -2788,10 +2788,10 @@ app.post('/api/design-order', async (req, res) => {
   const clientIp = getClientIp(req);
   const now = Date.now();
 
-  // 1. Enforce 20-second cooldown per IP against spamming
+  // 1. Enforce 4-second cooldown per IP against double-clicking
   const lastOrderTime = orderIpCooldownMap.get(clientIp) || 0;
-  if (now - lastOrderTime < 20000) {
-    const remainingSecs = Math.ceil((20000 - (now - lastOrderTime)) / 1000);
+  if (now - lastOrderTime < 4000) {
+    const remainingSecs = Math.ceil((4000 - (now - lastOrderTime)) / 1000);
     return res.status(429).json({
       success: false,
       error: `Iltimos, keyingi buyurtmani yuborish uchun ${remainingSecs} soniya kuting.`
@@ -2884,7 +2884,7 @@ ${location ? `📍 <b>Geolokatsiya:</b> <a href="${escapeTgHtml(location)}">Xari
         const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
           method: 'POST',
           body: formData,
-          signal: AbortSignal.timeout(4000)
+          signal: AbortSignal.timeout(12000)
         });
         const tgData: any = await tgRes.json();
         if (tgData.ok) {
