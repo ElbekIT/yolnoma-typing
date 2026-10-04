@@ -42,7 +42,6 @@ const LanguageSelectView = React.lazy(() => import('./components/languages/Langu
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
 const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
-const ElbekDesignView = React.lazy(() => import('./components/design/ElbekDesignView').then(m => ({ default: m.ElbekDesignView })));
 
 function ViewLoadingFallback() {
   return (
@@ -87,14 +86,12 @@ function MainAppContent() {
     partners: 'partners',
     owner: 'about',
     dashboard: 'dashboard',
-    design: 'design',
     admin: atob('YWRtaW4=')
   };
 
   const TAB_TITLES: Record<string, string> = {
     home: "Yolnoma Typing - O'zbekistonda №1 Tez Yozish Platformasi",
     typing: 'Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing',
-    design: 'Elbek Design - Professional Grafik Dizayn & Buyurtma Studiyasi',
     leaderboard: "Peshqadamlar & Milliy Reyting - Yolnoma Typing",
     languages: '125+ Jahon Tillari - Yolnoma Typing',
     battle: 'Speedway Battle Arena - Yolnoma Typing',
@@ -143,7 +140,6 @@ function MainAppContent() {
     if (['partners', 'hamkorlar'].includes(subpath)) return { lang: detectedLang, tab: 'partners' };
     if (['about', 'owner', 'haqida'].includes(subpath)) return { lang: detectedLang, tab: 'owner' };
     if (['dashboard'].includes(subpath)) return { lang: detectedLang, tab: 'dashboard' };
-    if (['design', 'dizayn', 'buyurtma', 'order'].includes(subpath)) return { lang: detectedLang, tab: 'design' };
     return { lang: detectedLang, tab: 'home' };
   }, []);
 
@@ -1178,7 +1174,6 @@ function MainAppContent() {
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => setActiveTab('login')}
-            onGoToDesign={() => setActiveTab('design')}
           />
         )}
 
@@ -1230,14 +1225,6 @@ function MainAppContent() {
         )}
 
         <React.Suspense fallback={<ViewLoadingFallback />}>
-          {activeTab === 'design' && (
-            <ElbekDesignView
-              onBackToHome={() => setActiveTab('home')}
-              onGoToTyping={() => setActiveTab('typing')}
-              onOpenAuth={() => setIsAuthOpen(true)}
-            />
-          )}
-
           {activeTab === 'leaderboard' && (
             <LeaderboardPage
               onBackToHome={() => setActiveTab('home')}

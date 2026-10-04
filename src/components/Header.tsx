@@ -9,7 +9,6 @@ import {
   User as UserIcon,
   Settings,
   Globe,
-  Palette,
   LogIn,
   LogOut,
   Target,
@@ -101,7 +100,6 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
 
   const navItems = [
     { id: 'home', label: currMenu.home, icon: Home },
-    { id: 'design', label: 'Elbek Design (Buyurtma)', icon: Palette },
     { id: 'typing', label: currMenu.typingTest, icon: Keyboard },
     { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
     { id: 'languages', label: currMenu.languages, icon: Globe },
@@ -167,16 +165,6 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
                 title={currMenu.home}
               >
                 <Home className={iconDimensions} />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('design')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'design' ? 'text-amber-400 bg-amber-500/20 border border-amber-500/40 shadow-xs' : 'text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10'
-                }`}
-                title="Elbek Design — Grafik dizayn buyurtma qilish"
-              >
-                <Palette className={iconDimensions} />
               </button>
 
               <button

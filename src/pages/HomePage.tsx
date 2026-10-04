@@ -1,5 +1,4 @@
 import React from 'react';
-import { WelcomeEntrancePortal } from '../components/home/WelcomeEntrancePortal';
 import { HeroSection } from '../components/home/HeroSection';
 import { FeaturesSection } from '../components/home/FeaturesSection';
 import { MiniLeaderboard } from '../components/home/MiniLeaderboard';
@@ -13,7 +12,6 @@ interface HomePageProps {
   onGoToLessons: () => void;
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
-  onGoToDesign?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -21,8 +19,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGoToBattle,
   onGoToLessons,
   onGoToLeaderboard,
-  onOpenLogin,
-  onGoToDesign
+  onOpenLogin
 }) => {
   const handleThematicAction = (action: ThematicActionType) => {
     if (action === 'battle') {
@@ -34,14 +31,6 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="w-full flex flex-col space-y-6 sm:space-y-8">
-      {/* 0. Central Welcome Portal (Design Order vs Typing Practice) */}
-      <WelcomeEntrancePortal
-        onGoToDesign={() => {
-          if (onGoToDesign) onGoToDesign();
-        }}
-        onGoToTyping={() => onStartTyping()}
-      />
-
       {/* 1. Hero Section (H1 Title + Start Button + Practice Hub) */}
       <HeroSection
         onStartTyping={() => onStartTyping()}
