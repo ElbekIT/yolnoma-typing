@@ -2844,6 +2844,14 @@ app.post('/api/design-order', async (req, res) => {
   const providerLabel = authProvider === 'github' || authProvider === 'GitHub' ? 'GitHub' : 'Google';
   const accountLine = userEmail ? `📧 <b>Akkount:</b> ${escapeTgHtml(userEmail)} (${providerLabel} ✓)\n` : '';
 
+  const locationStr = String(location || '').trim();
+  const locationUrl = locationStr.startsWith('http')
+    ? locationStr
+    : `https://maps.google.com/?q=${encodeURIComponent(locationStr)}`;
+  const locationLine = locationStr
+    ? `📍 <b>Lokatsiya:</b> <a href="${escapeTgHtml(locationUrl)}">${escapeTgHtml(locationStr.startsWith('http') ? 'Google Xaritalar (GPS Koordinata)' : locationStr)}</a>\n`
+    : '';
+
   const captionText =
 `🎨 <b>YANGI DIZAYN BUYURTMASI (Elbek Design)</b>
 ━━━━━━━━━━━━━━━━━━━━━
@@ -2854,11 +2862,12 @@ app.post('/api/design-order', async (req, res) => {
 👤 <b>Mijoz:</b> ${escapeTgHtml(clientName)}
 ${accountLine}📞 <b>Telefon:</b> <a href="tel:${escapeTgHtml(clientPhone)}">${escapeTgHtml(clientPhone)}</a>
 💬 <b>Telegram:</b> ${tgUserLink}
-${location ? `📍 <b>Geolokatsiya:</b> <a href="${escapeTgHtml(location)}">Xaritada ochish</a>\n` : ''}━━━━━━━━━━━━━━━━━━━━━
+${locationLine}━━━━━━━━━━━━━━━━━━━━━
 📝 <b>Mijoz fikri va talablari:</b>
 <i>${escapeTgHtml(notes || "Qo'shimcha talab kiritilmadi")}</i>
 ━━━━━━━━━━━━━━━━━━━━━
 💳 <b>Karta:</b> <code>4073 4200 8456 9577</code> (Elbek Qoriyev)
+📩 <b>To'lov cheki:</b> Mijozga chekni <a href="https://t.me/elbekdesign_va_webdasturchi_uz">@elbekdesign_va_webdasturchi_uz</a> ga tashlash aytildi
 ⏰ <b>Vaqt:</b> ${formattedDate}
 🆔 <b>Buyurtma ID:</b> <code>#${orderId}</code>`;
 

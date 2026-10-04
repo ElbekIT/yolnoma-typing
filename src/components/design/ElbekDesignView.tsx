@@ -3,7 +3,6 @@ import {
   Palette,
   ArrowLeft,
   CheckCircle2,
-  Upload,
   Copy,
   Check,
   Send,
@@ -21,7 +20,9 @@ import {
   AlertTriangle,
   Video,
   Camera,
-  Gamepad2
+  Gamepad2,
+  Navigation,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -43,45 +44,46 @@ export interface CategoryItem {
   services: ServiceItem[];
 }
 
-const DESIGN_CATEGORIES: CategoryItem[] = [
+export const DESIGN_CATEGORIES: CategoryItem[] = [
   {
     id: 'youtube',
     name: 'YouTube Uchun',
     badge: 'Trend',
-    description: 'Kanalingiz obunachilarini jalb qiluvchi yuqori CTR va 4K grafik dizaynlar',
+    description: 'YouTube kanalingiz uchun yuqori sifatli va tomoshabinlarni jalb qiluvchi vizual dizaynlar',
     services: [
       {
         id: 'yt-banner',
         name: 'YouTube Bosh Banner (Muqova)',
         price: 45000,
-        description: 'Barcha qurilmalarga (TV, Kompyuter, Telefon) mukammal mos 2560x1440 o\'lchamdagi professional banner.',
+        description: 'Kompyuter, planshet va smartfonlarga to\'liq moslashtirilgan professional bosh banner.',
+        recommended: true,
         deliverTime: '24 soat ichida',
-        specs: ['2560x1440 Ultra HD', 'Barcha qurilmalar safe-zone', 'Manbali PSD/PNG fayl']
+        specs: ['2560x1440 HD format', 'Mobil & Desktop moslashuv', '3 ta bepul tuzatish']
       },
       {
         id: 'yt-avatar',
-        name: 'YouTube Avatarka / Logo',
-        price: 15000,
-        description: 'Kanal identifikatsiyasi uchun zamonaviy profil rasmi (vektorli va 3D elementlar).',
+        name: 'YouTube Kanal Avatarkasi (Logo)',
+        price: 25000,
+        description: 'Kanalingiz mavzusiga mos, oson eslab qolinadigan va jozibali logotip/avatarka.',
         deliverTime: '12 soat ichida',
-        specs: ['1000x1000 Yuqori tiniqlik', 'Dumaloq ramkaga mos', 'PNG shaffof fon']
+        specs: ['800x800 Yuqori tiniqlik', 'Yorqin ranglar', 'Vektorli format']
       },
       {
         id: 'yt-preview',
-        name: 'YouTube Preview / Muqova (Thumbnail)',
-        price: 65000,
-        description: 'Ko\'ruvchilar e\'tiborini darhol tortuvchi, kliklar foizini (CTR) oshiruvchi jozibador muqova.',
+        name: 'YouTube Video Preview (Prevyu/Presh)',
+        price: 30000,
+        description: 'CTR (bosishlar foizi)ni oshiruvchi, e\'tiborni tortadigan video muqovasi (Thumbnail).',
         recommended: true,
-        deliverTime: '18 soat ichida',
-        specs: ['1920x1080 Full HD', 'Yuqori CTR kompozitsiya', 'Fotoshopda chizilgan']
+        deliverTime: '12-24 soat ichida',
+        specs: ['1280x720 60fps sifat', 'Yuqori CTR kafolati', 'Emotsional dizayn']
       },
       {
         id: 'yt-full-pack',
-        name: 'YouTube VIP Komplekt (Banner + Avatarka + 2 ta Preview)',
-        price: 110000,
-        description: 'Kanalni noldan yulduzli darajaga ko\'tarish uchun to\'liq professional dizayn to\'plami.',
-        deliverTime: '24-48 soat ichida',
-        specs: ['1 ta Asosiy Banner', '1 ta Logo / Avatarka', '2 ta VIP Video Preview', 'Bepul tuzatishlar']
+        name: 'YouTube To\'liq Komplekt (Banner + Logo + 2 ta Prevyu)',
+        price: 95000,
+        description: 'Kanalingizni noldan eng yuqori darajada bezatish uchun maxsus chegirmali komplekt.',
+        deliverTime: '48 soat ichida',
+        specs: ['100% Yagona uslub', 'VIP qulaylik', 'Tezkor tayyorlash']
       }
     ]
   },
@@ -89,13 +91,13 @@ const DESIGN_CATEGORIES: CategoryItem[] = [
     id: 'telegram',
     name: 'Telegram Uchun',
     badge: 'Ommabop',
-    description: 'Telegram kanallar, guruhlar va shaxsiy brendlar uchun zamonaviy dizaynlar',
+    description: 'Telegram kanal va guruhlaringiz uchun rasmiy va zamonaviy grafik ishlanmalar',
     services: [
       {
         id: 'tg-avatar',
         name: 'Telegram Kanal / Guruh Avatarkasi',
-        price: 20000,
-        description: 'Kanal nomiga mos premium minimalist yoki 3D logotip avatarka.',
+        price: 25000,
+        description: 'Mijoz va obunachilar ko\'ziga darhol tashlanadigan brend avatarka.',
         deliverTime: '12 soat ichida',
         specs: ['1000x1000 Kvadrat', 'Tiniq va o\'qilishi oson', 'Premium ramka']
       },
@@ -158,45 +160,45 @@ const DESIGN_CATEGORIES: CategoryItem[] = [
         specs: ['1080x1350 portret format', 'Karusel sahifalar', 'Brend identifikatsiyasi']
       },
       {
-        id: 'ig-full-pack',
-        name: 'Instagram VIP Paket (Profil + Highlights + 3 ta Post)',
-        price: 95000,
-        description: 'Instagram sahifani professional tijoriy brend darajasiga olib chiquvchi to\'liq to\'plam.',
-        deliverTime: '24-48 soat ichida',
-        specs: ['1 ta Avatarka', '5 ta Highlights', '3 ta Post Shabloni', 'PSD manbalar']
+        id: 'ig-full-grid',
+        name: 'Instagram VIP Vizual Gridi (9 ta Post)',
+        price: 110000,
+        description: 'Profil tasmasini yagona mozaika shaklida tutashtiruvchi 9 ta dabdabali post dizayni.',
+        deliverTime: '48 soat ichida',
+        specs: ['9 qismli mozaik kompozitsiya', 'Profil estetikasini oshirish', 'PSD / PNG manba fayllar']
       }
     ]
   },
   {
     id: 'pubg',
     name: 'PUBG Mobile Uchun',
-    badge: 'Kibersport',
-    description: 'Klanlar, turnir jamoalari va o\'yinchilar uchun jangovar kibersport dizaynlari',
+    badge: 'E-Sports',
+    description: 'PUBG Mobile klanlari, geymerlar va turnirlar uchun agressiv kibersport uslubidagi dizaynlar',
     services: [
       {
-        id: 'pubg-clan-logo',
-        name: 'Klan Logotipi (E-Sports Mascot)',
+        id: 'pubg-avatar',
+        name: 'PUBG Mascot / Klan Avatarkasi',
         price: 35000,
-        description: 'Jamoangiz sharafini himoya qiluvchi kibersport uslubidagi yirtqich/jangchi mascot logotipi.',
+        description: 'Mascot qahramon yoki klan nomingiz yozilgan professional kiber-sport avatarkasi.',
         recommended: true,
+        deliverTime: '18 soat ichida',
+        specs: ['Mascot / 3D effekt', 'Geymer ramkasi', 'Profilga mos kvadrat format']
+      },
+      {
+        id: 'pubg-banner',
+        name: 'PUBG Klan Bosh Banneri / Afisha',
+        price: 45000,
+        description: 'Klan a\'zolari, yutuqlar va turnir g\'alabalari uchun daxshatli banner.',
         deliverTime: '24 soat ichida',
-        specs: ['Vektorli E-sports Mascot', 'Klan nomiga moslashtirilgan', 'Tiniq HD format']
+        specs: ['Neon effektlar', 'Klan shiori va logosi', 'Telegram/YouTube/Discordga mos']
       },
       {
         id: 'pubg-roster',
-        name: 'Turnir / Roster Posteri',
-        price: 45000,
-        description: 'Jamoa tarkibi (roster), o\'yinchilar niki va yutuqlari aks etgan professional poster.',
+        name: 'PUBG Turnir Rosteri (Tarkib Jadvali)',
+        price: 50000,
+        description: 'Scrims va rasmiy turnirlar uchun o\'yinchilar ID si va rollari aks etgan grafik ro\'yxat.',
         deliverTime: '24 soat ichida',
-        specs: ['Kibersport effekti', 'O\'yinchilar fotosi bilan', 'Turnirlar uchun rasmiy format']
-      },
-      {
-        id: 'pubg-avatars',
-        name: 'Klan A\'zolari Avatarkalari (4 ta)',
-        price: 60000,
-        description: 'Asosiy to\'rtlik (Squad) a\'zolari uchun nomlari yozilgan maxsus avatarkalar.',
-        deliverTime: '24 soat ichida',
-        specs: ['4 ta alohida avatarka', 'Jamoaviy yagona uslub', 'O\'yin ichiga mos']
+        specs: ['Line-up grafik jadvali', 'Tiniq shriftlar', 'Turnir hakamlariga taqdim etishga tayyor']
       },
       {
         id: 'pubg-vip-pack',
@@ -210,6 +212,23 @@ const DESIGN_CATEGORIES: CategoryItem[] = [
   }
 ];
 
+const UZ_REGIONS = [
+  'Toshkent shahri',
+  'Toshkent viloyati',
+  'Samarqand',
+  'Andijon',
+  'Farg\'ona',
+  'Namangan',
+  'Buxoro',
+  'Qashqadaryo',
+  'Surxondaryo',
+  'Xorazm',
+  'Navoiy',
+  'Jizzax',
+  'Sirdaryo',
+  'Qoraqalpog\'iston'
+];
+
 interface ElbekDesignViewProps {
   onBackToHome?: () => void;
   onGoToTyping?: () => void;
@@ -220,10 +239,9 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
   onBackToHome,
   onGoToTyping
 }) => {
-  // Existing site auth (if user is already logged in on the site, their info is utilized)
   const { user, profile } = useAuth();
 
-  // Stepper: 1 - Kategoriya, 2 - Xizmat & Narx, 3 - Ma'lumotlar & Joylashuv, 4 - To'lov & Chek
+  // Stepper: 1 - Kategoriya, 2 - Xizmat & Narx, 3 - Ma'lumotlar & Joylashuv, 4 - To'lov & Tasdiqlash
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Selected Category & Service
@@ -237,13 +255,13 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
   const [clientNotes, setClientNotes] = useState('');
   const [clientLocation, setClientLocation] = useState<string>('');
   const [isLocating, setIsLocating] = useState(false);
+  const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
 
-  // Step 4 Payment & Receipt State
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [receiptFileName, setReceiptFileName] = useState<string>('');
+  // Step 4 State
   const [isCopiedCard, setIsCopiedCard] = useState(false);
+  const [isCopiedTelegram, setIsCopiedTelegram] = useState(false);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -251,9 +269,13 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
   const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const locationSectionRef = useRef<HTMLDivElement>(null);
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const TELEGRAM_USERNAME = 'elbekdesign_va_webdasturchi_uz';
+  const TELEGRAM_LINK = 'https://t.me/elbekdesign_va_webdasturchi_uz';
+  const CARD_NUMBER = '4073 4200 8456 9577';
+  const CARD_HOLDER = 'Elbek Qoriyev';
 
   // Conveniently pre-fill clientName with user's name if logged in on the site
   useEffect(() => {
@@ -272,7 +294,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
     };
   }, []);
 
-  // Guard: If somehow in step 4 without mandatory location, return to step 3
+  // Guard: If in step 4 without mandatory location, return to step 3
   useEffect(() => {
     if (currentStep === 4 && !clientLocation.trim()) {
       setCurrentStep(3);
@@ -286,9 +308,6 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
     currentCategory.services.find((s) => s.id === selectedServiceId) ||
     currentCategory.services[0];
 
-  const CARD_NUMBER = '4073 4200 8456 9577';
-  const CARD_HOLDER = 'Elbek Qoriyev';
-
   const userProvider = user?.providerData?.[0]?.providerId === 'github.com' ? 'GitHub' : 'Google';
 
   const handleCopyCard = async () => {
@@ -301,11 +320,23 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
     setTimeout(() => setIsCopiedCard(false), 2000);
   };
 
-  // Geolocation trigger (MANDATORY GPS detection)
+  const handleCopyTelegram = async () => {
+    try {
+      await navigator.clipboard.writeText(TELEGRAM_LINK);
+    } catch {
+      // Fallback
+    }
+    setIsCopiedTelegram(true);
+    setTimeout(() => setIsCopiedTelegram(false), 2000);
+  };
+
+  // Robust, high-precision geolocation detection
   const handleGetLocation = () => {
     setLocationError(null);
+    setLocationSuccessMsg(null);
+
     if (!navigator.geolocation) {
-      setLocationError("Brauzeringizda GPS qo'llab-quvvatlanmadi. Iltimos manzilingizni yozing.");
+      setLocationError("Brauzeringizda GPS qo'llab-quvvatlanmadi. Iltimos, hududingizni tanlang yoki manzilingizni yozing.");
       setShowManualInput(true);
       return;
     }
@@ -319,22 +350,30 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
         setClientLocation(mapsLink);
         setIsLocating(false);
         setLocationError(null);
+        setLocationSuccessMsg(`GPS Koordinata muvaffaqiyatli aniqlandi (${lat}, ${lon})`);
       },
       (err) => {
         setIsLocating(false);
         let errorMsg = "Lokatsiyani aniqlashda ruxsat berilmadi yoki xatolik yuz berdi.";
         if (err.code === 1) {
-          errorMsg = "Brauzeringizda geolokatsiyaga ruxsat berilmadi. Iltimos ruxsat bering yoki aniq manzilingizni kiriting.";
+          errorMsg = "GPS-ga ruxsat berilmadi. Quyidagi viloyatlardan birini tanlang yoki manzilingizni yozing.";
         } else if (err.code === 2) {
-          errorMsg = "Qurilmangizda joylashuvni aniqlab bo'lmadi. Iltimos GPS-ni yoqing yoki manzilingizni yozing.";
+          errorMsg = "Joylashuvni aniqlab bo'lmadi. GPS yoqilganini tekshiring yoki manzilingizni yozing.";
         } else if (err.code === 3) {
-          errorMsg = "Lokatsiyani aniqlash vaqti tugadi. Qayta urinib ko'ring yoki manzilingizni yozing.";
+          errorMsg = "GPS aniqlash vaqti tugadi. Qayta urinib ko'ring yoki manzilingizni tanlang.";
         }
         setLocationError(errorMsg);
         setShowManualInput(true);
       },
-      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+      { timeout: 12000, enableHighAccuracy: true, maximumAge: 0 }
     );
+  };
+
+  // Quick region selection helper
+  const handleSelectRegion = (region: string) => {
+    setClientLocation(region);
+    setLocationError(null);
+    setLocationSuccessMsg(`Joylashuv belgilandi: ${region}`);
   };
 
   // Transition from Step 3 to Step 4: Strictly enforce Location only
@@ -351,9 +390,9 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
     // MANDATORY LOCATION CHECK
     if (!clientLocation.trim()) {
-      setLocationError("Lokatsiyani qo'shish majburiydir! Lokatsiyani kiritmasdan yoki yoqmasdan to'lovga o'tib bo'lmaydi.");
-      alert("Lokatsiyani qo'shish majburiy!\n\nLokatsiyani qo'shmasdan to'lovga o'tish va buyurtma berish mumkin emas.\n\nIltimos, GPS tugmasini bosing yoki aniq manzilingizni kiriting.");
-      locationSectionRef.current?.scrollIntoView({ block: 'center' });
+      setLocationError("Lokatsiyani qo'shish majburiydir! Lokatsiyani kiritmasdan yoki tanlamasdan to'lovga o'tib bo'lmaydi.");
+      alert("Lokatsiyani qo'shish majburiy!\n\nIltimos, «GPS Lokatsiyani Aniqlash» tugmasini bosing yoki hududingizni tanlang.");
+      locationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -361,87 +400,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
     setCurrentStep(4);
   };
 
-  // Compress receipt image to lightweight JPEG (max 1280px, ~150-250KB) for instant, fail-proof upload
-  const compressReceiptImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const rawDataUrl = e.target?.result as string;
-        if (!rawDataUrl) {
-          resolve('');
-          return;
-        }
-
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const MAX_DIM = 1280;
-
-            if (width > MAX_DIM || height > MAX_DIM) {
-              if (width > height) {
-                height = Math.round((height * MAX_DIM) / width);
-                width = MAX_DIM;
-              } else {
-                width = Math.round((width * MAX_DIM) / height);
-                height = MAX_DIM;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              resolve(rawDataUrl);
-              return;
-            }
-
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.82);
-            resolve(compressed);
-          } catch {
-            resolve(rawDataUrl);
-          }
-        };
-        img.onerror = () => resolve(rawDataUrl);
-        img.src = rawDataUrl;
-      };
-      reader.onerror = () => resolve('');
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Receipt File upload handler with automatic compression
-  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert("Iltimos, faqat rasm faylini (JPG, PNG, WebP) yuklang.");
-      return;
-    }
-
-    if (file.size > 15 * 1024 * 1024) {
-      alert("Rasm hajmi 15 MB dan oshmasligi kerak.");
-      return;
-    }
-
-    setReceiptFileName(file.name);
-    try {
-      const compressedData = await compressReceiptImage(file);
-      setReceiptImage(compressedData);
-    } catch {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setReceiptImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Submit Order to Server -> Telegram Bot
+  // Submit Order to Server -> Telegram Bot directly
   const handleSubmitOrder = async () => {
     if (cooldownRemaining > 0) {
       alert(`Iltimos, qayta yuborish uchun ${cooldownRemaining} soniya kuting.`);
@@ -473,7 +432,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
       const response = await fetch('/api/design-order', {
         method: 'POST',
@@ -489,7 +448,6 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           clientTelegram: clientTelegram.trim(),
           notes: clientNotes.trim(),
           location: clientLocation.trim(),
-          receiptImage: receiptImage || undefined,
           userId: user?.uid || undefined,
           userEmail: user?.email || undefined,
           authProvider: user ? userProvider : undefined
@@ -503,7 +461,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       try {
         data = await response.json();
       } catch {
-        throw new Error(`Server javobi xato formatda bo'ldi (${response.status})`);
+        throw new Error(`Server javobi noto'g'ri bo'ldi (${response.status})`);
       }
 
       if (response.ok && data.success) {
@@ -543,7 +501,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto py-4 px-3 sm:px-4 select-none font-sans space-y-3.5">
-      {/* 1. Header: Elbek Design Studio (Minimalist & Ultra-lightweight) */}
+      {/* 1. Header: Elbek Design Studio */}
       <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm shrink-0">
@@ -608,7 +566,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
         </div>
       )}
 
-      {/* 2. Stepper Progress: 4 Distinct Dedicated Steps */}
+      {/* 2. Stepper Progress */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono text-xs">
         <button
           type="button"
@@ -679,56 +637,99 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           <span className="w-5 h-5 rounded flex items-center justify-center font-bold text-[11px] bg-black/30 shrink-0">
             4
           </span>
-          <span className="truncate">4. To'lov & Chek</span>
+          <span className="truncate">4. To'lov & Tasdiq</span>
         </button>
       </div>
 
-      {/* SUCCESS SCREEN */}
+      {/* ========================================================================= */}
+      {/* SUCCESS SCREEN (BUYURTMA BERILGANDA KO'RINADIGAN OYNA)                      */}
+      {/* ========================================================================= */}
       {orderSuccessId && (
-        <div className="p-6 rounded-xl bg-[var(--card-bg)] border border-emerald-500 text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-400 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-6 h-6" />
+        <div className="p-5 sm:p-7 rounded-2xl bg-[var(--card-bg)] border-2 border-emerald-500 text-center space-y-5 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-9 h-9" />
           </div>
 
-          <div className="space-y-1 max-w-md mx-auto">
-            <span className="text-xs font-mono font-bold text-emerald-400 block">
-              Buyurtma ID: #{orderSuccessId}
+          <div className="space-y-1.5 max-w-lg mx-auto">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-mono font-bold text-emerald-400 inline-block">
+              Buyurtma ID: #{orderSuccessId} ✓
             </span>
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
               Buyurtmangiz Muvaffaqiyatli Qabul Qilindi!
             </h2>
-            <p className="text-xs text-slate-300">
-              Barcha ma'lumotlar va chek Telegram botimizga yuborildi. Tez orada siz bilan bog'lanamiz.
+            <p className="text-xs sm:text-sm text-slate-300">
+              Barcha buyurtma tafsilotlari to'g'ridan-to'g'ri Telegram botimizga yetkazildi.
             </p>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] max-w-md mx-auto text-left font-mono text-xs space-y-1 text-slate-300">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Kategoriya:</span>
-              <span className="text-white font-bold">{currentCategory.name}</span>
+          {/* TELEGRAM NOTICE CARD */}
+          <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-sky-950/80 via-slate-900 to-sky-900/60 border-2 border-sky-400/80 text-left space-y-3 max-w-xl mx-auto shadow-lg">
+            <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
+              <Send className="w-5 h-5 shrink-0" />
+              <span>To'lov chekini quyidagi Telegram manzilimizga yuboring:</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Xizmat:</span>
-              <span className="text-white font-bold">{currentService.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Summa:</span>
-              <span className="text-amber-400 font-bold">{currentService.price.toLocaleString('uz-UZ')} so'm</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Mijoz:</span>
-              <span className="text-white">{clientName}</span>
+
+            <p className="text-xs text-slate-200 leading-relaxed">
+              To'lov qilganingizdan so'ng, chek rasmini (skrinshotini) bizning rasmiy Telegram lichkamizga tashlang.
+              Mutaxassislarimiz chekni va buyurtmangizni tekshirib, <strong>tez orada siz bilan bog'lanishadi va javob berishadi!</strong>
+            </p>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <a
+                href={TELEGRAM_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all transform hover:-translate-y-0.5"
+              >
+                <Send className="w-4 h-4" />
+                <span>Chekni Telegramga Tashlash (@{TELEGRAM_USERNAME})</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+
+              <button
+                type="button"
+                onClick={handleCopyTelegram}
+                className="px-3.5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-mono flex items-center justify-center gap-1.5 cursor-pointer border border-sky-500/30"
+              >
+                {isCopiedTelegram ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                <span>{isCopiedTelegram ? 'Nusxalandi ✓' : 'Linkni nusxalash'}</span>
+              </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          {/* ORDER SUMMARY */}
+          <div className="p-3.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] max-w-xl mx-auto text-left font-mono text-xs space-y-1.5 text-slate-300">
+            <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+              <span className="text-slate-400">Xizmat:</span>
+              <span className="text-white font-bold text-right">{currentCategory.name} — {currentService.name}</span>
+            </div>
+            <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+              <span className="text-slate-400">Summa:</span>
+              <span className="text-amber-400 font-bold">{currentService.price.toLocaleString('uz-UZ')} so'm</span>
+            </div>
+            <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+              <span className="text-slate-400">Buyurtmachi:</span>
+              <span className="text-white">{clientName} ({clientPhone})</span>
+            </div>
+            {clientTelegram && clientTelegram !== '@' && (
+              <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+                <span className="text-slate-400">Telegram:</span>
+                <span className="text-sky-400">{clientTelegram}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Lokatsiya:</span>
+              <span className="text-emerald-400 truncate max-w-[240px] text-right">{clientLocation}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
             <button
               onClick={() => {
                 setOrderSuccessId(null);
                 setCurrentStep(1);
-                setReceiptImage(null);
               }}
-              className="px-4 py-2 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-white font-bold text-xs font-mono cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-white font-bold text-xs font-mono cursor-pointer"
             >
               Yangi Buyurtma Berish
             </button>
@@ -736,9 +737,9 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
             {onGoToTyping && (
               <button
                 onClick={onGoToTyping}
-                className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center gap-1.5 cursor-pointer shadow-md"
               >
-                <Keyboard className="w-3.5 h-3.5" />
+                <Keyboard className="w-4 h-4" />
                 <span>Klaviaturada Mashq Qilish</span>
               </button>
             )}
@@ -747,24 +748,22 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 1: CATEGORY SELECTION ONLY (ALOHIDA SAHIFA)                          */}
+      {/* STEP 1: CATEGORY SELECTION ONLY                                           */}
       {/* ========================================================================= */}
       {!orderSuccessId && currentStep === 1 && (
         <div className="space-y-3">
-          <div className="p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)]">
-            <h2 className="text-sm sm:text-base font-bold text-[var(--text-color)]">
-              1-Bosqich: Dizayn yo'nalishini tanlang
-            </h2>
-            <p className="text-xs text-[var(--sub-color)] mt-0.5">
-              Qaysi platforma uchun dizayn kerak bo'lsa, tanlang va keyingi sahifaga o'ting.
-            </p>
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between">
+            <span className="text-xs font-mono font-bold text-[var(--text-color)]">
+              1-Bosqich: Yo'nalishni Tanlang
+            </span>
+            <span className="text-[11px] font-mono text-[var(--sub-color)]">
+              4 xil yo'nalish mavjud
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {DESIGN_CATEGORIES.map((cat) => {
               const isSelected = selectedCategoryId === cat.id;
-              const minPrice = Math.min(...cat.services.map((s) => s.price));
-
               return (
                 <div
                   key={cat.id}
@@ -772,46 +771,40 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                     setSelectedCategoryId(cat.id);
                     setSelectedServiceId(cat.services[0].id);
                   }}
-                  className={`p-4 rounded-xl border cursor-pointer flex flex-col justify-between ${
+                  className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
-                      ? 'bg-[var(--card-bg)] border-amber-400'
-                      : 'bg-[var(--card-bg)] border-[var(--sub-alt)] hover:border-amber-400/50'
+                      ? 'bg-amber-500/10 border-amber-400 shadow-md ring-1 ring-amber-400/40'
+                      : 'bg-[var(--card-bg)] border-[var(--sub-alt)] hover:border-[var(--text-color)]/30'
                   }`}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[var(--sub-alt)] flex items-center justify-center">
-                          {renderCategoryIcon(cat.id)}
-                        </div>
-                        <h3 className="text-base font-bold text-[var(--text-color)]">
+                        {renderCategoryIcon(cat.id)}
+                        <h3 className="text-sm font-bold text-[var(--text-color)]">
                           {cat.name}
                         </h3>
                       </div>
-                      <span className="text-[10px] font-mono text-[var(--sub-color)] font-semibold">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-400/20 text-amber-400 border border-amber-400/30">
                         {cat.badge}
                       </span>
                     </div>
-
                     <p className="text-xs text-[var(--sub-color)] leading-relaxed">
                       {cat.description}
                     </p>
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-[var(--sub-alt)]/60 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="text-[10px] text-[var(--sub-color)] block font-mono">
-                        Boshlang'ich narx:
-                      </span>
-                      <span className="font-mono font-bold text-amber-400">
-                        {minPrice.toLocaleString('uz-UZ')} so'mdan
-                      </span>
-                    </div>
-
-                    <span className={`px-2.5 py-1 rounded text-xs font-mono font-bold ${
-                      isSelected ? 'bg-amber-400 text-slate-950' : 'bg-[var(--sub-alt)] text-[var(--text-color)]'
-                    }`}>
+                  <div className="pt-2 border-t border-[var(--sub-alt)]/60 flex items-center justify-between text-xs font-mono">
+                    <span className="text-[var(--sub-color)] text-[11px]">
+                      {cat.services.length} ta xizmat turi
+                    </span>
+                    <span
+                      className={`font-bold flex items-center gap-1 ${
+                        isSelected ? 'text-amber-400' : 'text-[var(--sub-color)]'
+                      }`}
+                    >
                       {isSelected ? 'Tanlandi ✓' : 'Tanlash'}
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
                 </div>
@@ -819,15 +812,16 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
             })}
           </div>
 
-          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Bottom navigation */}
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between">
             <div className="text-xs">
-              <span className="text-[10px] font-mono text-[var(--sub-color)] block">Tanlangan Kategoriya:</span>
-              <strong className="text-sm text-[var(--text-color)]">{currentCategory.name}</strong>
+              <span className="text-[var(--sub-color)]">Tanlangan: </span>
+              <strong className="text-[var(--text-color)]">{currentCategory.name}</strong>
             </div>
 
             <button
               onClick={() => setCurrentStep(2)}
-              className="w-full sm:w-auto px-5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono uppercase flex items-center justify-center gap-1 cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono uppercase flex items-center gap-1 cursor-pointer"
             >
               <span>Keyingisi (Xizmatlar)</span>
               <ChevronRight className="w-4 h-4" />
@@ -837,26 +831,22 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 2: SERVICES & PRICING FOR CHOSEN CATEGORY (ALOHIDA SAHIFA)           */}
+      {/* STEP 2: SERVICE SELECTION & PRICING                                       */}
       {/* ========================================================================= */}
       {!orderSuccessId && currentStep === 2 && (
         <div className="space-y-3">
-          <div className="p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <div className="text-xs font-mono text-amber-400 font-bold">
-                2-Bosqich • {currentCategory.name}
-              </div>
-              <h2 className="text-sm sm:text-base font-bold text-[var(--text-color)]">
-                Kerakli xizmat turini tanlang
-              </h2>
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              {renderCategoryIcon(currentCategory.id)}
+              <span className="font-bold text-[var(--text-color)]">
+                2-Bosqich: {currentCategory.name} xizmatlaridan birini tanlang
+              </span>
             </div>
-
             <button
               onClick={() => setCurrentStep(1)}
-              className="px-2.5 py-1.5 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono flex items-center gap-1 shrink-0 cursor-pointer self-start sm:self-auto"
+              className="text-[11px] font-mono text-[var(--sub-color)] hover:text-amber-400 underline cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Kategoriyalarga qaytish</span>
+              Kategoriyani o'zgartirish
             </button>
           </div>
 
@@ -867,15 +857,15 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                 <div
                   key={service.id}
                   onClick={() => setSelectedServiceId(service.id)}
-                  className={`p-4 rounded-xl border cursor-pointer flex flex-col justify-between ${
+                  className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
-                      ? 'bg-[var(--card-bg)] border-amber-400'
-                      : 'bg-[var(--card-bg)] border-[var(--sub-alt)] hover:border-amber-400/50'
+                      ? 'bg-amber-500/10 border-amber-400 shadow-md ring-1 ring-amber-400/40'
+                      : 'bg-[var(--card-bg)] border-[var(--sub-alt)] hover:border-[var(--text-color)]/30'
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-bold text-[var(--text-color)]">
+                      <h4 className="text-sm font-bold text-[var(--text-color)] leading-snug">
                         {service.name}
                       </h4>
                       <div className="text-right shrink-0 font-mono">
@@ -908,9 +898,11 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                       <span>{service.deliverTime}</span>
                     </span>
 
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                      isSelected ? 'text-amber-400' : 'text-[var(--sub-color)]'
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-bold ${
+                        isSelected ? 'text-amber-400' : 'text-[var(--sub-color)]'
+                      }`}
+                    >
                       {isSelected ? 'Tanlandi ✓' : 'Tanlash'}
                     </span>
                   </div>
@@ -948,7 +940,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 3: CLIENT INFO & MANDATORY LOCATION (ALOHIDA SAHIFA)                 */}
+      {/* STEP 3: CLIENT INFO & MANDATORY LOCATION                                  */}
       {/* ========================================================================= */}
       {!orderSuccessId && currentStep === 3 && (
         <div className="space-y-3 max-w-xl mx-auto">
@@ -1040,149 +1032,192 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               />
             </div>
 
-            {/* Geolocation Section (STRICTLY MANDATORY) */}
-            <div ref={locationSectionRef} className="pt-2 space-y-2 border-t border-[var(--sub-alt)]">
+            {/* Geolocation Section (MANDATORY & ENHANCED WITH REGION/MANUAL FALLBACK) */}
+            <div ref={locationSectionRef} className="pt-2 space-y-2.5 border-t border-[var(--sub-alt)]">
               <div
-                className={`p-3 rounded-lg border ${
+                className={`p-3.5 rounded-xl border ${
                   clientLocation.trim()
-                    ? 'bg-emerald-500/10 border-emerald-500/40'
-                    : 'bg-[var(--bg-color)] border-rose-500/40'
+                    ? 'bg-emerald-500/10 border-emerald-500/50'
+                    : 'bg-[var(--bg-color)] border-amber-500/50'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2.5">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-1.5">
                       <MapPin
                         className={`w-4 h-4 ${
-                          clientLocation.trim() ? 'text-emerald-400' : 'text-rose-400'
+                          clientLocation.trim() ? 'text-emerald-400' : 'text-amber-400'
                         }`}
                       />
                       <span className="text-xs font-mono font-bold text-[var(--text-color)]">
-                        Geolokatsiya
+                        Joylashuv (Lokatsiya)
                       </span>
-                      <span className="text-[10px] font-mono font-bold uppercase text-rose-400 bg-rose-500/20 px-1.5 py-0.2 rounded">
+                      <span className="text-[10px] font-mono font-bold uppercase text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded">
                         Majburiy *
                       </span>
                     </div>
                     <p className="text-[11px] text-[var(--sub-color)]">
                       {clientLocation.trim() ? (
-                        <span className="text-emerald-400">✓ Lokatsiya biriktirildi. To'lovga o'tishingiz mumkin.</span>
+                        <span className="text-emerald-400 font-semibold">✓ Joylashuv muvaffaqiyatli biriktirildi.</span>
                       ) : (
-                        <span className="text-rose-300">Lokatsiyasiz to'lovga o'tish va buyurtma berish mumkin emas!</span>
+                        <span className="text-amber-300">GPS tugmasini bosing yoki hududingizni tanlang.</span>
                       )}
                     </p>
                   </div>
 
+                  {/* GPS Detection Button */}
                   <button
                     type="button"
                     onClick={handleGetLocation}
                     disabled={isLocating}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
+                    className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all ${
                       clientLocation.trim()
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                        : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                        : 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md'
                     }`}
                   >
-                    <MapPin className="w-3.5 h-3.5" />
+                    <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
                     <span>
                       {isLocating
-                        ? 'Aniqlanmoqda...'
+                        ? 'GPS aniqlanmoqda...'
                         : clientLocation.trim()
-                        ? 'Yangilash (GPS) ✓'
-                        : "Lokatsiyani Aniqlash (GPS) *"}
+                        ? 'Qayta Aniqlash (GPS)'
+                        : 'Mening Joylashuvim (GPS)'}
                     </span>
                   </button>
                 </div>
 
                 {/* Detected Location Display */}
                 {clientLocation.trim() && (
-                  <div className="p-2 rounded bg-[var(--card-bg)] border border-emerald-500/30 flex items-center justify-between gap-2 text-xs font-mono">
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="text-slate-300 text-[11px] truncate">
+                  <div className="p-2.5 rounded-lg bg-[var(--card-bg)] border border-emerald-500/40 flex items-center justify-between gap-2 text-xs font-mono mb-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="text-slate-200 text-xs truncate">
                         {clientLocation}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      {clientLocation.startsWith('http') && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {clientLocation.startsWith('http') ? (
                         <a
                           href={clientLocation}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] flex items-center gap-1"
+                          className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1 hover:bg-emerald-500/30 cursor-pointer"
                         >
-                          <span>Xarita</span>
+                          <span>Xaritada Ko'rish</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <a
+                          href={`https://maps.google.com/?q=${encodeURIComponent(clientLocation)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1 hover:bg-emerald-500/30 cursor-pointer"
+                        >
+                          <span>Xaritada Ochish</span>
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
                       <button
                         type="button"
                         onClick={() => setShowManualInput(!showManualInput)}
-                        className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px]"
+                        className="px-2 py-1 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-white text-[11px] cursor-pointer"
                       >
-                        {showManualInput ? 'Yopish' : 'Tahrir'}
+                        {showManualInput ? 'Yopish' : 'Tahrirlash'}
                       </button>
                     </div>
                   </div>
                 )}
 
+                {/* Success Message Banner */}
+                {locationSuccessMsg && (
+                  <div className="p-2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5 mb-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{locationSuccessMsg}</span>
+                  </div>
+                )}
+
                 {/* Error Banner */}
                 {locationError && (
-                  <div className="mt-2 p-2 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-1.5">
+                  <div className="p-2 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-1.5 mb-2">
                     <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">{locationError}</p>
                       <p className="text-[10px] text-rose-300/80">
-                        GPS ishlamasa, manzilingizni pastda yozma kiritishingiz mumkin.
+                        GPS ishlamasa, quyidagi viloyatlardan birini bosish yoki manzilingizni yozish kifoya.
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* Manual Address Input */}
-                {(showManualInput || !clientLocation.trim()) && (
-                  <div className="mt-2 pt-2 border-t border-[var(--sub-alt)]/40 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-[var(--sub-color)]">
-                      <span>Manzil (shahar, tuman, ko'cha):</span>
-                      {!showManualInput && (
-                        <button
-                          type="button"
-                          onClick={() => setShowManualInput(true)}
-                          className="text-amber-400 underline cursor-pointer"
-                        >
-                          Qo'lda kiritish
-                        </button>
-                      )}
-                    </div>
-                    {showManualInput && (
+                {/* Quick Region Selector (Viloyatlar orqali 1 bosishda tanlash) */}
+                <div className="pt-2 border-t border-[var(--sub-alt)]/40 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--sub-color)]">
+                    <span>Viloyat / Shaharni tezkor tanlash:</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowManualInput(!showManualInput)}
+                      className="text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      {showManualInput ? 'Yopish' : 'Aniq manzil yozish'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {UZ_REGIONS.map((reg) => (
+                      <button
+                        key={reg}
+                        type="button"
+                        onClick={() => handleSelectRegion(reg)}
+                        className={`px-2 py-1 rounded text-[11px] font-mono transition-all cursor-pointer ${
+                          clientLocation === reg
+                            ? 'bg-emerald-500 text-slate-950 font-bold'
+                            : 'bg-[var(--card-bg)] hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
+                        }`}
+                      >
+                        {reg}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Manual Address Input */}
+                  {(showManualInput || !clientLocation.trim()) && (
+                    <div className="pt-2 space-y-1">
+                      <span className="text-[10px] font-mono text-[var(--sub-color)] block">
+                        Yoki aniq ko'cha, tuman va uy raqamingiz:
+                      </span>
                       <div className="flex gap-1.5">
                         <input
                           type="text"
-                          placeholder="Toshkent, Chilonzor, 15-uy..."
-                          value={clientLocation}
+                          placeholder="Masalan: Toshkent, Chilonzor 9, 14-uy..."
+                          value={clientLocation.startsWith('http') ? '' : clientLocation}
                           onChange={(e) => {
                             setClientLocation(e.target.value);
-                            if (e.target.value.trim()) setLocationError(null);
+                            if (e.target.value.trim()) {
+                              setLocationError(null);
+                              setLocationSuccessMsg(null);
+                            }
                           }}
-                          className="flex-1 px-2.5 py-1.5 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-400 font-sans"
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-400 font-sans"
                         />
-                        {clientLocation.trim() && (
+                        {clientLocation.trim() && !clientLocation.startsWith('http') && (
                           <button
                             type="button"
                             onClick={() => {
                               setShowManualInput(false);
                               setLocationError(null);
+                              setLocationSuccessMsg("Manzil saqlandi ✓");
                             }}
-                            className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-mono font-bold"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-mono font-bold cursor-pointer"
                           >
                             Saqlash
                           </button>
                         )}
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1199,7 +1234,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
             <button
               onClick={handleProceedToPayment}
-              className={`px-5 py-2 rounded-lg font-bold text-xs font-mono uppercase flex items-center gap-1.5 cursor-pointer ${
+              className={`px-5 py-2 rounded-lg font-bold text-xs font-mono uppercase flex items-center gap-1.5 cursor-pointer shadow-md ${
                 clientLocation.trim()
                   ? 'bg-amber-400 hover:bg-amber-300 text-slate-950'
                   : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
@@ -1218,18 +1253,18 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 4: PAYMENT & RECEIPT (ALOHIDA SAHIFA)                                 */}
+      {/* STEP 4: PAYMENT & ORDER CONFIRMATION (CHEK YUKLASH SHART EMAS)            */}
       {/* ========================================================================= */}
       {!orderSuccessId && currentStep === 4 && (
-        <div className="space-y-3 max-w-xl mx-auto">
+        <div className="space-y-3.5 max-w-xl mx-auto">
           {/* Summary Box */}
           <div className="p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-2 text-xs">
             <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-2">
               <div>
-                <span className="text-[10px] font-mono uppercase text-[var(--sub-color)]">Xulosa:</span>
+                <span className="text-[10px] font-mono uppercase text-[var(--sub-color)]">Buyurtma Xulosasi:</span>
                 <div className="font-bold text-[var(--text-color)]">{currentCategory.name} — {currentService.name}</div>
                 <div className="text-[var(--sub-color)] mt-0.5">
-                  Mijoz: <span className="text-[var(--text-color)]">{clientName}</span> ({clientPhone})
+                  Mijoz: <span className="text-[var(--text-color)] font-semibold">{clientName}</span> ({clientPhone})
                 </div>
               </div>
               <div className="text-right font-mono">
@@ -1244,7 +1279,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               <div className="flex items-center gap-1.5 overflow-hidden">
                 <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="text-emerald-400 font-bold shrink-0">Lokatsiya:</span>
-                <span className="text-slate-300 truncate">{clientLocation}</span>
+                <span className="text-slate-200 truncate">{clientLocation}</span>
               </div>
               <button
                 type="button"
@@ -1257,114 +1292,81 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* Payment Card Box */}
-          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-amber-500/40 space-y-2.5">
+          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-amber-500/40 space-y-3 shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <CreditCard className="w-4 h-4 text-amber-400" />
                 <h3 className="text-sm font-bold text-white">To'lov Uchun Karta</h3>
               </div>
               <span className="text-[10px] font-mono text-emerald-400">
-                Click / Payme / Uzum
+                Click / Payme / Uzum Bank
               </span>
             </div>
 
-            <div className="p-3 rounded-lg bg-[var(--bg-color)] border border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="p-3.5 rounded-lg bg-[var(--bg-color)] border border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div>
-                <div className="text-base font-bold font-mono tracking-wider text-amber-300">
+                <div className="text-base sm:text-lg font-bold font-mono tracking-wider text-amber-300">
                   {CARD_NUMBER}
                 </div>
-                <div className="text-xs font-mono text-slate-300">
-                  Egasi: {CARD_HOLDER}
+                <div className="text-xs font-mono text-slate-300 mt-0.5">
+                  Karta egasi: <strong className="text-white">{CARD_HOLDER}</strong>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleCopyCard}
-                className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-1 cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-1 cursor-pointer transition-all shadow"
               >
-                {isCopiedCard ? <Check className="w-3.5 h-3.5 text-emerald-900" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{isCopiedCard ? 'Nusxa Olindi ✓' : 'Nusxa Olish'}</span>
+                {isCopiedCard ? <Check className="w-3.5 h-3.5 text-emerald-950" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{isCopiedCard ? 'Nusxa Olindi ✓' : 'Karta Raqamini Olish'}</span>
               </button>
             </div>
           </div>
 
-          {/* Receipt Upload Card */}
-          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-2.5">
-            <div className="space-y-0.5">
-              <h4 className="text-xs font-bold text-[var(--text-color)] flex items-center gap-1.5">
-                <Upload className="w-3.5 h-3.5 text-amber-400" />
-                <span>To'lov Cheki (Skrinshot yoki Rasm) *</span>
-              </h4>
-              <p className="text-[11px] text-[var(--sub-color)]">
-                Chek rasmi to'g'ridan-to'g'ri Telegram botimizga yuboriladi.
-              </p>
+          {/* CHEK YUKLASH SHART EMAS TUSHUNTIRISH BLOKI */}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-sky-950/60 via-[var(--card-bg)] to-sky-900/40 border border-sky-500/40 space-y-2">
+            <div className="flex items-center gap-2 text-sky-400 text-xs font-bold font-mono">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Chek yuklash shart emas!</span>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleReceiptUpload}
-            />
+            <p className="text-xs text-slate-200 leading-relaxed">
+              Saytga chek rasmini yuklash talab etilmaydi. Pastdagi <strong>«Buyurtmani Berish»</strong> tugmasini bosishingiz bilan buyurtma tafsilotlari Telegram botimizga yuboriladi.
+            </p>
 
-            {!receiptImage ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="p-5 rounded-lg border border-dashed border-[var(--sub-alt)] hover:border-amber-400 bg-[var(--bg-color)] flex flex-col items-center justify-center text-center cursor-pointer space-y-1"
+            <div className="p-2.5 rounded-lg bg-black/40 border border-sky-500/20 text-xs text-slate-300 space-y-1">
+              <p>
+                To'lov chekini esa to'g'ridan-to'g'ri Telegram orqali lichkamizga tashlaysiz:
+              </p>
+              <a
+                href={TELEGRAM_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sky-300 font-bold hover:underline inline-flex items-center gap-1"
               >
-                <Upload className="w-4 h-4 text-amber-400" />
-                <p className="text-xs font-bold text-[var(--text-color)]">
-                  Chek rasmini yuklash uchun bosing
-                </p>
-                <p className="text-[10px] text-[var(--sub-color)]">
-                  JPG, PNG, WebP (Maksimal 8 MB)
-                </p>
-              </div>
-            ) : (
-              <div className="p-2.5 rounded-lg bg-[var(--bg-color)] border border-emerald-500/40 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <img
-                    src={receiptImage}
-                    alt="Chek"
-                    className="w-10 h-10 rounded object-cover border border-emerald-500/30 shrink-0"
-                  />
-                  <div className="min-w-0 text-xs">
-                    <span className="font-bold text-emerald-400 block truncate">Chek yuklandi</span>
-                    <span className="text-[10px] text-[var(--sub-color)] font-mono truncate block">
-                      {receiptFileName || 'chek.jpg'}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setReceiptImage(null);
-                    setReceiptFileName('');
-                  }}
-                  className="px-2 py-1 rounded bg-rose-500/10 text-rose-400 text-xs font-mono cursor-pointer"
-                >
-                  O'chirish
-                </button>
-              </div>
-            )}
+                <span>{TELEGRAM_LINK}</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <p className="text-[11px] text-slate-400 pt-0.5">
+                Mutaxassislarimiz chekni tekshirib, tez orada sizga javob berishadi.
+              </p>
+            </div>
           </div>
 
           {submitError && (
-            <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{submitError}</span>
             </div>
           )}
 
-          {/* Stepper Buttons & Submit */}
+          {/* Stepper Buttons & Submit to Telegram Bot */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1">
             <button
               onClick={() => setCurrentStep(3)}
               disabled={isSubmitting}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono flex items-center justify-center gap-1 cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono flex items-center justify-center gap-1 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Orqaga</span>
@@ -1373,7 +1375,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
             <button
               onClick={handleSubmitOrder}
               disabled={isSubmitting || cooldownRemaining > 0}
-              className="w-full sm:w-auto px-6 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono uppercase flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm font-mono uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Send className="w-4 h-4" />
               <span>
@@ -1381,7 +1383,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                   ? "Botga yuborilmoqda..."
                   : cooldownRemaining > 0
                   ? `Kuting (${cooldownRemaining}s)`
-                  : "Buyurtmani Yuborish (Telegram Bot)"}
+                  : "Buyurtma Berish (Telegram Botga)"}
               </span>
             </button>
           </div>
