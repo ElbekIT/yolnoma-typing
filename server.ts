@@ -2759,8 +2759,9 @@ app.get('/api/user/ban-status', (req, res) => {
 // -------------------------------------------------------------
 // SECURE ELBEK DESIGN STUDIO ORDERS & TELEGRAM BOT DISPATCH
 // -------------------------------------------------------------
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8962165787:AAFMUNn8hYofaywR86JR4LwNUd5Wah1m1sE';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8269163077';
+// Exactly this bot token requested by user: 8962165787:AAFMUNn8hYofaywR86JR4LwNUd5Wah1m1sE
+const TELEGRAM_BOT_TOKEN = '8962165787:AAFMUNn8hYofaywR86JR4LwNUd5Wah1m1sE';
+const TELEGRAM_CHAT_ID = '8269163077';
 
 export interface StoredDesignOrder {
   id: string;
@@ -2928,13 +2929,36 @@ ${locationLine}━━━━━━━━━━━━━━━━━━━━━
           text: captionText,
           parse_mode: 'HTML'
         }),
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(10000)
       });
       const tgData: any = await tgRes.json();
       if (tgData.ok) {
         telegramDelivered = true;
       } else {
-        telegramError = tgData.description || 'sendMessage failed';
+        telegramError = tgData.description || 'sendMessage HTML failed';
+        console.warn('Telegram HTML send failed, trying plain text fallback:', tgData);
+        // Fallback: send as plain text without HTML tags in case of unescaped text
+        try {
+          const plainText = captionText.replace(/<[^>]+>/g, '');
+          const fallbackRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: TELEGRAM_CHAT_ID,
+              text: plainText
+            }),
+            signal: AbortSignal.timeout(8000)
+          });
+          const fallbackData: any = await fallbackRes.json();
+          if (fallbackData.ok) {
+            telegramDelivered = true;
+            telegramError = undefined;
+          } else {
+            telegramError = fallbackData.description || telegramError;
+          }
+        } catch (fErr: any) {
+          telegramError = fErr?.message || telegramError;
+        }
       }
     }
   } catch (err: any) {
