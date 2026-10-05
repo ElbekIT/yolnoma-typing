@@ -42,6 +42,7 @@ import { maskEmail } from '../utils/maskEmail';
 import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
 import { ShareModal } from './share/ShareModal';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { useI18n } from '../context/I18nContext';
 import { menuTranslations } from '../locales/translations';
 
@@ -51,7 +52,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
 }
 
-export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpenAuth }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
   const { t, uiLanguage } = useI18n();
@@ -239,19 +240,22 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
             </div>
           </div>
 
-          {/* Right Side: Language Switcher, 2-State Theme Toggle & Profile Avatar */}
+          {/* Right Side: Theme Palette, Quick Sun/Moon Toggle, Language Switcher & Profile Avatar */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Theme Palette Switcher Dropdown */}
+            <ThemeSwitcher />
+
             {/* Quick 2-state Sun/Moon Theme Switcher */}
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(theme === 'light' || theme === 'sepia' ? 'dark' : 'light')}
               className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer border border-[var(--sub-alt)]/60"
-              title={theme === 'dark' ? "Oq temaga o'tish (Light)" : "Qora temaga o'tish (Dark)"}
-              aria-label="Toggle Theme"
+              title={theme === 'light' || theme === 'sepia' ? "To'q rejimga o'tish (Dark)" : "Oq rejimga o'tish (Light)"}
+              aria-label="Toggle Light/Dark Theme"
             >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+              {theme === 'light' || theme === 'sepia' ? (
+                <Moon className="w-4 h-4 text-sky-500" />
               ) : (
-                <Moon className="w-4 h-4 text-sky-600" />
+                <Sun className="w-4 h-4 text-amber-400" />
               )}
             </button>
 
@@ -562,28 +566,31 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
                 </button>
               </div>
 
-              {/* Mobile Language Switcher & 2-state Theme Switcher */}
-              <div className="pt-2 pb-3 flex items-center justify-between gap-2">
-                <div className="flex-1">
-                  <LanguageSwitcher compact={true} />
+              {/* Mobile Language Switcher & Theme Controls */}
+              <div className="pt-2 pb-3 space-y-2 border-b border-[var(--sub-alt)]/60">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1">
+                    <LanguageSwitcher compact={true} />
+                  </div>
+                  <button
+                    onClick={() => setTheme(theme === 'light' || theme === 'sepia' ? 'dark' : 'light')}
+                    className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold shrink-0"
+                    title={theme === 'light' || theme === 'sepia' ? "To'q rejimga o'tish" : "Oq rejimga o'tish"}
+                  >
+                    {theme === 'light' || theme === 'sepia' ? (
+                      <>
+                        <Moon className="w-4 h-4 text-sky-500" />
+                        <span>Dark</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="w-4 h-4 text-amber-400" />
+                        <span>Light</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
-                  title={theme === 'dark' ? "Oq temaga o'tish" : "Qora temaga o'tish"}
-                >
-                  {theme === 'dark' ? (
-                    <>
-                      <Sun className="w-4 h-4 text-amber-400" />
-                      <span>Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-4 h-4 text-sky-500" />
-                      <span>Dark</span>
-                    </>
-                  )}
-                </button>
+                <ThemeSwitcher compact={true} />
               </div>
 
               {/* Clean Navigation Menu Links */}
@@ -712,5 +719,5 @@ export const Header = React.memo<HeaderProps>(({ activeTab, setActiveTab, onOpen
       />
     </>
   );
-});
+};
 

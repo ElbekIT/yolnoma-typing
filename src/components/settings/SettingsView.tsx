@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useSettings, TypingAnimation, TypingAnimationSpeed } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
-import { themes } from '../../config/themes';
+import { themes, THEME_LIST, ThemeConfig } from '../../config/themes';
 import { languagesList } from '../../config/languages';
 import { ThemeMode, CaretStyle, TapeMode, SoundProfile, LanguageCode } from '../../types';
 
@@ -126,68 +126,108 @@ export const SettingsView: React.FC = () => {
         </p>
       </div>
 
-      {/* Theme Picker: TypingMaster clean style (Only Dark & Light) */}
+      {/* Theme Picker: Comprehensive Premium Palette (10 Curated Themes) */}
       <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 sm:p-6 rounded-2xl shadow-xs">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
-            <Palette className="w-4 h-4 text-[var(--main-color)]" />
-            <span>Mavzu (Theme)</span>
-          </h3>
-          <span className="text-xs text-[var(--sub-color)] font-medium">Faqat 2 ta toza rejim</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[var(--sub-alt)]/60">
+          <div>
+            <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
+              <Palette className="w-4 h-4 text-[var(--main-color)]" />
+              <span>Sayt Mavzusi (Theme Gallery)</span>
+            </h3>
+            <p className="text-xs text-[var(--sub-color)] mt-0.5">
+              10 xil eksklyuziv ranglar uyg'unligi — qorong'u kiber neon, zumrad, tokio va toza yorug' mavzular
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-xs font-mono text-[var(--main-color)]">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>10 ta jonli mavzu</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {/* 1. Qora tema (Dark) */}
-          <button
-            type="button"
-            onClick={() => setTheme('dark')}
-            className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-              theme === 'dark'
-                ? 'border-[var(--main-color)] bg-[var(--sub-alt)]/70 ring-1 ring-[var(--main-color)]'
-                : 'border-[var(--sub-alt)] bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sky-400 shrink-0">
-                <Moon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
-                  <span>Qora tema (Dark)</span>
-                </div>
-                <div className="text-xs text-[var(--sub-color)] mt-0.5">
-                  To'q fon, toza oq matn, ko'zga qulay
-                </div>
-              </div>
-            </div>
-            {theme === 'dark' && <Check className="w-5 h-5 text-[var(--main-color)] shrink-0 ml-2" />}
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {THEME_LIST.map((t: ThemeConfig) => {
+            const isActive = theme === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTheme(t.id as ThemeMode)}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                  isActive
+                    ? 'border-[var(--main-color)] bg-[var(--sub-alt)]/75 ring-2 ring-[var(--main-color)]/50 shadow-md'
+                    : 'border-[var(--sub-alt)]/80 bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/35 hover:border-[var(--sub-alt)]'
+                }`}
+              >
+                {/* Top: Header & Status Check */}
+                <div className="flex items-start justify-between gap-2 mb-2 w-full">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className="w-5 h-5 rounded-lg border border-white/20 shrink-0 shadow-xs flex items-center justify-center"
+                      style={{ backgroundColor: t.mainColor }}
+                    >
+                      {t.isDark ? (
+                        <Moon className="w-2.5 h-2.5 text-white/90" />
+                      ) : (
+                        <Sun className="w-2.5 h-2.5 text-white/90" />
+                      )}
+                    </div>
+                    <span className="text-xs font-bold text-[var(--text-color)] truncate">
+                      {t.name}
+                    </span>
+                  </div>
 
-          {/* 2. Oq tema (Light - TypingMaster) */}
-          <button
-            type="button"
-            onClick={() => setTheme('light')}
-            className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-              theme === 'light'
-                ? 'border-[var(--main-color)] bg-[var(--sub-alt)]/70 ring-1 ring-[var(--main-color)]'
-                : 'border-[var(--sub-alt)] bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white border border-slate-300 flex items-center justify-center text-amber-500 shrink-0">
-                <Sun className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
-                  <span>Oq tema (Light)</span>
+                  {isActive ? (
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[var(--main-color)] text-[var(--bg-color,#060913)] shrink-0">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-md bg-[var(--sub-alt)] text-[var(--sub-color)]">
+                      {t.category}
+                    </span>
+                  )}
                 </div>
-                <div className="text-xs text-[var(--sub-color)] mt-0.5">
-                  TypingMaster toza oq fon, tiniq qora matn
+
+                {/* Middle: Short Description */}
+                <p className="text-[11px] text-[var(--sub-color)] leading-snug line-clamp-2 mb-3">
+                  {t.description}
+                </p>
+
+                {/* Bottom: Mini Interactive Palette Preview & Sample Typing Text */}
+                <div
+                  className="w-full p-2 rounded-xl border border-white/10 flex items-center justify-between"
+                  style={{ backgroundColor: t.bg }}
+                >
+                  <div className="flex items-center gap-1 text-[11px] font-mono font-medium">
+                    <span style={{ color: t.correctColor }}>tez</span>
+                    <span style={{ color: t.subColor }}>yozish</span>
+                    <span
+                      className="inline-block w-1.5 h-3.5 rounded-xs animate-pulse"
+                      style={{ backgroundColor: t.caretColor }}
+                    />
+                  </div>
+
+                  {/* 3 Color Dots */}
+                  <div className="flex items-center -space-x-1 shrink-0">
+                    <div
+                      className="w-3 h-3 rounded-full border border-black/30 shadow-xs"
+                      style={{ backgroundColor: t.mainColor }}
+                      title="Asosiy rang"
+                    />
+                    <div
+                      className="w-3 h-3 rounded-full border border-black/30"
+                      style={{ backgroundColor: t.cardBg }}
+                      title="Karta"
+                    />
+                    <div
+                      className="w-3 h-3 rounded-full border border-black/30"
+                      style={{ backgroundColor: t.caretColor }}
+                      title="Kursor"
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
-            {theme === 'light' && <Check className="w-5 h-5 text-[var(--main-color)] shrink-0 ml-2" />}
-          </button>
+              </button>
+            );
+          })}
         </div>
       </div>
 

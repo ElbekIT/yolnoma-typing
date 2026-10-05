@@ -41,7 +41,6 @@ const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutVie
 const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
 const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
-const SeoArticleSection = React.lazy(() => import('./components/seo/SeoArticleSection').then(m => ({ default: m.SeoArticleSection })));
 
 function ViewLoadingFallback() {
   return (
@@ -1141,11 +1140,11 @@ function MainAppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-150 overflow-x-clip w-full relative selection:bg-[var(--main-color)]/30 selection:text-[var(--text-color)]">
-      {/* Ultra-lightweight ambient atmospheric backdrop */}
+      {/* Ultra-lightweight ambient atmospheric backdrop dynamically adapted to current theme */}
       <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-70"
+        className="pointer-events-none fixed inset-0 -z-10 opacity-60 transition-all duration-300"
         style={{
-          background: 'radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05), transparent 65%)'
+          background: 'radial-gradient(ellipse 80% 50% at 50% 0%, var(--glow-color, rgba(6, 182, 212, 0.18)), transparent 70%)'
         }}
       />
       {/* Whitelisted Owner Notice during Active Maintenance */}

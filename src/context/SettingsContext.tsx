@@ -51,8 +51,13 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('yolnoma_theme');
-    return saved === 'light' ? 'light' : 'dark';
+    try {
+      const saved = localStorage.getItem('yolnoma_theme');
+      if (saved && themes[saved]) {
+        return saved as ThemeMode;
+      }
+    } catch {}
+    return 'dark';
   });
   const [caretStyle, setCaretStyleState] = useState<CaretStyle>(() => {
     return (localStorage.getItem('yolnoma_caret') as CaretStyle) || 'line';
@@ -226,6 +231,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     root.style.setProperty('--correct-color', curTheme.correctColor);
     root.style.setProperty('--extra-color', curTheme.extraColor);
     root.style.setProperty('--caret-color', curTheme.caretColor);
+    root.style.setProperty('--glow-color', curTheme.glowColor || 'rgba(6, 182, 212, 0.25)');
 
     // Synchronize HTML/body background and text color
     root.style.backgroundColor = curTheme.bg;

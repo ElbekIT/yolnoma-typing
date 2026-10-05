@@ -14,7 +14,18 @@ export type DifficultyMode = 'easy' | 'medium' | 'hard' | 'expert';
 export type CaretStyle = 'line' | 'block' | 'underline' | 'outline';
 export type TapeMode = 'off' | 'letter' | 'word';
 export type SoundProfile = 'off' | 'cherry-blue' | 'cherry-red' | 'thock' | 'typewriter' | 'soft-bubble';
-export type ThemeMode = 'dark' | 'light';
+export type ThemeMode =
+  | 'dark'
+  | 'emerald'
+  | 'tokyo'
+  | 'sapphire'
+  | 'magma'
+  | 'sunset'
+  | 'forest'
+  | 'gold'
+  | 'light'
+  | 'sepia'
+  | (string & {});
 
 export interface UserSocialLinks {
   twitter?: string;

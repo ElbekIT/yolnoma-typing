@@ -189,25 +189,60 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
 
         {/* Tab Content: FAQ */}
         {activeTab === 'faq' && (
-          <div className="space-y-4 text-xs">
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
-              <h4 className="font-bold text-sm text-[var(--text-color)]">WPM qanday hisoblanadi?</h4>
+          <div className="space-y-3 text-xs max-h-[60vh] overflow-y-auto pr-1">
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">WPM va CPM qanday hisoblanadi?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
-                Words Per Minute (WPM) toʻgʻri kiritilgan barcha belgilarni 5 ga boʻlish va sarflangan daqiqaga boʻlish orqali aniqlanadi: <code className="font-mono bg-black/20 px-1 py-0.5 rounded text-[var(--main-color)]">((Toʻgʻri Belgilar / 5) / Daqiqa)</code>.
+                Words Per Minute (WPM) toʻgʻri kiritilgan belgilarni 5 ga boʻlish va sarflangan daqiqaga boʻlish orqali aniqlanadi: <code className="font-mono bg-black/20 px-1 py-0.5 rounded text-[var(--main-color)]">((Toʻgʻri Belgilar / 5) / Daqiqa)</code>. CPM esa daqiqadagi jami sof bosilgan belgilar sonidir (masalan: 350 CPM = 70 WPM).
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
-              <h4 className="font-bold text-sm text-[var(--text-color)]">Oʻngdan chapga yoziladigan (RTL) tillar bormi?</h4>
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Yozish tezligini 100+ WPM ga qanday oshirish mumkin?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
-                Ha! Arab, Fors, Ibroniy va Urdu tillari toʻliq RTL yoʻnalishida, toʻgʻri harakatlanuvchi kursor va maxsus shriftlar bilan ishlaydi.
+                Eng muhim qoida: dastlab tezlikka emas, 97-98%+ aniqlikka intiling. Har bir harfni faqat unga biriktirilgan barmoq bilan, metronom kabi bir xil ritmda bosing. Mushak xotirasi mustahkamlangach, tezlik avtomatik ravishda oshadi.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)] space-y-1">
-              <h4 className="font-bold text-sm text-[var(--text-color)]">Qanday tezkor tugmalar mavjud?</h4>
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Kuniga necha daqiqa mashq qilish kifoya?</h4>
               <p className="text-[var(--sub-color)] leading-relaxed">
-                Testni qayta boshlash uchun <span className="font-bold text-[var(--text-color)]">Tab + Enter</span> tugmalarini bosing. Kursor yoki matndan chiqish uchun <span className="font-bold text-[var(--text-color)]">Esc</span> tugmasidan foydalaning.
+                Kuniga atigi 15-25 daqiqa muntazam shugʻullanish kifoya. Kuniga 20 daqiqa mashq qilish orqali 2-4 haftada sezilarli oʻsish, 2-3 oyda esa barqaror professional 75-100+ WPM ga erishasiz.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Speedway Battle (1v1 jonli duel) qanday ishlaydi?</h4>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                «Tezkor Bellashuv» orqali tasodifiy raqib bilan poyga qilishingiz yoki «Xona Yaratish» tugmasini bosib, 6 xonali maxsus kodni doʻstingizga yuborib birga poyga tarzida yozish jangini oʻtkazishingiz mumkin.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Milliy reytingga natijalar qanday qoʻshiladi?</h4>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                Google hisobingiz orqali tizimga kirib, 15s, 30s yoki 60s test topshiring. Natijangiz avtomatik tarzda Oʻzbekiston milliy reytingiga kiritiladi. Tizimda firibgarlik (cheat)larga qarshi aqlli himoya ishlaydi.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Qanday tezkor tugmalar (Hotkeys) mavjud?</h4>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                Testni bir zumda qayta boshlash: <span className="font-bold text-[var(--text-color)]">Tab + Enter</span>. Fokusni tiklash yoki oynani yopish: <span className="font-bold text-[var(--text-color)]">Esc</span>. Butun soʻzni oʻchirish: <span className="font-bold text-[var(--text-color)]">Ctrl + Backspace</span>.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Platformada qanday tillar va dasturlash tillari bor?</h4>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                Oʻzbekcha (Lotin va Kirill), Ingliz, Rus va 125+ jahon tillari, shuningdek dasturchilar uchun JavaScript, Python, C++, HTML/CSS, Java, SQL, Rust va Go sintaksislari mavjud.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--sub-alt)] space-y-1">
+              <h4 className="font-bold text-sm text-[var(--text-color)]">Platforma bepulmi?</h4>
+              <p className="text-[var(--sub-color)] leading-relaxed">
+                Ha, Yolnoma Typing 100% mutlaqo bepul va ochiq milliy taʼlimiy platformadir. Hech qanday yashirin toʻlov yoki obunalar yoʻq.
               </p>
             </div>
           </div>
