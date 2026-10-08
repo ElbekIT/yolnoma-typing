@@ -12,7 +12,7 @@ export type WordCountMode = 100 | 200 | 300 | 400 | 500 | 10 | 25 | 50 | 0; // 0
 export type DifficultyMode = 'easy' | 'medium' | 'hard' | 'expert';
 
 export type CaretStyle = 'line' | 'block' | 'underline' | 'outline';
-export type TapeMode = 'off' | 'letter' | 'word';
+export type TapeMode = 'off' | 'letter' | 'word' | 'drum';
 export type SoundProfile = 'off' | 'cherry-blue' | 'cherry-red' | 'thock' | 'typewriter' | 'soft-bubble';
 export type ThemeMode =
   | 'dark'
@@ -235,4 +235,29 @@ export interface SponsorItem {
   name: string;
   addedBy?: string;
   createdAt: number;
+}
+
+export interface SiteFeedbackItem {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userAvatar?: string;
+  userRole?: string;
+  userRank?: string;
+  userWpm?: number;
+  userAccuracy?: number;
+  userLevel?: number;
+  category: 'fikr' | 'taklif' | 'xato' | 'dizayn';
+  rating: number; // 1 to 5
+  message: string;
+  createdAt: number;
+  expiresAt: number; // createdAt + 86400000 (24h)
+  deviceInfo?: string;
+  ip?: string;
+  isRead?: boolean;
+  status: 'active' | 'reviewed' | 'replied';
+  replyText?: string;
+  repliedAt?: number;
+  repliedBy?: string;
 }

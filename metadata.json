@@ -1,6 +1,6 @@
 {
   "name": "Yolnoma Typing",
-  "description": "Dunyo bo'yicha 125+ tilda klaviaturada tez yozish, 10 barmoq mashqlari va real-vaqt musobaqa platformasi. Bepul WPM va CPM tezligingizni aniqlang va milliy reytingda qatnashing!",
+  "description": "Klaviaturada tez yozishni o'rganing! Bepul 10 barmoq mashqlari, WPM tezlik testi, real-vaqt musobaqalar va O'zbekiston milliy reytingi. Tez yozish bo'yicha №1 platforma.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

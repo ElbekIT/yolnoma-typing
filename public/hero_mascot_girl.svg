@@ -1,0 +1,316 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 650" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Radial Ground Shadow -->
+    <radialGradient id="girlGroundShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.32"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Hair Gradients (Silky rich dark brown with soft amber-gold highlights) -->
+    <linearGradient id="girlHairDark" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#4a2511"/>
+      <stop offset="50%" stop-color="#321609"/>
+      <stop offset="100%" stop-color="#1f0c05"/>
+    </linearGradient>
+    <linearGradient id="girlHairHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8d4925"/>
+      <stop offset="50%" stop-color="#693318"/>
+      <stop offset="100%" stop-color="#4a2511"/>
+    </linearGradient>
+    <linearGradient id="girlHairGleam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b4683c" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#b4683c" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Skin Gradients (Warm, porcelain-soft healthy glow) -->
+    <linearGradient id="girlSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff0e5"/>
+      <stop offset="70%" stop-color="#fddbc7"/>
+      <stop offset="100%" stop-color="#f7c3aa"/>
+    </linearGradient>
+    <linearGradient id="girlSkinShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7c3aa"/>
+      <stop offset="100%" stop-color="#e8a082"/>
+    </linearGradient>
+
+    <!-- Eyes Gradient (Sparkling emerald-teal eyes with anime luster) -->
+    <linearGradient id="girlEyeIris" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="45%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+
+    <!-- Jacket Gradients (Turquoise / Cyan & Crisp White Varsity Jacket) -->
+    <linearGradient id="girlJacketCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="girlJacketWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+
+    <!-- Pleated Skirt Gradients (Chic Navy Violet with subtle sheen) -->
+    <linearGradient id="girlSkirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="60%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <!-- Sneakers Gradients (Modern crisp white & turquoise kicks) -->
+    <linearGradient id="girlShoe" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="70%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+
+    <!-- Ribbon & Accessory Gradient (Coral Rose) -->
+    <linearGradient id="ribbonCoral" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+
+    <!-- Ambient Glow Filter -->
+    <filter id="girlGlowSubtle" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#06b6d4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Ground Drop Shadow -->
+  <ellipse cx="250" cy="610" rx="135" ry="22" fill="url(#girlGroundShadow)"/>
+
+  <!-- Character Main Group -->
+  <g filter="url(#girlGlowSubtle)">
+
+    <!-- BACK HAIR PONYTAIL / FLOWING LOCKS -->
+    <g id="girlBackHair">
+      <!-- High side ponytail flowing over left shoulder -->
+      <path d="M290 120 Q360 160 350 260 Q340 310 320 340 Q330 290 315 240 Q305 190 280 145 Z" fill="url(#girlHairDark)"/>
+      <path d="M295 130 Q350 170 342 250 Q332 290 322 315" stroke="url(#girlHairHighlight)" stroke-width="3" fill="none"/>
+      <!-- Soft back hair base -->
+      <path d="M195 130 Q180 200 215 230 L285 230 Q320 200 305 130 Z" fill="url(#girlHairDark)"/>
+    </g>
+
+    <!-- LEGS & SOCKS -->
+    <!-- Left Leg -->
+    <path d="M218 450 L216 532 L230 534 L234 450 Z" fill="url(#girlSkin)"/>
+    <path d="M216 450 L219 532 L223 532 L220 450 Z" fill="url(#girlSkinShadow)" opacity="0.3"/>
+    <!-- Left Sock (Cute ribbed white sock with double cyan stripe) -->
+    <path d="M214 526 Q223 528 231 527 L231 552 Q223 554 213 551 Z" fill="#ffffff"/>
+    <path d="M215 532 Q223 534 231 533" stroke="#0ea5e9" stroke-width="1.8"/>
+    <path d="M214 537 Q223 539 231 538" stroke="#0ea5e9" stroke-width="1.8"/>
+
+    <!-- Right Leg -->
+    <path d="M266 450 L270 532 L284 530 L282 450 Z" fill="url(#girlSkin)"/>
+    <!-- Right Sock -->
+    <path d="M269 526 Q277 528 285 526 L286 551 Q277 554 268 552 Z" fill="#ffffff"/>
+    <path d="M269 532 Q277 534 285 532" stroke="#0ea5e9" stroke-width="1.8"/>
+    <path d="M269 537 Q277 539 285 537" stroke="#0ea5e9" stroke-width="1.8"/>
+
+    <!-- SNEAKERS (Sporty chic trendy pastel sneakers) -->
+    <!-- Left Shoe -->
+    <g id="girlLeftShoe">
+      <ellipse cx="220" cy="580" rx="20" ry="9" fill="#0f172a" opacity="0.18"/>
+      <path d="M205 548 Q218 544 232 550 L238 572 Q226 582 198 580 Q195 568 205 548 Z" fill="url(#girlShoe)"/>
+      <!-- Cyan accent swoosh -->
+      <path d="M208 562 Q220 558 230 564" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <!-- White Toe Cap & Sole -->
+      <path d="M197 570 Q206 565 214 572 L212 581 Q199 582 197 570 Z" fill="#ffffff"/>
+      <path d="M195 576 Q218 585 242 575 L241 582 Q218 589 195 581 Z" fill="#ffffff"/>
+      <!-- Laces -->
+      <line x1="210" y1="554" x2="222" y2="558" stroke="#fb7185" stroke-width="1.8"/>
+      <line x1="209" y1="560" x2="224" y2="564" stroke="#fb7185" stroke-width="1.8"/>
+    </g>
+
+    <!-- Right Shoe -->
+    <g id="girlRightShoe">
+      <ellipse cx="280" cy="580" rx="20" ry="9" fill="#0f172a" opacity="0.18"/>
+      <path d="M268 550 Q282 544 295 548 L305 569 Q303 580 263 582 Q262 570 268 550 Z" fill="url(#girlShoe)"/>
+      <!-- Cyan accent swoosh -->
+      <path d="M272 564 Q284 558 296 562" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <!-- White Toe Cap & Sole -->
+      <path d="M286 572 Q294 565 303 570 L301 581 Q292 582 286 572 Z" fill="#ffffff"/>
+      <path d="M258 576 Q282 585 305 576 L305 582 Q282 589 258 581 Z" fill="#ffffff"/>
+      <!-- Laces -->
+      <line x1="278" y1="558" x2="290" y2="554" stroke="#fb7185" stroke-width="1.8"/>
+      <line x1="276" y1="564" x2="291" y2="560" stroke="#fb7185" stroke-width="1.8"/>
+    </g>
+
+    <!-- PLEATED SKIRT (Navy with crisp folds) -->
+    <g id="girlPleatedSkirt">
+      <!-- Waistband -->
+      <path d="M210 370 L290 370 L293 385 L207 385 Z" fill="#1e1b4b"/>
+      <!-- Skirt Flare & Pleats -->
+      <path d="M205 385 L295 385 L310 450 Q250 460 190 450 Z" fill="url(#girlSkirt)"/>
+      <!-- Pleat Shadows & Highlights -->
+      <path d="M215 385 L206 450" stroke="#0f172a" stroke-width="2.5"/>
+      <path d="M230 385 L225 452" stroke="#0f172a" stroke-width="2.5"/>
+      <path d="M245 385 L244 453" stroke="#0f172a" stroke-width="2.5"/>
+      <path d="M260 385 L263 453" stroke="#0f172a" stroke-width="2.5"/>
+      <path d="M275 385 L282 452" stroke="#0f172a" stroke-width="2.5"/>
+      <path d="M290 385 L299 450" stroke="#0f172a" stroke-width="2.5"/>
+      <!-- White hem stripe -->
+      <path d="M192 444 Q250 454 308 444" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.85"/>
+    </g>
+
+    <!-- TORSO & VARSITY JACKET -->
+    <!-- Inner Top (Soft white tee with turquoise keyboard motif) -->
+    <path d="M230 225 L270 225 L276 375 L224 375 Z" fill="#ffffff"/>
+    <!-- Mini keyboard motif on shirt -->
+    <rect x="242" y="270" width="16" height="10" rx="2" fill="#0284c7" opacity="0.3"/>
+    <line x1="244" y1="274" x2="256" y2="274" stroke="#0284c7" stroke-width="1.2"/>
+    <line x1="244" y1="277" x2="256" y2="277" stroke="#0284c7" stroke-width="1.2"/>
+
+    <!-- Left Jacket Half (Cyan with White Sleeve) -->
+    <g id="girlLeftJacket">
+      <path d="M190 235 Q198 225 232 224 L234 372 Q198 374 188 360 Z" fill="url(#girlJacketCyan)"/>
+      <path d="M218 230 L232 230 L232 372 L218 372 Z" fill="url(#girlJacketWhite)"/>
+      <!-- White zipper line -->
+      <line x1="232" y1="225" x2="232" y2="372" stroke="#e2e8f0" stroke-width="2"/>
+    </g>
+
+    <!-- Right Jacket Half -->
+    <g id="girlRightJacket">
+      <path d="M310 235 Q302 225 268 224 L266 372 Q302 374 312 360 Z" fill="url(#girlJacketCyan)"/>
+      <path d="M268 230 L282 230 L282 372 L268 372 Z" fill="url(#girlJacketWhite)"/>
+      <line x1="268" y1="225" x2="268" y2="372" stroke="#e2e8f0" stroke-width="2"/>
+    </g>
+
+    <!-- Ribbed Collar & Hem -->
+    <path d="M210 216 Q250 232 290 216 Q300 228 290 236 Q250 246 210 236 Q200 228 210 216 Z" fill="#0369a1"/>
+    <path d="M214 222 Q250 236 286 222" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+
+    <!-- LEFT ARM (Bent, Hand Placed Respectfully Over Heart - "Qo'l Ko'ksida") -->
+    <g id="girlLeftArmOverHeart">
+      <!-- White sleeve -->
+      <path d="M192 235 Q170 265 180 310 L204 305 Q198 268 216 244 Z" fill="url(#girlJacketWhite)"/>
+      <!-- Forearm & Cyan Cuff reaching to heart -->
+      <path d="M180 310 Q200 326 238 296 L244 276 Q204 292 198 286 Z" fill="url(#girlJacketWhite)"/>
+      <!-- Striped cuff -->
+      <rect x="232" y="276" width="14" height="18" rx="3" transform="rotate(-30 232 276)" fill="#0284c7"/>
+      <!-- Cute Hand Over Heart -->
+      <g transform="translate(238, 258) rotate(-15)">
+        <path d="M0 10 Q5 0 15 0 Q22 0 23 10 L24 26 Q16 32 8 28 Q-2 24 0 10 Z" fill="url(#girlSkin)"/>
+        <!-- Thumb -->
+        <path d="M-4 8 Q0 4 6 8 L6 15 Q-2 17 -4 8 Z" fill="url(#girlSkin)"/>
+        <!-- Slender Fingers -->
+        <line x1="7" y1="3" x2="7" y2="23" stroke="#e8a082" stroke-width="0.9"/>
+        <line x1="13" y1="3" x2="13" y2="25" stroke="#e8a082" stroke-width="0.9"/>
+        <line x1="18" y1="5" x2="18" y2="24" stroke="#e8a082" stroke-width="0.9"/>
+      </g>
+    </g>
+
+    <!-- RIGHT ARM (Gracefully Gesturing in Welcome) -->
+    <g id="girlRightArmWelcoming">
+      <!-- White Upper sleeve -->
+      <path d="M308 235 Q340 265 360 305 L342 320 Q322 280 294 252 Z" fill="url(#girlJacketWhite)"/>
+      <!-- Forearm extending outward in greeting -->
+      <path d="M352 310 Q390 330 420 338 L426 322 Q390 312 362 300 Z" fill="url(#girlJacketWhite)"/>
+      <!-- Striped cuff -->
+      <rect x="415" y="320" width="14" height="18" rx="3" transform="rotate(15 415 320)" fill="#0284c7"/>
+      <!-- Slender Welcoming Open Hand -->
+      <g transform="translate(426, 320) rotate(15)">
+        <path d="M0 5 Q10 2 17 8 Q23 15 19 24 L8 23 Q-2 19 0 5 Z" fill="url(#girlSkin)"/>
+        <!-- Thumb -->
+        <path d="M2 -2 Q9 -5 11 0 L9 6 Q4 6 2 -2 Z" fill="url(#girlSkin)"/>
+        <!-- Fingers gracefully extended -->
+        <path d="M15 2 Q26 0 32 4 Q30 9 19 9 Z" fill="url(#girlSkin)"/>
+        <path d="M17 8 Q30 9 34 14 Q32 18 19 16 Z" fill="url(#girlSkin)"/>
+        <path d="M15 15 Q26 19 30 24 Q28 27 15 22 Z" fill="url(#girlSkin)"/>
+        <path d="M11 21 Q20 26 22 31 Q19 34 10 27 Z" fill="url(#girlSkin)"/>
+      </g>
+    </g>
+
+    <!-- NECK & HEAD -->
+    <!-- Neck -->
+    <path d="M238 196 L262 196 L264 228 L236 228 Z" fill="url(#girlSkinShadow)"/>
+    <path d="M240 200 L260 200 L262 222 L238 222 Z" fill="url(#girlSkin)"/>
+
+    <!-- Head Base (Soft cute chin, feminine anime jawline) -->
+    <path d="M205 130 Q198 180 224 200 Q250 214 276 200 Q302 180 295 130 Q295 70 250 70 Q205 70 205 130 Z" fill="url(#girlSkin)"/>
+
+    <!-- Ears -->
+    <!-- Left Ear with small pearl earring -->
+    <path d="M198 136 Q190 144 196 156 Q202 164 208 158 Z" fill="url(#girlSkin)"/>
+    <circle cx="204" cy="158" r="2.5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+    <!-- Right Ear with pearl earring -->
+    <path d="M302 136 Q310 144 304 156 Q298 164 292 158 Z" fill="url(#girlSkin)"/>
+    <circle cx="296" cy="158" r="2.5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+
+    <!-- Cheerful Pink Cheek Blushes -->
+    <ellipse cx="220" cy="158" rx="11" ry="5.5" fill="#fb7185" opacity="0.25"/>
+    <ellipse cx="280" cy="158" rx="11" ry="5.5" fill="#fb7185" opacity="0.25"/>
+
+    <!-- EYES (Large, radiant anime emerald-teal eyes with fluttery lashes) -->
+    <!-- Left Eye -->
+    <g id="girlLeftEye">
+      <!-- White -->
+      <path d="M216 138 Q228 130 238 140 Q234 154 218 152 Q212 146 216 138 Z" fill="#ffffff"/>
+      <!-- Iris -->
+      <ellipse cx="228" cy="142" rx="7.5" ry="8.5" fill="url(#girlEyeIris)"/>
+      <!-- Pupil -->
+      <ellipse cx="228" cy="142" rx="3.8" ry="4.5" fill="#042f2e"/>
+      <!-- Multiple Star Catchlights -->
+      <circle cx="226" cy="139" r="2.6" fill="#ffffff"/>
+      <circle cx="231" cy="146" r="1.4" fill="#ffffff"/>
+      <circle cx="225" cy="146" r="0.9" fill="#ffffff"/>
+      <!-- Eyelash Line with Winged Flick -->
+      <path d="M212 138 Q228 128 242 136 L244 133" stroke="#1c1917" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M241 135 L245 131" stroke="#1c1917" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M213 138 L210 134" stroke="#1c1917" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <!-- Right Eye -->
+    <g id="girlRightEye">
+      <!-- White -->
+      <path d="M284 138 Q272 130 262 140 Q266 154 282 152 Q288 146 284 138 Z" fill="#ffffff"/>
+      <!-- Iris -->
+      <ellipse cx="272" cy="142" rx="7.5" ry="8.5" fill="url(#girlEyeIris)"/>
+      <!-- Pupil -->
+      <ellipse cx="272" cy="142" rx="3.8" ry="4.5" fill="#042f2e"/>
+      <!-- Catchlights -->
+      <circle cx="270" cy="139" r="2.6" fill="#ffffff"/>
+      <circle cx="275" cy="146" r="1.4" fill="#ffffff"/>
+      <circle cx="269" cy="146" r="0.9" fill="#ffffff"/>
+      <!-- Eyelash Line with Winged Flick -->
+      <path d="M288 138 Q272 128 258 136 L256 133" stroke="#1c1917" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M259 135 L255 131" stroke="#1c1917" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M287 138 L290 134" stroke="#1c1917" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <!-- Fine Arched Eyebrows -->
+    <path d="M213 124 Q226 118 238 125" stroke="#4a2511" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M287 124 Q274 118 262 125" stroke="#4a2511" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+    <!-- Cute button nose -->
+    <path d="M249 157 Q251 160 253 159" stroke="#e8a082" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+    <!-- Sweet, friendly, open smile with soft pink lip -->
+    <path d="M238 171 Q250 185 262 171" stroke="#be123c" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <path d="M239 171 Q250 183 261 171 Z" fill="#fb7185" opacity="0.4"/>
+    <path d="M244 172 Q250 176 256 172" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+    <!-- FRONT HAIR (Cute feminine bangs, face-framing strands & hair ribbon) -->
+    <g id="girlFrontHair">
+      <!-- Hair Ribbon / Clip on right side -->
+      <path d="M282 85 Q295 72 305 84 Q295 94 282 85 Z" fill="url(#ribbonCoral)"/>
+      <path d="M305 84 Q318 75 322 88 Q312 96 305 84 Z" fill="url(#ribbonCoral)"/>
+      <circle cx="304" cy="85" r="4.5" fill="#facc15"/>
+
+      <!-- Crown & Bangs -->
+      <path d="M200 115 Q212 55 250 52 Q288 55 300 115 L292 118 L284 96 L275 120 L264 98 L254 124 L244 98 L234 122 L224 96 L214 118 Z" fill="url(#girlHairHighlight)"/>
+      
+      <!-- Luscious hair volume sweep -->
+      <path d="M210 60 Q250 40 290 60 Q270 50 230 50 Z" fill="url(#girlHairGleam)"/>
+
+      <!-- Face-framing soft side strands -->
+      <path d="M198 120 Q192 165 204 195 Q208 190 205 160 Q204 135 208 120 Z" fill="url(#girlHairDark)"/>
+      <path d="M302 120 Q308 165 296 195 Q292 190 295 160 Q296 135 292 120 Z" fill="url(#girlHairDark)"/>
+    </g>
+
+  </g>
+</svg>

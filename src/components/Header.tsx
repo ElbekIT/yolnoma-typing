@@ -29,20 +29,15 @@ import {
   MessageSquare,
   Gamepad2,
   Share2,
-  BookOpen,
-  Sun,
-  Moon
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { languagesList, t } from '../config/languages';
-import { themes } from '../config/themes';
-import { LanguageCode, ThemeMode } from '../types';
+import { LanguageCode } from '../types';
 import { maskEmail } from '../utils/maskEmail';
 import { isOwnerUser, isAdminSessionActive, checkOwnerBackend } from '../utils/ownerAuth';
 import { ShareModal } from './share/ShareModal';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { ThemeSwitcher } from './ThemeSwitcher';
 import { useI18n } from '../context/I18nContext';
 import { menuTranslations } from '../locales/translations';
 
@@ -141,18 +136,24 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               </span>
             </button>
 
-            {/* Brand Logo */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
+            {/* Clean Brand Logo */}
+            <div
+              className="flex items-center gap-2 sm:gap-2.5 cursor-pointer select-none group"
+              onClick={() => setActiveTab('home')}
+              title="Yolnoma - Bosh Sahifaga Qaytish"
+            >
               <img
                 src="/yolnoma_icon.svg"
                 alt="Yolnoma Logo"
-                className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
               />
               <div className="flex items-baseline gap-1.5">
-                <h1 className="text-base sm:text-lg font-black tracking-tight text-[var(--text-color)]">
+                <span className="text-base sm:text-lg font-black tracking-tight text-[var(--text-color)] group-hover:text-[var(--main-color)] transition-colors">
                   Yolnoma
-                </h1>
-                <span className="text-[var(--main-color)] font-mono text-[10px] font-bold">typing</span>
+                </span>
+                <span className="text-[var(--main-color)] font-mono text-[11px] font-bold">
+                  typing
+                </span>
               </div>
             </div>
 
@@ -240,27 +241,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             </div>
           </div>
 
-          {/* Right Side: Theme Palette, Quick Sun/Moon Toggle, Language Switcher & Profile Avatar */}
+          {/* Right Side: Profile Avatar or Login */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Theme Palette Switcher Dropdown */}
-            <ThemeSwitcher />
-
-            {/* Quick 2-state Sun/Moon Theme Switcher */}
-            <button
-              onClick={() => setTheme(theme === 'light' || theme === 'sepia' ? 'dark' : 'light')}
-              className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer border border-[var(--sub-alt)]/60"
-              title={theme === 'light' || theme === 'sepia' ? "To'q rejimga o'tish (Dark)" : "Oq rejimga o'tish (Light)"}
-              aria-label="Toggle Light/Dark Theme"
-            >
-              {theme === 'light' || theme === 'sepia' ? (
-                <Moon className="w-4 h-4 text-sky-500" />
-              ) : (
-                <Sun className="w-4 h-4 text-amber-400" />
-              )}
-            </button>
-
-            <LanguageSwitcher />
-
             {user ? (
               <div className="relative">
                 {/* Circular Profile Avatar Button */}
@@ -564,33 +546,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 >
                   <X className="w-5 h-5" />
                 </button>
-              </div>
-
-              {/* Mobile Language Switcher & Theme Controls */}
-              <div className="pt-2 pb-3 space-y-2 border-b border-[var(--sub-alt)]/60">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1">
-                    <LanguageSwitcher compact={true} />
-                  </div>
-                  <button
-                    onClick={() => setTheme(theme === 'light' || theme === 'sepia' ? 'dark' : 'light')}
-                    className="p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold shrink-0"
-                    title={theme === 'light' || theme === 'sepia' ? "To'q rejimga o'tish" : "Oq rejimga o'tish"}
-                  >
-                    {theme === 'light' || theme === 'sepia' ? (
-                      <>
-                        <Moon className="w-4 h-4 text-sky-500" />
-                        <span>Dark</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sun className="w-4 h-4 text-amber-400" />
-                        <span>Light</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <ThemeSwitcher compact={true} />
               </div>
 
               {/* Clean Navigation Menu Links */}

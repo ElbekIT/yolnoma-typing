@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 600" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Linear Gradients -->
+    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#090d16" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="speedRay" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2b714" stop-opacity="0.25"/>
+      <stop offset="60%" stop-color="#f97316" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="keyGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <linearGradient id="keyGlowWarm" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#facc15" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <!-- Radial Core Spotlight -->
+    <radialGradient id="centerGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.18"/>
+      <stop offset="40%" stop-color="#e2b714" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#090d16" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Ambient Background Spotlight -->
+  <rect width="1440" height="600" fill="url(#centerGlow)"/>
+
+  <!-- Perspective 3D Speedway Grid Floor -->
+  <g opacity="0.65">
+    <!-- Horizon Line -->
+    <line x1="0" y1="280" x2="1440" y2="280" stroke="#38bdf8" stroke-opacity="0.15" stroke-width="1.5"/>
+
+    <!-- Perspective Rays Radiating from Center Horizon (720, 260) -->
+    <line x1="720" y1="260" x2="-200" y2="600" stroke="#6366f1" stroke-opacity="0.15" stroke-width="1.2"/>
+    <line x1="720" y1="260" x2="50" y2="600" stroke="#38bdf8" stroke-opacity="0.18" stroke-width="1.2"/>
+    <line x1="720" y1="260" x2="280" y2="600" stroke="#38bdf8" stroke-opacity="0.18" stroke-width="1.2"/>
+    <line x1="720" y1="260" x2="500" y2="600" stroke="#e2b714" stroke-opacity="0.22" stroke-width="1.5"/>
+    <line x1="720" y1="260" x2="640" y2="600" stroke="#e2b714" stroke-opacity="0.28" stroke-width="1.5"/>
+    <line x1="720" y1="260" x2="800" y2="600" stroke="#e2b714" stroke-opacity="0.28" stroke-width="1.5"/>
+    <line x1="720" y1="260" x2="940" y2="600" stroke="#e2b714" stroke-opacity="0.22" stroke-width="1.5"/>
+    <line x1="720" y1="260" x2="1160" y2="600" stroke="#38bdf8" stroke-opacity="0.18" stroke-width="1.2"/>
+    <line x1="720" y1="260" x2="1390" y2="600" stroke="#38bdf8" stroke-opacity="0.18" stroke-width="1.2"/>
+    <line x1="720" y1="260" x2="1640" y2="600" stroke="#6366f1" stroke-opacity="0.15" stroke-width="1.2"/>
+
+    <!-- Horizontal Perspective Crossbars (Narrower near horizon, wider near bottom) -->
+    <line x1="420" y1="310" x2="1020" y2="310" stroke="#38bdf8" stroke-opacity="0.1" stroke-width="1"/>
+    <line x1="320" y1="350" x2="1120" y2="350" stroke="#38bdf8" stroke-opacity="0.12" stroke-width="1"/>
+    <line x1="200" y1="400" x2="1240" y2="400" stroke="#38bdf8" stroke-opacity="0.15" stroke-width="1.2"/>
+    <line x1="60" y1="465" x2="1380" y2="465" stroke="#38bdf8" stroke-opacity="0.18" stroke-width="1.2"/>
+    <line x1="-100" y1="545" x2="1540" y2="545" stroke="#6366f1" stroke-opacity="0.2" stroke-width="1.5"/>
+  </g>
+
+  <!-- Left Side: Floating Stylized Mechanical Cyber Keycaps -->
+  <g opacity="0.45" transform="translate(40, 50)">
+    <!-- Keycap 1: [ Q ] -->
+    <g transform="translate(50, 40) rotate(-12)">
+      <rect width="64" height="64" rx="14" fill="#0f172a" stroke="url(#keyGlow)" stroke-width="2"/>
+      <rect x="6" y="6" width="52" height="42" rx="10" fill="#1e293b" fill-opacity="0.6"/>
+      <text x="32" y="38" fill="#38bdf8" font-family="monospace" font-size="20" font-weight="bold" text-anchor="middle">Q</text>
+      <!-- Keycap bottom depth -->
+      <path d="M0 50 L0 64 Q0 78 14 78 L50 78 Q64 78 64 64 L64 50 Z" fill="#0284c7" fill-opacity="0.2"/>
+    </g>
+
+    <!-- Keycap 2: [ ⚡ SPEED ] -->
+    <g transform="translate(140, 110) rotate(8)">
+      <rect width="78" height="60" rx="14" fill="#0f172a" stroke="url(#keyGlowWarm)" stroke-width="2"/>
+      <rect x="6" y="6" width="66" height="38" rx="10" fill="#1e293b" fill-opacity="0.6"/>
+      <text x="39" y="32" fill="#facc15" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">⚡ WPM</text>
+    </g>
+
+    <!-- Keycap 3: [ TAB ] -->
+    <g transform="translate(30, 170) rotate(-6)">
+      <rect width="90" height="54" rx="12" fill="#0f172a" stroke="url(#keyGlow)" stroke-width="1.8"/>
+      <rect x="6" y="6" width="78" height="34" rx="8" fill="#1e293b" fill-opacity="0.5"/>
+      <text x="45" y="30" fill="#94a3b8" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle">⇥ TAB</text>
+    </g>
+  </g>
+
+  <!-- Right Side: Floating Stylized Mechanical Cyber Keycaps -->
+  <g opacity="0.45" transform="translate(1120, 50)">
+    <!-- Keycap 4: [ ENTER ↵ ] -->
+    <g transform="translate(80, 40) rotate(10)">
+      <rect width="96" height="64" rx="14" fill="#0f172a" stroke="url(#keyGlowWarm)" stroke-width="2"/>
+      <rect x="6" y="6" width="84" height="42" rx="10" fill="#1e293b" fill-opacity="0.6"/>
+      <text x="48" y="36" fill="#f59e0b" font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle">ENTER ↵</text>
+    </g>
+
+    <!-- Keycap 5: [ 1v1 BATTLE ] -->
+    <g transform="translate(20, 130) rotate(-8)">
+      <rect width="84" height="58" rx="14" fill="#0f172a" stroke="url(#keyGlow)" stroke-width="2"/>
+      <rect x="6" y="6" width="72" height="36" rx="10" fill="#1e293b" fill-opacity="0.6"/>
+      <text x="42" y="31" fill="#f43f5e" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle">⚔️ 1v1</text>
+    </g>
+
+    <!-- Keycap 6: [ SPACE ␣ ] -->
+    <g transform="translate(100, 185) rotate(5)">
+      <rect width="110" height="48" rx="12" fill="#0f172a" stroke="url(#keyGlow)" stroke-width="1.8"/>
+      <rect x="6" y="6" width="98" height="28" rx="8" fill="#1e293b" fill-opacity="0.5"/>
+      <text x="55" y="27" fill="#38bdf8" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">␣ SPACE</text>
+    </g>
+  </g>
+
+  <!-- Digital Waveform / Keystroke Telemetry in Upper Center -->
+  <g opacity="0.25">
+    <path d="M400 90 Q460 70 520 95 T640 85 T720 110 T800 85 T920 95 T1040 90" stroke="#38bdf8" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+    <path d="M420 115 Q480 95 540 120 T660 110 T720 135 T780 110 T900 120 T1020 115" stroke="#e2b714" stroke-width="1.5" fill="none"/>
+  </g>
+</svg>

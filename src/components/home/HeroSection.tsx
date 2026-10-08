@@ -1,6 +1,7 @@
 import React from 'react';
-import { Play, Swords, Sparkles, Zap, Globe, Shield, GraduationCap, ChevronRight, Keyboard, Trophy } from 'lucide-react';
+import { ArrowRight, Globe, Shield, Zap } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
+import { HeroCharacter } from './HeroCharacter';
 
 interface HeroSectionProps {
   onStartTyping: () => void;
@@ -8,192 +9,271 @@ interface HeroSectionProps {
   onOpenLogin: () => void;
   onGoToLessons?: () => void;
   onGoToLeaderboard?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onStartTyping,
   onGoToBattle,
-  onOpenLogin,
   onGoToLessons,
-  onGoToLeaderboard
+  onOpenFeedback
 }) => {
-  const { t } = useI18n();
+  const { uiLanguage } = useI18n();
 
   return (
-    <section className="relative w-full max-w-7xl mx-auto pt-4 sm:pt-8 pb-6 sm:pb-8 px-3 sm:px-6">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
-        {/* Left Column: Attention-Grabbing Hero Content */}
-        <div className="lg:col-span-7 flex flex-col items-start text-left space-y-4 sm:space-y-5">
-          {/* Small Top Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-medium">
-            <span className="text-sm leading-none">⚡️</span>
-            <span>{t('heroBadge').replace('⚡️ ', '')}</span>
-          </div>
-
-          {/* Large H1 Catchy Title */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[var(--text-color)] tracking-tight leading-[1.18]">
-            <span>{t('heroTitlePart1')}</span>
-            <span className="text-[var(--main-color)]">
-              {t('heroTitleHighlight')}
-            </span>
-            <span>{t('heroTitlePart2')}</span>
-          </h1>
-
-          {/* Short Narrative Description */}
-          <p className="text-sm sm:text-base text-[var(--sub-color)] leading-relaxed max-w-2xl font-normal">
-            {t('heroDesc')}
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-1 w-full sm:w-auto">
-            {/* Primary START Button */}
-            <button
-              onClick={onStartTyping}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--main-color)] hover:brightness-110 text-[var(--bg-color,#090d16)] font-bold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 cursor-pointer group"
-            >
-              <Play className="w-4 h-4 fill-current transition-transform group-hover:scale-110" />
-              <span>{t('startTypingBtn')}</span>
-            </button>
-
-            {/* Secondary BATTLE Button */}
-            <button
-              onClick={onGoToBattle}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--text-color)] font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 cursor-pointer group"
-            >
-              <Swords className="w-4 h-4 text-rose-400 transition-colors" />
-              <span>{t('battleArenaBtn')}</span>
-            </button>
-          </div>
-
-          {/* Core Feature Badges */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-2 border-t border-[var(--sub-alt)]/40 w-full max-w-xl text-[var(--sub-color)] font-mono text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[var(--sub-alt)]/50 text-cyan-400 flex items-center justify-center shrink-0">
-                <Globe className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-[11px] sm:text-xs text-[var(--sub-color)] font-sans">{t('statLanguages')}</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[var(--sub-alt)]/50 text-emerald-400 flex items-center justify-center shrink-0">
-                <Zap className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-[11px] sm:text-xs text-[var(--sub-color)] font-sans">{t('statMultiplayer')}</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[var(--sub-alt)]/50 text-amber-400 flex items-center justify-center shrink-0">
-                <Shield className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-[11px] sm:text-xs text-[var(--sub-color)] font-sans">{t('statFree')}</span>
-            </div>
-          </div>
+    <section className="relative w-full max-w-7xl mx-auto pt-2 sm:pt-4 pb-6 sm:pb-8 px-2 sm:px-4 lg:px-6">
+      {/* Wide Grand Panoramic Hero Banner with Cyber Speedway Arena Backdrop */}
+      <div className="relative w-full rounded-3xl lg:rounded-4xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--sub-alt)]/25 to-[var(--bg-color)] border border-[var(--sub-alt)]/90 p-5 sm:p-7 lg:p-9 shadow-2xl overflow-hidden">
+        
+        {/* Arena Speedway & Mechanical Cyber Keyboard Graphic Backdrop Artwork */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-20">
+          <img
+            src="/hero_banner_bg.svg"
+            alt=""
+            className="w-full h-full object-cover object-center pointer-events-none"
+            draggable={false}
+          />
         </div>
 
-        {/* Right Column: Quick Practice Training Hub Card */}
-        <div className="lg:col-span-5 w-full">
-          <div className="p-4 sm:p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/60 space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-[var(--sub-alt)]/40">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider font-mono text-[var(--text-color)]">
-                  Mashg'ulotlar Markazi
-                </h2>
+        {/* 3-Column Symmetrical Layout: Left Mascot - Center Content - Right Mascot */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-center relative z-10">
+          
+          {/* 1. Left Mascot Character: Girl (Facing Inward, Non-clickable, Non-draggable) */}
+          <div className="hidden md:flex md:col-span-3 lg:col-span-3 items-end justify-center pointer-events-none select-none">
+            <HeroCharacter character="girl" side="left" />
+          </div>
+
+          {/* 2. Center Content: Headings, Action Buttons with Graphic Badges & Highlights */}
+          <div className="col-span-12 md:col-span-6 lg:col-span-6 flex flex-col items-center text-center space-y-5 sm:space-y-6">
+            
+            {/* Mobile Mascot Teaser (Visible only on small phones, non-clickable & non-draggable) */}
+            <div className="flex md:hidden items-center justify-center gap-3 pointer-events-none select-none mb-1">
+              <div className="w-12 h-16 pointer-events-none select-none">
+                <img
+                  src="/hero_mascot_girl.svg"
+                  alt="Mascot Qiz"
+                  className="w-full h-full object-contain pointer-events-none select-none filter drop-shadow-sm"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                />
               </div>
-              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                Tezkor Kirish
+
+              {/* Kicker Pill */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--sub-alt)]/85 backdrop-blur-md border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>
+                  {uiLanguage === 'ru'
+                    ? '⚡️ Платформа №1 в Узбекистане'
+                    : uiLanguage === 'en'
+                    ? '⚡️ #1 Platform in Uzbekistan'
+                    : "⚡️ O'zbekistonda #1 Tezkor Yozuv Platformasi"}
+                </span>
+              </div>
+
+              <div
+                className="w-12 h-16 pointer-events-none select-none"
+                style={{ transform: 'scaleX(-1)' }}
+              >
+                <img
+                  src="/hero_mascot.svg"
+                  alt="Mascot O'g'il"
+                  className="w-full h-full object-contain pointer-events-none select-none filter drop-shadow-sm"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+              </div>
+            </div>
+
+            {/* Desktop Top Pill Kicker */}
+            <div className="hidden md:inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--sub-alt)]/85 backdrop-blur-md border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                {uiLanguage === 'ru'
+                  ? '⚡️ Платформа №1 скоростной печати в Узбекистане'
+                  : uiLanguage === 'en'
+                  ? '⚡️ #1 Touch Typing Platform in Uzbekistan'
+                  : "⚡️ O'zbekistonda #1 Tezkor Yozuv Platformasi"}
               </span>
             </div>
 
-            <div className="space-y-2.5">
-              {/* Classic Speed Typing */}
+            {/* Main Catchy Title */}
+            <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-[42px] font-black text-[var(--text-color)] tracking-tight leading-[1.2]">
+              {uiLanguage === 'ru' ? (
+                <>
+                  Проверьте скорость печати и освойте{' '}
+                  <span className="text-[var(--main-color)]">10-пальцевый метод</span>
+                </>
+              ) : uiLanguage === 'en' ? (
+                <>
+                  Test Your Typing Speed & Master{' '}
+                  <span className="text-[var(--main-color)]">10-Finger Technique</span>
+                </>
+              ) : (
+                <>
+                  Klaviaturada <span className="text-[var(--main-color)]">Tez Yozish</span> va{' '}
+                  <span className="text-[var(--main-color)]">
+                    10 Barmoq
+                  </span>{' '}
+                  Mashqlari
+                </>
+              )}
+            </h1>
+
+            {/* Narrative Subtitle */}
+            <p className="text-xs sm:text-sm lg:text-base text-[var(--sub-color)] leading-relaxed max-w-xl font-normal">
+              {uiLanguage === 'ru'
+                ? 'Определите свою скорость на клавиатуре с Yolnoma, соревнуйтесь 1 на 1 с друзьями и возглавьте национальный рейтинг.'
+                : uiLanguage === 'en'
+                ? 'Discover your typing speed with Yolnoma, race 1v1 with friends in real-time, and dominate the national leaderboard.'
+                : "Yolnoma yordamida klaviaturadagi tezligingizni aniqlang, do'stlaringiz bilan 1v1 poyga qiling va milliy reytingda peshqadam bo'ling."}
+            </p>
+
+            {/* 3 Action Buttons with Expressive Graphic Badges */}
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-3.5 pt-1 w-full">
+              {/* 1. Boshlash Button with 3D Rocket Badge */}
               <button
                 type="button"
                 onClick={onStartTyping}
-                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 font-black text-sm sm:text-base transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-md hover:brightness-105 active:scale-95 border border-amber-200/60 group select-none"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
-                    <Keyboard className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Klassik Tez Yozish Sinovi</span>
-                    <p className="text-[11px] text-[var(--sub-color)]">
-                      15s, 30s, 60s vaqt rejimlari, WPM va aniqlik
-                    </p>
-                  </div>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center">
+                  <img
+                    src="/btn_badge_rocket.svg"
+                    alt=""
+                    className="w-full h-full object-contain filter drop-shadow-sm pointer-events-none"
+                    draggable={false}
+                  />
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-cyan-400 transition-colors" />
+                <div className="flex flex-col items-start leading-tight text-left">
+                  <span className="tracking-wide">
+                    {uiLanguage === 'ru' ? 'Начать тест' : uiLanguage === 'en' ? 'Start Test' : 'Boshlash'}
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold text-slate-800 opacity-80">
+                    {uiLanguage === 'ru' ? 'Быстрый старт' : uiLanguage === 'en' ? 'Quick Start' : 'Tezkor Sinov'}
+                  </span>
+                </div>
+                <ArrowRight className="w-4 h-4 stroke-[3] ml-1" />
               </button>
 
-              {/* 10-Finger Lessons */}
-              <button
-                type="button"
-                onClick={onGoToLessons || onStartTyping}
-                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">10 Barmoq Mashqlari</span>
-                    <p className="text-[11px] text-[var(--sub-color)]">
-                      Klaviaturaga qaramay yozish saboqlari
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 transition-colors" />
-              </button>
-
-              {/* 1v1 Speedway Battle */}
+              {/* 2. 1v1 Battle Arenasi Button with Dual Swords & Shield Badge */}
               <button
                 type="button"
                 onClick={onGoToBattle}
-                className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-950/80 via-purple-950/80 to-slate-900 border border-rose-500/50 text-rose-100 font-bold text-sm sm:text-base transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-md hover:border-rose-400 active:scale-95 group select-none"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
-                    <Swords className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Speedway 1v1 Arena</span>
-                    <p className="text-[11px] text-[var(--sub-color)]">
-                      Do'stlar bilan real vaqtda poyga va jang
-                    </p>
-                  </div>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center">
+                  <img
+                    src="/btn_badge_swords.svg"
+                    alt=""
+                    className="w-full h-full object-contain filter drop-shadow-sm pointer-events-none"
+                    draggable={false}
+                  />
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-rose-400 transition-colors" />
+                <div className="flex flex-col items-start leading-tight text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="tracking-wide text-rose-100">
+                      {uiLanguage === 'ru'
+                        ? '1v1 Арена Битв'
+                        : uiLanguage === 'en'
+                        ? '1v1 Battle Arena'
+                        : '1v1 Battle Arenasi'}
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-rose-500 text-white font-mono text-[9px] font-extrabold uppercase">
+                      LIVE
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-rose-300/80">
+                    {uiLanguage === 'ru' ? 'Гонка с друзьями' : uiLanguage === 'en' ? 'Race with friends' : "Do'stlar bilan poyga"}
+                  </span>
+                </div>
               </button>
 
-              {/* Leaderboard / Peshqadamlar */}
-              {onGoToLeaderboard && (
+              {/* 3. 10 Barmoq Saboqlari Button with Academy Emblem Badge */}
+              {onGoToLessons && (
                 <button
                   type="button"
-                  onClick={onGoToLeaderboard}
-                  className="w-full p-2.5 sm:p-3 rounded-xl bg-[var(--bg-color)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/50 text-left transition-colors cursor-pointer flex items-center justify-between group"
+                  onClick={onGoToLessons}
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-sky-950/80 via-indigo-950/80 to-slate-900 border border-sky-500/50 text-sky-100 font-bold text-sm transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-md hover:border-sky-400 active:scale-95 group select-none"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
-                      <Trophy className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-[var(--text-color)]">Milliy Reyting (Top 100)</span>
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300">
-                          LIVE
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[var(--sub-color)]">
-                        O'zbekistonning eng tezkor yozuvchilari peshqadami
-                      </p>
-                    </div>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center">
+                    <img
+                      src="/btn_badge_academy.svg"
+                      alt=""
+                      className="w-full h-full object-contain filter drop-shadow-sm pointer-events-none"
+                      draggable={false}
+                    />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[var(--sub-color)] group-hover:text-amber-400 transition-colors" />
+                  <div className="flex flex-col items-start leading-tight text-left">
+                    <span className="tracking-wide text-sky-100">
+                      {uiLanguage === 'ru'
+                        ? 'Уроки 10 пальцев'
+                        : uiLanguage === 'en'
+                        ? '10-Finger Lessons'
+                        : '10 Barmoq Saboqlari'}
+                    </span>
+                    <span className="text-[10px] font-mono text-sky-300/80">
+                      {uiLanguage === 'ru' ? 'Интерактивный курс' : uiLanguage === 'en' ? 'Interactive course' : 'Interaktiv ta\'lim'}
+                    </span>
+                  </div>
                 </button>
               )}
             </div>
+
+            {/* 3 Core Highlights (125+ Til, 1v1 Arena, 100% Bepul) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-3 border-t border-[var(--sub-alt)]/60 w-full max-w-xl text-xs">
+              {/* Highlight 1: 125+ Til */}
+              <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-cyan-400/50 transition-colors group">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-400/25 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="block text-[var(--text-color)] font-bold text-xs sm:text-sm">
+                    125+ Til
+                  </strong>
+                  <span className="text-[10px] sm:text-[11px] text-[var(--sub-color)]">
+                    {uiLanguage === 'ru' ? 'Узбекский, Русский, Код' : uiLanguage === 'en' ? 'Uzbek, Russian, Code' : "O'zbek, Rus, Kod"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Highlight 2: 1v1 Arena */}
+              <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-emerald-400/50 transition-colors group">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="block text-[var(--text-color)] font-bold text-xs sm:text-sm">
+                    1v1 Arena
+                  </strong>
+                  <span className="text-[10px] sm:text-[11px] text-[var(--sub-color)]">
+                    {uiLanguage === 'ru' ? 'Гонка в реальном времени' : uiLanguage === 'en' ? 'Real-time race' : 'Real-vaqtda poyga'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Highlight 3: 100% Bepul */}
+              <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-amber-400/50 transition-colors group">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-400/25 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="block text-[var(--text-color)] font-bold text-xs sm:text-sm">
+                    100% Bepul
+                  </strong>
+                  <span className="text-[10px] sm:text-[11px] text-[var(--sub-color)]">
+                    {uiLanguage === 'ru' ? 'Без рекламы, чисто' : uiLanguage === 'en' ? 'No ads, clean' : 'Reklamasiz, toza'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
           </div>
+
+          {/* 3. Right Mascot Character: Boy (Facing Inward, Non-clickable, Non-draggable) */}
+          <div className="hidden md:flex md:col-span-3 lg:col-span-3 items-end justify-center pointer-events-none select-none">
+            <HeroCharacter character="boy" side="right" />
+          </div>
+
         </div>
       </div>
     </section>

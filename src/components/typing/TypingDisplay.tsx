@@ -6,6 +6,7 @@ import { languagesList } from '../../config/languages';
 import { soundSynth } from '../../utils/audio';
 import { antiCheatManager } from '../../utils/antiCheat';
 import { getLockedMinLength, getNextWordStartIndexOnSpace } from '../../utils/typingEngine';
+import { DrumTapeView } from './DrumTapeView';
 
 // Memoized Character Component: Only re-renders when its own typed state or animation changes
 interface CharItemProps {
@@ -212,6 +213,8 @@ interface TypingDisplayProps {
   isTestFinished: boolean;
   quoteMeta?: { author: string; source?: string };
   codeLang?: string;
+  liveWpm?: number;
+  isTestActive?: boolean;
 }
 
 export const TypingDisplay: React.FC<TypingDisplayProps> = ({
@@ -221,7 +224,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   onRestart,
   isTestFinished,
   quoteMeta,
-  codeLang
+  codeLang,
+  liveWpm,
+  isTestActive: propIsTestActive
 }) => {
   const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
   const { user } = useAuth();
@@ -511,7 +516,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   // Smooth horizontal scrolling for Tape mode
   useLayoutEffect(() => {
-    if (tapeMode === 'off') return;
+    if (tapeMode === 'off' || tapeMode === 'drum') return;
     const vpEl = tapeViewportRef.current;
     if (!vpEl) return;
 
@@ -541,7 +546,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   const baseFontSize = Math.max(20, fontSize || 28);
   const lineHeightMultiplier = 1.55;
-  const isTape = tapeMode !== 'off';
+  const isDrum = tapeMode === 'drum';
+  const isTape = tapeMode === 'letter' || tapeMode === 'word';
   const effHeight = measuredLineHeight > 0 ? measuredLineHeight : Math.round(baseFontSize * lineHeightMultiplier);
   const containerHeight = isTape
     ? Math.round(effHeight * 1.35)
@@ -560,7 +566,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     const caretEl = caretElRef.current;
     if (!caretEl) return;
 
-    if (!isFocused || isTestFinished) {
+    if (!isFocused || isTestFinished || isDrum) {
       caretEl.style.display = 'none';
       return;
     }
@@ -706,96 +712,118 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         </div>
       )}
 
-      {/* Scroll Viewport with Hardware Acceleration */}
-      <div
-        ref={tapeViewportRef}
-        key={`${targetText.slice(0, 15)}-${tapeMode}`}
-        className={`relative w-full overflow-hidden ${isTape ? 'flex items-center' : ''}`}
-        style={{
-          height: `${containerHeight}px`,
-          transform: 'translateZ(0)',
-          willChange: 'transform',
-          ...(isTape
-            ? {
-                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
-                maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)'
-              }
-            : {})
-        }}
-      >
+      {/* Drum Rotary Mode or Standard Scroll Viewport */}
+      {isDrum ? (
+        <DrumTapeView
+          targetText={targetText}
+          typedInput={typedInput}
+          parsedWords={parsedWords}
+          currentTypedLen={currentTypedLen}
+          activeWordIdx={activeWordIdx}
+          isFocused={isFocused}
+          isTestFinished={isTestFinished}
+          liveWpm={liveWpm}
+          isTestActive={propIsTestActive ?? isTestActive}
+          onFocusRequest={() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+              setIsFocused(true);
+            }
+          }}
+          onRestart={onRestart}
+        />
+      ) : (
+        /* Scroll Viewport with Hardware Acceleration */
         <div
-          ref={wordsWrapperRef}
-          className={`relative text-left ${
-            isTape
-              ? 'flex flex-nowrap whitespace-nowrap items-center pl-[28%] sm:pl-[35%]'
-              : 'flex flex-wrap'
-          }`}
+          ref={tapeViewportRef}
+          key={`${targetText.slice(0, 15)}-${tapeMode}`}
+          className={`relative w-full overflow-hidden ${isTape ? 'flex items-center' : ''}`}
           style={{
-            transform: isTape
-              ? `translateX(-${tapeOffset}px) translateZ(0)`
-              : `translateY(-${scrollOffset}px) translateZ(0)`,
+            height: `${containerHeight}px`,
+            transform: 'translateZ(0)',
             willChange: 'transform',
-            transition: smoothCaret
-              ? isTape
-                ? 'transform 85ms cubic-bezier(0.2, 0, 0, 1)'
-                : 'transform 150ms ease-out'
-              : 'none',
-            lineHeight: lineHeightMultiplier,
-            direction: isRtl ? 'rtl' : 'ltr'
+            ...(isTape
+              ? {
+                  WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+                  maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)'
+                }
+              : {})
           }}
         >
-          {/* Smooth floating caret */}
           <div
-            ref={caretElRef}
-            className="smooth-caret"
+            ref={wordsWrapperRef}
+            className={`relative text-left ${
+              isTape
+                ? 'flex flex-nowrap whitespace-nowrap items-center pl-[28%] sm:pl-[35%]'
+                : 'flex flex-wrap'
+            }`}
             style={{
-              display: 'none',
-              position: 'absolute',
-              top: 0,
-              left: 0,
+              transform: isTape
+                ? `translateX(-${tapeOffset}px) translateZ(0)`
+                : `translateY(-${scrollOffset}px) translateZ(0)`,
               willChange: 'transform',
-              pointerEvents: 'none',
-              zIndex: 10
+              transition: smoothCaret
+                ? isTape
+                  ? 'transform 85ms cubic-bezier(0.2, 0, 0, 1)'
+                  : 'transform 150ms ease-out'
+                : 'none',
+              lineHeight: lineHeightMultiplier,
+              direction: isRtl ? 'rtl' : 'ltr'
             }}
-          />
-
-          {parsedWords.map((wordObj) => (
-            <WordItem
-              key={`w-${wordObj.wordIdx}`}
-              wordObj={wordObj}
-              typedInput={typedInput}
-              typingAnimation={typingAnimation}
-              isTape={isTape}
-              onWordRef={handleWordRef}
-              onCharRef={handleCharRef}
+          >
+            {/* Smooth floating caret */}
+            <div
+              ref={caretElRef}
+              className="smooth-caret"
+              style={{
+                display: 'none',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                willChange: 'transform',
+                pointerEvents: 'none',
+                zIndex: 10
+              }}
             />
-          ))}
 
-          {/* Extra characters typed past targetText */}
-          {typedInput.length > targetText.length &&
-            typedInput.slice(targetText.length).split('').map((extraChar, extraIdx) => (
-              <span
-                key={`extra-${extraIdx}`}
-                className="text-[var(--error-color,#ef4444)] border-b-2 border-red-500 font-semibold opacity-90"
-              >
-                {extraChar === ' ' ? '\u00A0' : extraChar}
-              </span>
+            {parsedWords.map((wordObj) => (
+              <WordItem
+                key={`w-${wordObj.wordIdx}`}
+                wordObj={wordObj}
+                typedInput={typedInput}
+                typingAnimation={typingAnimation}
+                isTape={isTape}
+                onWordRef={handleWordRef}
+                onCharRef={handleCharRef}
+              />
             ))}
-        </div>
 
-        {quoteMeta && (
-          <div className="mt-3 text-right text-xs font-mono text-[var(--main-color)] italic select-none opacity-90">
-            — {quoteMeta.author}{quoteMeta.source ? `, «${quoteMeta.source}»` : ''}
+            {/* Extra characters typed past targetText */}
+            {typedInput.length > targetText.length &&
+              typedInput.slice(targetText.length).split('').map((extraChar, extraIdx) => (
+                <span
+                  key={`extra-${extraIdx}`}
+                  className="text-[var(--error-color,#ef4444)] border-b-2 border-red-500 font-semibold opacity-90"
+                >
+                  {extraChar === ' ' ? '\u00A0' : extraChar}
+                </span>
+              ))}
           </div>
-        )}
-        {codeLang && (
-          <div className="mt-2 flex items-center justify-end">
-            <span className="text-[10px] font-mono uppercase bg-[var(--sub-alt)] text-[var(--main-color)] px-2 py-0.5 rounded border border-[var(--main-color)]/30">
-              Stack: {codeLang}
-            </span>
-          </div>
-        )}
-      </div>
+
+          {quoteMeta && (
+            <div className="mt-3 text-right text-xs font-mono text-[var(--main-color)] italic select-none opacity-90">
+              — {quoteMeta.author}{quoteMeta.source ? `, «${quoteMeta.source}»` : ''}
+            </div>
+          )}
+          {codeLang && (
+            <div className="mt-2 flex items-center justify-end">
+              <span className="text-[10px] font-mono uppercase bg-[var(--sub-alt)] text-[var(--main-color)] px-2 py-0.5 rounded border border-[var(--main-color)]/30">
+                Stack: {codeLang}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Restart Button */}
       <div className="mt-6 relative z-30 pointer-events-auto flex flex-col items-center justify-center gap-2.5">

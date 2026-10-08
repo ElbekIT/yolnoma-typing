@@ -53,7 +53,7 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({ compact = fa
 
   if (compact) {
     return (
-      <div className="grid grid-cols-3 gap-1.5 w-full bg-[#101726]/90 p-1.5 rounded-2xl border border-cyan-500/25 shadow-inner">
+      <div className="grid grid-cols-3 gap-1.5 w-full bg-[var(--card-bg)] p-1.5 rounded-2xl border border-[var(--sub-color)]/20 shadow-xs">
         {LANGUAGES.map((l) => {
           const isActive = l.code === uiLanguage;
           return (
@@ -61,10 +61,10 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({ compact = fa
               key={l.code}
               id={`drawer-lang-btn-${l.code}`}
               onClick={() => handleSelect(l.code)}
-              className={`py-2 px-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+              className={`py-1.5 px-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 text-slate-950 font-black shadow-lg shadow-emerald-500/40 border border-emerald-300 ring-1 ring-emerald-300/80 scale-[1.02]'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-black shadow-xs'
+                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
               }`}
               title={`${l.name} (${l.flag})`}
             >
@@ -78,7 +78,7 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({ compact = fa
   }
 
   return (
-    <div className="flex items-center bg-[#101726]/90 p-0.5 sm:p-1 rounded-xl border border-cyan-500/25 shadow-inner">
+    <div className="flex items-center bg-[var(--card-bg)] p-1 rounded-2xl border border-[var(--sub-color)]/20 shadow-xs">
       {LANGUAGES.map((l) => {
         const isActive = l.code === uiLanguage;
         return (
@@ -86,14 +86,14 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({ compact = fa
             key={l.code}
             id={`navbar-lang-btn-${l.code}`}
             onClick={() => handleSelect(l.code)}
-            className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
               isActive
-                ? 'bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 text-slate-950 font-black shadow-lg shadow-emerald-500/40 border border-emerald-300 ring-1 ring-emerald-300/80'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-black shadow-xs'
+                : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
             }`}
             title={`${l.name} (${l.flag})`}
           >
-            <span className="hidden sm:inline text-xs leading-none">{l.flag}</span>
+            <span className="text-sm leading-none">{l.flag}</span>
             <span className="uppercase font-black">{l.code}</span>
           </button>
         );

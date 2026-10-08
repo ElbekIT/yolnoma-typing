@@ -41,21 +41,27 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
 
   return (
     <section className="w-full max-w-7xl mx-auto py-12 sm:py-16 px-3 sm:px-6">
-      <div className="rounded-3xl bg-gradient-to-b from-[#101726]/90 to-[#0c121e]/90 border border-cyan-500/20 p-6 sm:p-10 lg:p-12 relative overflow-hidden shadow-2xl">
+      <div className="rounded-3xl bg-gradient-to-b from-[var(--card-bg)] to-[var(--bg-color)] border border-[var(--sub-alt)] p-6 sm:p-10 lg:p-12 relative overflow-hidden shadow-xl">
         {/* Background Subtle Gradient Blurs */}
-        <div className="absolute -top-24 -left-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div
+          className="absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl opacity-15 pointer-events-none"
+          style={{ backgroundColor: 'var(--main-color)' }}
+        />
+        <div
+          className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-15 pointer-events-none"
+          style={{ backgroundColor: '#10b981' }}
+        />
 
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-xs font-mono font-semibold uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold uppercase tracking-wider mb-3">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{t('howItWorksBadge')}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--text-color)] tracking-tight">
             {t('howItWorksTitle')}
           </h2>
-          <p className="text-xs sm:text-sm md:text-base text-gray-400 mt-2.5">
+          <p className="text-xs sm:text-sm md:text-base text-[var(--sub-color)] mt-2.5">
             {t('howItWorksSubtitle')}
           </p>
         </div>
@@ -67,7 +73,7 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
             return (
               <div
                 key={idx}
-                className="relative rounded-2xl bg-[#090d16]/70 border border-white/10 p-6 flex flex-col justify-between hover:border-cyan-500/40 transition-all group"
+                className="relative rounded-2xl bg-[var(--bg-color)]/70 border border-[var(--sub-alt)] p-6 flex flex-col justify-between hover:border-[var(--main-color)]/50 transition-all group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">
@@ -76,22 +82,22 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
                     >
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-3xl font-black font-mono text-cyan-400/30 group-hover:text-cyan-400/60 transition-colors">
+                    <span className="text-3xl font-black font-mono text-[var(--main-color)]/30 group-hover:text-[var(--main-color)]/60 transition-colors">
                       {step.num}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">
+                  <h3 className="text-lg font-bold text-[var(--text-color)] mb-2 group-hover:text-[var(--main-color)] transition-colors">
                     {step.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-400 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-[var(--sub-color)] leading-relaxed font-normal">
                     {step.desc}
                   </p>
                 </div>
 
                 {/* Subtle Step arrow indicator on desktop */}
                 {idx < steps.length - 1 && (
-                  <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-cyan-500/40 pointer-events-none">
+                  <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-[var(--main-color)]/40 pointer-events-none">
                     <ArrowRight className="w-6 h-6" />
                   </div>
                 )}
@@ -104,9 +110,9 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
         <div className="mt-10 sm:mt-12 text-center">
           <button
             onClick={onStartTyping}
-            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-[#090d16] font-bold text-base transition-all duration-200 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-400/40 active:scale-95 cursor-pointer group"
+            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-[var(--main-color)] hover:brightness-110 text-[var(--bg-color,#090d16)] font-bold text-base transition-all duration-200 shadow-lg shadow-[var(--main-color)]/25 hover:shadow-[var(--main-color)]/40 active:scale-95 cursor-pointer group"
           >
-            <Play className="w-5 h-5 fill-current text-[#090d16] transition-transform group-hover:scale-110" />
+            <Play className="w-5 h-5 fill-current transition-transform group-hover:scale-110" />
             <span>{t('tryNowBtn')}</span>
           </button>
         </div>

@@ -48,14 +48,14 @@ export const FeaturesSection: React.FC = () => {
     <section className="w-full max-w-7xl mx-auto py-12 sm:py-16 px-3 sm:px-6">
       {/* Section Header */}
       <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-mono font-semibold uppercase tracking-wider mb-3">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold uppercase tracking-wider mb-3">
           <Layers className="w-3.5 h-3.5" />
           <span>{t('featuresBadge')}</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--text-color)] tracking-tight">
           {t('featuresTitle')}
         </h2>
-        <p className="text-xs sm:text-sm md:text-base text-gray-400 mt-2.5">
+        <p className="text-xs sm:text-sm md:text-base text-[var(--sub-color)] mt-2.5">
           {t('featuresSubtitle')}
         </p>
       </div>
@@ -67,7 +67,7 @@ export const FeaturesSection: React.FC = () => {
           return (
             <div
               key={idx}
-              className={`group relative rounded-2xl bg-[#101726]/80 hover:bg-[#131d31] border ${feat.borderColor} p-6 transition-all duration-200 shadow-lg shadow-black/40 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between overflow-hidden`}
+              className={`group relative rounded-2xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]/80 hover:border-[var(--main-color)]/50 p-6 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-1 flex flex-col justify-between overflow-hidden`}
             >
               {/* Top ambient hover glow */}
               <div
@@ -81,15 +81,15 @@ export const FeaturesSection: React.FC = () => {
                   >
                     <Icon className="w-6 h-6" />
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-gray-300 font-semibold tracking-wide">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[10px] font-mono text-[var(--sub-color)] font-semibold tracking-wide">
                     {feat.badge}
                   </span>
                 </div>
 
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight mb-2 group-hover:text-cyan-300 transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-[var(--text-color)] tracking-tight mb-2 group-hover:text-[var(--main-color)] transition-colors">
                   {feat.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-400 leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-[var(--sub-color)] leading-relaxed font-normal">
                   {feat.desc}
                 </p>
               </div>

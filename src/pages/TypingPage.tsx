@@ -172,6 +172,8 @@ export const TypingPage: React.FC<TypingPageProps> = ({
         isTestFinished={isTestFinished}
         quoteMeta={quoteMeta}
         codeLang={codeLang}
+        liveWpm={liveWpm}
+        isTestActive={isTestActive}
       />
 
       {/* Virtual Keyboard */}

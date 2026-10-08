@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { I18nProvider, useI18n } from './context/I18nContext';
+import { DeviceProvider } from './context/DeviceContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdBanner } from './components/common/AdBanner';
@@ -11,8 +12,12 @@ import { AboutModal } from './components/about/AboutModal';
 import { LoginPage } from './components/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TypingPage } from './pages/TypingPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
+import { SiteFeedbackModal } from './components/feedback/SiteFeedbackModal';
+import { SiteFeedbackFloatingButton } from './components/feedback/SiteFeedbackFloatingButton';
+import { DeviceAutoCalibrationScreen } from './components/device/DeviceAutoCalibrationScreen';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { BlockedScreen } from './components/BlockedScreen';
@@ -26,21 +31,44 @@ import { Wrench } from 'lucide-react';
 import { antiCheatManager } from './utils/antiCheat';
 import { updatePageSEO } from './utils/seo';
 
+// Robust dynamic import with automatic retry on network or chunk cache failure
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return React.lazy(async () => {
+    try {
+      return await factory();
+    } catch (error) {
+      console.warn('[Vite Dynamic Import Retry]: Retrying failed module load...', error);
+      await new Promise(r => setTimeout(r, 300));
+      try {
+        return await factory();
+      } catch (retryError) {
+        const hasRefreshed = sessionStorage.getItem('vite-chunk-reload');
+        if (!hasRefreshed) {
+          sessionStorage.setItem('vite-chunk-reload', 'true');
+          window.location.reload();
+        }
+        throw retryError;
+      }
+    }
+  });
+}
+
 // Lazy-loaded secondary views for high performance & fast initial loading
-const DashboardView = React.lazy(() => import('./components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
-const StatisticsView = React.lazy(() => import('./components/statistics/StatisticsView').then(m => ({ default: m.StatisticsView })));
-const AchievementsView = React.lazy(() => import('./components/achievements/AchievementsView').then(m => ({ default: m.AchievementsView })));
-const ChallengesView = React.lazy(() => import('./components/challenges/ChallengesView').then(m => ({ default: m.ChallengesView })));
-const ProfileView = React.lazy(() => import('./components/profile/ProfileView').then(m => ({ default: m.ProfileView })));
-const SettingsView = React.lazy(() => import('./components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
-const PartnersView = React.lazy(() => import('./components/partners/PartnersView').then(m => ({ default: m.PartnersView })));
-const BattleView = React.lazy(() => import('./components/battle/BattleView').then(m => ({ default: m.BattleView })));
-const LessonsView = React.lazy(() => import('./components/lessons/LessonsView').then(m => ({ default: m.LessonsView })));
-const AdminView = React.lazy(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
-const OwnerAboutView = React.lazy(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
-const LanguageSelectView = React.lazy(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
-const NotFoundView = React.lazy(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
-const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
+const DashboardView = lazyWithRetry(() => import('./components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
+const StatisticsView = lazyWithRetry(() => import('./components/statistics/StatisticsView').then(m => ({ default: m.StatisticsView })));
+const AchievementsView = lazyWithRetry(() => import('./components/achievements/AchievementsView').then(m => ({ default: m.AchievementsView })));
+const ChallengesView = lazyWithRetry(() => import('./components/challenges/ChallengesView').then(m => ({ default: m.ChallengesView })));
+const ProfileView = lazyWithRetry(() => import('./components/profile/ProfileView').then(m => ({ default: m.ProfileView })));
+const SettingsView = lazyWithRetry(() => import('./components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
+const PartnersView = lazyWithRetry(() => import('./components/partners/PartnersView').then(m => ({ default: m.PartnersView })));
+const BattleView = lazyWithRetry(() => import('./components/battle/BattleView').then(m => ({ default: m.BattleView })));
+const LessonsView = lazyWithRetry(() => import('./components/lessons/LessonsView').then(m => ({ default: m.LessonsView })));
+const AdminView = lazyWithRetry(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
+const OwnerAboutView = lazyWithRetry(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
+const LanguageSelectView = lazyWithRetry(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
+const NotFoundView = lazyWithRetry(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 
 function ViewLoadingFallback() {
   return (
@@ -499,9 +527,17 @@ function MainAppContent() {
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [aboutModalTab, setAboutModalTab] = useState<'faq' | 'privacy' | 'terms' | 'updates'>('faq');
   const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
   const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
+
+  // Global event listener for opening site feedback from any component
+  useEffect(() => {
+    const handleOpenFeedback = () => setIsFeedbackOpen(true);
+    window.addEventListener('open_site_feedback', handleOpenFeedback);
+    return () => window.removeEventListener('open_site_feedback', handleOpenFeedback);
+  }, []);
 
   // Realtime Battle Invites listener (Supports both authenticated users and guests)
   useEffect(() => {
@@ -725,6 +761,9 @@ function MainAppContent() {
     const currentUserId = user ? user.uid : (localStorage.getItem('yolnoma_guest_id') || 'guest');
     const currentUsername = profile ? profile.username : (user ? (user.displayName || 'Foydalanuvchi') : 'Mehmon');
 
+    const previousBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
+    const isPersonalBest = wpm > previousBest && wpm > 0 && wpm <= 280;
+
     const resultObj: TypingResult = {
       wpm,
       cpm,
@@ -749,7 +788,7 @@ function MainAppContent() {
       codeLang,
       userId: currentUserId,
       username: currentUsername,
-      isPersonalBest: false
+      isPersonalBest
     };
 
     // 1. Immediately render ResultModal synchronously with complete computed stats
@@ -896,6 +935,18 @@ function MainAppContent() {
 
   const handleStartHero = useCallback((targetMode?: string) => {
     if (targetMode && typeof targetMode === 'string') {
+      if (targetMode === '15' || targetMode === '30' || targetMode === '60') {
+        setTimeMode(Number(targetMode));
+        setMode('time');
+        setActiveTab('typing');
+        setTimeout(() => {
+          const arena = document.getElementById('typing-arena');
+          if (arena) {
+            arena.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+        return;
+      }
       handleThematicAction(targetMode as ThematicActionType);
       return;
     }
@@ -1173,6 +1224,7 @@ function MainAppContent() {
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => setActiveTab('login')}
+            onOpenFeedback={() => setIsFeedbackOpen(true)}
           />
         )}
 
@@ -1223,14 +1275,15 @@ function MainAppContent() {
           />
         )}
 
+        {activeTab === 'leaderboard' && (
+          <LeaderboardPage
+            onBackToHome={() => setActiveTab('home')}
+            onOpenLogin={() => setActiveTab('login')}
+            onGoToTyping={() => setActiveTab('typing')}
+          />
+        )}
+
         <React.Suspense fallback={<ViewLoadingFallback />}>
-          {activeTab === 'leaderboard' && (
-            <LeaderboardPage
-              onBackToHome={() => setActiveTab('home')}
-              onOpenLogin={() => setActiveTab('login')}
-              onGoToTyping={() => setActiveTab('typing')}
-            />
-          )}
 
           {activeTab === 'languages' && (
             <LanguageSelectView
@@ -1313,6 +1366,16 @@ function MainAppContent() {
         initialTab={aboutModalTab}
         onClose={() => setIsAboutOpen(false)}
       />
+
+      {/* Floating 3-Dots SMS Feedback Button & Modal */}
+      <SiteFeedbackFloatingButton onClick={() => setIsFeedbackOpen(true)} />
+      <SiteFeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
+
+      {/* Global Device Auto Calibration Loading Gate (1-100%) */}
+      <DeviceAutoCalibrationScreen />
     </div>
   );
 }
@@ -1322,7 +1385,9 @@ export default function App() {
     <AuthProvider>
       <SettingsProvider>
         <I18nProvider>
-          <MainAppContent />
+          <DeviceProvider>
+            <MainAppContent />
+          </DeviceProvider>
         </I18nProvider>
       </SettingsProvider>
     </AuthProvider>

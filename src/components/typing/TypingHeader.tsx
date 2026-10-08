@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Clock, Type, Layers, Globe, Sparkles, Film, BookOpen, Code } from 'lucide-react';
+import { Clock, Type, Layers, Globe, Sparkles, Film, BookOpen, Code, Disc } from 'lucide-react';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
 import { getAllLanguages } from '../../utils/customContentStore';
@@ -215,19 +215,23 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
 
           <button
             onClick={() => {
-              const nextMode = tapeMode === 'off' ? 'letter' : tapeMode === 'letter' ? 'word' : 'off';
+              const nextMode = tapeMode === 'off' ? 'letter' : tapeMode === 'letter' ? 'word' : tapeMode === 'word' ? 'drum' : 'off';
               setTapeMode(nextMode);
               onReset();
             }}
             className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
               tapeMode !== 'off'
-                ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
+                ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10 ring-1 ring-[var(--main-color)]/20'
                 : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
             }`}
-            title="Lenta rejimini almashtirish (Tape mode: off -> letter -> word)"
+            title="Lenta rejimini almashtirish (off -> letter -> word -> drum/baraban)"
           >
-            <Film className="w-3.5 h-3.5" />
-            <span>tape: {tapeMode}</span>
+            {tapeMode === 'drum' ? (
+              <Disc className="w-3.5 h-3.5 animate-spin [animation-duration:8s]" />
+            ) : (
+              <Film className="w-3.5 h-3.5" />
+            )}
+            <span>tape: {tapeMode === 'drum' ? 'baraban' : tapeMode}</span>
           </button>
         </div>
 

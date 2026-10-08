@@ -134,6 +134,124 @@ class SoundSynthesizer {
       // Ignore audio fail
     }
   }
+
+  public playCoinSound() {
+    if (this.volume <= 0) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      // Twin harmonious bell notes: B5 (987Hz) then E6 (1318Hz)
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'triangle';
+      osc1.frequency.setValueAtTime(987, now);
+      osc1.frequency.setValueAtTime(1318, now + 0.07);
+      osc2.frequency.setValueAtTime(1975, now + 0.07);
+
+      gain.gain.setValueAtTime(0.22 * this.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.35 * this.volume, now + 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now + 0.07);
+      osc1.stop(now + 0.35);
+      osc2.stop(now + 0.35);
+    } catch {
+      // Audio safety catch
+    }
+  }
+
+  public playPenaltySound() {
+    if (this.volume <= 0) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.linearRampToValueAtTime(130, now + 0.12);
+      osc.frequency.linearRampToValueAtTime(90, now + 0.22);
+
+      gain.gain.setValueAtTime(0.3 * this.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } catch {
+      // Audio safety catch
+    }
+  }
+
+  public playRadarFlashSound() {
+    if (this.volume <= 0) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      // High pitch flash charging beep + chirp
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(2400, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+
+      gain.gain.setValueAtTime(0.28 * this.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch {
+      // Audio safety catch
+    }
+  }
+
+  public playCrashSound() {
+    if (this.volume <= 0) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.3);
+
+      gain.gain.setValueAtTime(0.35 * this.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } catch {
+      // Audio safety catch
+    }
+  }
 }
 
 export const soundSynth = new SoundSynthesizer();

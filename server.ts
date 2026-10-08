@@ -694,22 +694,22 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   } else {
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   }
 
   // Content-Security-Policy: allow trusted Google, Firebase, Dicebear, and Yolnoma endpoints with explicit frame-src for auth iframes
   const frameAncestors = isPreview
     ? "frame-ancestors 'self' https://ai.studio https://ais-*.run.app https://*.google.com https://yolnoma.uz https://www.yolnoma.uz"
-    : "frame-ancestors 'none'";
+    : "frame-ancestors 'self' https://yolnoma.uz https://www.yolnoma.uz";
 
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob: https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com https://accounts.google.com https://ssl.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob: https://apis.google.com https://*.google.com https://accounts.google.com https://*.firebaseapp.com https://*.googleapis.com https://ssl.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https:",
     "font-src 'self' data: https://fonts.gstatic.com https:",
     "img-src 'self' data: blob: https: https://api.dicebear.com https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.firebasestorage.googleapis.com https://*.firebase.com https://*.gstatic.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
-    "connect-src 'self' https: wss: https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://ep2.adtrafficquality.google https://www.highrevenueformat.com https://*.highrevenueformat.com",
+    "connect-src 'self' https: wss: https://*.google.com https://apis.google.com https://accounts.google.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.dicebear.com https://*.run.app https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://ep2.adtrafficquality.google https://www.highrevenueformat.com https://*.highrevenueformat.com",
     "frame-src 'self' https: data: blob: https://*.firebaseapp.com https://accounts.google.com https://*.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://www.highrevenueformat.com https://*.highrevenueformat.com",
     "media-src 'self' data: blob: https:",
     frameAncestors,
@@ -955,6 +955,66 @@ const serverInboxMessages: StoredInboxMessage[] = [
   }
 ];
 
+interface StoredFeedbackThought {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userAvatar?: string;
+  userRole?: string;
+  userRank?: string;
+  userWpm?: number;
+  userAccuracy?: number;
+  userLevel?: number;
+  category: 'fikr' | 'taklif' | 'xato' | 'dizayn';
+  rating: number; // 1-5
+  message: string;
+  createdAt: number;
+  expiresAt: number; // 24 hours (86,400,000 ms)
+  ip: string;
+  userAgent?: string;
+  isRead: boolean;
+  status: 'active' | 'reviewed' | 'replied';
+  replyText?: string;
+  repliedAt?: number;
+  repliedBy?: string;
+}
+
+let serverFeedbackThoughts: StoredFeedbackThought[] = [
+  {
+    id: 'fb-sample-1',
+    userId: 'user_bekzod_master',
+    userName: 'Bekzod Aliyev',
+    userEmail: 'bekzod.typing@gmail.com',
+    userRole: 'user',
+    userRank: 'Typing Master',
+    userWpm: 118,
+    userAccuracy: 99.4,
+    userLevel: 14,
+    category: 'fikr',
+    rating: 5,
+    message: 'Sayt juda ajoyib va tez ishlayapti! 10 barmoq mashqlari va 1v1 janglar ayni muddao bo\'libdi. Yangi personajlar ham juda chiroyli chiqibdi.',
+    createdAt: Date.now() - 3600000 * 2,
+    expiresAt: Date.now() + 3600000 * 22, // 22 hours remaining
+    ip: '127.0.0.1',
+    isRead: false,
+    status: 'active'
+  }
+];
+
+// Map of userId/IP -> { expiresAt: number, feedbackId: string }
+const feedbackLimitCooldown = new Map<string, { expiresAt: number; feedbackId: string }>();
+
+function purgeExpiredFeedbacks() {
+  const now = Date.now();
+  serverFeedbackThoughts = serverFeedbackThoughts.filter((f) => f.expiresAt > now);
+  for (const [key, val] of feedbackLimitCooldown.entries()) {
+    if (val.expiresAt <= now) {
+      feedbackLimitCooldown.delete(key);
+    }
+  }
+}
+
 const serverAnnouncements: StoredAnnouncement[] = [
   {
     id: 'ann-init-1',
@@ -1173,6 +1233,136 @@ app.post('/api/contact', async (req, res) => {
   return res.json({
     success: true,
     message: 'Xabaringiz Admin panelga xavfsiz yetkazildi!'
+  });
+});
+
+// -------------------------------------------------------------
+// USER SITE FEEDBACK & CHAT (24-Hour Limit + Auto-Expiration)
+// -------------------------------------------------------------
+
+// Endpoint: Check feedback submission status & 24h cooldown
+app.get('/api/feedback/status', (req, res) => {
+  purgeExpiredFeedbacks();
+  const clientIp = getClientIp(req);
+  const userId = (req.query.userId as string) || '';
+  const now = Date.now();
+
+  const userLimitKey = userId ? `uid_${userId.trim()}` : null;
+  const ipLimitKey = `ip_${clientIp}`;
+
+  let activeLimit = (userLimitKey && feedbackLimitCooldown.get(userLimitKey)) || feedbackLimitCooldown.get(ipLimitKey);
+
+  if (activeLimit && activeLimit.expiresAt > now) {
+    const remainingMs = activeLimit.expiresAt - now;
+    const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+    const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    const activeItem = serverFeedbackThoughts.find((f) => f.id === activeLimit?.feedbackId) || null;
+
+    return res.json({
+      success: true,
+      canSubmit: false,
+      remainingMs,
+      remainingFormatted: `${hours} soat ${mins} daqiqa`,
+      activeFeedback: activeItem
+    });
+  }
+
+  return res.json({
+    success: true,
+    canSubmit: true,
+    remainingMs: 0,
+    activeFeedback: null
+  });
+});
+
+// Endpoint: Submit site feedback (Strict 24h limit, 1 per day, auto-expires in 24h)
+app.post(['/api/feedback/submit', '/api/feedback'], (req, res) => {
+  purgeExpiredFeedbacks();
+  const clientIp = getClientIp(req);
+  const now = Date.now();
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  if (bannedIps.has(clientIp)) {
+    return res.status(403).json({ success: false, error: 'Sizning IP manzilingiz bloklangan.' });
+  }
+
+  const {
+    userId,
+    userName,
+    userEmail,
+    userAvatar,
+    userRole,
+    userRank,
+    userWpm,
+    userAccuracy,
+    userLevel,
+    category,
+    rating,
+    message
+  } = req.body;
+
+  const cleanUserId = userId ? String(userId).trim() : `guest_${clientIp.replace(/[:.]/g, '_')}`;
+  const userLimitKey = `uid_${cleanUserId}`;
+  const ipLimitKey = `ip_${clientIp}`;
+
+  // Check 24-hour rate limit
+  const existingLimit = feedbackLimitCooldown.get(userLimitKey) || feedbackLimitCooldown.get(ipLimitKey);
+  if (existingLimit && existingLimit.expiresAt > now) {
+    const remainingMs = existingLimit.expiresAt - now;
+    const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+    const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    return res.status(429).json({
+      success: false,
+      canSubmit: false,
+      error: `Siz allaqachon bugun o'z fikringizni bildirgansiz! Yangi fikr qoldirish uchun yana ${hours} soat ${mins} daqiqa kutish lozim.`,
+      remainingMs
+    });
+  }
+
+  // Validate message
+  if (!message || typeof message !== 'string' || message.trim().length < 3) {
+    return res.status(400).json({ success: false, error: 'Fikr matni kamida 3 ta belgidan iborat bo\'lishi kerak.' });
+  }
+
+  const newId = `fb-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+  const expiresAt = now + ONE_DAY_MS;
+
+  const newFeedback: StoredFeedbackThought = {
+    id: newId,
+    userId: cleanUserId,
+    userName: (userName && String(userName).trim().substring(0, 60)) || 'Mehmon Foydalanuvchi',
+    userEmail: userEmail ? String(userEmail).trim().substring(0, 100) : undefined,
+    userAvatar: userAvatar ? String(userAvatar).trim().substring(0, 500) : undefined,
+    userRole: userRole || 'user',
+    userRank: userRank || 'Typing Yangi',
+    userWpm: typeof userWpm === 'number' && userWpm > 0 ? userWpm : undefined,
+    userAccuracy: typeof userAccuracy === 'number' && userAccuracy > 0 ? userAccuracy : undefined,
+    userLevel: typeof userLevel === 'number' && userLevel > 0 ? userLevel : 1,
+    category: ['fikr', 'taklif', 'xato', 'dizayn'].includes(category) ? category : 'fikr',
+    rating: typeof rating === 'number' && rating >= 1 && rating <= 5 ? rating : 5,
+    message: String(message).trim().substring(0, 1200),
+    createdAt: now,
+    expiresAt,
+    ip: clientIp,
+    userAgent: (req.headers['user-agent'] || '').substring(0, 120),
+    isRead: false,
+    status: 'active'
+  };
+
+  serverFeedbackThoughts.unshift(newFeedback);
+  feedbackLimitCooldown.set(userLimitKey, { expiresAt, feedbackId: newId });
+  feedbackLimitCooldown.set(ipLimitKey, { expiresAt, feedbackId: newId });
+
+  // Limit in-memory store size to 1000
+  if (serverFeedbackThoughts.length > 1000) {
+    serverFeedbackThoughts.pop();
+  }
+
+  return res.json({
+    success: true,
+    message: 'Fikringiz muvaffaqiyatli qabul qilindi va Admin panelga yetkazildi! Rahmat!',
+    feedback: newFeedback,
+    remainingMs: ONE_DAY_MS
   });
 });
 
@@ -2136,6 +2326,74 @@ app.post('/api/admin/inbox/reply', requireAdminAuth, (req, res) => {
   msg.isRead = true;
 
   res.json({ success: true, message: 'Javob saqlandi', updatedMessage: msg });
+});
+
+// -------------------------------------------------------------
+// ADMIN SITE FEEDBACKS (24h Chat & Thoughts Management)
+// -------------------------------------------------------------
+
+// Admin Feedbacks: List All Active & Expiring Feedbacks
+app.get('/api/admin/feedbacks', requireAdminAuth, (req, res) => {
+  purgeExpiredFeedbacks();
+  res.json({
+    success: true,
+    feedbacks: serverFeedbackThoughts,
+    count: serverFeedbackThoughts.length
+  });
+});
+
+// Admin Feedbacks: Toggle Read Status
+app.patch('/api/admin/feedbacks/:id/read', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const item = serverFeedbackThoughts.find((f) => f.id === id);
+
+  if (!item) {
+    return res.status(404).json({ success: false, error: 'Fikr topilmadi' });
+  }
+
+  item.isRead = !item.isRead;
+  item.status = item.isRead ? 'reviewed' : 'active';
+
+  res.json({ success: true, feedback: item });
+});
+
+// Admin Feedbacks: Delete Feedback
+app.delete('/api/admin/feedbacks/:id', requireAdminAuth, (req, res) => {
+  const { id } = req.params;
+  const index = serverFeedbackThoughts.findIndex((f) => f.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: 'Fikr topilmadi' });
+  }
+
+  serverFeedbackThoughts.splice(index, 1);
+  res.json({ success: true, message: 'Fikr o\'chirildi' });
+});
+
+// Admin Feedbacks: Reply to Feedback
+app.post('/api/admin/feedbacks/reply', requireAdminAuth, (req, res) => {
+  const { feedbackId, replyText, adminName } = req.body;
+  const item = serverFeedbackThoughts.find((f) => f.id === feedbackId);
+
+  if (!item) {
+    return res.status(404).json({ success: false, error: 'Fikr topilmadi' });
+  }
+
+  item.replyText = String(replyText).trim();
+  item.repliedAt = Date.now();
+  item.repliedBy = adminName || 'Admin (Yolnoma)';
+  item.status = 'replied';
+  item.isRead = true;
+
+  res.json({ success: true, message: 'Javob saqlandi', feedback: item });
+});
+
+// Admin Feedbacks: Purge Expired Feedbacks
+app.post('/api/admin/feedbacks/purge-expired', requireAdminAuth, (req, res) => {
+  const beforeCount = serverFeedbackThoughts.length;
+  purgeExpiredFeedbacks();
+  const purgedCount = beforeCount - serverFeedbackThoughts.length;
+  res.json({ success: true, message: `${purgedCount} ta eskirgan fikr tozalandi`, remaining: serverFeedbackThoughts.length });
 });
 
 // Admin Announcements: Create

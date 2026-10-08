@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="bladeNeon1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fda4af"/>
+      <stop offset="50%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#be123c"/>
+    </linearGradient>
+    <linearGradient id="bladeNeon2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#6b21a8"/>
+    </linearGradient>
+    <filter id="swordGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#f43f5e" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#swordGlow)">
+    <!-- Background Shield Crest -->
+    <path d="M32 8 L48 16 C48 34 32 52 32 52 C32 52 16 34 16 16 Z" fill="#1e1b4b" stroke="#f43f5e" stroke-width="1.8" opacity="0.8"/>
+    
+    <!-- Sword 1 (Top-Left to Bottom-Right) -->
+    <g transform="rotate(45 32 32)">
+      <!-- Blade -->
+      <rect x="30" y="8" width="4" height="34" rx="2" fill="url(#bladeNeon1)"/>
+      <path d="M30 8 L32 4 L34 8 Z" fill="#ffffff"/>
+      <!-- Crossguard -->
+      <rect x="23" y="40" width="18" height="3.5" rx="1.5" fill="#facc15"/>
+      <!-- Grip & Pommel -->
+      <rect x="30.5" y="43.5" width="3" height="9" rx="1" fill="#475569"/>
+      <circle cx="32" cy="54" r="2.5" fill="#facc15"/>
+    </g>
+
+    <!-- Sword 2 (Top-Right to Bottom-Left) -->
+    <g transform="rotate(-45 32 32)">
+      <!-- Blade -->
+      <rect x="30" y="8" width="4" height="34" rx="2" fill="url(#bladeNeon2)"/>
+      <path d="M30 8 L32 4 L34 8 Z" fill="#ffffff"/>
+      <!-- Crossguard -->
+      <rect x="23" y="40" width="18" height="3.5" rx="1.5" fill="#facc15"/>
+      <!-- Grip & Pommel -->
+      <rect x="30.5" y="43.5" width="3" height="9" rx="1" fill="#475569"/>
+      <circle cx="32" cy="54" r="2.5" fill="#facc15"/>
+    </g>
+
+    <!-- Center Impact Flare -->
+    <circle cx="32" cy="32" r="3" fill="#ffffff"/>
+    <circle cx="32" cy="32" r="6" stroke="#facc15" stroke-width="1.5" opacity="0.75"/>
+  </g>
+</svg>

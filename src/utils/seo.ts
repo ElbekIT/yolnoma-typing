@@ -13,15 +13,15 @@ export interface PageSEOInfo {
 
 export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
   home: {
-    title: "Yolnoma Typing - O'zbekistonda №1 Tez Yozish Platformasi",
-    description: "Klaviaturada tez yozishni o'rganing, 10 barmoq mashqlarini bajaring va milliy reytingda bellashing!",
-    keywords: "yolnoma, yolnoma typing, tez yozish testi, klaviaturada tez yozish, 10 barmoq bilan yozish, wpm test uzbek, speed typing uzbekistan, klaviatura trenajyori, touch typing test",
+    title: "Tez Yozish - Klaviaturada Tez Yozish Testi & 10 Barmoq Mashqlari | Yolnoma",
+    description: "Klaviaturada tez yozishni o'rganing! Bepul 10 barmoq mashqlari, WPM tezlik testi, real-vaqt musobaqalar va O'zbekiston milliy reytingi. Tez yozish bo'yicha №1 platforma.",
+    keywords: "tez yozish, klaviaturada tez yozish, tez yozish testi, tez yozishni organish, 10 barmoq bilan yozish, 10 barmoq mashqlari, klaviatura trenajori, klaviatura tezligi, wpm test uzbek, cpm test uzbek, tez yozish musobaqasi, tez yozish oyini, klaviaturada 10 barmoq, lotincha tez yozish, ozbekcha tez yozish, kompyuterda tez yozish, telefonda tez yozish, matn terish tezligi, tez terish, kor yozish usuli, touch typing uzbek, typing test uzbek, speed typing uzbekistan, monkeytype uzbek, yolnoma, yolnoma typing, тез ёзиш, клавиатурада тез ёзиш, 10 бармок билан ёзиш, тест скорости печати, клавиатурный тренажер",
     canonicalUrl: "https://www.yolnoma.uz/"
   },
   typing: {
-    title: "Tez Yozish Trenajyori & WPM Arena - Yolnoma Typing",
-    description: "Klaviaturada tez yozish trenajyori, 125+ tilda so'zlar, kod testi va jonli WPM tezlik hisoblagichi.",
-    keywords: "tez yozish trenajyori, yolnoma test, wpm hisoblagich, monkeytype uzbek",
+    title: "Tez Yozish Testi & Jonli WPM Hisoblagich - Yolnoma Typing",
+    description: "Klaviaturada tez yozish tezligingizni (WPM va CPM) 15, 30, 60 soniya ichida bepul sinab ko'ring va xatolaringizni aniqlang.",
+    keywords: "tez yozish testi, klaviaturada tez yozish testi, wpm hisoblagich, cpm hisoblagich, monkeytype uzbek, typing test online, tez yozish trenajyori, yolnoma test",
     canonicalUrl: "https://www.yolnoma.uz/test"
   },
   leaderboard: {

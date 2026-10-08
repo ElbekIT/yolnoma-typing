@@ -1,0 +1,302 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 650" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Radial Ground Shadow -->
+    <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Hair Gradients -->
+    <linearGradient id="hairDark" x1="0%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#6a3b24"/>
+      <stop offset="50%" stop-color="#4a2514"/>
+      <stop offset="100%" stop-color="#30150b"/>
+    </linearGradient>
+    <linearGradient id="hairHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#935738"/>
+      <stop offset="100%" stop-color="#6a3b24"/>
+    </linearGradient>
+
+    <!-- Skin Gradients -->
+    <linearGradient id="skin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe3cf"/>
+      <stop offset="70%" stop-color="#fcd3ba"/>
+      <stop offset="100%" stop-color="#f5bea0"/>
+    </linearGradient>
+    <linearGradient id="skinShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5bea0"/>
+      <stop offset="100%" stop-color="#e29b7a"/>
+    </linearGradient>
+
+    <!-- Eyes Gradient -->
+    <linearGradient id="eyeIris" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3c2012"/>
+      <stop offset="60%" stop-color="#6b3a20"/>
+      <stop offset="100%" stop-color="#9c5932"/>
+    </linearGradient>
+
+    <!-- Jacket Orange Gradient -->
+    <linearGradient id="jacketOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8e3d"/>
+      <stop offset="50%" stop-color="#f2711c"/>
+      <stop offset="100%" stop-color="#d65609"/>
+    </linearGradient>
+    <linearGradient id="jacketOrangeDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d65609"/>
+      <stop offset="100%" stop-color="#a83c00"/>
+    </linearGradient>
+
+    <!-- Jacket Cream Panels -->
+    <linearGradient id="jacketCream" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff9ef"/>
+      <stop offset="70%" stop-color="#fcefdc"/>
+      <stop offset="100%" stop-color="#eddac0"/>
+    </linearGradient>
+
+    <!-- Undershirt Navy with Stripes Pattern -->
+    <pattern id="stripedShirt" width="20" height="14" patternUnits="userSpaceOnUse">
+      <rect width="20" height="14" fill="#1b2a47"/>
+      <rect y="8" width="20" height="3" fill="#facc15"/>
+    </pattern>
+
+    <!-- Shorts Brown Gradient -->
+    <linearGradient id="shortsBrown" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#785038"/>
+      <stop offset="60%" stop-color="#5c3a26"/>
+      <stop offset="100%" stop-color="#422718"/>
+    </linearGradient>
+
+    <!-- Shoes Gradient -->
+    <linearGradient id="shoesGrey" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <!-- Ambient Glow Filter -->
+    <filter id="glowSubtle" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#f97316" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Ground Drop Shadow -->
+  <ellipse cx="250" cy="610" rx="140" ry="24" fill="url(#groundShadow)"/>
+
+  <!-- Character Group with subtle entrance drop shadow -->
+  <g filter="url(#glowSubtle)">
+
+    <!-- LEGS & SOCKS -->
+    <!-- Left Leg -->
+    <path d="M215 450 L212 530 L228 532 L232 450 Z" fill="url(#skin)"/>
+    <path d="M212 450 L216 530 L220 530 L218 450 Z" fill="url(#skinShadow)" opacity="0.4"/>
+    <!-- Left Sock -->
+    <path d="M211 526 Q220 528 229 527 L229 550 Q220 552 210 549 Z" fill="#e2e8f0"/>
+    <path d="M212 534 Q220 536 228 535" stroke="#94a3b8" stroke-width="1.5"/>
+
+    <!-- Right Leg -->
+    <path d="M268 450 L272 530 L288 528 L285 450 Z" fill="url(#skin)"/>
+    <!-- Right Sock -->
+    <path d="M271 526 Q280 528 289 526 L290 549 Q280 552 271 550 Z" fill="#e2e8f0"/>
+    <path d="M272 534 Q280 536 288 534" stroke="#94a3b8" stroke-width="1.5"/>
+
+    <!-- SHOES (Trendy Sneakers matching uploaded image) -->
+    <!-- Left Shoe -->
+    <g id="leftShoe">
+      <ellipse cx="218" cy="580" rx="22" ry="10" fill="#0f172a" opacity="0.2"/>
+      <path d="M202 546 Q215 542 230 548 L236 572 Q224 582 195 580 Q192 568 202 546 Z" fill="url(#shoesGrey)"/>
+      <!-- White Toe Cap & Sole -->
+      <path d="M194 570 Q204 564 212 572 L210 581 Q196 582 194 570 Z" fill="#f8fafc"/>
+      <path d="M192 576 Q215 585 240 575 L239 582 Q215 589 192 581 Z" fill="#f8fafc"/>
+      <!-- Laces -->
+      <line x1="208" y1="552" x2="220" y2="556" stroke="#ffffff" stroke-width="2"/>
+      <line x1="207" y1="558" x2="222" y2="562" stroke="#ffffff" stroke-width="2"/>
+      <line x1="209" y1="564" x2="220" y2="567" stroke="#ffffff" stroke-width="2"/>
+    </g>
+
+    <!-- Right Shoe -->
+    <g id="rightShoe">
+      <ellipse cx="282" cy="580" rx="22" ry="10" fill="#0f172a" opacity="0.2"/>
+      <path d="M270 548 Q285 542 298 546 L308 568 Q306 580 265 582 Q264 570 270 548 Z" fill="url(#shoesGrey)"/>
+      <!-- White Toe Cap & Sole -->
+      <path d="M288 572 Q296 564 306 570 L304 581 Q294 582 288 572 Z" fill="#f8fafc"/>
+      <path d="M260 576 Q285 585 308 576 L308 582 Q285 589 260 581 Z" fill="#f8fafc"/>
+      <!-- Laces -->
+      <line x1="280" y1="556" x2="292" y2="552" stroke="#ffffff" stroke-width="2"/>
+      <line x1="278" y1="562" x2="293" y2="558" stroke="#ffffff" stroke-width="2"/>
+      <line x1="280" y1="567" x2="291" y2="564" stroke="#ffffff" stroke-width="2"/>
+    </g>
+
+    <!-- SHORTS (Cargo Brown Shorts) -->
+    <g id="cargoShorts">
+      <path d="M200 375 L300 375 L306 450 Q285 455 260 448 L250 420 L240 448 Q215 455 194 450 Z" fill="url(#shortsBrown)"/>
+      <!-- Left Leg Pocket -->
+      <rect x="195" y="405" width="22" height="28" rx="3" fill="#4a2e1c" stroke="#382112" stroke-width="1.5"/>
+      <path d="M195 405 L217 405 L206 414 Z" fill="#382112"/>
+      <!-- Right Leg Pocket -->
+      <rect x="283" y="405" width="22" height="28" rx="3" fill="#4a2e1c" stroke="#382112" stroke-width="1.5"/>
+      <path d="M283 405 L305 405 L294 414 Z" fill="#382112"/>
+      <!-- Seams & Folds -->
+      <path d="M250 375 L250 420" stroke="#382112" stroke-width="2"/>
+      <path d="M205 385 L230 385" stroke="#382112" stroke-width="1.5"/>
+      <path d="M270 385 L295 385" stroke="#382112" stroke-width="1.5"/>
+    </g>
+
+    <!-- TORSO & JACKET -->
+    <!-- Undershirt with Striped Pattern -->
+    <path d="M232 230 L268 230 L275 380 L225 380 Z" fill="url(#stripedShirt)"/>
+
+    <!-- Left Jacket Half (Open & Orange with Cream Panel) -->
+    <g id="leftJacketBody">
+      <path d="M185 240 Q195 230 230 228 L232 376 Q195 378 185 365 Z" fill="url(#jacketOrange)"/>
+      <!-- Cream Panel along zipper & chest -->
+      <path d="M214 235 L231 235 L231 376 L214 376 Q208 300 214 235 Z" fill="url(#jacketCream)"/>
+      <line x1="231" y1="230" x2="231" y2="376" stroke="#d65609" stroke-width="2"/>
+      <!-- Pocket welt -->
+      <line x1="196" y1="330" x2="216" y2="345" stroke="#d65609" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- Right Jacket Half -->
+    <g id="rightJacketBody">
+      <path d="M315 240 Q305 230 270 228 L268 376 Q305 378 315 365 Z" fill="url(#jacketOrange)"/>
+      <!-- Cream Panel along zipper & chest -->
+      <path d="M269 235 L286 235 Q292 300 286 376 L269 376 Z" fill="url(#jacketCream)"/>
+      <line x1="269" y1="230" x2="269" y2="376" stroke="#d65609" stroke-width="2"/>
+      <!-- Pocket welt -->
+      <line x1="304" y1="330" x2="284" y2="345" stroke="#d65609" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- HOODIE COLLAR & STRINGS -->
+    <path d="M205 220 Q250 240 295 220 Q305 235 295 245 Q250 255 205 245 Q195 235 205 220 Z" fill="url(#jacketOrangeDark)"/>
+    <!-- Strings -->
+    <path d="M225 242 Q224 270 220 285" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <circle cx="220" cy="286" r="3" fill="#cbd5e1"/>
+    <path d="M275 242 Q276 270 280 285" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <circle cx="280" cy="286" r="3" fill="#cbd5e1"/>
+
+    <!-- RIGHT ARM (Bent, Hand Placed Respectfully Over Heart - "Qo'l Ko'ksida") -->
+    <g id="rightArmOverHeart">
+      <!-- Upper Arm (Orange Sleeve) -->
+      <path d="M190 238 Q165 270 175 315 L200 310 Q195 270 215 248 Z" fill="url(#jacketOrange)"/>
+      <!-- Forearm & Cuff reaching to chest -->
+      <path d="M175 315 Q195 330 236 300 L242 278 Q200 295 195 290 Z" fill="url(#jacketOrange)"/>
+      <!-- Cuff -->
+      <rect x="230" y="278" width="14" height="20" rx="3" transform="rotate(-30 230 278)" fill="#fcefdc"/>
+      <!-- Right Hand Over Heart -->
+      <!-- Palm and fingers flat on chest -->
+      <g transform="translate(236, 260) rotate(-15)">
+        <path d="M0 10 Q5 0 16 0 Q24 0 25 10 L26 28 Q18 34 8 30 Q-2 26 0 10 Z" fill="url(#skin)"/>
+        <!-- Thumb -->
+        <path d="M-4 8 Q0 4 6 8 L6 16 Q-2 18 -4 8 Z" fill="url(#skin)"/>
+        <!-- Finger separation lines -->
+        <line x1="8" y1="2" x2="8" y2="24" stroke="#e29b7a" stroke-width="1"/>
+        <line x1="14" y1="2" x2="14" y2="26" stroke="#e29b7a" stroke-width="1"/>
+        <line x1="20" y1="4" x2="20" y2="25" stroke="#e29b7a" stroke-width="1"/>
+      </g>
+    </g>
+
+    <!-- LEFT ARM (Gesturing Forward in Friendly Welcome) -->
+    <g id="leftArmWelcoming">
+      <!-- Upper Arm -->
+      <path d="M310 240 Q345 270 365 310 L345 325 Q325 285 295 255 Z" fill="url(#jacketOrange)"/>
+      <!-- Forearm extending outward -->
+      <path d="M355 315 Q395 335 425 345 L432 328 Q395 318 365 305 Z" fill="url(#jacketOrange)"/>
+      <!-- Cuff -->
+      <rect x="420" y="325" width="14" height="20" rx="3" transform="rotate(15 420 325)" fill="#fcefdc"/>
+      <!-- Welcoming Open Hand -->
+      <g transform="translate(432, 325) rotate(15)">
+        <!-- Palm -->
+        <path d="M0 5 Q10 2 18 8 Q24 16 20 25 L8 24 Q-2 20 0 5 Z" fill="url(#skin)"/>
+        <!-- Fingers extended outward -->
+        <!-- Thumb -->
+        <path d="M2 -2 Q10 -6 12 0 L10 6 Q4 6 2 -2 Z" fill="url(#skin)"/>
+        <!-- Index Finger -->
+        <path d="M16 2 Q28 0 34 5 Q32 10 20 10 Z" fill="url(#skin)"/>
+        <!-- Middle Finger -->
+        <path d="M18 9 Q32 10 36 15 Q34 20 20 17 Z" fill="url(#skin)"/>
+        <!-- Ring Finger -->
+        <path d="M16 16 Q28 20 32 25 Q30 29 16 23 Z" fill="url(#skin)"/>
+        <!-- Pinky Finger -->
+        <path d="M12 22 Q22 28 24 33 Q20 36 10 28 Z" fill="url(#skin)"/>
+      </g>
+    </g>
+
+    <!-- NECK & HEAD -->
+    <!-- Neck -->
+    <path d="M236 200 L264 200 L266 232 L234 232 Z" fill="url(#skinShadow)"/>
+    <path d="M238 205 L262 205 L264 225 L236 225 Z" fill="url(#skin)"/>
+
+    <!-- Head Base (Youthful jawline and cheeks) -->
+    <path d="M200 135 Q192 185 220 205 Q250 220 280 205 Q308 185 300 135 Q300 70 250 70 Q200 70 200 135 Z" fill="url(#skin)"/>
+
+    <!-- Ears -->
+    <!-- Left Ear -->
+    <path d="M192 140 Q182 148 190 162 Q196 170 202 165 Z" fill="url(#skin)"/>
+    <path d="M193 148 Q188 152 194 158" stroke="#e29b7a" stroke-width="1.5" fill="none"/>
+    <!-- Right Ear -->
+    <path d="M308 140 Q318 148 310 162 Q304 170 298 165 Z" fill="url(#skin)"/>
+    <path d="M307 148 Q312 152 306 158" stroke="#e29b7a" stroke-width="1.5" fill="none"/>
+
+    <!-- Soft Cheek Blushes -->
+    <ellipse cx="218" cy="162" rx="10" ry="5" fill="#f43f5e" opacity="0.18"/>
+    <ellipse cx="282" cy="162" rx="10" ry="5" fill="#f43f5e" opacity="0.18"/>
+
+    <!-- EYES (Expressive, warm anime/Pixar style) -->
+    <!-- Left Eye -->
+    <g id="leftEye">
+      <!-- White of eye -->
+      <path d="M214 140 Q228 132 238 142 Q234 156 216 154 Q210 148 214 140 Z" fill="#ffffff"/>
+      <!-- Iris -->
+      <ellipse cx="228" cy="144" rx="7.5" ry="8" fill="url(#eyeIris)"/>
+      <!-- Pupil -->
+      <ellipse cx="228" cy="144" rx="4" ry="4.5" fill="#180c05"/>
+      <!-- Catchlight sparkles -->
+      <circle cx="226" cy="141" r="2.5" fill="#ffffff"/>
+      <circle cx="231" cy="148" r="1.2" fill="#ffffff"/>
+      <!-- Upper Eyelash line -->
+      <path d="M210 140 Q226 130 240 138" stroke="#33180a" stroke-width="3" stroke-linecap="round" fill="none"/>
+    </g>
+
+    <!-- Right Eye -->
+    <g id="rightEye">
+      <!-- White of eye -->
+      <path d="M286 140 Q272 132 262 142 Q266 156 284 154 Q290 148 286 140 Z" fill="#ffffff"/>
+      <!-- Iris -->
+      <ellipse cx="272" cy="144" rx="7.5" ry="8" fill="url(#eyeIris)"/>
+      <!-- Pupil -->
+      <ellipse cx="272" cy="144" rx="4" ry="4.5" fill="#180c05"/>
+      <!-- Catchlight sparkles -->
+      <circle cx="270" cy="141" r="2.5" fill="#ffffff"/>
+      <circle cx="275" cy="148" r="1.2" fill="#ffffff"/>
+      <!-- Upper Eyelash line -->
+      <path d="M290 140 Q274 130 260 138" stroke="#33180a" stroke-width="3" stroke-linecap="round" fill="none"/>
+    </g>
+
+    <!-- EYEBROWS -->
+    <path d="M210 126 Q226 120 238 128" stroke="#4a2514" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M290 126 Q274 120 262 128" stroke="#4a2514" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+    <!-- NOSE (Subtle cute button nose) -->
+    <path d="M248 160 Q250 163 253 162" stroke="#d6845d" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+    <!-- MOUTH (Gentle, warm, friendly smile) -->
+    <path d="M236 174 Q250 188 264 174" stroke="#882d17" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- Gentle lip fill -->
+    <path d="M238 174 Q250 184 262 174 Z" fill="#f87171" opacity="0.3"/>
+
+    <!-- HAIR (Spiky, stylish anime hair with volume matching image) -->
+    <g id="animeHair">
+      <!-- Back hair spikes -->
+      <path d="M190 120 L165 95 L190 85 L180 60 L205 65 L215 35 L245 50 L265 25 L285 50 L315 40 L315 70 L340 75 L325 105 L345 125 L310 135 Z" fill="url(#hairDark)"/>
+      
+      <!-- Front Hair Bangs and Volume -->
+      <path d="M195 110 Q215 50 250 48 Q285 50 305 110 L295 118 L285 105 L280 125 L265 110 L255 132 L242 112 L232 128 L220 108 L208 122 Z" fill="url(#hairHighlight)"/>
+      
+      <!-- Center characteristic spiky strands -->
+      <path d="M235 60 Q248 20 260 55 Q252 50 235 60 Z" fill="url(#hairHighlight)"/>
+      <path d="M210 75 Q180 50 195 90 Z" fill="url(#hairHighlight)"/>
+      <path d="M290 75 Q320 50 305 90 Z" fill="url(#hairHighlight)"/>
+      <path d="M255 90 L260 128 L250 120 Z" fill="url(#hairDark)"/>
+      <path d="M235 90 L238 125 L244 116 Z" fill="url(#hairDark)"/>
+    </g>
+  </g>
+</svg>
