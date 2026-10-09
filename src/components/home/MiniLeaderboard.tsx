@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Crown, ArrowRight, LogIn, Flame, Sparkles, UserCheck } from 'lucide-react';
-import { ref, get } from 'firebase/database';
+import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -66,11 +66,9 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
           // Continue to RTDB fetch
         }
 
-        // Tier 2: RTDB fetch with timeout
+        // Tier 2: RTDB fetch with timeout (Properly secured with query)
         const rtdbPromise = Promise.allSettled([
-          get(ref(rtdb, 'users')),
-          get(ref(rtdb, 'leaderboard')),
-          get(ref(rtdb, 'bannedUsers'))
+          get(query(ref(rtdb, 'leaderboard'), orderByChild('highestWpm'), limitToLast(150)))
         ]);
         const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 4000));
         const rtdbRace = await Promise.race([rtdbPromise, timeoutPromise]);
@@ -82,41 +80,13 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
         let bannedSet = new Set<string>();
 
         if (rtdbRace !== 'timeout') {
-          const [usersSnapResult, lbSnapResult, banSnapResult] = rtdbRace;
-          usersVal =
-            usersSnapResult.status === 'fulfilled' && usersSnapResult.value.exists()
-              ? usersSnapResult.value.val() || {}
-              : {};
+          const [lbSnapResult] = rtdbRace;
           lbVal =
             lbSnapResult.status === 'fulfilled' && lbSnapResult.value.exists()
               ? lbSnapResult.value.val() || {}
               : {};
-          if (banSnapResult.status === 'fulfilled' && banSnapResult.value.exists()) {
-            const bVal = banSnapResult.value.val();
-            if (bVal && typeof bVal === 'object') {
-              Object.keys(bVal).forEach((k) => bannedSet.add(k));
-            }
-          }
-        } else {
-          // Direct REST fallback
-          try {
-            const [uRes, lRes, bRes] = await Promise.allSettled([
-              fetch('https://typing-euro-default-rtdb.firebaseio.com/users.json'),
-              fetch('https://typing-euro-default-rtdb.firebaseio.com/leaderboard.json'),
-              fetch('https://typing-euro-default-rtdb.firebaseio.com/bannedUsers.json')
-            ]);
-            if (uRes.status === 'fulfilled' && uRes.value.ok) usersVal = await uRes.value.json();
-            if (lRes.status === 'fulfilled' && lRes.value.ok) lbVal = await lRes.value.json();
-            if (bRes.status === 'fulfilled' && bRes.value.ok) {
-              const bVal = await bRes.value.json();
-              if (bVal && typeof bVal === 'object') {
-                Object.keys(bVal).forEach((k) => bannedSet.add(k));
-              }
-            }
-          } catch {
-            // Handled
-          }
         }
+
 
         const allUids = new Set<string>([...Object.keys(usersVal || {}), ...Object.keys(lbVal || {})]);
         const list: LeaderboardEntry[] = [];
