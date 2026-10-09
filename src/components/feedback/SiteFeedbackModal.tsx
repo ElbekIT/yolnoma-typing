@@ -239,9 +239,16 @@ export const SiteFeedbackModal: React.FC<SiteFeedbackModalProps> = ({
         body: JSON.stringify(feedbackPayload)
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Fikrni yuborishda xatolik yuz berdi.');
+      const responseText = await res.text();
+      let data = {};
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error('API javobini oqishda xato:', responseText);
+      }
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || `Serverga yuborishda xatolik (Status: ${res.status}). API ishlayotganiga ishonch hosil qiling.`);
       }
 
       const returnedFeedback: SiteFeedbackItem = data.feedback || feedbackPayload;
