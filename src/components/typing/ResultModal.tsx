@@ -16,7 +16,6 @@ import { useAuth } from '../../context/AuthContext';
 import { ShareModal } from '../share/ShareModal';
 import { ShareResultCertificateModal } from '../share/ShareResultCertificateModal';
 import { KeyboardHeatmap } from './KeyboardHeatmap';
-import { AdBanner } from '../common/AdBanner';
 
 interface ResultModalProps {
   result: TypingResult | null;
@@ -25,6 +24,7 @@ interface ResultModalProps {
   onGoToLeaderboard?: () => void;
   onOpenLogin?: () => void;
   onStartTargetedPractice?: (keys: string[]) => void;
+  onGoToCertificate?: () => void;
 }
 
 // Ultra-fast lightweight SVG timeline chart (Zero CPU overhead, no heavy chart libraries)
@@ -203,7 +203,8 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   onNextTest,
   onGoToLeaderboard,
   onOpenLogin,
-  onStartTargetedPractice
+  onStartTargetedPractice,
+  onGoToCertificate
 }) => {
   const { themeConfig } = useSettings();
   const { user, profile, signInWithGoogle, signInWithGithub } = useAuth();
@@ -405,17 +406,20 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           </div>
         )}
 
-        {/* Google AdSense Banner */}
-        <AdBanner format="horizontal" className="my-3 w-full" />
-
         {/* Action Buttons Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[var(--sub-alt)]">
           <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
             {/* Share Certificate Button (Viral feature) */}
             <button
-              onClick={() => setShowCertificateModal(true)}
+              onClick={() => {
+                if (onGoToCertificate) {
+                  onGoToCertificate();
+                } else {
+                  setShowCertificateModal(true);
+                }
+              }}
               className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-md"
-              title="Instagram Story yoki Banner formatida rasmiy sertifikat yuklab olish"
+              title="Rasmiy Sertifikat sahifasiga o'tish (10 soniya / Screenshot)"
             >
               <Award className="w-3.5 h-3.5 text-amber-300" />
               <span>Sertifikat</span>

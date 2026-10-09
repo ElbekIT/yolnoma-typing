@@ -26,19 +26,22 @@ import {
   Sparkles,
   AlertCircle,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { UserProfile } from '../../types';
+import { UserProfile, TypingResult } from '../../types';
 import { maskEmail, maskUid } from '../../utils/maskEmail';
 import { sanitizeText, sanitizeUsername } from '../../utils/security';
+import { ShareResultCertificateModal } from '../share/ShareResultCertificateModal';
 
 interface ProfileViewProps {
   onOpenAuth?: () => void;
   onSavedHome?: () => void;
+  onGoToCertificate?: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHome }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHome, onGoToCertificate }) => {
   const {
     user,
     profile,
@@ -92,6 +95,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
   // Admin Search
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
   const [adminUsersList, setAdminUsersList] = useState<UserProfile[]>([]);
+
+  // Certificate Modal State
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
 
   if (loading && user) {
     return (
@@ -493,7 +499,22 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                  <button
+                    onClick={() => {
+                      if (onGoToCertificate) {
+                        onGoToCertificate();
+                      } else {
+                        setShowCertificateModal(true);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                    title="Rasmiy Sertifikat sahifasiga o'tish (10 soniya / Screenshot)"
+                  >
+                    <Award className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Sertifikatimni Ko'rish</span>
+                  </button>
+
                   <button
                     onClick={() => setIsEditing(true)}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--sub-alt)] text-xs font-semibold hover:bg-[var(--main-color)] hover:text-white transition-all cursor-pointer"
@@ -948,6 +969,32 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             )}
           </div>
         </div>
+      )}
+
+      {/* Official Certificate Generator Modal */}
+      {showCertificateModal && (
+        <ShareResultCertificateModal
+          isOpen={showCertificateModal}
+          onClose={() => setShowCertificateModal(false)}
+          displayName={profile?.displayName || user?.displayName || 'Tezkor Yozuvchi'}
+          result={{
+            wpm: profile?.highestWpm || 60,
+            rawWpm: profile?.highestWpm || 60,
+            cpm: (profile?.highestWpm || 60) * 5,
+            accuracy: profile?.highestAccuracy || 98,
+            mode: 'time',
+            timeMode: 30,
+            wordCountMode: 0,
+            difficulty: 'normal',
+            language: 'uz-latn',
+            testTimeSeconds: 30,
+            mistakes: 0,
+            totalWords: Math.round(((profile?.highestWpm || 60) * 30) / 60),
+            correctChars: Math.round(((profile?.highestWpm || 60) * 5 * 30) / 60),
+            incorrectChars: 0,
+            timestamp: Date.now()
+          }}
+        />
       )}
     </div>
   );

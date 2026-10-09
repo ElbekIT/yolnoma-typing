@@ -1687,12 +1687,17 @@ app.get('/api/battle/room/:code', (req, res) => {
 app.post('/api/battle/update-progress', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   try {
-    const { code, role, progress, status, winner } = req.body || {};
+    const { code, role, progress, status, winner, text } = req.body || {};
     const safeCode = String(code || '').trim().toUpperCase();
     const room = activeBattleRooms.get(safeCode);
 
     if (!room) {
       return res.status(404).json({ success: false, error: 'Xona topilmadi' });
+    }
+
+    if (text) {
+      room.text = String(text);
+      room.selectedText = String(text);
     }
 
     if (role === 'host' && progress) {
@@ -1705,11 +1710,14 @@ app.post('/api/battle/update-progress', (req, res) => {
 
     if (status) {
       room.status = status;
+      if (status === 'ready' || status === 'waiting' || status === 'countdown') {
+        room.winner = null;
+      }
     }
 
-    if (winner) {
+    if (winner !== undefined) {
       room.winner = winner;
-      room.status = 'finished';
+      if (winner) room.status = 'finished';
     }
 
     room.lastUpdated = Date.now();

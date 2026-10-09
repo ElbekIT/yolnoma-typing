@@ -105,6 +105,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'statistics', label: currMenu.statistics, icon: Clock },
     { id: 'achievements', label: currMenu.achievements, icon: Award },
     { id: 'challenges', label: currMenu.milestones, icon: Target },
+    { id: 'certificate', label: uiLanguage === 'ru' ? 'Сертификат' : uiLanguage === 'en' ? 'Certificate' : 'Sertifikat', icon: Award },
     { id: 'partners', label: currMenu.partners, icon: Handshake },
     { id: 'owner', label: currMenu.about, icon: Sparkles },
     ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', icon: ShieldAlert }] : []),
@@ -429,6 +430,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         <div className="flex items-center gap-2.5">
                           <Award className="w-4 h-4 text-amber-500" />
                           <span>{currMenu.achievements}</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectTab('certificate')}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-amber-400 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Award className="w-4 h-4 text-amber-400" />
+                          <span>{uiLanguage === 'ru' ? 'Мой Сертификат' : uiLanguage === 'en' ? 'My Certificate' : 'Mening Sertifikatim'}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--sub-color)]" />
                       </button>

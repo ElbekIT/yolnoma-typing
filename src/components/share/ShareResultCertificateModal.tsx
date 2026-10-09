@@ -25,6 +25,21 @@ interface ShareResultCertificateModalProps {
   displayName?: string;
 }
 
+// Safe roundRect polyfill for older iOS / Android browsers that don't have CanvasRenderingContext2D.roundRect
+function safeRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  if (typeof (ctx as any).roundRect === 'function') {
+    (ctx as any).roundRect(x, y, w, h, r);
+  } else {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  }
+}
+
 export function getWpmTitle(wpm: number): { title: string; badge: string; color: string } {
   if (wpm >= 100) {
     return { title: 'Kiber Chaqmoq', badge: '⚡️ AFSONAVIY', color: '#f59e0b' };
@@ -120,7 +135,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
     // Card Glass Background
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(cardPad, cardPad, cardW, cardH, radius);
+    safeRoundRect(ctx, cardPad, cardPad, cardW, cardH, radius);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
     ctx.fill();
     ctx.lineWidth = 2;
@@ -156,7 +171,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
       const pillY = cardPad + 300;
       ctx.fillStyle = `${rankColor}22`;
       ctx.beginPath();
-      ctx.roundRect(width / 2 - 180, pillY, 360, 54, 27);
+      safeRoundRect(ctx, width / 2 - 180, pillY, 360, 54, 27);
       ctx.fill();
       ctx.strokeStyle = rankColor;
       ctx.lineWidth = 2;
@@ -198,7 +213,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
         const bx = cardPad + 30 + i * (boxW + 10);
         ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
         ctx.beginPath();
-        ctx.roundRect(bx, gridY, boxW, boxH, 20);
+        safeRoundRect(ctx, bx, gridY, boxW, boxH, 20);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 1.5;
@@ -217,7 +232,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
       const footerY = height - cardPad - 250;
       ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
       ctx.beginPath();
-      ctx.roundRect(width / 2 - 280, footerY, 560, 140, 24);
+      safeRoundRect(ctx, width / 2 - 280, footerY, 560, 140, 24);
       ctx.fill();
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
       ctx.stroke();
@@ -275,7 +290,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
         const sy = cardPad + 110 + idx * 75;
         ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
         ctx.beginPath();
-        ctx.roundRect(rightX, sy, 460, 60, 16);
+        safeRoundRect(ctx, rightX, sy, 460, 60, 16);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.stroke();
@@ -294,7 +309,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
       // Footer bar
       ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
       ctx.beginPath();
-      ctx.roundRect(rightX, cardPad + 355, 460, 75, 18);
+      safeRoundRect(ctx, rightX, cardPad + 355, 460, 75, 18);
       ctx.fill();
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
       ctx.stroke();
@@ -309,31 +324,112 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
     }
   };
 
+  // State for preview image
+  const [previewImgSrc, setPreviewImgSrc] = useState<string | null>(null);
+
   // Re-draw canvas on format change
   useEffect(() => {
     if (canvasRef.current) {
       drawCertificate(canvasRef.current, format === 'story');
+      try {
+        const url = canvasRef.current.toDataURL('image/png', 0.95);
+        setPreviewImgSrc(url);
+      } catch (e) {
+        console.warn('Canvas toDataURL preview error:', e);
+      }
     }
   }, [format, result, displayName]);
 
-  // 1-Tap Download PNG
-  const handleDownloadImage = () => {
-    if (!canvasRef.current) return;
+  // Direct download trigger with fallback
+  const triggerAnchorDownload = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      try {
+        document.body.removeChild(link);
+      } catch {}
+    }, 200);
+  };
+
+  // 1-Tap Universal Download PNG (Blob + Web Share API + DataURL Fallback)
+  const handleDownloadImage = async () => {
     setIsGenerating(true);
 
     try {
-      // Re-draw onto a clean export canvas
       const exportCanvas = document.createElement('canvas');
       drawCertificate(exportCanvas, format === 'story');
+      const filename = `yolnoma-${wpm}wpm-sertifikat.png`;
 
-      const dataUrl = exportCanvas.toDataURL('image/png', 1.0);
-      const link = document.createElement('a');
-      link.download = `yolnoma-${wpm}wpm-certificate.png`;
-      link.href = dataUrl;
-      link.click();
+      // Fallback generator using toDataURL
+      const fallbackDownload = () => {
+        try {
+          const dataUrl = exportCanvas.toDataURL('image/png', 1.0);
+          triggerAnchorDownload(dataUrl, filename);
+        } catch (e) {
+          console.error('Fallback export error:', e);
+          if (canvasRef.current) {
+            try {
+              triggerAnchorDownload(canvasRef.current.toDataURL('image/png', 1.0), filename);
+            } catch {}
+          }
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+
+      if (!exportCanvas.toBlob) {
+        fallbackDownload();
+        return;
+      }
+
+      exportCanvas.toBlob(async (blob) => {
+        if (!blob) {
+          fallbackDownload();
+          return;
+        }
+
+        // 1. Mobile Web Share API: Saves directly to Camera Roll / Photos on iOS & Android!
+        if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare) {
+          try {
+            const file = new File([blob], filename, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'Yolnoma Natija Sertifikati',
+                text: `Mening Yolnoma Typing tezlik natijam: ${wpm} WPM!`
+              });
+              setIsGenerating(false);
+              return;
+            }
+          } catch {
+            // Dismissed or unsupported, fall through to browser download
+          }
+        }
+
+        // 2. Standard Blob Object URL download
+        try {
+          const blobUrl = URL.createObjectURL(blob);
+          triggerAnchorDownload(blobUrl, filename);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+        } catch {
+          fallbackDownload();
+        } finally {
+          setIsGenerating(false);
+        }
+      }, 'image/png', 1.0);
     } catch (err) {
       console.error('Download certificate error:', err);
-    } finally {
+      // Last resort fallback
+      if (canvasRef.current) {
+        try {
+          triggerAnchorDownload(canvasRef.current.toDataURL('image/png', 1.0), `yolnoma-${wpm}wpm-sertifikat.png`);
+        } catch {}
+      }
       setIsGenerating(false);
     }
   };
@@ -416,11 +512,21 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
         </div>
 
         {/* Live Canvas Preview */}
-        <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden bg-slate-950/80 rounded-2xl border border-slate-800/80 p-3 relative group">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center overflow-hidden bg-slate-950/80 rounded-2xl border border-slate-800/80 p-3 relative group">
+          {previewImgSrc ? (
+            <img
+              src={previewImgSrc}
+              alt="Yolnoma Natija Sertifikati"
+              className="max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-2xl object-contain border border-slate-700/50 transition-transform duration-200 group-hover:scale-[1.01]"
+            />
+          ) : null}
           <canvas
             ref={canvasRef}
-            className={`max-h-[380px] sm:max-h-[420px] w-auto h-auto rounded-xl shadow-2xl object-contain border border-slate-700/50 transition-transform duration-200 group-hover:scale-[1.01]`}
+            className={`${previewImgSrc ? 'hidden' : 'block'} max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-2xl object-contain border border-slate-700/50`}
           />
+          <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-mono mt-2">
+            💡 <span className="text-amber-300 font-bold">Maslahat:</span> «PNG Yuklab Olish» tugmasini bosing yoki telefonda rasm ustiga bosib turib galereyaga saqlang.
+          </p>
         </div>
 
         {/* Actions Bar */}

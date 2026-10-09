@@ -36,7 +36,6 @@ import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
 import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
-import { AdBanner } from '../common/AdBanner';
 
 // Module-level caches for instant 0ms tab switching & reduced network load
 let cachedTypingUsers: LeaderboardUser[] | null = null;
@@ -1468,9 +1467,6 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           )}
         </div>
       </div>
-
-      {/* Google AdSense Banner (Leaderboard) */}
-      <AdBanner format="auto" className="w-full my-6" />
 
       {/* Floating Scroll to Top Button */}
       {showScrollTop && (

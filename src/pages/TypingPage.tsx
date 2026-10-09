@@ -46,6 +46,7 @@ interface TypingPageProps {
   onOpenLogin: () => void;
   onStartTargetedPractice: (keys: string[]) => void;
   onBackToHome?: () => void;
+  onGoToCertificate?: () => void;
 }
 
 export const TypingPage: React.FC<TypingPageProps> = ({
@@ -84,7 +85,8 @@ export const TypingPage: React.FC<TypingPageProps> = ({
   onGoToLeaderboard,
   onOpenLogin,
   onStartTargetedPractice,
-  onBackToHome
+  onBackToHome,
+  onGoToCertificate
 }) => {
   const { t } = useI18n();
 
@@ -193,6 +195,10 @@ export const TypingPage: React.FC<TypingPageProps> = ({
           onOpenLogin();
         }}
         onStartTargetedPractice={onStartTargetedPractice}
+        onGoToCertificate={() => {
+          setIsTestFinished(false);
+          if (onGoToCertificate) onGoToCertificate();
+        }}
       />
     </div>
   );

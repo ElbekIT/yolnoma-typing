@@ -5,8 +5,6 @@ import { I18nProvider, useI18n } from './context/I18nContext';
 import { DeviceProvider } from './context/DeviceContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { AdBanner } from './components/common/AdBanner';
-import { AdsterraBanner } from './components/AdsterraBanner';
 import { AuthModal } from './components/AuthModal';
 import { AboutModal } from './components/about/AboutModal';
 import { LoginPage } from './components/LoginPage';
@@ -68,6 +66,7 @@ const LessonsView = lazyWithRetry(() => import('./components/lessons/LessonsView
 const AdminView = lazyWithRetry(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
 const OwnerAboutView = lazyWithRetry(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = lazyWithRetry(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
+const CertificatePage = lazyWithRetry(() => import('./components/CertificatePage').then(m => ({ default: m.CertificatePage })));
 const NotFoundView = lazyWithRetry(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 
 function ViewLoadingFallback() {
@@ -113,6 +112,7 @@ function MainAppContent() {
     partners: 'partners',
     owner: 'about',
     dashboard: 'dashboard',
+    certificate: 'certificate',
     admin: atob('YWRtaW4=')
   };
 
@@ -132,6 +132,7 @@ function MainAppContent() {
     partners: 'Hamkorlar - Yolnoma Typing',
     owner: 'Sayt Haqida & Muallif - Yolnoma Typing',
     dashboard: 'Boshqaruv Paneli - Yolnoma Typing',
+    certificate: 'Rasmiy Natija Sertifikati - Yolnoma Typing',
     admin: 'Admin Panel - Yolnoma Typing'
   };
 
@@ -167,6 +168,7 @@ function MainAppContent() {
     if (['partners', 'hamkorlar'].includes(subpath)) return { lang: detectedLang, tab: 'partners' };
     if (['about', 'owner', 'haqida'].includes(subpath)) return { lang: detectedLang, tab: 'owner' };
     if (['dashboard'].includes(subpath)) return { lang: detectedLang, tab: 'dashboard' };
+    if (['certificate', 'sertifikat', 'diplom'].includes(subpath)) return { lang: detectedLang, tab: 'certificate' };
     return { lang: detectedLang, tab: 'home' };
   }, []);
 
@@ -1272,6 +1274,7 @@ function MainAppContent() {
             }}
             onStartTargetedPractice={handleStartTargetedPractice}
             onBackToHome={() => setActiveTab('home')}
+            onGoToCertificate={() => setActiveTab('certificate')}
           />
         )}
 
@@ -1319,6 +1322,25 @@ function MainAppContent() {
             <ProfileView
               onOpenAuth={() => setActiveTab('login')}
               onSavedHome={() => setActiveTab('typing')}
+              onGoToCertificate={() => setActiveTab('certificate')}
+            />
+          )}
+          {activeTab === 'certificate' && (
+            <CertificatePage
+              onBackToHome={() => {
+                setFinalResult(null);
+                setActiveTab('home');
+              }}
+              onOpenLogin={() => setActiveTab('login')}
+              initialResult={
+                finalResult
+                  ? {
+                      wpm: finalResult.wpm,
+                      accuracy: finalResult.accuracy,
+                      duration: finalResult.testTimeSeconds
+                    }
+                  : undefined
+              }
             />
           )}
           {activeTab === 'login' && (
@@ -1337,9 +1359,6 @@ function MainAppContent() {
           )}
         </React.Suspense>
       </main>
-
-      {/* Adsterra 728x90 Banner (Markazlashgan, Footer usti, Layout Shift-Free) */}
-      <AdsterraBanner className="my-6 max-w-5xl mx-auto px-4" isTyping={isTestActive} />
 
       <Footer
         onOpenAbout={() => {
