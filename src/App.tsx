@@ -11,6 +11,7 @@ import { LoginPage } from './components/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TypingPage } from './pages/TypingPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
+import { SupportPage } from './pages/SupportPage';
 import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { DeviceAutoCalibrationScreen } from './components/device/DeviceAutoCalibrationScreen';
@@ -1216,7 +1217,12 @@ function MainAppContent() {
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => setActiveTab('login')}
+            onGoToSupport={() => setActiveTab('support')}
           />
+        )}
+
+        {activeTab === 'support' && (
+          <SupportPage />
         )}
 
         {activeTab === 'typing' && (

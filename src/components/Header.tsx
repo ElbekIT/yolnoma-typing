@@ -29,7 +29,8 @@ import {
   MessageSquare,
   Gamepad2,
   Share2,
-  BookOpen
+  BookOpen,
+  Heart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -108,6 +109,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'certificate', label: uiLanguage === 'ru' ? 'Сертификат' : uiLanguage === 'en' ? 'Certificate' : 'Sertifikat', icon: Award },
     { id: 'partners', label: currMenu.partners, icon: Handshake },
     { id: 'owner', label: currMenu.about, icon: Sparkles },
+    { id: 'support', label: uiLanguage === 'ru' ? 'Поддержка' : uiLanguage === 'en' ? 'Support' : 'Qo\'llab-quvvatlash', icon: Heart },
     ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: uiLanguage === 'ru' ? 'Профиль' : uiLanguage === 'en' ? 'Profile' : 'Profil', icon: UserIcon },
     { id: 'settings', label: uiLanguage === 'ru' ? 'Настройки' : uiLanguage === 'en' ? 'Settings' : 'Sozlamalar', icon: Settings },
