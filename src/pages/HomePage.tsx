@@ -15,7 +15,6 @@ interface HomePageProps {
   onGoToLessons: () => void;
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
-  onOpenFeedback?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -23,22 +22,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGoToBattle,
   onGoToLessons,
   onGoToLeaderboard,
-  onOpenLogin,
-  onOpenFeedback
+  onOpenLogin
 }) => {
   const handleThematicAction = (action: ThematicActionType) => {
     if (action === 'battle') {
       onGoToBattle();
     } else {
       onStartTyping(action);
-    }
-  };
-
-  const handleOpenFeedback = () => {
-    if (onOpenFeedback) {
-      onOpenFeedback();
-    } else {
-      window.dispatchEvent(new CustomEvent('open_site_feedback'));
     }
   };
 
@@ -62,7 +52,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         onGoToLessons={onGoToLessons}
         onGoToLeaderboard={onGoToLeaderboard}
         onOpenLogin={onOpenLogin}
-        onOpenFeedback={handleOpenFeedback}
       />
 
       {/* 2. Interactive Modes & Mastery Tiers Hub (Instant Play, PvP & WPM Ranks) */}

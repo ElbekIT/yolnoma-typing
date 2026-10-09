@@ -9,14 +9,12 @@ interface HeroSectionProps {
   onOpenLogin: () => void;
   onGoToLessons?: () => void;
   onGoToLeaderboard?: () => void;
-  onOpenFeedback?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onStartTyping,
   onGoToBattle,
-  onGoToLessons,
-  onOpenFeedback
+  onGoToLessons
 }) => {
   const { uiLanguage } = useI18n();
 

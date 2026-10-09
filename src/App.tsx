@@ -13,8 +13,6 @@ import { TypingPage } from './pages/TypingPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
-import { SiteFeedbackModal } from './components/feedback/SiteFeedbackModal';
-import { SiteFeedbackFloatingButton } from './components/feedback/SiteFeedbackFloatingButton';
 import { DeviceAutoCalibrationScreen } from './components/device/DeviceAutoCalibrationScreen';
 import { rtdb } from './config/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
@@ -529,17 +527,9 @@ function MainAppContent() {
   // Modals & Battle Invite
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [aboutModalTab, setAboutModalTab] = useState<'faq' | 'privacy' | 'terms' | 'updates'>('faq');
   const [incomingInvite, setIncomingInvite] = useState<BattleInviteData | null>(null);
   const [pendingBattleRoomCode, setPendingBattleRoomCode] = useState<string | null>(null);
-
-  // Global event listener for opening site feedback from any component
-  useEffect(() => {
-    const handleOpenFeedback = () => setIsFeedbackOpen(true);
-    window.addEventListener('open_site_feedback', handleOpenFeedback);
-    return () => window.removeEventListener('open_site_feedback', handleOpenFeedback);
-  }, []);
 
   // Realtime Battle Invites listener (Supports both authenticated users and guests)
   useEffect(() => {
@@ -1226,7 +1216,6 @@ function MainAppContent() {
               setActiveTab('leaderboard');
             }}
             onOpenLogin={() => setActiveTab('login')}
-            onOpenFeedback={() => setIsFeedbackOpen(true)}
           />
         )}
 
@@ -1386,12 +1375,7 @@ function MainAppContent() {
         onClose={() => setIsAboutOpen(false)}
       />
 
-      {/* Floating 3-Dots SMS Feedback Button & Modal */}
-      <SiteFeedbackFloatingButton onClick={() => setIsFeedbackOpen(true)} />
-      <SiteFeedbackModal
-        isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
-      />
+
 
       {/* Global Device Auto Calibration Loading Gate (1-100%) */}
       <DeviceAutoCalibrationScreen />
