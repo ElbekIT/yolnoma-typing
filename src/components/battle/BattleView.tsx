@@ -19,11 +19,13 @@ import {
   Link as LinkIcon,
   Send,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Volume2
 } from 'lucide-react';
 import { DualBattleDrumView, RacerProgress } from './DualBattleDrumView';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import { soundSynth } from '../../utils/audio';
 import { rtdb, db } from '../../config/firebase';
 import { ref, set, onValue, update, get } from 'firebase/database';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
@@ -61,7 +63,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   onClearInitialRoomCode
 }) => {
   const { user, profile, saveTestResult, addXp } = useAuth();
-  const { soundEnabled } = useSettings();
+  const { soundProfile } = useSettings();
 
   // Active user data
   const currentUid = user?.uid || localStorage.getItem('yolnoma_guest_id') || `guest_${Math.random().toString(36).substring(2, 7)}`;
@@ -71,11 +73,20 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   // Game Lifecycle State: 'lobby' | 'ready_screen' | 'countdown' | 'racing' | 'finished'
   const [gameState, setGameState] = useState<'lobby' | 'ready_screen' | 'countdown' | 'racing' | 'finished'>('lobby');
+  const gameStateRef = useRef<'lobby' | 'ready_screen' | 'countdown' | 'racing' | 'finished'>('lobby');
+
   const [activeRoomCode, setActiveRoomCode] = useState<string>('');
+  const activeRoomCodeRef = useRef<string>('');
+
   const [isHost, setIsHost] = useState(false);
+  const isHostRef = useRef<boolean>(false);
+
   const [isBotMatch, setIsBotMatch] = useState(false);
+  const isBotMatchRef = useRef<boolean>(false);
+
   const [countdown, setCountdown] = useState(3);
   const [battleText, setBattleText] = useState(() => getRandomBattleText('uz-latn'));
+  const battleTextRef = useRef<string>(battleText);
 
   // Online Players for direct invite
   const [onlinePlayers, setOnlinePlayers] = useState<RealPlayerItem[]>([]);
@@ -99,6 +110,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     isWinner: false,
     isBot: false
   });
+  const myProgressRef = useRef<RacerProgress>(myProgress);
 
   const [opponentProgress, setOpponentProgress] = useState<RacerProgress>({
     id: 'opp_waiting',
@@ -113,7 +125,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   // Typing state
   const [userInput, setUserInput] = useState('');
+  const userInputRef = useRef('');
   const [startTime, setStartTime] = useState<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [winnerId, setWinnerId] = useState<string | null>(null);
 
@@ -125,7 +139,46 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const pollIntervalRef = useRef<any>(null);
   const elapsedTimerRef = useRef<any>(null);
 
-  // Cleanup on unmount
+  // Helper to synchronously update gameState
+  const updateGameState = useCallback((newState: 'lobby' | 'ready_screen' | 'countdown' | 'racing' | 'finished') => {
+    gameStateRef.current = newState;
+    setGameState(newState);
+  }, []);
+
+  // Sync refs when state changes
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  useEffect(() => {
+    activeRoomCodeRef.current = activeRoomCode;
+  }, [activeRoomCode]);
+
+  useEffect(() => {
+    isHostRef.current = isHost;
+  }, [isHost]);
+
+  useEffect(() => {
+    isBotMatchRef.current = isBotMatch;
+  }, [isBotMatch]);
+
+  useEffect(() => {
+    battleTextRef.current = battleText;
+  }, [battleText]);
+
+  useEffect(() => {
+    myProgressRef.current = myProgress;
+  }, [myProgress]);
+
+  useEffect(() => {
+    userInputRef.current = userInput;
+  }, [userInput]);
+
+  useEffect(() => {
+    startTimeRef.current = startTime;
+  }, [startTime]);
+
+  // Cleanup all timers on unmount
   useEffect(() => {
     return () => {
       if (roomUnsubRef.current) roomUnsubRef.current();
@@ -152,16 +205,42 @@ export const BattleView: React.FC<BattleViewProps> = ({
     };
   }, [gameState, startTime]);
 
+  // Keep input focused during race
+  useEffect(() => {
+    if (gameState === 'racing') {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState]);
+
+  // Auto-focus input on keydown when racing
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (gameStateRef.current === 'racing') {
+        if (
+          document.activeElement !== inputRef.current &&
+          !['Tab', 'Escape', 'Alt', 'Control', 'Meta', 'Shift'].includes(e.key)
+        ) {
+          inputRef.current?.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   // Handle URL code or prop deep-link auto join (?room=CODE)
   useEffect(() => {
-    if (initialRoomCode && gameState === 'lobby') {
+    if (initialRoomCode && gameStateRef.current === 'lobby') {
       handleJoinRoom(initialRoomCode.toUpperCase().trim());
       if (onClearInitialRoomCode) onClearInitialRoomCode();
     } else {
       try {
         const params = new URLSearchParams(window.location.search);
         const roomParam = params.get('room') || params.get('battleRoom');
-        if (roomParam && gameState === 'lobby') {
+        if (roomParam && gameStateRef.current === 'lobby') {
           handleJoinRoom(roomParam.toUpperCase().trim());
         }
       } catch {}
@@ -226,42 +305,195 @@ export const BattleView: React.FC<BattleViewProps> = ({
     };
   }, [currentUid]);
 
-  // Apply synchronized room state update
-  const applyRoomUpdate = useCallback((data: any, amIHost: boolean) => {
+  // Sound play helper
+  const playSoundSafe = useCallback((type: 'tick' | 'go' | 'key' | 'error' | 'win') => {
+    if (soundProfile === 'off') return;
+    try {
+      if (type === 'tick') {
+        soundSynth.playKeyPress('thock');
+      } else if (type === 'go') {
+        soundSynth.playCoinSound();
+      } else if (type === 'key') {
+        soundSynth.playKeyPress(soundProfile || 'cherry-blue');
+      } else if (type === 'error') {
+        soundSynth.playErrorSound();
+      } else if (type === 'win') {
+        soundSynth.playCoinSound();
+      }
+    } catch {}
+  }, [soundProfile]);
+
+  // Cyber Bot simulation engine (natural variance, realistic typing rhythm)
+  const startBotEngine = useCallback(() => {
+    let botProgress = 0;
+    const botWpm = 58 + Math.floor(Math.random() * 20); // 58-78 WPM
+    const intervalMs = 200;
+    const stepIncrement = (botWpm / 60) * 5 * (intervalMs / 1000);
+
+    if (botTimerRef.current) clearInterval(botTimerRef.current);
+
+    botTimerRef.current = setInterval(() => {
+      botProgress += stepIncrement;
+      const bounded = Math.min(100, Math.round(botProgress));
+
+      setOpponentProgress((prev) => ({
+        ...prev,
+        progressPercent: bounded,
+        wpm: botWpm,
+        isWinner: bounded >= 100
+      }));
+
+      if (bounded >= 100) {
+        if (botTimerRef.current) {
+          clearInterval(botTimerRef.current);
+          botTimerRef.current = null;
+        }
+        setWinnerId('bot_cyber');
+        updateGameState('finished');
+      }
+    }, intervalMs);
+  }, [updateGameState]);
+
+  // Robust 3-2-1 Countdown Sequence
+  const startCountdownSequence = useCallback(() => {
+    // If we are ALREADY racing or finished, do not restart
+    if (gameStateRef.current === 'racing' || gameStateRef.current === 'finished') {
+      return;
+    }
+    // If timer is already running, avoid duplicating
+    if (countdownTimerRef.current) {
+      return;
+    }
+
+    updateGameState('countdown');
+    setCountdown(3);
+    setUserInput('');
+    setStartTime(null);
+    setWinnerId(null);
+    playSoundSafe('tick');
+
+    let count = 3;
+    countdownTimerRef.current = setInterval(() => {
+      count -= 1;
+      setCountdown(count);
+
+      if (count > 0) {
+        playSoundSafe('tick');
+      }
+
+      if (count <= 0) {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+
+        const raceNow = Date.now();
+        updateGameState('racing');
+        setStartTime(raceNow);
+        playSoundSafe('go');
+
+        // CRITICAL: Notify server and RTDB that match is now 'racing'
+        // This stops anyone from re-triggering 'countdown'!
+        const code = activeRoomCodeRef.current;
+        if (!isBotMatchRef.current && code) {
+          try {
+            update(ref(rtdb, `battle_rooms/${code}`), {
+              status: 'racing',
+              startedAt: raceNow
+            }).catch(() => {});
+
+            fetch('/api/battle/update-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code, status: 'racing', startedAt: raceNow })
+            }).catch(() => {});
+          } catch {}
+        }
+
+        setTimeout(() => {
+          if (inputRef.current) inputRef.current.focus();
+        }, 50);
+
+        if (isBotMatchRef.current) {
+          startBotEngine();
+        }
+      }
+    }, 1000);
+  }, [updateGameState, playSoundSafe, startBotEngine]);
+
+  // Apply synchronized room state update (NO stale closures)
+  const applyRoomUpdate = useCallback((data: any) => {
     if (!data) return;
 
-    if (data.text) {
+    if (data.text && data.text !== battleTextRef.current) {
+      battleTextRef.current = data.text;
       setBattleText(data.text);
     }
 
+    const amIHost = isHostRef.current;
     const opponentRoleData = amIHost ? data.guest : data.host;
     if (opponentRoleData) {
-      setOpponentProgress(opponentRoleData);
+      setOpponentProgress((prev) => ({
+        ...prev,
+        ...opponentRoleData
+      }));
     }
 
-    // Remote countdown trigger
-    if (data.status === 'countdown' && gameState !== 'countdown' && gameState !== 'racing' && gameState !== 'finished') {
-      startCountdownSequence();
+    const currentStatus = gameStateRef.current;
+
+    // Remote countdown trigger:
+    // ONLY start countdown if we are waiting in 'ready_screen'!
+    // Never restart if already in countdown, racing, or finished!
+    if (data.status === 'countdown') {
+      if (currentStatus === 'ready_screen') {
+        startCountdownSequence();
+      }
+    }
+
+    // Remote racing trigger:
+    // If the room transitioned to 'racing' while we were still waiting in 'ready_screen'
+    if (data.status === 'racing') {
+      if (currentStatus === 'ready_screen') {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+        const now = data.startedAt || Date.now();
+        updateGameState('racing');
+        setStartTime(now);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
     }
 
     // Remote winner completion
     if (data.winner) {
       setWinnerId(data.winner);
-      setGameState('finished');
+      updateGameState('finished');
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+      if (botTimerRef.current) {
+        clearInterval(botTimerRef.current);
+        botTimerRef.current = null;
+      }
     }
-  }, [gameState]);
+  }, [updateGameState, startCountdownSequence]);
 
-  // Listen to room updates via RTDB + Server Polling (100% resilient dual sync)
+  // Listen to room updates via RTDB + Server Polling
   const listenToRoom = useCallback((code: string, amIHost: boolean) => {
     if (roomUnsubRef.current) roomUnsubRef.current();
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
+    isHostRef.current = amIHost;
+    activeRoomCodeRef.current = code;
 
     // 1. RTDB live listener
     try {
       const roomRef = ref(rtdb, `battle_rooms/${code}`);
       roomUnsubRef.current = onValue(roomRef, (snapshot) => {
         if (!snapshot.exists()) return;
-        applyRoomUpdate(snapshot.val(), amIHost);
+        applyRoomUpdate(snapshot.val());
       });
     } catch {}
 
@@ -272,7 +504,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         if (res.ok) {
           const sData = await res.json();
           if (sData.success && sData.room) {
-            applyRoomUpdate(sData.room, amIHost);
+            applyRoomUpdate(sData.room);
           }
         }
       } catch {}
@@ -282,13 +514,17 @@ export const BattleView: React.FC<BattleViewProps> = ({
   // 1. 🤖 Play vs Robot (Cyber Bot)
   const handleStartBotMatch = () => {
     setIsBotMatch(true);
+    isBotMatchRef.current = true;
     setIsHost(true);
+    isHostRef.current = true;
     setActiveRoomCode('BOT_ARENA');
+    activeRoomCodeRef.current = 'BOT_ARENA';
     setJoinError(null);
     setWinnerId(null);
 
     const randomText = getRandomBattleText('uz-latn');
     setBattleText(randomText);
+    battleTextRef.current = randomText;
 
     const hostData: RacerProgress = {
       id: currentUid,
@@ -314,20 +550,24 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     setMyProgress(hostData);
     setOpponentProgress(botData);
-    setGameState('ready_screen');
+    updateGameState('ready_screen');
   };
 
   // 2. ⚔️ Create Room (Do'st bilan 1v1 xona yaratish)
   const handleCreateRoom = async () => {
     const code = generateCleanRoomCode();
     setActiveRoomCode(code);
+    activeRoomCodeRef.current = code;
     setIsHost(true);
+    isHostRef.current = true;
     setIsBotMatch(false);
+    isBotMatchRef.current = false;
     setJoinError(null);
     setWinnerId(null);
 
     const randomText = getRandomBattleText('uz-latn');
     setBattleText(randomText);
+    battleTextRef.current = randomText;
 
     const hostInitialData: RacerProgress = {
       id: currentUid,
@@ -365,8 +605,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       winner: null
     };
 
-    // Immediate UI transition so host is NEVER blocked
-    setGameState('ready_screen');
+    // Immediate UI transition
+    updateGameState('ready_screen');
     listenToRoom(code, true);
 
     // Sync to Server API
@@ -395,8 +635,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     setJoinError(null);
     setActiveRoomCode(code);
+    activeRoomCodeRef.current = code;
     setIsHost(false);
+    isHostRef.current = false;
     setIsBotMatch(false);
+    isBotMatchRef.current = false;
     setWinnerId(null);
 
     const guestData: RacerProgress = {
@@ -415,7 +658,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     try {
       let roomVal: any = null;
 
-      // 1. Check Server API join first (instant & authoritative)
+      // 1. Join Server API (instant & authoritative)
       try {
         const sRes = await fetch('/api/battle/join-room', {
           method: 'POST',
@@ -428,28 +671,19 @@ export const BattleView: React.FC<BattleViewProps> = ({
         }
       } catch {}
 
-      // 2. Check RTDB fallback
-      if (!roomVal) {
-        try {
-          const roomRef = ref(rtdb, `battle_rooms/${code}`);
-          const snap = await get(roomRef);
-          if (snap.exists()) {
-            roomVal = snap.val();
-            update(roomRef, { guest: guestData, status: 'ready' }).catch(() => {});
-          }
-        } catch {}
-      }
+      // 2. Also write guest to RTDB and Firestore
+      try {
+        const roomRef = ref(rtdb, `battle_rooms/${code}`);
+        const snap = await get(roomRef);
+        if (snap.exists()) {
+          if (!roomVal) roomVal = snap.val();
+          update(roomRef, { guest: guestData, status: 'ready' }).catch(() => {});
+        }
+      } catch {}
 
-      // 3. Check Firestore fallback
-      if (!roomVal) {
-        try {
-          const fSnap = await getDoc(doc(db, 'battle_rooms', code));
-          if (fSnap.exists()) {
-            roomVal = fSnap.data();
-            updateDoc(doc(db, 'battle_rooms', code), { guest: guestData, status: 'ready' }).catch(() => {});
-          }
-        } catch {}
-      }
+      try {
+        updateDoc(doc(db, 'battle_rooms', code), { guest: guestData, status: 'ready' }).catch(() => {});
+      } catch {}
 
       if (!roomVal) {
         setJoinError(`"${code}" kodli xona topilmadi. Kodni tekshirib qayta kiriting.`);
@@ -458,11 +692,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
       const textToUse = roomVal.selectedText || roomVal.text || getRandomBattleText('uz-latn');
       setBattleText(textToUse);
+      battleTextRef.current = textToUse;
+
       if (roomVal.host) {
         setOpponentProgress(roomVal.host);
       }
 
-      setGameState('ready_screen');
+      updateGameState('ready_screen');
       listenToRoom(code, false);
     } catch {
       setJoinError("Xonaga ulanishda xatolik yuz berdi. Qayta urinib ko'ring.");
@@ -473,12 +709,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const handleInvitePlayer = async (targetPlayer: RealPlayerItem) => {
     const code = generateCleanRoomCode();
     setActiveRoomCode(code);
+    activeRoomCodeRef.current = code;
     setIsHost(true);
+    isHostRef.current = true;
     setIsBotMatch(false);
+    isBotMatchRef.current = false;
     setJoinError(null);
 
     const randomText = getRandomBattleText('uz-latn');
     setBattleText(randomText);
+    battleTextRef.current = randomText;
 
     const hostData: RacerProgress = {
       id: currentUid,
@@ -504,7 +744,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     });
 
     setInviteSentStatus(`${targetPlayer.displayName} ga duel taklifnomasi yuborildi!`);
-    setGameState('ready_screen');
+    updateGameState('ready_screen');
     listenToRoom(code, true);
 
     const roomPayload = {
@@ -520,7 +760,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
       winner: null
     };
 
-    // Sync room & send invite notification
     try {
       fetch('/api/battle/create-room', {
         method: 'POST',
@@ -539,114 +778,71 @@ export const BattleView: React.FC<BattleViewProps> = ({
     } catch {}
   };
 
-  // Start match trigger (Host or Single Player triggers match start)
+  // Start match trigger (Host or Guest triggers match start)
   const handleTriggerStartMatch = async () => {
-    if (!isBotMatch && activeRoomCode) {
+    const code = activeRoomCodeRef.current;
+    if (!isBotMatchRef.current && code) {
       try {
-        update(ref(rtdb, `battle_rooms/${activeRoomCode}`), { status: 'countdown' }).catch(() => {});
+        update(ref(rtdb, `battle_rooms/${code}`), { status: 'countdown' }).catch(() => {});
         fetch('/api/battle/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: activeRoomCode, status: 'countdown' })
+          body: JSON.stringify({ code, status: 'countdown' })
         }).catch(() => {});
       } catch {}
     }
     startCountdownSequence();
   };
 
-  // 3-2-1 Countdown Sequence
-  const startCountdownSequence = () => {
-    setGameState('countdown');
-    setCountdown(3);
-    setUserInput('');
-    setStartTime(null);
-    setWinnerId(null);
-
-    let count = 3;
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-
-    countdownTimerRef.current = setInterval(() => {
-      count -= 1;
-      setCountdown(count);
-
-      if (count <= 0) {
-        clearInterval(countdownTimerRef.current);
-        setGameState('racing');
-        setStartTime(Date.now());
-
-        setTimeout(() => {
-          if (inputRef.current) inputRef.current.focus();
-        }, 50);
-
-        if (isBotMatch) {
-          startBotEngine();
-        }
-      }
-    }, 1000);
-  };
-
-  // Cyber Bot simulation engine (natural variance, realistic typing rhythm)
-  const startBotEngine = () => {
-    let botProgress = 0;
-    const botWpm = 58 + Math.floor(Math.random() * 20); // 58-78 WPM
-    const intervalMs = 200;
-    const stepIncrement = (botWpm / 60) * 5 * (intervalMs / 1000);
-
-    if (botTimerRef.current) clearInterval(botTimerRef.current);
-
-    botTimerRef.current = setInterval(() => {
-      botProgress += stepIncrement;
-      const bounded = Math.min(100, Math.round(botProgress));
-
-      setOpponentProgress((prev) => ({
-        ...prev,
-        progressPercent: bounded,
-        wpm: botWpm,
-        isWinner: bounded >= 100
-      }));
-
-      if (bounded >= 100) {
-        clearInterval(botTimerRef.current);
-        setWinnerId('bot_cyber');
-        setGameState('finished');
-      }
-    }, intervalMs);
-  };
-
   // User typing input handler
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (gameState !== 'racing') return;
+    if (gameStateRef.current !== 'racing') return;
     const val = e.target.value;
+    const targetText = battleTextRef.current;
+
+    // Do not allow typing beyond text length
+    if (val.length > targetText.length) return;
+
     setUserInput(val);
 
-    const targetLength = battleText.length;
-    const correctCount = val.split('').filter((c, i) => c === battleText[i]).length;
+    // Audio feedback
+    if (val.length > 0) {
+      const lastIndex = val.length - 1;
+      const isCorrectChar = val[lastIndex] === targetText[lastIndex];
+      playSoundSafe(isCorrectChar ? 'key' : 'error');
+    }
+
+    const targetLength = targetText.length;
+    const correctCount = val.split('').filter((c, i) => c === targetText[i]).length;
     const calculatedProgress = Math.min(100, Math.round((correctCount / targetLength) * 100));
 
-    const timeMinutes = Math.max(0.01, (Date.now() - (startTime || Date.now())) / 60000);
+    const timeMinutes = Math.max(0.01, (Date.now() - (startTimeRef.current || Date.now())) / 60000);
     const calculatedWpm = Math.round(val.length / 5 / timeMinutes);
-    const accuracy = Math.round((correctCount / Math.max(1, val.length)) * 100);
+    const accuracy = val.length === 0 ? 100 : Math.round((correctCount / val.length) * 100);
+
+    const isFinished = val === targetText;
 
     const updatedState: RacerProgress = {
       ...myProgress,
       progressPercent: calculatedProgress,
       wpm: calculatedWpm,
       accuracy,
-      isWinner: val === battleText
+      isWinner: isFinished
     };
 
     setMyProgress(updatedState);
 
     // Sync progress in real time
-    if (!isBotMatch && activeRoomCode) {
-      const role = isHost ? 'host' : 'guest';
+    const code = activeRoomCodeRef.current;
+    if (!isBotMatchRef.current && code) {
+      const role = isHostRef.current ? 'host' : 'guest';
       try {
-        update(ref(rtdb, `battle_rooms/${activeRoomCode}/${role}`), updatedState).catch(() => {});
+        update(ref(rtdb, `battle_rooms/${code}/${role}`), updatedState).catch(() => {});
         fetch('/api/battle/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            code: activeRoomCode,
+            code,
             role,
             progress: updatedState
           })
@@ -655,11 +851,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
 
     // Check if player won
-    if (val === battleText) {
-      if (botTimerRef.current) clearInterval(botTimerRef.current);
+    if (isFinished) {
+      if (botTimerRef.current) {
+        clearInterval(botTimerRef.current);
+        botTimerRef.current = null;
+      }
 
       setWinnerId(currentUid);
-      setGameState('finished');
+      updateGameState('finished');
+      playSoundSafe('win');
 
       if (addXp) addXp(150);
       if (saveTestResult) {
@@ -669,15 +869,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
           accuracy,
           rawWpm: calculatedWpm,
           consistency: 96,
-          time: Math.round((Date.now() - (startTime || Date.now())) / 1000),
+          time: Math.round((Date.now() - (startTimeRef.current || Date.now())) / 1000),
           mode: 'time',
           language: 'uzbek'
         });
       }
 
-      if (!isBotMatch && activeRoomCode) {
+      if (!isBotMatchRef.current && code) {
         try {
-          update(ref(rtdb, `battle_rooms/${activeRoomCode}`), {
+          update(ref(rtdb, `battle_rooms/${code}`), {
             winner: currentUid,
             status: 'finished'
           }).catch(() => {});
@@ -686,7 +886,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              code: activeRoomCode,
+              code,
               winner: currentUid,
               status: 'finished'
             })
@@ -700,21 +900,34 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const handleRematch = async () => {
     const freshText = getRandomBattleText('uz-latn');
     setBattleText(freshText);
+    battleTextRef.current = freshText;
+    setUserInput('');
+    setWinnerId(null);
 
-    if (!isBotMatch && activeRoomCode) {
+    const resetMyData: RacerProgress = {
+      ...myProgress,
+      progressPercent: 0,
+      wpm: 0,
+      accuracy: 100,
+      isWinner: false
+    };
+    setMyProgress(resetMyData);
+
+    const code = activeRoomCodeRef.current;
+    if (!isBotMatchRef.current && code) {
       try {
-        await update(ref(rtdb, `battle_rooms/${activeRoomCode}`), {
+        const payload = {
           text: freshText,
           selectedText: freshText,
           winner: null,
           status: 'ready'
-        });
-
+        };
+        await update(ref(rtdb, `battle_rooms/${code}`), payload);
         await fetch('/api/battle/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            code: activeRoomCode,
+            code,
             text: freshText,
             winner: null,
             status: 'ready'
@@ -723,7 +936,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
       } catch {}
     }
 
-    handleTriggerStartMatch();
+    updateGameState('ready_screen');
   };
 
   const isFriendJoined = !isBotMatch && opponentProgress.id !== 'opp_waiting';
@@ -754,7 +967,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
             onClick={() => {
               if (botTimerRef.current) clearInterval(botTimerRef.current);
               if (roomUnsubRef.current) roomUnsubRef.current();
-              setGameState('lobby');
+              if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+              updateGameState('lobby');
               setActiveRoomCode('');
               setInviteSentStatus(null);
               setJoinError(null);
@@ -1091,44 +1305,61 @@ export const BattleView: React.FC<BattleViewProps> = ({
       {(gameState === 'countdown' || gameState === 'racing' || gameState === 'finished') && (
         <div className="space-y-4">
           {/* 2X Dual Rotary Drums (Yonma-yon 2 ta Baraban, Bir Xil Matn) */}
-          <DualBattleDrumView
-            player1={myProgress}
-            player2={opponentProgress}
-            targetText={battleText}
-            player1TypedLen={userInput.length}
-            player2TypedLen={Math.floor((opponentProgress.progressPercent / 100) * (battleText.length || 1))}
-            player1Input={userInput}
-            timeLeft={elapsedSeconds}
-            isRacing={gameState === 'racing'}
-          />
+          <div onClick={() => inputRef.current?.focus()} className="cursor-text">
+            <DualBattleDrumView
+              player1={myProgress}
+              player2={opponentProgress}
+              targetText={battleText}
+              player1TypedLen={userInput.length}
+              player2TypedLen={Math.floor((opponentProgress.progressPercent / 100) * (battleText.length || 1))}
+              player1Input={userInput}
+              timeLeft={elapsedSeconds}
+              isRacing={gameState === 'racing'}
+            />
+          </div>
 
           {/* 3-2-1 Countdown Overlay */}
           {gameState === 'countdown' && (
-            <div className="bg-slate-900/95 border border-cyan-500/50 rounded-3xl p-8 text-center text-white space-y-2 animate-in zoom-in-95 shadow-2xl">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
+            <div className="bg-slate-900/95 border-2 border-cyan-500/60 rounded-3xl p-8 text-center text-white space-y-2 animate-in zoom-in-95 shadow-2xl">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
                 BATTLE BOSHLANMOQDA
               </span>
-              <div className="text-6xl sm:text-7xl font-black font-mono text-amber-400 animate-pulse drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
-                {countdown > 0 ? countdown : 'GO!'}
+              <div
+                className={`text-6xl sm:text-7xl font-black font-mono transition-transform duration-200 ${
+                  countdown === 3
+                    ? 'text-amber-400 scale-105 drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]'
+                    : countdown === 2
+                    ? 'text-orange-400 scale-110 drop-shadow-[0_0_25px_rgba(251,146,60,0.6)]'
+                    : countdown === 1
+                    ? 'text-rose-500 scale-115 drop-shadow-[0_0_25px_rgba(244,63,94,0.6)]'
+                    : 'text-emerald-400 scale-125 drop-shadow-[0_0_30px_rgba(52,211,153,0.7)]'
+                }`}
+              >
+                {countdown > 0 ? countdown : 'GO! BOSHLANDI!'}
               </div>
-              <p className="text-xs text-slate-400 font-mono">Klaviaturaga qo'llarni tayyorlang! Matnni xatosiz tering!</p>
+              <p className="text-xs text-slate-400 font-mono">
+                Klaviaturaga qo'llarni tayyorlang! Matnni xatosiz tering!
+              </p>
             </div>
           )}
 
           {/* Active Typing Input Box */}
           {gameState === 'racing' && (
-            <div className="bg-[var(--card-bg)] border border-cyan-500/40 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
+            <div
+              onClick={() => inputRef.current?.focus()}
+              className="bg-[var(--card-bg)] border-2 border-cyan-500/50 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl cursor-text transition-all hover:border-cyan-400"
+            >
               {/* Reference Text with Dynamic Character Highlights */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-sm sm:text-base font-mono leading-relaxed select-none shadow-inner">
+              <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-sm sm:text-base font-mono leading-relaxed select-none shadow-inner tracking-wide">
                 {battleText.split('').map((char, index) => {
                   let colorClass = 'text-[var(--sub-color)] opacity-70';
                   if (index < userInput.length) {
                     colorClass =
                       userInput[index] === char
                         ? 'text-emerald-400 font-bold'
-                        : 'text-rose-500 bg-rose-500/20 rounded';
+                        : 'text-rose-500 bg-rose-500/25 px-0.5 rounded font-bold';
                   } else if (index === userInput.length) {
-                    colorClass = 'text-cyan-400 underline font-extrabold animate-pulse';
+                    colorClass = 'text-cyan-400 underline font-black bg-cyan-500/20 px-0.5 rounded animate-pulse';
                   }
                   return (
                     <span key={index} className={colorClass}>
@@ -1139,19 +1370,24 @@ export const BattleView: React.FC<BattleViewProps> = ({
               </div>
 
               {/* Typing Input Field */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={userInput}
-                onChange={handleInputChange}
-                autoFocus
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                placeholder="Matnni shu yerga tering..."
-                className="w-full px-4 py-3.5 rounded-2xl bg-[var(--bg-color)] border-2 border-cyan-500/50 text-[var(--text-color)] font-mono text-sm sm:text-base outline-none focus:border-cyan-400 shadow-inner"
-              />
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={userInput}
+                  onChange={handleInputChange}
+                  autoFocus
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
+                  placeholder="Shu yerga tering... (to'xtovsiz yozing!)"
+                  className="w-full px-4 py-3.5 rounded-2xl bg-[var(--bg-color)] border-2 border-cyan-500 text-[var(--text-color)] font-mono text-sm sm:text-base outline-none focus:ring-4 focus:ring-cyan-500/20 shadow-inner"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-1 rounded-md border border-cyan-500/30">
+                  {userInput.length} / {battleText.length}
+                </span>
+              </div>
             </div>
           )}
 
@@ -1234,7 +1470,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
                   <button
                     onClick={() => {
-                      setGameState('lobby');
+                      updateGameState('lobby');
                       setActiveRoomCode('');
                     }}
                     className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700 active:scale-95 cursor-pointer"

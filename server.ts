@@ -1642,7 +1642,7 @@ app.post('/api/battle/join-room', (req, res) => {
       return res.status(404).json({ success: false, error: `"${safeCode}" kodli xona topilmadi.` });
     }
 
-    if (room.status !== 'waiting' && room.status !== 'ready') {
+    if (room.status !== 'waiting' && room.status !== 'ready' && room.status !== 'finished') {
       return res.status(409).json({ success: false, error: 'Xonadagi oʻyin allaqachon boshlangan.' });
     }
 
