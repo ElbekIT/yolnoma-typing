@@ -20,7 +20,13 @@ import {
   Send,
   Flame,
   ArrowRight,
-  Volume2
+  Clock,
+  Globe,
+  Settings,
+  Hourglass,
+  XCircle,
+  ChevronRight,
+  ShieldAlert
 } from 'lucide-react';
 import { DualBattleDrumView, RacerProgress } from './DualBattleDrumView';
 import { useAuth } from '../../context/AuthContext';
@@ -84,6 +90,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const [isBotMatch, setIsBotMatch] = useState(false);
   const isBotMatchRef = useRef<boolean>(false);
 
+  // Room custom configurations (Host selects before creating)
+  const [selectedDuration, setSelectedDuration] = useState<number>(30); // 15, 30, 60, 120 (0 = cheksiz)
+  const [selectedLanguage, setSelectedLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'en' | 'ru' | 'code'>('uz-latn');
+  const roomDurationRef = useRef<number>(30);
+  const roomLanguageRef = useRef<string>('uz-latn');
+
+  // Active match timer (remaining seconds for timed matches)
+  const [remainingTime, setRemainingTime] = useState<number>(30);
+  const remainingTimeRef = useRef<number>(30);
+
   const [countdown, setCountdown] = useState(3);
   const [battleText, setBattleText] = useState(() => getRandomBattleText('uz-latn'));
   const battleTextRef = useRef<string>(battleText);
@@ -99,7 +115,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Racers Progress
+  // Racers Progress & Error Counting
+  const [myMistakes, setMyMistakes] = useState(0);
+  const [oppMistakes, setOppMistakes] = useState(0);
+
   const [myProgress, setMyProgress] = useState<RacerProgress>({
     id: currentUid,
     name: currentDisplayName,
@@ -122,14 +141,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
     isWinner: false,
     isBot: false
   });
+  const opponentProgressRef = useRef<RacerProgress>(opponentProgress);
 
   // Typing state
   const [userInput, setUserInput] = useState('');
   const userInputRef = useRef('');
   const [startTime, setStartTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [winnerId, setWinnerId] = useState<string | null>(null);
+  const [finishReason, setFinishReason] = useState<'completed' | 'timeout'>('completed');
 
   // Timers and listener refs
   const inputRef = useRef<HTMLInputElement>(null);
@@ -137,7 +157,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const roomUnsubRef = useRef<any>(null);
   const countdownTimerRef = useRef<any>(null);
   const pollIntervalRef = useRef<any>(null);
-  const elapsedTimerRef = useRef<any>(null);
+  const matchTimerRef = useRef<any>(null);
 
   // Helper to synchronously update gameState
   const updateGameState = useCallback((newState: 'lobby' | 'ready_screen' | 'countdown' | 'racing' | 'finished') => {
@@ -171,12 +191,24 @@ export const BattleView: React.FC<BattleViewProps> = ({
   }, [myProgress]);
 
   useEffect(() => {
+    opponentProgressRef.current = opponentProgress;
+  }, [opponentProgress]);
+
+  useEffect(() => {
     userInputRef.current = userInput;
   }, [userInput]);
 
   useEffect(() => {
     startTimeRef.current = startTime;
   }, [startTime]);
+
+  useEffect(() => {
+    roomDurationRef.current = selectedDuration;
+  }, [selectedDuration]);
+
+  useEffect(() => {
+    roomLanguageRef.current = selectedLanguage;
+  }, [selectedLanguage]);
 
   // Cleanup all timers on unmount
   useEffect(() => {
@@ -185,25 +217,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       if (botTimerRef.current) clearInterval(botTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+      if (matchTimerRef.current) clearInterval(matchTimerRef.current);
     };
   }, []);
-
-  // Track active elapsed seconds during race
-  useEffect(() => {
-    if (gameState === 'racing' && startTime) {
-      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
-      elapsedTimerRef.current = setInterval(() => {
-        setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
-      }, 500);
-    } else if (gameState !== 'racing') {
-      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
-      if (gameState === 'lobby') setElapsedSeconds(0);
-    }
-    return () => {
-      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
-    };
-  }, [gameState, startTime]);
 
   // Keep input focused during race
   useEffect(() => {
@@ -258,40 +274,22 @@ export const BattleView: React.FC<BattleViewProps> = ({
           const val = snapshot.val();
           const items: RealPlayerItem[] = [];
 
-          Object.keys(val).forEach((k) => {
-            const p = val[k];
-            if (
-              !k ||
-              k === currentUid ||
-              !p ||
-              p.isBlocked ||
-              p.isBanned ||
-              p.isGuest ||
-              p.isBot ||
-              p.isDummy ||
-              k.startsWith('guest_') ||
-              k.startsWith('bot_') ||
-              k.startsWith('ai_') ||
-              k.startsWith('seed_') ||
-              k.startsWith('dummy_')
-            ) {
-              return;
-            }
-            const userWpm = Number(p.highestWpm) || 0;
-            if (userWpm > 0 && userWpm <= 280) {
+          Object.keys(val).forEach((uid) => {
+            if (uid !== currentUid) {
+              const p = val[uid];
               items.push({
-                uid: k,
-                displayName: p.displayName || p.username || 'Foydalanuvchi',
-                username: p.username || k.slice(0, 6),
-                highestWpm: userWpm,
-                highestAccuracy: Number(p.highestAccuracy) || 98,
-                avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${k}`,
-                lastActive: p.lastActive || Date.now(),
-                level: Number(p.level) || 1
+                uid,
+                displayName: p.displayName || p.name || 'Poygachi',
+                username: p.username || 'user',
+                highestWpm: Number(p.wpm || p.highestWpm || 45),
+                highestAccuracy: Number(p.accuracy || 98),
+                avatarUrl: p.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${uid}`,
+                level: Number(p.level || 1)
               });
             }
           });
 
+          // Sort by highest WPM
           items.sort((a, b) => b.highestWpm - a.highestWpm);
           setOnlinePlayers(items.slice(0, 8));
         }
@@ -306,7 +304,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   }, [currentUid]);
 
   // Sound play helper
-  const playSoundSafe = useCallback((type: 'tick' | 'go' | 'key' | 'error' | 'win') => {
+  const playSoundSafe = useCallback((type: 'tick' | 'go' | 'key' | 'error' | 'win' | 'lose') => {
     if (soundProfile === 'off') return;
     try {
       if (type === 'tick') {
@@ -319,14 +317,108 @@ export const BattleView: React.FC<BattleViewProps> = ({
         soundSynth.playErrorSound();
       } else if (type === 'win') {
         soundSynth.playCoinSound();
+      } else if (type === 'lose') {
+        soundSynth.playErrorSound();
       }
     } catch {}
   }, [soundProfile]);
 
+  // Finish match with winner evaluation
+  const concludeMatch = useCallback((winnerUid: string | null, reason: 'completed' | 'timeout') => {
+    if (gameStateRef.current === 'finished') return;
+
+    if (matchTimerRef.current) {
+      clearInterval(matchTimerRef.current);
+      matchTimerRef.current = null;
+    }
+    if (botTimerRef.current) {
+      clearInterval(botTimerRef.current);
+      botTimerRef.current = null;
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+
+    setFinishReason(reason);
+    setWinnerId(winnerUid);
+    updateGameState('finished');
+
+    const amIWinner = winnerUid === currentUid;
+    if (amIWinner) {
+      playSoundSafe('win');
+      if (addXp) addXp(150);
+    } else {
+      playSoundSafe('lose');
+      if (addXp) addXp(50);
+    }
+
+    if (saveTestResult && myProgressRef.current) {
+      const now = Date.now();
+      const testSeconds = Math.max(1, Math.round((now - (startTimeRef.current || now)) / 1000));
+      saveTestResult({
+        wpm: myProgressRef.current.wpm,
+        cpm: myProgressRef.current.wpm * 5,
+        accuracy: myProgressRef.current.accuracy,
+        rawWpm: myProgressRef.current.wpm,
+        consistency: 95,
+        time: testSeconds,
+        mode: 'time',
+        language: roomLanguageRef.current === 'uz-cyrl' ? 'uzbek-cyrillic' : roomLanguageRef.current === 'en' ? 'english' : 'uzbek'
+      });
+    }
+
+    const code = activeRoomCodeRef.current;
+    if (!isBotMatchRef.current && code) {
+      try {
+        update(ref(rtdb, `battle_rooms/${code}`), {
+          winner: winnerUid,
+          status: 'finished',
+          finishReason: reason
+        }).catch(() => {});
+
+        fetch('/api/battle/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code,
+            winner: winnerUid,
+            status: 'finished',
+            finishReason: reason
+          })
+        }).catch(() => {});
+      } catch {}
+    }
+  }, [currentUid, addXp, saveTestResult, playSoundSafe, updateGameState]);
+
+  // Handle Match Timeout (Vaqt tugaganda kim oldinda bo'lsa o'sha yutadi)
+  const handleMatchTimeout = useCallback(() => {
+    const myProg = myProgressRef.current.progressPercent;
+    const oppProg = opponentProgressRef.current.progressPercent;
+    const myW = myProgressRef.current.wpm;
+    const oppW = opponentProgressRef.current.wpm;
+
+    let declaredWinner: string | null = null;
+    if (myProg > oppProg) {
+      declaredWinner = currentUid;
+    } else if (oppProg > myProg) {
+      declaredWinner = opponentProgressRef.current.id;
+    } else {
+      // If same progress, winner by higher WPM
+      if (myW >= oppW) {
+        declaredWinner = currentUid;
+      } else {
+        declaredWinner = opponentProgressRef.current.id;
+      }
+    }
+
+    concludeMatch(declaredWinner, 'timeout');
+  }, [currentUid, concludeMatch]);
+
   // Cyber Bot simulation engine (natural variance, realistic typing rhythm)
   const startBotEngine = useCallback(() => {
     let botProgress = 0;
-    const botWpm = 58 + Math.floor(Math.random() * 20); // 58-78 WPM
+    const botWpm = 55 + Math.floor(Math.random() * 25); // 55-80 WPM
     const intervalMs = 200;
     const stepIncrement = (botWpm / 60) * 5 * (intervalMs / 1000);
 
@@ -348,11 +440,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
           clearInterval(botTimerRef.current);
           botTimerRef.current = null;
         }
-        setWinnerId('bot_cyber');
-        updateGameState('finished');
+        concludeMatch('bot_cyber', 'completed');
       }
     }, intervalMs);
-  }, [updateGameState]);
+  }, [concludeMatch]);
 
   // Robust 3-2-1 Countdown Sequence
   const startCountdownSequence = useCallback(() => {
@@ -368,11 +459,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
     updateGameState('countdown');
     setCountdown(3);
     setUserInput('');
-    setStartTime(null);
-    setWinnerId(null);
-    playSoundSafe('tick');
+    setMyMistakes(0);
+    setOppMistakes(0);
 
     let count = 3;
+    playSoundSafe('tick');
+
     countdownTimerRef.current = setInterval(() => {
       count -= 1;
       setCountdown(count);
@@ -392,8 +484,27 @@ export const BattleView: React.FC<BattleViewProps> = ({
         setStartTime(raceNow);
         playSoundSafe('go');
 
-        // CRITICAL: Notify server and RTDB that match is now 'racing'
-        // This stops anyone from re-triggering 'countdown'!
+        // Set up match duration countdown timer
+        const durationSec = roomDurationRef.current || 30;
+        setRemainingTime(durationSec);
+        remainingTimeRef.current = durationSec;
+
+        if (matchTimerRef.current) clearInterval(matchTimerRef.current);
+        matchTimerRef.current = setInterval(() => {
+          remainingTimeRef.current -= 1;
+          const left = remainingTimeRef.current;
+          setRemainingTime(left);
+
+          if (left <= 0) {
+            if (matchTimerRef.current) {
+              clearInterval(matchTimerRef.current);
+              matchTimerRef.current = null;
+            }
+            handleMatchTimeout();
+          }
+        }, 1000);
+
+        // Notify server and RTDB that match is now 'racing'
         const code = activeRoomCodeRef.current;
         if (!isBotMatchRef.current && code) {
           try {
@@ -419,7 +530,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         }
       }
     }, 1000);
-  }, [updateGameState, playSoundSafe, startBotEngine]);
+  }, [updateGameState, playSoundSafe, startBotEngine, handleMatchTimeout]);
 
   // Apply synchronized room state update (NO stale closures)
   const applyRoomUpdate = useCallback((data: any) => {
@@ -428,6 +539,17 @@ export const BattleView: React.FC<BattleViewProps> = ({
     if (data.text && data.text !== battleTextRef.current) {
       battleTextRef.current = data.text;
       setBattleText(data.text);
+    }
+
+    if (data.duration && data.duration !== roomDurationRef.current) {
+      roomDurationRef.current = Number(data.duration);
+      setSelectedDuration(Number(data.duration));
+      setRemainingTime(Number(data.duration));
+    }
+
+    if (data.language && data.language !== roomLanguageRef.current) {
+      roomLanguageRef.current = String(data.language);
+      setSelectedLanguage(data.language as any);
     }
 
     const amIHost = isHostRef.current;
@@ -443,7 +565,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     // Remote countdown trigger:
     // ONLY start countdown if we are waiting in 'ready_screen'!
-    // Never restart if already in countdown, racing, or finished!
     if (data.status === 'countdown') {
       if (currentStatus === 'ready_screen') {
         startCountdownSequence();
@@ -451,7 +572,6 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
 
     // Remote racing trigger:
-    // If the room transitioned to 'racing' while we were still waiting in 'ready_screen'
     if (data.status === 'racing') {
       if (currentStatus === 'ready_screen') {
         if (countdownTimerRef.current) {
@@ -461,6 +581,27 @@ export const BattleView: React.FC<BattleViewProps> = ({
         const now = data.startedAt || Date.now();
         updateGameState('racing');
         setStartTime(now);
+
+        const dur = data.duration || roomDurationRef.current || 30;
+        const elapsed = Math.floor((Date.now() - now) / 1000);
+        const rem = Math.max(0, dur - elapsed);
+        setRemainingTime(rem);
+        remainingTimeRef.current = rem;
+
+        if (matchTimerRef.current) clearInterval(matchTimerRef.current);
+        matchTimerRef.current = setInterval(() => {
+          remainingTimeRef.current -= 1;
+          const left = remainingTimeRef.current;
+          setRemainingTime(left);
+          if (left <= 0) {
+            if (matchTimerRef.current) {
+              clearInterval(matchTimerRef.current);
+              matchTimerRef.current = null;
+            }
+            handleMatchTimeout();
+          }
+        }, 1000);
+
         setTimeout(() => inputRef.current?.focus(), 50);
       }
     }
@@ -468,7 +609,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
     // Remote winner completion
     if (data.winner) {
       setWinnerId(data.winner);
+      setFinishReason(data.finishReason || 'completed');
       updateGameState('finished');
+      if (matchTimerRef.current) {
+        clearInterval(matchTimerRef.current);
+        matchTimerRef.current = null;
+      }
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current);
         countdownTimerRef.current = null;
@@ -478,7 +624,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         botTimerRef.current = null;
       }
     }
-  }, [updateGameState, startCountdownSequence]);
+  }, [updateGameState, startCountdownSequence, handleMatchTimeout]);
 
   // Listen to room updates via RTDB + Server Polling
   const listenToRoom = useCallback((code: string, amIHost: boolean) => {
@@ -521,10 +667,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
     activeRoomCodeRef.current = 'BOT_ARENA';
     setJoinError(null);
     setWinnerId(null);
+    setFinishReason('completed');
 
-    const randomText = getRandomBattleText('uz-latn');
+    const randomText = getRandomBattleText(selectedLanguage);
     setBattleText(randomText);
     battleTextRef.current = randomText;
+    setRemainingTime(selectedDuration);
+    remainingTimeRef.current = selectedDuration;
 
     const hostData: RacerProgress = {
       id: currentUid,
@@ -553,7 +702,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     updateGameState('ready_screen');
   };
 
-  // 2. ⚔️ Create Room (Do'st bilan 1v1 xona yaratish)
+  // 2. ⚔️ Create Room (Do'st bilan 1v1 xona yaratish - tanlangan voqt va til bilan)
   const handleCreateRoom = async () => {
     const code = generateCleanRoomCode();
     setActiveRoomCode(code);
@@ -564,10 +713,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
     isBotMatchRef.current = false;
     setJoinError(null);
     setWinnerId(null);
+    setFinishReason('completed');
 
-    const randomText = getRandomBattleText('uz-latn');
+    const randomText = getRandomBattleText(selectedLanguage);
     setBattleText(randomText);
     battleTextRef.current = randomText;
+    setRemainingTime(selectedDuration);
+    remainingTimeRef.current = selectedDuration;
 
     const hostInitialData: RacerProgress = {
       id: currentUid,
@@ -598,6 +750,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       gameType: 'drum_duel',
       text: randomText,
       selectedText: randomText,
+      duration: selectedDuration,
+      language: selectedLanguage,
       status: 'waiting',
       createdAt: Date.now(),
       host: hostInitialData,
@@ -641,6 +795,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
     setIsBotMatch(false);
     isBotMatchRef.current = false;
     setWinnerId(null);
+    setFinishReason('completed');
 
     const guestData: RacerProgress = {
       id: currentUid,
@@ -694,6 +849,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
       setBattleText(textToUse);
       battleTextRef.current = textToUse;
 
+      if (roomVal.duration) {
+        setSelectedDuration(Number(roomVal.duration));
+        roomDurationRef.current = Number(roomVal.duration);
+        setRemainingTime(Number(roomVal.duration));
+      }
+      if (roomVal.language) {
+        setSelectedLanguage(roomVal.language);
+        roomLanguageRef.current = roomVal.language;
+      }
+
       if (roomVal.host) {
         setOpponentProgress(roomVal.host);
       }
@@ -716,9 +881,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
     isBotMatchRef.current = false;
     setJoinError(null);
 
-    const randomText = getRandomBattleText('uz-latn');
+    const randomText = getRandomBattleText(selectedLanguage);
     setBattleText(randomText);
     battleTextRef.current = randomText;
+    setRemainingTime(selectedDuration);
+    remainingTimeRef.current = selectedDuration;
 
     const hostData: RacerProgress = {
       id: currentUid,
@@ -753,6 +920,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
       gameType: 'drum_duel',
       text: randomText,
       selectedText: randomText,
+      duration: selectedDuration,
+      language: selectedLanguage,
       status: 'waiting',
       createdAt: Date.now(),
       host: hostData,
@@ -773,13 +942,17 @@ export const BattleView: React.FC<BattleViewProps> = ({
         fromName: currentDisplayName,
         fromAvatar: currentAvatar,
         roomCode: code,
+        duration: selectedDuration,
+        language: selectedLanguage,
         timestamp: Date.now()
       }).catch(() => {});
     } catch {}
   };
 
-  // Start match trigger (Host or Guest triggers match start)
+  // Start match trigger (HOST ONLY triggers match start)
   const handleTriggerStartMatch = async () => {
+    if (!isHostRef.current) return;
+
     const code = activeRoomCodeRef.current;
     if (!isBotMatchRef.current && code) {
       try {
@@ -805,7 +978,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
     setUserInput(val);
 
-    // Audio feedback
+    // Audio feedback & mistakes tracking
+    let mistakes = 0;
+    for (let i = 0; i < val.length; i++) {
+      if (val[i] !== targetText[i]) mistakes++;
+    }
+    setMyMistakes(mistakes);
+
     if (val.length > 0) {
       const lastIndex = val.length - 1;
       const isCorrectChar = val[lastIndex] === targetText[lastIndex];
@@ -850,59 +1029,24 @@ export const BattleView: React.FC<BattleViewProps> = ({
       } catch {}
     }
 
-    // Check if player won
+    // Check if player won by typing entire text before time runs out
     if (isFinished) {
-      if (botTimerRef.current) {
-        clearInterval(botTimerRef.current);
-        botTimerRef.current = null;
-      }
-
-      setWinnerId(currentUid);
-      updateGameState('finished');
-      playSoundSafe('win');
-
-      if (addXp) addXp(150);
-      if (saveTestResult) {
-        saveTestResult({
-          wpm: calculatedWpm,
-          cpm: calculatedWpm * 5,
-          accuracy,
-          rawWpm: calculatedWpm,
-          consistency: 96,
-          time: Math.round((Date.now() - (startTimeRef.current || Date.now())) / 1000),
-          mode: 'time',
-          language: 'uzbek'
-        });
-      }
-
-      if (!isBotMatchRef.current && code) {
-        try {
-          update(ref(rtdb, `battle_rooms/${code}`), {
-            winner: currentUid,
-            status: 'finished'
-          }).catch(() => {});
-
-          fetch('/api/battle/update-progress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              code,
-              winner: currentUid,
-              status: 'finished'
-            })
-          }).catch(() => {});
-        } catch {}
-      }
+      concludeMatch(currentUid, 'completed');
     }
   };
 
   // Rematch with fresh random text
   const handleRematch = async () => {
-    const freshText = getRandomBattleText('uz-latn');
+    const freshText = getRandomBattleText(selectedLanguage);
     setBattleText(freshText);
     battleTextRef.current = freshText;
     setUserInput('');
     setWinnerId(null);
+    setFinishReason('completed');
+    setMyMistakes(0);
+    setOppMistakes(0);
+    setRemainingTime(selectedDuration);
+    remainingTimeRef.current = selectedDuration;
 
     const resetMyData: RacerProgress = {
       ...myProgress,
@@ -957,7 +1101,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
               </span>
             </h1>
             <p className="text-xs text-slate-400">
-              Robot bilan mashq qiling yoki do'stingiz bilan 1v1 xona ochib bir xil matnda bellashing!
+              Robot bilan mashq qiling yoki vaqt va tilni belgilab do'stingiz bilan 1v1 xona oching!
             </p>
           </div>
         </div>
@@ -968,6 +1112,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
               if (botTimerRef.current) clearInterval(botTimerRef.current);
               if (roomUnsubRef.current) roomUnsubRef.current();
               if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+              if (matchTimerRef.current) clearInterval(matchTimerRef.current);
               updateGameState('lobby');
               setActiveRoomCode('');
               setInviteSentStatus(null);
@@ -990,18 +1135,89 @@ export const BattleView: React.FC<BattleViewProps> = ({
           </div>
           <button
             onClick={() => setInviteSentStatus(null)}
-            className="text-cyan-400 hover:text-white font-bold ml-2 text-xs cursor-pointer"
+            className="text-cyan-400 hover:text-white font-bold text-xs"
           >
-            Yopish
+            ✕
           </button>
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* 1. LOBBY SCREEN: ROBOT, XONA YARATISH, VA KOD BILAN KIRISH */}
+      {/* 1. LOBBY SCREEN: SOZLAMALAR, XONA YARATISH, VA KIRISH */}
       {/* ======================================================== */}
       {gameState === 'lobby' && (
         <div className="space-y-6">
+          {/* Room Customization Banner (Host tanlaydigan Vaqt va Til parametrlari) */}
+          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 sm:p-6 rounded-3xl space-y-4 shadow-md">
+            <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-3">
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-sm sm:text-base font-black text-[var(--text-color)] uppercase tracking-wider">
+                  Jang Parametrlari (Xona Vaqti va Matn Tili)
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2.5 py-1 rounded-xl border border-cyan-500/20">
+                {selectedDuration} sekund • {selectedLanguage.toUpperCase()}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option 1: Vaqt (Necha sekundlik duel) */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[var(--sub-color)] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span>Jang Davomiyligi (Vaqt tanlang):</span>
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[15, 30, 60, 120].map((sec) => (
+                    <button
+                      key={sec}
+                      type="button"
+                      onClick={() => setSelectedDuration(sec)}
+                      className={`py-2.5 px-2 rounded-2xl font-mono font-bold text-xs transition-all border text-center cursor-pointer ${
+                        selectedDuration === sec
+                          ? 'bg-amber-500 text-black border-amber-400 shadow-md shadow-amber-500/30 scale-[1.02]'
+                          : 'bg-[var(--bg-color)] border-[var(--sub-alt)] text-[var(--text-color)] hover:border-amber-400/50'
+                      }`}
+                    >
+                      {sec} sek
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Option 2: Matn Tili (Qaysi tildagi matn) */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[var(--sub-color)] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Globe className="w-4 h-4 text-cyan-400" />
+                  <span>Matn Tili (Qaysi tilda yoziladi):</span>
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                  {[
+                    { id: 'uz-latn', label: "O'zbekcha" },
+                    { id: 'uz-cyrl', label: "Ўзбекча" },
+                    { id: 'en', label: 'English' },
+                    { id: 'ru', label: 'Русский' },
+                    { id: 'code', label: '</> Kod' }
+                  ].map((lang) => (
+                    <button
+                      key={lang.id}
+                      type="button"
+                      onClick={() => setSelectedLanguage(lang.id as any)}
+                      className={`py-2 px-1.5 rounded-2xl font-sans font-bold text-[11px] transition-all border text-center truncate cursor-pointer ${
+                        selectedLanguage === lang.id
+                          ? 'bg-cyan-500 text-black border-cyan-400 shadow-md shadow-cyan-500/30 scale-[1.02]'
+                          : 'bg-[var(--bg-color)] border-[var(--sub-alt)] text-[var(--text-color)] hover:border-cyan-400/50'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Main 3 Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card 1: 🤖 Robot Bilan O'ynash (Cyber Bot) */}
@@ -1017,7 +1233,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   </span>
                 </h3>
                 <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-                  Hech kimni kutmasdan, hoziroq sun'iy intellektli Robot bilan tezkor yozish dueliga kiring.
+                  Kutmasdan tanlangan vaqt ({selectedDuration}s) va tilda sun'iy intellektli Robot bilan duelga kiring.
                 </p>
               </div>
 
@@ -1043,7 +1259,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   </span>
                 </h3>
                 <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-                  Yangi duel xonasi oching. Do'stingizga xona kodini yoki havolani yuboring va birga o'ynang.
+                  Belgilangan {selectedDuration} soniya va {selectedLanguage} tilida yangi xona oching va kod oling.
                 </p>
               </div>
 
@@ -1066,7 +1282,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   <span>Xona Kodi Bilan Kirish</span>
                 </h3>
                 <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-                  Do'stingiz yuborgan 6 xonali xona kodini kiriting va darhol uning dueliga qo'shiling.
+                  Do'stingiz ochgan xona kodini kiriting va uning shartlari bilan duelga qo'shiling.
                 </p>
               </div>
 
@@ -1175,7 +1391,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
             <p className="text-xs sm:text-sm text-[var(--sub-color)] max-w-lg mx-auto">
               {isBotMatch
                 ? 'Cyber Bot bilan mashq qilishga tayyormisiz? Pastdagi "JANGNI BOSHLASH" tugmasini bosing.'
-                : 'Ushbu 6 xonali xona kodini do\'stingizga yuboring yoki havolani nusxalang:'}
+                : isHost
+                ? 'Do\'stingiz xonaga kirgandan so\'ng, siz "JANGNI BOSHLASH" tugmasini bosing:'
+                : 'Siz xonaga ulandingiz. Xona egasi (host) jangni boshlashini kuting...'}
             </p>
           </div>
 
@@ -1189,6 +1407,14 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 <span className="text-3xl sm:text-4xl font-black font-mono tracking-widest text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
                   {activeRoomCode}
                 </span>
+                <div className="text-[11px] font-mono text-[var(--sub-color)] mt-1.5 flex items-center justify-center gap-2">
+                  <span className="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-lg border border-amber-500/20 font-bold">
+                    ⏱️ {selectedDuration} soniya
+                  </span>
+                  <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-lg border border-cyan-500/20 font-bold">
+                    🌐 {selectedLanguage.toUpperCase()}
+                  </span>
+                </div>
               </div>
 
               {/* Share & Copy Buttons */}
@@ -1243,7 +1469,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
               <p className="text-xs sm:text-sm font-bold text-[var(--text-color)] truncate max-w-[110px] mx-auto">
                 {myProgress.name}
               </p>
-              <span className="text-[10px] font-mono text-cyan-400 font-bold block">Siz (1-ishtirokchi)</span>
+              <span className="text-[10px] font-mono text-cyan-400 font-bold block">
+                {isHost ? 'Siz (Xona Egasi 👑)' : 'Siz (Mehmon ⚔️)'}
+              </span>
             </div>
 
             {/* VS Badge */}
@@ -1276,7 +1504,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
             <div className="text-xs font-mono">
               {isFriendJoined ? (
                 <span className="text-emerald-400 font-bold flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" /> Do'stingiz xonaga muvaffaqiyatli ulandi! Jangni boshlashingiz mumkin.
+                  <CheckCircle2 className="w-4 h-4" /> Do'stingiz xonaga muvaffaqiyatli ulandi!
                 </span>
               ) : (
                 <span className="text-amber-400 font-semibold flex items-center justify-center gap-1.5 animate-pulse">
@@ -1286,15 +1514,22 @@ export const BattleView: React.FC<BattleViewProps> = ({
             </div>
           )}
 
-          {/* Start Battle Trigger Button */}
+          {/* Start Battle Trigger Button: ONLY HOST HAS THIS BUTTON! GUEST SEES WAITING BADGE */}
           <div className="pt-2">
-            <button
-              onClick={handleTriggerStartMatch}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-cyan-500/25 active:scale-95 flex items-center gap-2 mx-auto cursor-pointer"
-            >
-              <Play className="w-5 h-5 fill-white" />
-              <span>JANGNI BOSHLASH ⚔️</span>
-            </button>
+            {isHost ? (
+              <button
+                onClick={handleTriggerStartMatch}
+                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-cyan-500/25 active:scale-95 flex items-center gap-2 mx-auto cursor-pointer"
+              >
+                <Play className="w-5 h-5 fill-white" />
+                <span>JANGNI BOSHLASH ⚔️</span>
+              </button>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-800 border border-cyan-500/30 text-cyan-300 font-mono font-bold text-xs shadow-inner animate-pulse">
+                <Hourglass className="w-4 h-4 text-cyan-400 animate-spin" />
+                <span>Xona egasi (host) jangni boshlashi kutilmoqda...</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1313,7 +1548,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
               player1TypedLen={userInput.length}
               player2TypedLen={Math.floor((opponentProgress.progressPercent / 100) * (battleText.length || 1))}
               player1Input={userInput}
-              timeLeft={elapsedSeconds}
+              timeLeft={remainingTime}
+              totalDuration={selectedDuration}
               isRacing={gameState === 'racing'}
             />
           </div>
@@ -1330,39 +1566,56 @@ export const BattleView: React.FC<BattleViewProps> = ({
                     ? 'text-amber-400 scale-105 drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]'
                     : countdown === 2
                     ? 'text-orange-400 scale-110 drop-shadow-[0_0_25px_rgba(251,146,60,0.6)]'
-                    : countdown === 1
-                    ? 'text-rose-500 scale-115 drop-shadow-[0_0_25px_rgba(244,63,94,0.6)]'
-                    : 'text-emerald-400 scale-125 drop-shadow-[0_0_30px_rgba(52,211,153,0.7)]'
+                    : 'text-rose-400 scale-125 drop-shadow-[0_0_30px_rgba(244,63,94,0.7)]'
                 }`}
               >
-                {countdown > 0 ? countdown : 'GO! BOSHLANDI!'}
+                {countdown}
               </div>
               <p className="text-xs text-slate-400 font-mono">
-                Klaviaturaga qo'llarni tayyorlang! Matnni xatosiz tering!
+                Tayyor turing! Barmoqlaringizni klaviaturaga qo'ying.
               </p>
             </div>
           )}
 
-          {/* Active Typing Input Box */}
+          {/* Racing Typing Box */}
           {gameState === 'racing' && (
-            <div
-              onClick={() => inputRef.current?.focus()}
-              className="bg-[var(--card-bg)] border-2 border-cyan-500/50 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl cursor-text transition-all hover:border-cyan-400"
-            >
-              {/* Reference Text with Dynamic Character Highlights */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-sm sm:text-base font-mono leading-relaxed select-none shadow-inner tracking-wide">
-                {battleText.split('').map((char, index) => {
-                  let colorClass = 'text-[var(--sub-color)] opacity-70';
-                  if (index < userInput.length) {
-                    colorClass =
-                      userInput[index] === char
-                        ? 'text-emerald-400 font-bold'
-                        : 'text-rose-500 bg-rose-500/25 px-0.5 rounded font-bold';
-                  } else if (index === userInput.length) {
-                    colorClass = 'text-cyan-400 underline font-black bg-cyan-500/20 px-0.5 rounded animate-pulse';
+            <div className="bg-[var(--card-bg)] border-2 border-cyan-500/50 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl animate-in fade-in">
+              {/* Header Info: Timer & Text details */}
+              <div className="flex items-center justify-between text-xs font-mono border-b border-[var(--sub-alt)] pb-2.5">
+                <span className="font-bold text-cyan-400 flex items-center gap-1.5">
+                  <Flame className="w-4 h-4 text-amber-400" />
+                  <span>Matnni xatosiz va tez tering!</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded-lg border ${
+                      remainingTime <= 5
+                        ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                    }`}
+                  >
+                    ⏱️ Qolgan vaqt: {remainingTime}s
+                  </span>
+                  <span className="text-[var(--sub-color)] font-bold">
+                    Xatolar: <span className="text-rose-400">{myMistakes}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Full Text Display with highlight */}
+              <div className="p-4 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-sm sm:text-base font-mono leading-relaxed tracking-wide select-none">
+                {battleText.split('').map((char, idx) => {
+                  let cls = 'text-slate-400';
+                  if (idx < userInput.length) {
+                    cls =
+                      userInput[idx] === char
+                        ? 'text-cyan-400 font-bold bg-cyan-500/10'
+                        : 'text-rose-400 bg-rose-500/20 underline font-bold';
+                  } else if (idx === userInput.length) {
+                    cls = 'text-white bg-cyan-500/40 px-0.5 rounded animate-pulse font-bold';
                   }
                   return (
-                    <span key={index} className={colorClass}>
+                    <span key={idx} className={cls}>
                       {char}
                     </span>
                   );
@@ -1391,7 +1644,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
             </div>
           )}
 
-          {/* Finished Victory / Defeat Screen */}
+          {/* Finished Victory / Defeat Screen with Detailed Stats */}
           {gameState === 'finished' && (() => {
             const isWin = winnerId === currentUid;
             return (
@@ -1423,38 +1676,48 @@ export const BattleView: React.FC<BattleViewProps> = ({
                     {isWin ? "🏆 SIZ YUTDINGIZ! G'ALABA!" : "💥 SIZ YUTQAZDINGIZ!"}
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
-                    {isWin
-                      ? "Matnni raqibingizdan tezroq va aniqroq terib g'alaba qozondingiz! +150 XP berildi."
-                      : "Raqib marraga birinchi bo'lib yetib keldi. Qayta o'ynab revansh oling!"}
+                    {finishReason === 'timeout'
+                      ? (isWin
+                        ? `⏱️ Vaqt tugadi! Siz raqibdan ko'proq progress va yuqori tezlik ko'rsatib g'olib bo'ldingiz! (+150 XP)`
+                        : `⏱️ Vaqt tugadi! Dushman ko'proq progress va tezlik bilan oldinga chiqdi. Qayta o'ynab revansh oling!`)
+                      : (isWin
+                        ? "Matnni raqibingizdan tezroq va xatosiz to'liq terib birinchi bo'lib marraga yetdingiz! (+150 XP)"
+                        : "Raqib butun matnni birinchi bo'lib yozib tugatdi. Qayta o'ynab revansh oling!")}
                   </p>
                 </div>
 
-                {/* Match Stats Comparison */}
-                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
-                  <div className={`space-y-1 text-left border-r border-slate-800 pr-3 ${isWin ? 'bg-emerald-950/20 p-2 rounded-xl' : ''}`}>
+                {/* Match Stats Comparison: Sizniki va Dushmaniki (WPM, Acc, Xatolar, Progress) */}
+                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                  {/* SIZNIKI */}
+                  <div className={`space-y-2 text-left border-r border-slate-800 pr-3 ${isWin ? 'bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-500/30' : ''}`}>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-cyan-400 font-mono uppercase font-bold">
-                        Sizning Natijangiz
+                      <span className="text-[10px] text-cyan-400 font-mono uppercase font-bold flex items-center gap-1">
+                        <span>Sizning Natijangiz</span>
                       </span>
-                      {isWin && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                      {isWin && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                     </div>
-                    <p className="text-2xl font-black font-mono text-cyan-300">{myProgress.wpm} WPM</p>
-                    <p className="text-xs font-mono text-slate-300">
-                      Aniqlik: <span className="text-white font-bold">{myProgress.accuracy}%</span>
-                    </p>
+                    <p className="text-2xl sm:text-3xl font-black font-mono text-cyan-300">{myProgress.wpm} <span className="text-xs text-cyan-400 font-normal">WPM</span></p>
+                    <div className="text-xs font-mono space-y-1 text-slate-300">
+                      <p>Aniqlik (Acc): <span className="text-white font-bold">{myProgress.accuracy}%</span></p>
+                      <p>Progress: <span className="text-cyan-400 font-bold">{myProgress.progressPercent}%</span></p>
+                      <p>Xatolar: <span className="text-rose-400 font-bold">{myMistakes} ta</span></p>
+                    </div>
                   </div>
 
-                  <div className={`space-y-1 text-left pl-3 ${!isWin ? 'bg-rose-950/20 p-2 rounded-xl' : ''}`}>
+                  {/* DUSHMANIKI */}
+                  <div className={`space-y-2 text-left pl-3 ${!isWin ? 'bg-rose-950/30 p-2.5 rounded-xl border border-rose-500/30' : ''}`}>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-amber-400 font-mono uppercase font-bold">
-                        Raqib Natijasi
+                      <span className="text-[10px] text-amber-400 font-mono uppercase font-bold flex items-center gap-1">
+                        <span>Dushman Natijasi</span>
                       </span>
-                      {!isWin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                      {!isWin && <Crown className="w-4 h-4 text-amber-400" />}
                     </div>
-                    <p className="text-2xl font-black font-mono text-amber-300">{opponentProgress.wpm} WPM</p>
-                    <p className="text-xs font-mono text-slate-300">
-                      Aniqlik: <span className="text-white font-bold">{opponentProgress.accuracy}%</span>
-                    </p>
+                    <p className="text-2xl sm:text-3xl font-black font-mono text-amber-300">{opponentProgress.wpm} <span className="text-xs text-amber-400 font-normal">WPM</span></p>
+                    <div className="text-xs font-mono space-y-1 text-slate-300">
+                      <p>Aniqlik (Acc): <span className="text-white font-bold">{opponentProgress.accuracy}%</span></p>
+                      <p>Progress: <span className="text-amber-400 font-bold">{opponentProgress.progressPercent}%</span></p>
+                      <p>Xatolar: <span className="text-slate-400 font-bold">~{Math.round((100 - opponentProgress.accuracy) / 2)} ta</span></p>
+                    </div>
                   </div>
                 </div>
 

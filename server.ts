@@ -1568,6 +1568,8 @@ interface ServerBattleRoom {
   createdAt: number;
   duration: number;
   language: string;
+  startedAt?: number;
+  finishReason?: string;
   host: ServerBattleRacer;
   guest: ServerBattleRacer | null;
   winner: string | null;
@@ -1687,7 +1689,7 @@ app.get('/api/battle/room/:code', (req, res) => {
 app.post('/api/battle/update-progress', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   try {
-    const { code, role, progress, status, winner, text } = req.body || {};
+    const { code, role, progress, status, winner, text, startedAt, finishReason } = req.body || {};
     const safeCode = String(code || '').trim().toUpperCase();
     const room = activeBattleRooms.get(safeCode);
 
@@ -1698,6 +1700,20 @@ app.post('/api/battle/update-progress', (req, res) => {
     if (text) {
       room.text = String(text);
       room.selectedText = String(text);
+    }
+
+    const { duration, language } = req.body || {};
+    if (duration !== undefined) {
+      room.duration = Number(duration);
+    }
+    if (language !== undefined) {
+      room.language = String(language);
+    }
+    if (startedAt !== undefined) {
+      room.startedAt = Number(startedAt);
+    }
+    if (finishReason !== undefined) {
+      room.finishReason = String(finishReason);
     }
 
     if (role === 'host' && progress) {

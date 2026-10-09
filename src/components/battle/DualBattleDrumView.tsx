@@ -402,6 +402,7 @@ interface DualBattleDrumViewProps {
   player2TypedLen: number;
   player1Input?: string;
   timeLeft?: number;
+  totalDuration?: number;
   isRacing: boolean;
 }
 
@@ -413,6 +414,7 @@ export const DualBattleDrumView: React.FC<DualBattleDrumViewProps> = ({
   player2TypedLen,
   player1Input = '',
   timeLeft,
+  totalDuration,
   isRacing
 }) => {
   const wpmDiff = Math.abs(player1.wpm - player2.wpm);
@@ -433,11 +435,21 @@ export const DualBattleDrumView: React.FC<DualBattleDrumViewProps> = ({
           </span>
         </div>
 
-        {/* Live Race Gap Indicator */}
+        {/* Live Race Gap & Timer Indicator */}
         <div className="flex items-center gap-3">
           {timeLeft !== undefined && (
-            <span className="font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
-              ⏱️ {timeLeft}s
+            <span
+              className={`font-mono font-bold px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                totalDuration && timeLeft <= 5
+                  ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              }`}
+            >
+              <span className="text-xs">⏱️</span>
+              <span>
+                {timeLeft}s
+                {totalDuration ? ` / ${totalDuration}s` : ''}
+              </span>
             </span>
           )}
 
