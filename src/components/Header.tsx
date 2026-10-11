@@ -109,6 +109,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'challenges', label: currMenu.milestones, icon: Target },
     { id: 'certificate', label: uiLanguage === 'ru' ? 'Сертификат' : uiLanguage === 'en' ? 'Certificate' : 'Sertifikat', icon: Award },
     { id: 'video', label: currMenu.videoGuide || "Sayt Haqida Video", icon: Video },
+    { id: 'reviews', label: uiLanguage === 'ru' ? 'Отзывы' : uiLanguage === 'en' ? 'Reviews' : 'Fikrlar', icon: MessageSquare },
     { id: 'support', label: currMenu.support || "Qo'llab-quvvatlash", icon: Heart },
     { id: 'partners', label: currMenu.partners, icon: Handshake },
     { id: 'owner', label: currMenu.about, icon: Sparkles },

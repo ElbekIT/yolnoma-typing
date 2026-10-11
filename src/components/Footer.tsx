@@ -16,7 +16,8 @@ import {
   ChevronUp,
   Rocket,
   Heart,
-  Video
+  Video,
+  MessageSquare
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -121,6 +122,16 @@ export const Footer = React.memo<FooterProps>(({
             >
               <Video className="w-3.5 h-3.5 text-amber-400" />
               <span>Video Qo'llanma</span>
+            </a>
+
+            <a
+              href="/reviews"
+              onClick={(e) => handleNav('reviews', e)}
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1.5 py-0.5 text-sky-400/90 font-bold"
+              title="Foydalanuvchilarning sayt haqidagi fikrlari"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
+              <span>Fikrlar</span>
             </a>
           </nav>
 

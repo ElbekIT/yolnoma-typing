@@ -67,6 +67,7 @@ const LanguageSelectView = lazyWithRetry(() => import('./components/languages/La
 const CertificatePage = lazyWithRetry(() => import('./components/CertificatePage').then(m => ({ default: m.CertificatePage })));
 const SupportView = lazyWithRetry(() => import('./components/support/SupportView').then(m => ({ default: m.SupportView })));
 const VideoGuideView = lazyWithRetry(() => import('./components/video/VideoGuideView').then(m => ({ default: m.VideoGuideView })));
+const ReviewsView = lazyWithRetry(() => import('./components/reviews/ReviewsView').then(m => ({ default: m.ReviewsView })));
 const NotFoundView = lazyWithRetry(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 
 function ViewLoadingFallback() {
@@ -113,6 +114,7 @@ function MainAppContent() {
     owner: 'about',
     support: 'support',
     video: 'video',
+    reviews: 'reviews',
     dashboard: 'dashboard',
     certificate: 'certificate',
     admin: atob('YWRtaW4=')
@@ -135,6 +137,7 @@ function MainAppContent() {
     owner: 'Sayt Haqida & Muallif - Yolnoma Typing',
     support: 'Yolnoma Loyihasini Qo\'llab-quvvatlash - Yolnoma Typing',
     video: 'Sayt Haqida Video Qo\'llanma - Yolnoma Typing',
+    reviews: 'Sayt Haqida Foydalanuvchilar Fikri - Yolnoma Typing',
     dashboard: 'Boshqaruv Paneli - Yolnoma Typing',
     certificate: 'Rasmiy Natija Sertifikati - Yolnoma Typing',
     admin: 'Admin Panel - Yolnoma Typing'
@@ -173,6 +176,7 @@ function MainAppContent() {
     if (['about', 'owner', 'haqida'].includes(subpath)) return { lang: detectedLang, tab: 'owner' };
     if (['support', 'donate', 'ehson', 'qollab-quvvatlash', 'sponsor', 'hissa'].includes(subpath)) return { lang: detectedLang, tab: 'support' };
     if (['video', 'videolar', 'video-qollanma', 'sayt-haqida-video', 'qollanma', 'tutorial'].includes(subpath)) return { lang: detectedLang, tab: 'video' };
+    if (['reviews', 'fikrlar', 'sayt-haqida-fikrlar', 'testimonials', 'fikr'].includes(subpath)) return { lang: detectedLang, tab: 'reviews' };
     if (['dashboard'].includes(subpath)) return { lang: detectedLang, tab: 'dashboard' };
     if (['certificate', 'sertifikat', 'diplom'].includes(subpath)) return { lang: detectedLang, tab: 'certificate' };
     return { lang: detectedLang, tab: 'home' };
@@ -1331,6 +1335,13 @@ function MainAppContent() {
               onGoToLessons={() => setActiveTab('lessons')}
               onGoToSupport={() => setActiveTab('support')}
               onOpenAuth={() => setActiveTab('login')}
+            />
+          )}
+          {activeTab === 'reviews' && (
+            <ReviewsView
+              onBackToHome={() => setActiveTab('home')}
+              onStartTyping={() => setActiveTab('typing')}
+              onGoToBattle={() => setActiveTab('battle')}
             />
           )}
           {activeTab === 'admin' && <AdminView />}
