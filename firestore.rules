@@ -48,7 +48,7 @@ service cloud.firestore {
     // 1. USERS COLLECTION
     // -------------------------------------------------------------
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isOwner(userId);
 
       allow create: if isOwner(userId)
         && isNotBanned()
@@ -81,7 +81,7 @@ service cloud.firestore {
     // 2. BANNED USERS
     // -------------------------------------------------------------
     match /bannedUsers/{bannedId} {
-      allow read: if true;
+      allow read: if isRootOwner() || (isAuthenticated() && request.auth.uid == bannedId);
       allow write: if isRootOwner();
     }
 
@@ -167,7 +167,7 @@ service cloud.firestore {
     // 7. LEADERBOARD SCORES (IRONCLAD ANTI-CHEAT BOUNDS)
     // -------------------------------------------------------------
     match /leaderboard/{docId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated() && isNotBanned() && isGoogleAuth()
                    && request.auth.uid == request.resource.data.userId
                    && request.resource.data.wpm is number
@@ -179,7 +179,20 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------
-    // 8. DEFAULT DENY ALL OTHER ACCESS
+    // 8. VIDEO FEEDBACK & REACTIONS
+    // -------------------------------------------------------------
+    match /video_feedback/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /video_reactions/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isRootOwner());
+    }
+
+    // -------------------------------------------------------------
+    // 9. DEFAULT DENY ALL OTHER ACCESS
     // -------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;

@@ -83,6 +83,12 @@ export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
     description: "Foydalanuvchi shaxsiy boshqaruv va statistika paneli.",
     keywords: "yolnoma dashboard, profil boshqaruvi",
     canonicalUrl: "https://www.yolnoma.uz/dashboard"
+  },
+  video: {
+    title: "Sayt Haqida Video Qo'llanma - Yolnoma Typing",
+    description: "Yolnoma platformasidan to'liq foydalanish bo'yicha video qo'llanma: saytga kirish, ro'yxatdan o'tish, tez yozish testi va milliy reyting.",
+    keywords: "yolnoma video, sayt haqida video, yolnoma qollanma, tez yozish video dars, ro'yxatdan o'tish",
+    canonicalUrl: "https://www.yolnoma.uz/video"
   }
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquareMore, Clock, Heart, ArrowRight } from 'lucide-react';
+import { Heart, ArrowRight, Video } from 'lucide-react';
 import { HeroSection } from '../components/home/HeroSection';
 import { InteractiveModesHub } from '../components/home/InteractiveModesHub';
 import { FeaturesSection } from '../components/home/FeaturesSection';
@@ -15,7 +15,8 @@ interface HomePageProps {
   onGoToLessons: () => void;
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
-  onGoToSupport: () => void;
+  onGoToSupport?: () => void;
+  onGoToVideo?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -24,7 +25,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGoToLessons,
   onGoToLeaderboard,
   onOpenLogin,
-  onGoToSupport
+  onGoToSupport,
+  onGoToVideo
 }) => {
   const handleThematicAction = (action: ThematicActionType) => {
     if (action === 'battle') {
@@ -35,46 +37,61 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col space-y-6 sm:space-y-8">
-      {/* Dedicated Home Page Language Selector Bar */}
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-1 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-mono text-[var(--sub-color)]">
-          <span className="w-2 h-2 rounded-full bg-[var(--main-color)]" />
-          <span className="font-bold">Interfeys tili (Language):</span>
-        </div>
-        <div>
-          <LanguageSwitcher />
-        </div>
-      </div>
-
-      {/* Quick Support Banner */}
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6">
-        <button
-          onClick={onGoToSupport}
-          type="button"
-          className="w-full relative overflow-hidden p-0.5 rounded-2xl group cursor-pointer text-left"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-rose-500/20 via-amber-500/10 to-[var(--bg-color)] group-hover:from-rose-500/30 group-hover:via-amber-500/20 transition-all rounded-2xl" />
-          <div className="relative bg-[var(--card-bg)] px-4 sm:px-5 py-3 rounded-[14px] flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 border border-[var(--sub-alt)]/50 group-hover:border-rose-500/30 transition-colors">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0 border border-rose-500/20">
-                <Heart className="w-5 h-5 fill-rose-500/80" />
-              </div>
-              <div>
-                <h3 className="text-[13px] sm:text-sm font-bold text-[var(--text-color)] leading-tight mb-0.5">
-                  Qo'llab-quvvatlash
-                </h3>
-                <p className="text-[10px] sm:text-[11px] font-medium text-[var(--sub-color)]">
-                  Saytga o'z hissangizni qo'shing (o'z xohishingizga bog'liq)
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-bold text-[var(--text-color)] px-4 py-2 bg-[var(--sub-alt)]/50 rounded-lg whitespace-nowrap group-hover:bg-[var(--sub-alt)] transition-colors">
-              <span>O'tish</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
+    <div className="w-full flex flex-col space-y-4 sm:space-y-6">
+      {/* Top Support Banner & Language Bar */}
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-1 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-mono text-[var(--sub-color)]">
+            <span className="w-2 h-2 rounded-full bg-[var(--main-color)]" />
+            <span className="font-bold">Interfeys tili (Language):</span>
           </div>
-        </button>
+          <div>
+            <LanguageSwitcher />
+          </div>
+        </div>
+
+        {/* Dual Highlight Banners: Support & Video Guide */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          {/* Eye-catching Support Banner */}
+          <button
+            onClick={onGoToSupport}
+            className="w-full flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-[var(--main-color)]/10 hover:from-rose-500/20 hover:via-amber-500/20 hover:to-[var(--main-color)]/20 border border-rose-500/25 transition-all text-xs font-semibold group cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-rose-500/20 text-rose-500 shrink-0">
+                <Heart className="w-3.5 h-3.5 fill-rose-500" />
+              </span>
+              <p className="truncate text-left text-[var(--text-color)] font-bold">
+                <span className="text-rose-400 font-black">Yolnoma-ni qo'llab-quvvatlash:</span>
+                <span className="ml-1.5 text-[var(--sub-color)] hidden sm:inline">Sayt 100% bepul rivojlanishiga hissa qo'shing.</span>
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-500 text-white font-extrabold text-[11px] shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+              <span>Hissa qo'shish</span>
+              <ArrowRight className="w-3 h-3" />
+            </span>
+          </button>
+
+          {/* Sayt Haqida Video Qo'llanma Banner */}
+          <button
+            onClick={onGoToVideo}
+            className="w-full flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-cyan-500/10 to-[var(--main-color)]/10 hover:from-amber-500/20 hover:via-cyan-500/20 hover:to-[var(--main-color)]/20 border border-amber-500/25 transition-all text-xs font-semibold group cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                <Video className="w-3.5 h-3.5" />
+              </span>
+              <p className="truncate text-left text-[var(--text-color)] font-bold">
+                <span className="text-amber-400 font-black">Sayt haqida video:</span>
+                <span className="ml-1.5 text-[var(--sub-color)] hidden sm:inline">Ro'yxatdan o'tish va foydalanish qo'llanmasi.</span>
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-extrabold text-[11px] shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+              <span>Videoni ko'rish</span>
+              <ArrowRight className="w-3 h-3" />
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* 1. Grand Hero Section (Panoramic Banner + Characters + Badge Buttons) */}
@@ -102,17 +119,16 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       </div>
 
-
-      {/* 5. Features / Imkoniyatlar Block */}
+      {/* 4. Features / Imkoniyatlar Block */}
       <FeaturesSection />
 
-      {/* 6. How It Works / Qanday Ishlaydi Block */}
+      {/* 5. How It Works / Qanday Ishlaydi Block */}
       <HowItWorksSection onStartTyping={() => onStartTyping()} />
 
-      {/* 7. Thematic Tests / Mavzuli Testlar Cards */}
+      {/* 6. Thematic Tests / Mavzuli Testlar Cards */}
       <ThematicTests onSelectAction={handleThematicAction} />
 
-      {/* 8. SEO Article & FAQ Block */}
+      {/* 7. SEO Article & FAQ Block */}
       <SeoArticleSection />
     </div>
   );

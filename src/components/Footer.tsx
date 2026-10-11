@@ -14,7 +14,9 @@ import {
   Send,
   ChevronDown,
   ChevronUp,
-  Rocket
+  Rocket,
+  Heart,
+  Video
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -99,6 +101,26 @@ export const Footer = React.memo<FooterProps>(({
             >
               <Handshake className="w-3.5 h-3.5 text-amber-500" />
               <span>{t('navPartners')}</span>
+            </a>
+
+            <a
+              href="/support"
+              onClick={(e) => handleNav('support', e)}
+              className="hover:text-rose-400 transition-colors flex items-center gap-1.5 py-0.5 text-rose-400/90 font-bold"
+              title="Yolnoma loyihasini qo'llab-quvvatlash"
+            >
+              <Heart className="w-3.5 h-3.5 fill-rose-500/20 text-rose-500" />
+              <span>Qo'llab-quvvatlash</span>
+            </a>
+
+            <a
+              href="/video"
+              onClick={(e) => handleNav('video', e)}
+              className="hover:text-amber-400 transition-colors flex items-center gap-1.5 py-0.5 text-amber-400 font-bold"
+              title="Sayt haqida to'liq video qo'llanma"
+            >
+              <Video className="w-3.5 h-3.5 text-amber-400" />
+              <span>Video Qo'llanma</span>
             </a>
           </nav>
 

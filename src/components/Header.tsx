@@ -30,7 +30,8 @@ import {
   Gamepad2,
   Share2,
   BookOpen,
-  Heart
+  Heart,
+  Video
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -107,9 +108,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'achievements', label: currMenu.achievements, icon: Award },
     { id: 'challenges', label: currMenu.milestones, icon: Target },
     { id: 'certificate', label: uiLanguage === 'ru' ? 'Сертификат' : uiLanguage === 'en' ? 'Certificate' : 'Sertifikat', icon: Award },
+    { id: 'video', label: currMenu.videoGuide || "Sayt Haqida Video", icon: Video },
+    { id: 'support', label: currMenu.support || "Qo'llab-quvvatlash", icon: Heart },
     { id: 'partners', label: currMenu.partners, icon: Handshake },
     { id: 'owner', label: currMenu.about, icon: Sparkles },
-    { id: 'support', label: uiLanguage === 'ru' ? 'Поддержка' : uiLanguage === 'en' ? 'Support' : 'Qo\'llab-quvvatlash', icon: Heart },
     ...(isOwnerAdmin ? [{ id: atob('YWRtaW4='), label: 'Admin Panel', icon: ShieldAlert }] : []),
     { id: 'profile', label: uiLanguage === 'ru' ? 'Профиль' : uiLanguage === 'en' ? 'Profile' : 'Profil', icon: UserIcon },
     { id: 'settings', label: uiLanguage === 'ru' ? 'Настройки' : uiLanguage === 'en' ? 'Settings' : 'Sozlamalar', icon: Settings },
@@ -232,6 +234,29 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 <Settings className={iconDimensions} />
               </button>
 
+              {/* Video Guide Icon Link */}
+              <button
+                onClick={() => setActiveTab('video')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'video' ? 'text-amber-400 bg-[var(--sub-alt)]/70' : 'hover:text-amber-400 hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title={currMenu.videoGuide || "Sayt Haqida Video"}
+              >
+                <Video className={iconDimensions} />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              </button>
+
+              {/* Support Icon Link */}
+              <button
+                onClick={() => setActiveTab('support')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'support' ? 'text-rose-500 bg-[var(--sub-alt)]/70' : 'hover:text-rose-500 hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title={currMenu.support || "Qo'llab-quvvatlash"}
+              >
+                <Heart className={iconDimensions} />
+              </button>
+
               {/* Share & Viral Invite Button */}
               <button
                 onClick={() => setShowShareModal(true)}
@@ -246,6 +271,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
           {/* Right Side: Profile Avatar or Login */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Dedicated Support Button (Never overflows or wraps) */}
+            <button
+              onClick={() => setActiveTab('support')}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0 ${
+                activeTab === 'support'
+                  ? 'bg-rose-500 text-white border-rose-500 shadow-sm'
+                  : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border-rose-500/30'
+              }`}
+              title={currMenu.support || "Qo'llab-quvvatlash"}
+            >
+              <Heart className="w-3.5 h-3.5 fill-rose-500/30 text-rose-500 shrink-0" />
+              <span className="hidden xs:inline sm:inline">
+                {currMenu.support || "Qo'llab-quvvatlash"}
+              </span>
+            </button>
+
             {user ? (
               <div className="relative">
                 {/* Circular Profile Avatar Button */}
@@ -481,6 +522,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                         </div>
                         <ChevronRight className="w-4 h-4 text-[var(--main-color)] opacity-70" />
                       </button>
+
+                      <button
+                        onClick={() => handleSelectTab('support')}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[var(--sub-alt)] text-rose-400 hover:text-rose-300 transition-colors font-bold bg-rose-500/10 border border-rose-500/25 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
+                          <span className="text-rose-400">{currMenu.support || "Qo'llab-quvvatlash"}</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-rose-400 opacity-70" />
+                      </button>
                     </div>
 
                     {/* Logout Button */}
@@ -606,8 +658,36 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 })}
               </div>
 
-              {/* Mobile Viral Share Banner Button */}
-              <div className="pt-3">
+              {/* Mobile Video, Support & Viral Share Banner Buttons */}
+              <div className="pt-3 space-y-2">
+                <button
+                  onClick={() => handleSelectTab('video')}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500/15 to-cyan-500/15 hover:from-amber-500/25 hover:to-cyan-500/25 border border-amber-500/30 text-amber-300 font-bold transition-all shadow-sm cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Video className="w-5 h-5 text-amber-400" />
+                    <span className="text-sm font-black">
+                      {currMenu.videoGuide || "Sayt Haqida Video"}
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 text-[10px] font-mono font-bold">
+                    VIDEO
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => handleSelectTab('support')}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-gradient-to-r from-rose-500/15 to-amber-500/15 hover:from-rose-500/25 hover:to-amber-500/25 border border-rose-500/30 text-rose-400 font-bold transition-all shadow-sm cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Heart className="w-5 h-5 text-rose-400 fill-rose-400/30" />
+                    <span className="text-sm font-black">
+                      {currMenu.support || "Qo'llab-quvvatlash"}
+                    </span>
+                  </div>
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                </button>
+
                 <button
                   onClick={() => {
                     setIsDrawerOpen(false);

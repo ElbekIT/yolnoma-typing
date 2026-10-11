@@ -14,6 +14,8 @@ export interface MenuTranslation {
   milestones: string;
   partners: string;
   about: string;
+  support: string;
+  videoGuide: string;
   close: string;
 }
 
@@ -32,6 +34,8 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Muvaffaqiyatlar",
     partners: "Hamkor & Homiy",
     about: "Sayt Haqida & Muallif",
+    support: "Qo'llab-quvvatlash",
+    videoGuide: "Sayt Haqida Video",
     close: "Yopish"
   },
   ru: {
@@ -48,6 +52,8 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Прогресс и успехи",
     partners: "Партнёры и спонсоры",
     about: "О сайте и авторе",
+    support: "Поддержать проект",
+    videoGuide: "Видео о сайте",
     close: "Закрыть"
   },
   en: {
@@ -64,6 +70,8 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     milestones: "Milestones",
     partners: "Partners & Sponsors",
     about: "About & Author",
+    support: "Support Project",
+    videoGuide: "Video Guide",
     close: "Close"
   }
 };

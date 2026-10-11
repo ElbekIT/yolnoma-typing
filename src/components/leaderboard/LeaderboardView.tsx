@@ -29,7 +29,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -279,33 +279,18 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         // Fallback to RTDB
       }
 
-      // Tier 2: Realtime Database SDK (Properly secured with query)
-      const rtdbPromise = Promise.allSettled([
-        get(query(ref(rtdb, 'leaderboard'), orderByChild('highestWpm'), limitToLast(150)))
-      ]);
-
-      const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 4000));
-      const rtdbRace = await Promise.race([rtdbPromise, timeoutPromise]);
-
-      let usersVal: any = {};
-      let lbVal: any = {};
-      let bannedSet = new Set<string>();
-
-      if (rtdbRace !== 'timeout') {
-        const [lbSnapResult] = rtdbRace;
-        lbVal =
-          lbSnapResult.status === 'fulfilled' && lbSnapResult.value.exists()
-            ? lbSnapResult.value.val() || {}
-            : {};
-      }
-
-
-      cachedBannedUids = bannedSet;
-      setBannedUids(bannedSet);
-
-      const freshList = processRawData(usersVal, lbVal, bannedSet);
-      if (freshList.length > 0) {
-        parsedList = freshList;
+      // Tier 2: Realtime Database leaderboard fallback
+      try {
+        const lbSnap = await get(ref(rtdb, 'leaderboard'));
+        if (lbSnap.exists()) {
+          const lbVal = lbSnap.val() || {};
+          const freshList = processRawData({}, lbVal, new Set<string>());
+          if (freshList.length > 0) {
+            parsedList = freshList;
+          }
+        }
+      } catch {
+        // Handled
       }
 
       // If current user is logged in, ensure their entry is present

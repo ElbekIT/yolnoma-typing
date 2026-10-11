@@ -11,7 +11,6 @@ import { LoginPage } from './components/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TypingPage } from './pages/TypingPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
-import { SupportPage } from './pages/SupportPage';
 import { ThematicActionType } from './components/home/ThematicTests';
 import { PubgInviteModal, BattleInviteData } from './components/battle/PubgInviteModal';
 import { DeviceAutoCalibrationScreen } from './components/device/DeviceAutoCalibrationScreen';
@@ -66,6 +65,8 @@ const AdminView = lazyWithRetry(() => import('./components/admin/AdminView').the
 const OwnerAboutView = lazyWithRetry(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = lazyWithRetry(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
 const CertificatePage = lazyWithRetry(() => import('./components/CertificatePage').then(m => ({ default: m.CertificatePage })));
+const SupportView = lazyWithRetry(() => import('./components/support/SupportView').then(m => ({ default: m.SupportView })));
+const VideoGuideView = lazyWithRetry(() => import('./components/video/VideoGuideView').then(m => ({ default: m.VideoGuideView })));
 const NotFoundView = lazyWithRetry(() => import('./components/NotFoundView').then(m => ({ default: m.NotFoundView })));
 
 function ViewLoadingFallback() {
@@ -110,6 +111,8 @@ function MainAppContent() {
     challenges: 'challenges',
     partners: 'partners',
     owner: 'about',
+    support: 'support',
+    video: 'video',
     dashboard: 'dashboard',
     certificate: 'certificate',
     admin: atob('YWRtaW4=')
@@ -130,6 +133,8 @@ function MainAppContent() {
     challenges: 'Musobaqalar & Bellashuvlar - Yolnoma Typing',
     partners: 'Hamkorlar - Yolnoma Typing',
     owner: 'Sayt Haqida & Muallif - Yolnoma Typing',
+    support: 'Yolnoma Loyihasini Qo\'llab-quvvatlash - Yolnoma Typing',
+    video: 'Sayt Haqida Video Qo\'llanma - Yolnoma Typing',
     dashboard: 'Boshqaruv Paneli - Yolnoma Typing',
     certificate: 'Rasmiy Natija Sertifikati - Yolnoma Typing',
     admin: 'Admin Panel - Yolnoma Typing'
@@ -166,6 +171,8 @@ function MainAppContent() {
     if (['challenges', 'musobaqalar', 'muvaffaqiyatlar'].includes(subpath)) return { lang: detectedLang, tab: 'challenges' };
     if (['partners', 'hamkorlar'].includes(subpath)) return { lang: detectedLang, tab: 'partners' };
     if (['about', 'owner', 'haqida'].includes(subpath)) return { lang: detectedLang, tab: 'owner' };
+    if (['support', 'donate', 'ehson', 'qollab-quvvatlash', 'sponsor', 'hissa'].includes(subpath)) return { lang: detectedLang, tab: 'support' };
+    if (['video', 'videolar', 'video-qollanma', 'sayt-haqida-video', 'qollanma', 'tutorial'].includes(subpath)) return { lang: detectedLang, tab: 'video' };
     if (['dashboard'].includes(subpath)) return { lang: detectedLang, tab: 'dashboard' };
     if (['certificate', 'sertifikat', 'diplom'].includes(subpath)) return { lang: detectedLang, tab: 'certificate' };
     return { lang: detectedLang, tab: 'home' };
@@ -1218,11 +1225,8 @@ function MainAppContent() {
             }}
             onOpenLogin={() => setActiveTab('login')}
             onGoToSupport={() => setActiveTab('support')}
+            onGoToVideo={() => setActiveTab('video')}
           />
-        )}
-
-        {activeTab === 'support' && (
-          <SupportPage />
         )}
 
         {activeTab === 'typing' && (
@@ -1310,6 +1314,23 @@ function MainAppContent() {
               onStartTyping={() => setActiveTab('typing')}
               onGoToBattle={() => setActiveTab('battle')}
               onGoToLessons={() => setActiveTab('lessons')}
+              onGoToSupport={() => setActiveTab('support')}
+            />
+          )}
+          {activeTab === 'support' && (
+            <SupportView
+              onBackToHome={() => setActiveTab('home')}
+              onStartTyping={() => setActiveTab('typing')}
+            />
+          )}
+          {activeTab === 'video' && (
+            <VideoGuideView
+              onBackToHome={() => setActiveTab('home')}
+              onStartTyping={() => setActiveTab('typing')}
+              onGoToBattle={() => setActiveTab('battle')}
+              onGoToLessons={() => setActiveTab('lessons')}
+              onGoToSupport={() => setActiveTab('support')}
+              onOpenAuth={() => setActiveTab('login')}
             />
           )}
           {activeTab === 'admin' && <AdminView />}
@@ -1380,8 +1401,6 @@ function MainAppContent() {
         initialTab={aboutModalTab}
         onClose={() => setIsAboutOpen(false)}
       />
-
-
 
       {/* Global Device Auto Calibration Loading Gate (1-100%) */}
       <DeviceAutoCalibrationScreen />

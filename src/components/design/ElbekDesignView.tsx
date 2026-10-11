@@ -1305,7 +1305,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
             <div className="p-3.5 rounded-lg bg-[var(--bg-color)] border border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div>
-                <div className="text-base sm:text-lg font-bold font-mono tracking-wider text-amber-300">
+                <div className="text-base sm:text-lg font-bold font-mono tracking-wider text-amber-300 select-all whitespace-nowrap">
                   {CARD_NUMBER}
                 </div>
                 <div className="text-xs font-mono text-slate-300 mt-0.5">

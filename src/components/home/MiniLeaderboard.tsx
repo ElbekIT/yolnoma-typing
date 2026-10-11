@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Crown, ArrowRight, LogIn, Flame, Sparkles, UserCheck } from 'lucide-react';
-import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -66,78 +66,42 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
           // Continue to RTDB fetch
         }
 
-        // Tier 2: RTDB fetch with timeout (Properly secured with query)
-        const rtdbPromise = Promise.allSettled([
-          get(query(ref(rtdb, 'leaderboard'), orderByChild('highestWpm'), limitToLast(150)))
-        ]);
-        const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 4000));
-        const rtdbRace = await Promise.race([rtdbPromise, timeoutPromise]);
-
-        if (!isMounted) return;
-
-        let usersVal: any = {};
-        let lbVal: any = {};
-        let bannedSet = new Set<string>();
-
-        if (rtdbRace !== 'timeout') {
-          const [lbSnapResult] = rtdbRace;
-          lbVal =
-            lbSnapResult.status === 'fulfilled' && lbSnapResult.value.exists()
-              ? lbSnapResult.value.val() || {}
-              : {};
+        // Tier 2: Realtime Database leaderboard fallback
+        let list: LeaderboardEntry[] = [];
+        try {
+          const lbSnap = await get(ref(rtdb, 'leaderboard'));
+          if (lbSnap.exists()) {
+            const lbVal = lbSnap.val() || {};
+            Object.keys(lbVal).forEach((uid) => {
+              if (
+                !uid ||
+                uid.startsWith('guest_') ||
+                uid.startsWith('bot_') ||
+                uid.startsWith('ai_') ||
+                uid.startsWith('seed_') ||
+                uid.startsWith('dummy_') ||
+                uid.startsWith('fake_') ||
+                uid === 'guest'
+              ) {
+                return;
+              }
+              const lb = lbVal[uid] || {};
+              if (lb.isGuest || lb.isBot || lb.isBanned || lb.isBlocked) return;
+              const wpm = Number(lb.highestWpm || 0);
+              if (wpm <= 0 || wpm > 280) return;
+              list.push({
+                uid,
+                name: lb.displayName || lb.username || 'Foydalanuvchi',
+                username: lb.username || 'user',
+                avatar: lb.avatarUrl || lb.photoURL,
+                wpm,
+                accuracy: Math.min(100, Math.max(0, Number(lb.highestAccuracy || 98)))
+              });
+            });
+          }
+        } catch {
+          // Handled
         }
-
-
-        const allUids = new Set<string>([...Object.keys(usersVal || {}), ...Object.keys(lbVal || {})]);
-        const list: LeaderboardEntry[] = [];
-
-        allUids.forEach((uid) => {
-          if (!uid || bannedSet.has(uid)) return;
-
-          // Strictly filter out any bots, guests, synthetic seed users, or fake accounts
-          if (
-            uid.startsWith('guest_') ||
-            uid.startsWith('bot_') ||
-            uid.startsWith('ai_') ||
-            uid.startsWith('seed_') ||
-            uid.startsWith('dummy_') ||
-            uid.startsWith('fake_') ||
-            uid === 'guest'
-          ) {
-            return;
-          }
-
-          const u = (usersVal && usersVal[uid]) || {};
-          const lb = (lbVal && lbVal[uid]) || {};
-
-          if (u.isGuest || lb.isGuest || u.isBot || lb.isBot || u.isDummy || lb.isDummy) {
-            return;
-          }
-
-          if (u.isBanned || u.isBlocked || lb.isBanned || lb.isBlocked) return;
-
-          const wpm = Math.max(
-            Number(u.highestWpm || 0),
-            Number(lb.highestWpm || 0),
-            Number(u.time15Wpm || lb.time15Wpm || 0),
-            Number(u.time30Wpm || lb.time30Wpm || 0),
-            Number(u.time60Wpm || lb.time60Wpm || 0),
-            Number(u.averageWpm || 0),
-            Number(lb.averageWpm || 0)
-          );
-
-          // Real user must have legitimate speed (> 0 and <= 280)
-          if (wpm <= 0 || wpm > 280) return;
-
-          list.push({
-            uid,
-            name: u.displayName || lb.displayName || u.username || lb.username || 'Foydalanuvchi',
-            username: u.username || lb.username || 'user',
-            avatar: u.avatarUrl || lb.avatarUrl || u.photoURL,
-            wpm,
-            accuracy: Math.min(100, Math.max(0, Number(u.highestAccuracy || lb.highestAccuracy || 98)))
-          });
-        });
 
         // Also ensure current user is represented if eligible
         if (user?.uid && !user.uid.startsWith('guest_') && !user.uid.startsWith('bot_')) {

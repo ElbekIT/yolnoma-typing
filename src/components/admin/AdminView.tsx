@@ -46,7 +46,6 @@ import { UserProfile } from '../../types';
 import { OwnerPanelModal } from './OwnerPanelModal';
 import { AdminNotificationsTab } from './AdminNotificationsTab';
 import { AdminInboxTab } from './AdminInboxTab';
-import { AdminFeedbackTab } from './AdminFeedbackTab';
 import { AdminServerTab } from './AdminServerTab';
 import { AdminSessionsTab } from './AdminSessionsTab';
 import { AdminMaintenanceTab } from './AdminMaintenanceTab';
@@ -131,10 +130,9 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'blocked' | 'active' | 'admins'>('all');
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'team' | 'feedback' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance' | 'sponsors'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'users' | 'team' | 'inbox' | 'notifications' | 'sessions' | 'server' | 'maintenance' | 'sponsors'>('leaderboard');
   const [targetUserForMessage, setTargetUserForMessage] = useState<UserProfile | null>(null);
   const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
-  const [feedbackCount, setFeedbackCount] = useState<number>(0);
 
   // Admin Permissions Modal for direct user promotion
   const [selectedUserForAdminPerms, setSelectedUserForAdminPerms] = useState<UserProfile | null>(null);
@@ -418,25 +416,11 @@ export const AdminView: React.FC = () => {
         }
       });
 
-      // Listen to site_feedbacks for feedbackCount
-      const feedbackRef = ref(rtdb, 'site_feedbacks');
-      const unsubFeedback = onValue(feedbackRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.val();
-          const now = Date.now();
-          const active = Object.values(data).filter((f: any) => !f.expiresAt || f.expiresAt > now).length;
-          setFeedbackCount(active);
-        } else {
-          setFeedbackCount(0);
-        }
-      });
-
       return () => {
         unsubBanned();
         unsubLeaderboard();
         unsubUsers();
         unsubInbox();
-        unsubFeedback();
       };
     } catch (e) {
       console.error('Error fetching admin data:', e);
@@ -964,23 +948,6 @@ export const AdminView: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('feedback')}
-          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer relative ${
-            activeTab === 'feedback'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-              : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
-          }`}
-        >
-          <MessageSquareMore className="w-4 h-4 text-amber-400" />
-          <span>💬 Sayt Fikrlari & Chat</span>
-          {feedbackCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-black font-mono font-extrabold text-[10px] animate-pulse">
-              {feedbackCount}
-            </span>
-          )}
-        </button>
-
-        <button
           onClick={() => setActiveTab('inbox')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer relative ${
             activeTab === 'inbox'
@@ -1427,11 +1394,6 @@ export const AdminView: React.FC = () => {
           currentUserEmail={user?.email}
           onRefresh={fetchData}
         />
-      )}
-
-      {/* TAB: FOYDALANUVCHILAR FIKRLARI & CHAT (24H LIMIT) */}
-      {activeTab === 'feedback' && (
-        <AdminFeedbackTab />
       )}
 
       {/* TAB 3: KELGAN MUROJAATLAR / INBOX */}

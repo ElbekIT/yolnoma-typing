@@ -26,7 +26,8 @@ import {
   AlertTriangle,
   Clock,
   History,
-  FileCode
+  FileCode,
+  Heart
 } from 'lucide-react';
 
 interface OwnerAboutViewProps {
@@ -34,6 +35,7 @@ interface OwnerAboutViewProps {
   onGoToBattle?: () => void;
   onGoToLessons?: () => void;
   onGoToLeaderboard?: () => void;
+  onGoToSupport?: () => void;
   initialSubTab?: 'overview' | 'changelog' | 'security' | 'contact';
 }
 
@@ -42,6 +44,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   onGoToBattle,
   onGoToLessons,
   onGoToLeaderboard,
+  onGoToSupport,
   initialSubTab = 'overview'
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'changelog' | 'security' | 'contact'>(initialSubTab);
@@ -549,6 +552,16 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 >
                   <GraduationCap className="w-4 h-4 text-emerald-400" />
                   <span>Saboqlar</span>
+                </button>
+              )}
+
+              {onGoToSupport && (
+                <button
+                  onClick={onGoToSupport}
+                  className="px-4 py-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
+                  <span>Qo'llab-quvvatlash</span>
                 </button>
               )}
             </div>
