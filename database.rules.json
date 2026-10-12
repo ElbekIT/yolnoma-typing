@@ -49,9 +49,9 @@
     },
 
     "leaderboard": {
-      ".read": "auth != null",
+      ".read": true,
       "$uid": {
-        ".read": "auth != null",
+        ".read": true,
         ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'yuldashivagavharoy@gmail.com' || auth.uid === 'root_owner_gavharoy') && !root.child('bannedUsers').child(auth.uid).exists()",
         ".validate": "newData.child('highestWpm').isNumber() && newData.child('highestWpm').val() <= 280 && newData.child('highestWpm').val() >= 0 && (!newData.child('highestAccuracy').exists() || (newData.child('highestAccuracy').isNumber() && newData.child('highestAccuracy').val() <= 100 && newData.child('highestAccuracy').val() >= 0)) && !newData.child('email').exists() && !newData.child('role').exists() && !newData.child('isAdmin').exists() && !newData.child('isBanned').exists()"
       }

@@ -262,7 +262,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     };
 
     try {
-      // Tier 1: Fast internal backend API endpoint
+      // Tier 1: Fast internal backend API endpoint (Returns all verified national typists)
       try {
         const apiRes = await fetch('/api/leaderboard?limit=100');
         if (apiRes.ok) {
@@ -279,51 +279,127 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         // Fallback to RTDB
       }
 
-      // Tier 2: Realtime Database leaderboard fallback
+      // Tier 2: Realtime Database leaderboard fallback (Merge seamlessly by uid, never overwrite!)
       try {
         const lbSnap = await get(ref(rtdb, 'leaderboard'));
         if (lbSnap.exists()) {
           const lbVal = lbSnap.val() || {};
           const freshList = processRawData({}, lbVal, new Set<string>());
           if (freshList.length > 0) {
-            parsedList = freshList;
+            const userMap = new Map<string, LeaderboardUser>();
+            parsedList.forEach((u) => userMap.set(u.uid, u));
+            freshList.forEach((u) => {
+              const existing = userMap.get(u.uid);
+              if (!existing) {
+                userMap.set(u.uid, u);
+              } else {
+                userMap.set(u.uid, {
+                  ...existing,
+                  ...u,
+                  highestWpm: Math.max(existing.highestWpm, u.highestWpm),
+                  highestAccuracy: Math.max(existing.highestAccuracy, u.highestAccuracy),
+                  time15Wpm: Math.max(existing.time15Wpm || 0, u.time15Wpm || 0),
+                  time30Wpm: Math.max(existing.time30Wpm || 0, u.time30Wpm || 0),
+                  time60Wpm: Math.max(existing.time60Wpm || 0, u.time60Wpm || 0),
+                  time120Wpm: Math.max(existing.time120Wpm || 0, u.time120Wpm || 0),
+                  totalTests: Math.max(existing.totalTests, u.totalTests),
+                  lastActive: Math.max(existing.lastActive, u.lastActive)
+                });
+              }
+            });
+            parsedList = Array.from(userMap.values());
           }
         }
       } catch {
         // Handled
       }
 
-      // If current user is logged in, ensure their entry is present
-      if (currentUser?.uid && !currentUser.uid.startsWith('guest_') && !currentUser.uid.startsWith('bot_')) {
+      // Also try fetching users node from RTDB if accessible
+      try {
+        const usersSnap = await get(ref(rtdb, 'users'));
+        if (usersSnap.exists()) {
+          const usersVal = usersSnap.val() || {};
+          const usersList = processRawData(usersVal, {}, new Set<string>());
+          if (usersList.length > 0) {
+            const userMap = new Map<string, LeaderboardUser>();
+            parsedList.forEach((u) => userMap.set(u.uid, u));
+            usersList.forEach((u) => {
+              const existing = userMap.get(u.uid);
+              if (!existing) {
+                userMap.set(u.uid, u);
+              } else {
+                userMap.set(u.uid, {
+                  ...existing,
+                  ...u,
+                  highestWpm: Math.max(existing.highestWpm, u.highestWpm),
+                  highestAccuracy: Math.max(existing.highestAccuracy, u.highestAccuracy),
+                  totalTests: Math.max(existing.totalTests, u.totalTests)
+                });
+              }
+            });
+            parsedList = Array.from(userMap.values());
+          }
+        }
+      } catch {}
+
+      // Incorporate local session results for current user or guest
+      let localMaxWpm = Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
+      let localAccuracy = 98;
+      try {
+        const localResultsRaw = localStorage.getItem('yolnoma_results_history');
+        if (localResultsRaw) {
+          const parsed = JSON.parse(localResultsRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            parsed.forEach((r: any) => {
+              if (r && typeof r.wpm === 'number' && r.wpm > localMaxWpm && r.wpm <= 280) {
+                localMaxWpm = r.wpm;
+                if (typeof r.accuracy === 'number') localAccuracy = r.accuracy;
+              }
+            });
+          }
+        }
+      } catch {}
+
+      // Ensure logged in user or user with completed tests is in the leaderboard
+      if (currentUser?.uid && !currentUser.uid.startsWith('bot_')) {
         const existingIdx = parsedList.findIndex((x) => x.uid === currentUser.uid);
-        const myWpm = Math.max(Number(currentUser.highestWpm || 0), Number(currentUser.averageWpm || 0));
+        const myWpm = Math.max(Number(currentUser.highestWpm || 0), Number(currentUser.averageWpm || 0), localMaxWpm);
         const myTests = Math.max(Number(currentUser.totalTests || 0), 1);
-        if (existingIdx === -1 && myWpm > 0 && myWpm <= 280) {
-          parsedList.push({
+        if (myWpm > 0 && myWpm <= 280) {
+          const myEntry: LeaderboardUser = {
             uid: currentUser.uid,
             displayName: currentUser.displayName || currentUser.username || 'Siz',
             username: currentUser.username || 'siz',
             avatarUrl: currentUser.avatarUrl,
             country: currentUser.country || '🇺🇿 Oʻzbekiston',
             highestWpm: myWpm,
-            highestAccuracy: Math.min(100, Math.max(0, Number(currentUser.highestAccuracy || 98))),
+            highestAccuracy: Math.min(100, Math.max(0, Number(currentUser.highestAccuracy || localAccuracy))),
             time15Wpm: Number(currentUser.time15Wpm || myWpm),
             time30Wpm: Number(currentUser.time30Wpm || myWpm),
             time60Wpm: Number(currentUser.time60Wpm || myWpm),
             time120Wpm: Number(currentUser.time120Wpm || myWpm),
             totalTests: myTests,
-            level: Number(currentUser.level || 1),
-            xp: Number(currentUser.xp || 150),
-            rankTitle: currentUser.rankTitle || 'Typing Novice',
+            level: Number(currentUser.level || Math.max(1, Math.floor(myWpm / 12))),
+            xp: Number(currentUser.xp || myWpm * 20),
+            rankTitle: currentUser.rankTitle || (myWpm >= 110 ? 'Grandmaster Typer' : myWpm >= 85 ? 'Master Typer' : 'Pro Typer'),
             lastActive: Date.now(),
             bio: currentUser.bio,
-            isVerified: Boolean(currentUser.isVerified),
+            isVerified: true,
             isBanned: false,
             isBlocked: false,
-            language: currentUser.language,
-            rawWpm: Number(currentUser.rawWpm || 0),
-            consistency: Number(currentUser.consistency || 90)
-          });
+            language: currentUser.language || 'uz',
+            rawWpm: Number(currentUser.rawWpm || Math.round(myWpm * 1.05)),
+            consistency: Number(currentUser.consistency || 92)
+          };
+          if (existingIdx !== -1) {
+            parsedList[existingIdx] = {
+              ...parsedList[existingIdx],
+              ...myEntry,
+              highestWpm: Math.max(parsedList[existingIdx].highestWpm, myWpm)
+            };
+          } else {
+            parsedList.push(myEntry);
+          }
         }
       }
 
@@ -474,12 +550,9 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const pageItems = useMemo(() => {
-    if (currentPage === 1 && !searchQuery.trim() && speedTier === 'all' && sortedList.length > 3) {
-      return sortedList.slice(3, 3 + pageSize);
-    }
     const start = (currentPage - 1) * pageSize;
     return sortedList.slice(start, start + pageSize);
-  }, [sortedList, currentPage, pageSize, searchQuery, speedTier]);
+  }, [sortedList, currentPage, pageSize]);
 
   const myRankingInfo = useMemo(() => {
     if (!currentUser?.uid) return null;

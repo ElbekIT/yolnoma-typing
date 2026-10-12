@@ -66,8 +66,12 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
           // Continue to RTDB fetch
         }
 
-        // Tier 2: Realtime Database leaderboard fallback
-        let list: LeaderboardEntry[] = [];
+        // Tier 2: Realtime Database leaderboard fallback (Merge seamlessly by uid)
+        const entryMap = new Map<string, LeaderboardEntry>();
+        if (cachedMiniList && cachedMiniList.length > 0) {
+          cachedMiniList.forEach((e) => entryMap.set(e.uid, e));
+        }
+
         try {
           const lbSnap = await get(ref(rtdb, 'leaderboard'));
           if (lbSnap.exists()) {
@@ -87,15 +91,16 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
               }
               const lb = lbVal[uid] || {};
               if (lb.isGuest || lb.isBot || lb.isBanned || lb.isBlocked) return;
-              const wpm = Number(lb.highestWpm || 0);
+              const wpm = Number(lb.highestWpm || lb.wpm || 0);
               if (wpm <= 0 || wpm > 280) return;
-              list.push({
+              const existing = entryMap.get(uid);
+              entryMap.set(uid, {
                 uid,
-                name: lb.displayName || lb.username || 'Foydalanuvchi',
-                username: lb.username || 'user',
-                avatar: lb.avatarUrl || lb.photoURL,
-                wpm,
-                accuracy: Math.min(100, Math.max(0, Number(lb.highestAccuracy || 98)))
+                name: lb.displayName || lb.username || existing?.name || 'Foydalanuvchi',
+                username: lb.username || existing?.username || 'user',
+                avatar: lb.avatarUrl || lb.photoURL || existing?.avatar,
+                wpm: Math.max(wpm, existing?.wpm || 0),
+                accuracy: Math.min(100, Math.max(0, Number(lb.highestAccuracy || existing?.accuracy || 98)))
               });
             });
           }
@@ -104,20 +109,22 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
         }
 
         // Also ensure current user is represented if eligible
-        if (user?.uid && !user.uid.startsWith('guest_') && !user.uid.startsWith('bot_')) {
-          const existingIdx = list.findIndex((x) => x.uid === user.uid);
+        if (user?.uid && !user.uid.startsWith('bot_')) {
           const myWpm = Math.max(Number(profile?.highestWpm || 0), Number(profile?.averageWpm || 0));
-          if (existingIdx === -1 && myWpm > 0 && myWpm <= 280) {
-            list.push({
+          if (myWpm > 0 && myWpm <= 280) {
+            const existing = entryMap.get(user.uid);
+            entryMap.set(user.uid, {
               uid: user.uid,
-              name: profile?.displayName || profile?.username || 'Siz',
-              username: profile?.username || 'siz',
-              avatar: profile?.avatarUrl || profile?.photoURL,
-              wpm: myWpm,
-              accuracy: Math.min(100, Math.max(0, Number(profile?.highestAccuracy || 98)))
+              name: profile?.displayName || profile?.username || existing?.name || 'Siz',
+              username: profile?.username || existing?.username || 'siz',
+              avatar: profile?.avatarUrl || profile?.photoURL || existing?.avatar,
+              wpm: Math.max(myWpm, existing?.wpm || 0),
+              accuracy: Math.min(100, Math.max(0, Number(profile?.highestAccuracy || existing?.accuracy || 98)))
             });
           }
         }
+
+        let list = Array.from(entryMap.values());
 
         list.sort((a, b) => b.wpm - a.wpm);
         const finalList = list.slice(0, 5);
