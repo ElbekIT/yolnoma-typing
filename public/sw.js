@@ -1,9 +1,12 @@
 // Yolnoma Typing - High Performance Progressive Web App Service Worker
-const CACHE_NAME = 'yolnoma-v3.2-cache';
+const CACHE_NAME = 'yolnoma-v3.3-cache';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/favicon.ico',
+  '/favicon.svg',
+  '/favicon-48x48.png',
   '/yolnoma_icon.svg',
   '/yolnoma_logo.svg',
   '/hero_mascot.svg',
