@@ -29,11 +29,12 @@ import {
   ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ref, get } from 'firebase/database';
+import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
+import { DEFAULT_NATIONAL_LEADERBOARD } from '../../data/nationalLeaderboard';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
 import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
 
@@ -281,8 +282,15 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
       // Tier 2: Realtime Database leaderboard fallback (Merge seamlessly by uid, never overwrite!)
       try {
-        const lbSnap = await get(ref(rtdb, 'leaderboard'));
-        if (lbSnap.exists()) {
+        let lbSnap;
+        try {
+          const lbQuery = query(ref(rtdb, 'leaderboard'), orderByChild('highestWpm'), limitToLast(100));
+          lbSnap = await get(lbQuery);
+        } catch {
+          lbSnap = await get(ref(rtdb, 'leaderboard'));
+        }
+
+        if (lbSnap && lbSnap.exists()) {
           const lbVal = lbSnap.val() || {};
           const freshList = processRawData({}, lbVal, new Set<string>());
           if (freshList.length > 0) {
@@ -403,6 +411,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         }
       }
 
+      if (parsedList.length === 0) {
+        parsedList = [...DEFAULT_NATIONAL_LEADERBOARD] as LeaderboardUser[];
+      }
+
       if (parsedList.length > 0) {
         cachedTypingUsers = parsedList;
         lastTypingFetchTime = Date.now();
@@ -411,7 +423,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     } catch (err) {
       console.error('Leaderboard fetch error:', err);
       if (!cachedTypingUsers || cachedTypingUsers.length === 0) {
-        setRawTypingUsers([]);
+        setRawTypingUsers([...DEFAULT_NATIONAL_LEADERBOARD] as LeaderboardUser[]);
       }
     } finally {
       setLoading(false);

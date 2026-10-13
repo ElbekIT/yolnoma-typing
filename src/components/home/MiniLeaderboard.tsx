@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Crown, ArrowRight, LogIn, Flame, Sparkles, UserCheck } from 'lucide-react';
-import { ref, get } from 'firebase/database';
+import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
+import { DEFAULT_NATIONAL_LEADERBOARD } from '../../data/nationalLeaderboard';
 
 interface LeaderboardEntry {
   uid: string;
@@ -73,8 +74,15 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
         }
 
         try {
-          const lbSnap = await get(ref(rtdb, 'leaderboard'));
-          if (lbSnap.exists()) {
+          let lbSnap;
+          try {
+            const lbQuery = query(ref(rtdb, 'leaderboard'), orderByChild('highestWpm'), limitToLast(10));
+            lbSnap = await get(lbQuery);
+          } catch {
+            lbSnap = await get(ref(rtdb, 'leaderboard'));
+          }
+
+          if (lbSnap && lbSnap.exists()) {
             const lbVal = lbSnap.val() || {};
             Object.keys(lbVal).forEach((uid) => {
               if (
@@ -125,6 +133,21 @@ export const MiniLeaderboard = React.memo<MiniLeaderboardProps>(({
         }
 
         let list = Array.from(entryMap.values());
+
+        // If list is still empty, populate with national championship baseline
+        if (list.length === 0) {
+          DEFAULT_NATIONAL_LEADERBOARD.slice(0, 5).forEach((u) => {
+            entryMap.set(u.uid, {
+              uid: u.uid,
+              name: u.displayName || u.username,
+              username: u.username,
+              avatar: u.avatarUrl,
+              wpm: u.highestWpm,
+              accuracy: u.highestAccuracy
+            });
+          });
+          list = Array.from(entryMap.values());
+        }
 
         list.sort((a, b) => b.wpm - a.wpm);
         const finalList = list.slice(0, 5);
