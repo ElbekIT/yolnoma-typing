@@ -9,6 +9,7 @@ export interface PageSEOInfo {
   description: string;
   keywords: string;
   canonicalUrl: string;
+  image?: string;
 }
 
 export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
@@ -16,79 +17,99 @@ export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
     title: "Tez Yozish - Klaviaturada Tez Yozish Testi & 10 Barmoq Mashqlari | Yolnoma",
     description: "Klaviaturada tez yozishni o'rganing! Bepul 10 barmoq mashqlari, WPM tezlik testi, real-vaqt musobaqalar va O'zbekiston milliy reytingi. Tez yozish bo'yicha №1 platforma.",
     keywords: "tez yozish, klaviaturada tez yozish, tez yozish testi, tez yozishni organish, 10 barmoq bilan yozish, 10 barmoq mashqlari, klaviatura trenajori, klaviatura tezligi, wpm test uzbek, cpm test uzbek, tez yozish musobaqasi, tez yozish oyini, klaviaturada 10 barmoq, lotincha tez yozish, ozbekcha tez yozish, kompyuterda tez yozish, telefonda tez yozish, matn terish tezligi, tez terish, kor yozish usuli, touch typing uzbek, typing test uzbek, speed typing uzbekistan, monkeytype uzbek, yolnoma, yolnoma typing, тез ёзиш, клавиатурада тез ёзиш, 10 бармок билан ёзиш, тест скорости печати, клавиатурный тренажер",
-    canonicalUrl: "https://www.yolnoma.uz/"
+    canonicalUrl: "https://www.yolnoma.uz/",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   typing: {
     title: "Tez Yozish Testi & Jonli WPM Hisoblagich - Yolnoma Typing",
     description: "Klaviaturada tez yozish tezligingizni (WPM va CPM) 15, 30, 60 soniya ichida bepul sinab ko'ring va xatolaringizni aniqlang.",
     keywords: "tez yozish testi, klaviaturada tez yozish testi, wpm hisoblagich, cpm hisoblagich, monkeytype uzbek, typing test online, tez yozish trenajyori, yolnoma test",
-    canonicalUrl: "https://www.yolnoma.uz/test"
+    canonicalUrl: "https://www.yolnoma.uz/test",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   leaderboard: {
     title: "Milliy Reyting - O'zbekistonning Eng Tezkor Yozuvchilari | Yolnoma Typing",
     description: "Yolnoma Typing rasmiy milliy peshqadamlar jadvali. O'zbekiston bo'yicha eng yuqori WPM tezlikka ega foydalanuvchilar va kunlik rekordlar.",
     keywords: "yolnoma reyting, eng tez yozuvchilar, typing leaderboard uzbekistan, wpm rekordlar, typing arena reyting, o'zbekcha tez yozish chempionlari",
-    canonicalUrl: "https://www.yolnoma.uz/leaderboard"
+    canonicalUrl: "https://www.yolnoma.uz/leaderboard",
+    image: "https://www.yolnoma.uz/og-leaderboard.jpg"
   },
   battle: {
     title: "Speedway Battle Arena - Jonli 1v1 Tez Yozish Janglari | Yolnoma Typing",
     description: "Boshqa foydalanuvchilar bilan real-vaqtda klaviaturada tez yozish jangi. Duelda g'alaba qozoning va tajriba ballaringizni oshiring!",
     keywords: "yolnoma battle, tez yozish jangi, typing arena 1v1, speedway battle, klaviatura dueli, real-time typing battle uzbek",
-    canonicalUrl: "https://www.yolnoma.uz/battle"
+    canonicalUrl: "https://www.yolnoma.uz/battle",
+    image: "https://www.yolnoma.uz/og-battle.jpg"
   },
   lessons: {
     title: "10 Barmoq Mashqlari & Saboqlar - Ko'r-ko'rona Yozish Kursi | Yolnoma",
     description: "Klaviaturaga qaramasdan 10 barmoq bilan tez yozishni bosqichma-bosqich o'rganing. Boshlang'ichdan professional darajagacha bepul interaktiv mashqlar.",
     keywords: "10 barmoq saboqlari, klaviaturada yozishni organish, touch typing darslari, kor korona yozish uzbekcha, tez yozish kurslari",
-    canonicalUrl: "https://www.yolnoma.uz/lessons"
+    canonicalUrl: "https://www.yolnoma.uz/lessons",
+    image: "https://www.yolnoma.uz/og-lessons.jpg"
   },
   languages: {
     title: "125+ Jahon Tillari & Lug'atlar - Klaviaturada Tez Yozish | Yolnoma",
     description: "O'zbek (Lotin va Kirill), Ingliz, Rus va dunyoning 125 dan ortiq tillarida yozish mashqlari. Istalgan tilda WPM tezligingizni sinab ko'ring.",
     keywords: "yolnoma tillar, o'zbekcha yozish testi, ruscha tez yozish, inglizcha typing test, 125 languages typing",
-    canonicalUrl: "https://www.yolnoma.uz/languages"
+    canonicalUrl: "https://www.yolnoma.uz/languages",
+    image: "https://www.yolnoma.uz/og-languages.jpg"
   },
   statistics: {
     title: "Shaxsiy Statistika & Tahlil - Tezlik O'sish Grafigi | Yolnoma",
     description: "Barcha topshirilgan testlar tarixi, WPM va aniqlik dinamikasi, eng ko'p adashilgan harflar tahlili.",
     keywords: "typing statistika, wpm grafigi, aniqlik tahlili, klaviatura tezlik rekordi",
-    canonicalUrl: "https://www.yolnoma.uz/statistics"
+    canonicalUrl: "https://www.yolnoma.uz/statistics",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   achievements: {
     title: "Yutuqlar & Unvonlar - Professional Tipist Pog'onalari | Yolnoma",
     description: "Tez yozish orqali yangi unvonlar, medallar va yutuqlarni qo'lga kiriting. O'z mahoratingizni isbotlang!",
     keywords: "yolnoma yutuqlar, typing badges, tez yozish medali, unvonlar",
-    canonicalUrl: "https://www.yolnoma.uz/achievements"
+    canonicalUrl: "https://www.yolnoma.uz/achievements",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   challenges: {
     title: "Musobaqalar & Maxsus Bellashuvlar | Yolnoma Typing",
     description: "Kunlik va haftalik tez yozish topshiriqlari, murakkab matnlar va tezlik musobaqalari.",
     keywords: "typing challenges, kunlik musobaqa, tez yozish topshirig'i",
-    canonicalUrl: "https://www.yolnoma.uz/challenges"
+    canonicalUrl: "https://www.yolnoma.uz/challenges",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   partners: {
     title: "Rasmiy Hamkor va Homiyimiz - Shamsiddin Kamoliddinov | Yolnoma Typing",
     description: "Yolnoma platformasining rivojlanishi va yoshlarning IT hamda klaviaturada tez yozish ko'nikmalarini oshirishdagi rasmiy hamkor va homiysi.",
     keywords: "yolnoma hamkor, yolnoma homiy, shamsiddin kamoliddinov, Farg'ona Davlat Texnika Universiteti, sun'iy intellekt",
-    canonicalUrl: "https://www.yolnoma.uz/partners"
+    canonicalUrl: "https://www.yolnoma.uz/partners",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   owner: {
     title: "Sayt Haqida & Muallif - Yolnoma Typing Tarixi",
     description: "Yolnoma platformasi haqida ma'lumot, yaratilish tarixi va maqsadlari.",
     keywords: "yolnoma haqida, muallif, yolnoma kim yaratgan",
-    canonicalUrl: "https://www.yolnoma.uz/about"
+    canonicalUrl: "https://www.yolnoma.uz/about",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   dashboard: {
     title: "Boshqaruv Paneli | Yolnoma Typing",
     description: "Foydalanuvchi shaxsiy boshqaruv va statistika paneli.",
     keywords: "yolnoma dashboard, profil boshqaruvi",
-    canonicalUrl: "https://www.yolnoma.uz/dashboard"
+    canonicalUrl: "https://www.yolnoma.uz/dashboard",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
+  },
+  support: {
+    title: "Loyihani Qo'llab-quvvatlash - Hissa Qo'shing | Yolnoma Typing",
+    description: "Yolnoma platformasini rivojlantirishga o'z hissangizni qo'shing. O'zbekistonda tez yozish madaniyatini birga yuksaltiramiz!",
+    keywords: "yolnoma ehson, qollab quvvatlash, sponsor, yordam berish",
+    canonicalUrl: "https://www.yolnoma.uz/support",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   },
   video: {
     title: "Sayt Haqida Video Qo'llanma - Yolnoma Typing",
     description: "Yolnoma platformasidan to'liq foydalanish bo'yicha video qo'llanma: saytga kirish, ro'yxatdan o'tish, tez yozish testi va milliy reyting.",
     keywords: "yolnoma video, sayt haqida video, yolnoma qollanma, tez yozish video dars, ro'yxatdan o'tish",
-    canonicalUrl: "https://www.yolnoma.uz/video"
+    canonicalUrl: "https://www.yolnoma.uz/video",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
   }
 };
 
@@ -124,11 +145,19 @@ export function updatePageSEO(tabKey: string, customTitle?: string, customDesc?:
   setMeta('property', 'og:title', finalTitle);
   setMeta('property', 'og:description', finalDesc);
   setMeta('property', 'og:url', info.canonicalUrl);
+  if (info.image) {
+    setMeta('property', 'og:image', info.image);
+    setMeta('property', 'og:image:secure_url', info.image);
+  }
 
   // Twitter
   setMeta('name', 'twitter:title', finalTitle);
   setMeta('name', 'twitter:description', finalDesc);
   setMeta('name', 'twitter:url', info.canonicalUrl);
+  if (info.image) {
+    setMeta('name', 'twitter:image', info.image);
+    setMeta('name', 'twitter:image:src', info.image);
+  }
 
   // Canonical link
   let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;

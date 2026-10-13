@@ -3684,6 +3684,16 @@ async function startServer() {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+      const specificFile = path.join(distPath, cleanPath, 'index.html');
+      const htmlFile = path.join(distPath, `${cleanPath}.html`);
+
+      if (cleanPath && fs.existsSync(specificFile)) {
+        return res.sendFile(specificFile);
+      }
+      if (cleanPath && fs.existsSync(htmlFile)) {
+        return res.sendFile(htmlFile);
+      }
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
