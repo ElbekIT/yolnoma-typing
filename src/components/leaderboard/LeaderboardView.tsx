@@ -34,7 +34,6 @@ import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
-import { DEFAULT_NATIONAL_LEADERBOARD } from '../../data/nationalLeaderboard';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
 import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
 
@@ -411,19 +410,17 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         }
       }
 
-      if (parsedList.length === 0) {
-        parsedList = [...DEFAULT_NATIONAL_LEADERBOARD] as LeaderboardUser[];
-      }
-
       if (parsedList.length > 0) {
         cachedTypingUsers = parsedList;
         lastTypingFetchTime = Date.now();
         setRawTypingUsers(parsedList);
+      } else {
+        setRawTypingUsers([]);
       }
     } catch (err) {
       console.error('Leaderboard fetch error:', err);
       if (!cachedTypingUsers || cachedTypingUsers.length === 0) {
-        setRawTypingUsers([...DEFAULT_NATIONAL_LEADERBOARD] as LeaderboardUser[]);
+        setRawTypingUsers([]);
       }
     } finally {
       setLoading(false);
