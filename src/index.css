@@ -79,33 +79,156 @@
   --primary: 48, 96%, 53%;
 }
 
+:root {
+  --typing-anim-duration: 260ms;
+}
+
 /* =========================================================
-   UZBEKTYPE / MONKEYTYPE ULTRA-LIGHTWEIGHT TYPING & SMOOTH CARET
-   Ultra-fast, zero-lag character rendering, no heavy bouncy delays
+   UZBEKTYPE / MONKEYTYPE DYNAMIC TYPING ANIMATIONS & SMOOTH CARET
+   Scales smoothly from Ultra-fast (80ms) to Super-slow (1500ms)
    ========================================================= */
 
-/* Harf bosilgandagi yengil, tezkor mikro-render */
+/* Harf bosilgandagi elastik pop animatsiyasi */
 @keyframes char-pop {
-  0% { opacity: 0.85; }
-  100% { opacity: 1; }
+  0% {
+    transform: scale(1.32);
+    opacity: 0.7;
+    filter: brightness(1.25);
+  }
+  45% {
+    transform: scale(0.94);
+  }
+  75% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
 }
 
+/* Yuqoriga yengil sakrash */
 @keyframes bounceUp {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  38% {
+    transform: translateY(-8px);
+  }
+  70% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
+
+/* Pastga yengil sakrash */
 @keyframes bounceDown {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(1px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  38% {
+    transform: translateY(8px);
+  }
+  70% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Katta sakrash (Jump) */
+@keyframes char-jump {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  38% {
+    transform: translateY(-14px) scale(1.15);
+  }
+  70% {
+    transform: translateY(2.5px) scale(0.96);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Neon Nur (Glow) */
+@keyframes char-glow {
+  0% {
+    text-shadow: 0 0 16px var(--main-color, #06b6d4), 0 0 28px var(--main-color, #06b6d4);
+    filter: brightness(1.5);
+    transform: scale(1.12);
+  }
+  50% {
+    text-shadow: 0 0 8px var(--main-color, #06b6d4), 0 0 14px var(--main-color, #06b6d4);
+    filter: brightness(1.25);
+    transform: scale(1.04);
+  }
+  100% {
+    text-shadow: none;
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+/* Qiya to'lqinlanish (Wave) */
+@keyframes char-wave {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-7px) rotate(-10deg);
+  }
+  65% {
+    transform: translateY(2.5px) rotate(5deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* Pastdan ko'tarilish (Slide) */
+@keyframes char-slide {
+  0% {
+    transform: translateY(12px);
+    opacity: 0.15;
+  }
+  60% {
+    transform: translateY(-2px);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Pulsatsiya (Pulse) */
+@keyframes char-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Xato bosilganda mikro-reaksiya */
 @keyframes char-shake {
   0%, 100% { transform: translateX(0); }
-  33% { transform: translateX(-2px); }
-  66% { transform: translateX(2px); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
 }
 
 /* Silliq kursor o'tishi va miltillashi */
@@ -114,27 +237,57 @@
   50% { opacity: 0.1; }
 }
 
-/* Animatsiya klasslari (Tezkor va yengil) */
-.char-typed-pop {
-  animation: char-pop 0.08s ease-out;
+/* Animatsiya klasslari (Tanlangan --typing-anim-duration asosida to'liq dinamik) */
+.char-typed-pop, .anim-char-pop {
+  animation: char-pop var(--typing-anim-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
   display: inline-block;
-  will-change: opacity;
+  will-change: transform, opacity;
 }
 
-.char-typed-bounce {
-  animation: bounceUp 0.1s ease-out;
+.char-typed-bounce, .anim-char-bounce, .anim-char-bounceUp {
+  animation: bounceUp var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
   display: inline-block;
   will-change: transform;
 }
 
-.char-typed-bounceDown {
-  animation: bounceDown 0.1s ease-out;
+.char-typed-bounceDown, .anim-char-bounceDown {
+  animation: bounceDown var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  display: inline-block;
+  will-change: transform;
+}
+
+.char-typed-jump, .anim-char-jump {
+  animation: char-jump var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  display: inline-block;
+  will-change: transform;
+}
+
+.char-typed-glow, .anim-char-glow {
+  animation: char-glow var(--typing-anim-duration, 260ms) ease-out both;
+  display: inline-block;
+  will-change: transform, filter;
+}
+
+.char-typed-wave, .anim-char-wave {
+  animation: char-wave var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  display: inline-block;
+  will-change: transform;
+}
+
+.char-typed-slide, .anim-char-slide {
+  animation: char-slide var(--typing-anim-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.char-typed-pulse, .anim-char-pulse {
+  animation: char-pulse var(--typing-anim-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
   display: inline-block;
   will-change: transform;
 }
 
 .char-error-shake {
-  animation: char-shake 0.12s ease-in-out;
+  animation: char-shake 0.16s ease-in-out;
   display: inline-block;
   will-change: transform;
 }
@@ -154,88 +307,6 @@
   background-image: radial-gradient(circle at 50% -10%, var(--glow-color, rgba(6, 182, 212, 0.12)) 0%, transparent 65%);
 }
 
-/* Yengil va tejamkor Character animations */
-@keyframes char-jump {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
-}
-
-@keyframes char-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
-}
-
-@keyframes char-glow {
-  0%, 100% { opacity: 0.95; }
-  50% { opacity: 1; }
-}
-
-@keyframes char-wave {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
-}
-
-@keyframes char-slide {
-  0% { opacity: 0.85; }
-  100% { opacity: 1; }
-}
-
-@keyframes char-pulse {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 1; }
-}
-
-.anim-char-pop {
-  animation: char-pop 0.08s ease-out;
-  display: inline-block;
-  will-change: opacity;
-}
-
-.anim-char-bounceUp {
-  animation: bounceUp 0.1s ease-out;
-  display: inline-block;
-  will-change: transform;
-}
-
-.anim-char-bounceDown {
-  animation: bounceDown 0.1s ease-out;
-  display: inline-block;
-  will-change: transform;
-}
-
-.anim-char-jump {
-  animation: char-jump 0.1s ease-out;
-  display: inline-block;
-  will-change: transform;
-}
-
-.anim-char-bounce {
-  animation: bounceUp 0.1s ease-out;
-  display: inline-block;
-  will-change: transform;
-}
-
-.anim-char-glow {
-  animation: char-glow 0.1s ease-out;
-  display: inline-block;
-}
-
-.anim-char-wave {
-  animation: char-wave 0.1s ease-out;
-  display: inline-block;
-  will-change: transform;
-}
-
-.anim-char-slide {
-  animation: char-slide 0.08s ease-out;
-  display: inline-block;
-}
-
-.anim-char-pulse {
-  animation: char-pulse 0.08s ease-out;
-  display: inline-block;
-}
-
 @keyframes shake-anim {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-2px); }
@@ -246,9 +317,10 @@
   animation: shake-anim 0.2s ease-in-out;
 }
 
-/* Zero Lag GPU acceleration & reduced-motion support */
+/* Zero Lag GPU acceleration & reduced-motion support (Istisno: foydalanuvchi tanlagan yozish animatsiyasi) */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *:not([class*="char-typed-"]):not([class*="anim-char-"]):not(.char-error-shake),
+  *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

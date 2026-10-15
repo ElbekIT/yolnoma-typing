@@ -80,7 +80,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [typingAnimDurationMs, setTypingAnimDurationMsState] = useState<number>(() => {
     const saved = localStorage.getItem('yolnoma_typing_anim_duration');
-    return saved ? parseInt(saved, 10) : 260;
+    const ms = saved ? parseInt(saved, 10) : 260;
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--typing-anim-duration', `${ms}ms`);
+    }
+    return ms;
   });
   const [soundProfile, setSoundProfileState] = useState<SoundProfile>(() => {
     return (localStorage.getItem('yolnoma_sound') as SoundProfile) || 'thock';
@@ -149,17 +153,36 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     super_slow: 1200
   };
 
+  const getSpeedFromMs = (ms: number): TypingAnimationSpeed => {
+    if (ms <= 140) return 'ultra_fast';
+    if (ms <= 210) return 'fast';
+    if (ms <= 360) return 'normal';
+    if (ms <= 650) return 'slow';
+    if (ms <= 950) return 'very_slow';
+    return 'super_slow';
+  };
+
   const setTypingAnimationSpeed = (speed: TypingAnimationSpeed) => {
     setTypingAnimationSpeedState(speed);
     localStorage.setItem('yolnoma_typing_anim_speed', speed);
     const ms = speedToMsMap[speed] || 260;
     setTypingAnimDurationMsState(ms);
     localStorage.setItem('yolnoma_typing_anim_duration', String(ms));
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--typing-anim-duration', `${ms}ms`);
+    }
   };
 
   const setTypingAnimDurationMs = (ms: number) => {
-    setTypingAnimDurationMsState(ms);
-    localStorage.setItem('yolnoma_typing_anim_duration', String(ms));
+    const clampedMs = Math.max(80, Math.min(1500, ms));
+    setTypingAnimDurationMsState(clampedMs);
+    localStorage.setItem('yolnoma_typing_anim_duration', String(clampedMs));
+    const speed = getSpeedFromMs(clampedMs);
+    setTypingAnimationSpeedState(speed);
+    localStorage.setItem('yolnoma_typing_anim_speed', speed);
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--typing-anim-duration', `${clampedMs}ms`);
+    }
   };
 
   const setSoundProfile = (sp: SoundProfile) => {

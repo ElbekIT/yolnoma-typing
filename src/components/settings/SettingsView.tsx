@@ -72,6 +72,8 @@ export const SettingsView: React.FC = () => {
 
   const [previewInput, setPreviewInput] = useState('Tezkor yozish');
   const [animTrigger, setAnimTrigger] = useState(0);
+  const [triggerCascade, setTriggerCascade] = useState(true);
+  const [lastTypedIdx, setLastTypedIdx] = useState<number | null>(null);
 
   // 1000 Themes Navigation & Filtering State
   const [themeSearch, setThemeSearch] = useState('');
@@ -102,13 +104,14 @@ export const SettingsView: React.FC = () => {
     duration: string;
     desc: string;
     tag: string;
+    ms: number;
   }[] = [
-    { id: 'ultra_fast', label: "O'ta Tez", duration: '120ms', desc: 'Chaqqon & dinamik', tag: '0.12s' },
-    { id: 'fast', label: 'Tez', duration: '180ms', desc: 'Yengil & tezkor', tag: '0.18s' },
-    { id: 'normal', label: "O'rtacha", duration: '260ms', desc: 'Standart mezon', tag: '0.26s' },
-    { id: 'slow', label: 'Sekin', duration: '500ms', desc: 'Sokin va yaqqol sezilarli', tag: '0.50s' },
-    { id: 'very_slow', label: 'Juda Sekin', duration: '800ms', desc: 'Mayin va cho‘ziq harakat', tag: '0.80s' },
-    { id: 'super_slow', label: 'Super Sekin', duration: '1200ms', desc: 'Kinematik sekin animatsiya', tag: '1.20s' },
+    { id: 'ultra_fast', label: "O'ta Tez", duration: '120ms', desc: 'Chaqqon & dinamik', tag: '0.12s', ms: 120 },
+    { id: 'fast', label: 'Tez', duration: '180ms', desc: 'Yengil & tezkor', tag: '0.18s', ms: 180 },
+    { id: 'normal', label: "O'rtacha", duration: '260ms', desc: 'Standart mezon', tag: '0.26s', ms: 260 },
+    { id: 'slow', label: 'Sekin', duration: '500ms', desc: 'Sokin va yaqqol sezilarli', tag: '0.50s', ms: 500 },
+    { id: 'very_slow', label: 'Juda Sekin', duration: '800ms', desc: 'Mayin va cho‘ziq harakat', tag: '0.80s', ms: 800 },
+    { id: 'super_slow', label: 'Super Sekin', duration: '1200ms', desc: 'Kinematik sekin animatsiya', tag: '1.20s', ms: 1200 },
   ];
 
   const caretOptions: CaretStyle[] = ['line', 'block', 'underline', 'outline'];
@@ -661,9 +664,11 @@ export const SettingsView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-6">
           {typingAnimationOptions.map((opt) => (
             <button
+              type="button"
               key={opt.id}
               onClick={() => {
                 setTypingAnimation(opt.id);
+                setTriggerCascade(true);
                 setAnimTrigger((prev) => prev + 1);
               }}
               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-1.5 ${
@@ -703,12 +708,14 @@ export const SettingsView: React.FC = () => {
             {/* Speed Presets */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {animationSpeedOptions.map((sp) => {
-                const isSelected = typingAnimationSpeed === sp.id;
+                const isSelected = typingAnimDurationMs === sp.ms || typingAnimationSpeed === sp.id;
                 return (
                   <button
+                    type="button"
                     key={sp.id}
                     onClick={() => {
                       setTypingAnimationSpeed(sp.id);
+                      setTriggerCascade(true);
                       setAnimTrigger((prev) => prev + 1);
                     }}
                     className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
@@ -744,6 +751,7 @@ export const SettingsView: React.FC = () => {
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10);
                   setTypingAnimDurationMs(val);
+                  setTriggerCascade(true);
                   setAnimTrigger((prev) => prev + 1);
                 }}
                 className="w-full h-2 bg-[var(--card-bg)] rounded-lg appearance-none cursor-pointer accent-[var(--main-color)]"
@@ -751,9 +759,10 @@ export const SettingsView: React.FC = () => {
               <div className="flex justify-between text-[10px] font-mono text-[var(--sub-color)] mt-1.5">
                 <span>80ms (O'ta Tez)</span>
                 <span>260ms (Mezon)</span>
-                <span>600ms (Sekin)</span>
-                <span>1000ms (Juda Sekin)</span>
-                <span>1500ms (Super Sekin)</span>
+                <span>500ms (Sekin)</span>
+                <span>800ms (Juda Sekin)</span>
+                <span>1200ms (Super Sekin)</span>
+                <span>1500ms (Maksimal)</span>
               </div>
             </div>
           </div>
@@ -766,43 +775,80 @@ export const SettingsView: React.FC = () => {
               <Zap className="w-3.5 h-3.5 text-[var(--main-color)]" />
               <span>Jonli Sinov (Live Preview):</span>
             </span>
-            <button
-              type="button"
-              onClick={() => setAnimTrigger((prev) => prev + 1)}
-              className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white transition-colors cursor-pointer text-[var(--text-color)] flex items-center gap-1"
-            >
-              <span>Qayta ko'rish</span>
-              <span>🔄</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-[var(--sub-color)] hidden sm:inline-block">
+                Tezlik: <strong className="text-[var(--main-color)]">{typingAnimDurationMs}ms</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setTriggerCascade(true);
+                  setAnimTrigger((prev) => prev + 1);
+                }}
+                className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white transition-colors cursor-pointer text-[var(--text-color)] flex items-center gap-1 shadow-xs"
+                title="Animatsiyani tanlangan tezlikda qayta ko'rish"
+              >
+                <span>Qayta ko'rish</span>
+                <span>🔄</span>
+              </button>
+            </div>
           </div>
 
           {/* Animated Text Sample Display */}
           <div className="py-4 px-4 bg-[var(--card-bg)] rounded-xl border border-[var(--sub-alt)] font-mono text-xl sm:text-2xl text-[var(--text-color)] flex items-center justify-center gap-1.5 select-none overflow-x-auto min-h-[64px]">
-            {previewInput.split('').map((ch, i) => (
-              <span
-                key={`${i}-${ch}-${animTrigger}`}
-                className={`inline-block font-semibold transition-all ${
-                  typingAnimation !== 'none' ? `anim-char-${typingAnimation}` : ''
-                } ${ch === ' ' ? 'w-3' : 'text-[var(--main-color)]'}`}
-                style={{ animationDelay: `${i * Math.min(60, Math.max(20, typingAnimDurationMs * 0.15))}ms` }}
-              >
-                {ch === ' ' ? '\u00A0' : ch}
-              </span>
-            ))}
+            {previewInput.split('').map((ch, i) => {
+              const stepMs = Math.min(140, Math.max(25, Math.round(typingAnimDurationMs * 0.16)));
+              const delay = triggerCascade ? `${i * stepMs}ms` : '0ms';
+              const isAnimating = typingAnimation !== 'none' && (triggerCascade || i === lastTypedIdx);
+
+              return (
+                <span
+                  key={triggerCascade ? `c-${i}-${ch}-${animTrigger}` : `t-${i}-${ch}-${i === lastTypedIdx ? animTrigger : 'idle'}`}
+                  className={`inline-block font-semibold ${
+                    isAnimating ? `anim-char-${typingAnimation}` : ''
+                  } ${ch === ' ' ? 'w-3' : 'text-[var(--main-color)]'}`}
+                  style={{
+                    animationDuration: `${typingAnimDurationMs}ms`,
+                    animationDelay: delay,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  {ch === ' ' ? '\u00A0' : ch}
+                </span>
+              );
+            })}
           </div>
 
           {/* User Input Test Field */}
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-2">
             <input
               type="text"
               value={previewInput}
               onChange={(e) => {
-                setPreviewInput(e.target.value);
+                const val = e.target.value;
+                setPreviewInput(val);
+                setTriggerCascade(false);
+                setLastTypedIdx(val.length > 0 ? val.length - 1 : null);
                 setAnimTrigger((prev) => prev + 1);
               }}
               placeholder="Harflarni yozib ko'ring (tezligi va sekinligini sinang)..."
-              className="w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+              className="flex-1 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
             />
+            {previewInput !== 'Tezkor yozish' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewInput('Tezkor yozish');
+                  setTriggerCascade(true);
+                  setLastTypedIdx(null);
+                  setAnimTrigger((prev) => prev + 1);
+                }}
+                className="px-2.5 py-2.5 text-xs font-mono rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--main-color)] hover:text-white text-[var(--sub-color)] transition-colors cursor-pointer"
+                title="Boshlang'ich matnga qaytarish"
+              >
+                Tiklash
+              </button>
+            )}
           </div>
         </div>
       </div>

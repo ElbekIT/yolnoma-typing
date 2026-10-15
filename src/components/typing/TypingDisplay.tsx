@@ -34,22 +34,22 @@ const CharItem = memo<CharItemProps>(
       charClass += 'text-[var(--sub-color)] opacity-85 ';
     } else if (isCorrect) {
       charClass += 'text-[var(--text-color)] font-medium ';
-      if (typingAnimation === 'pop' || !typingAnimation) {
+      if (typingAnimation === 'pop' || (!typingAnimation && typingAnimation !== 'none')) {
         charClass += 'char-typed-pop ';
       } else if (typingAnimation === 'bounce' || typingAnimation === 'bounceUp') {
         charClass += 'char-typed-bounce ';
       } else if (typingAnimation === 'bounceDown') {
         charClass += 'char-typed-bounceDown ';
       } else if (typingAnimation === 'jump') {
-        charClass += 'anim-char-jump ';
+        charClass += 'char-typed-jump ';
       } else if (typingAnimation === 'glow') {
-        charClass += 'anim-char-glow ';
+        charClass += 'char-typed-glow ';
       } else if (typingAnimation === 'wave') {
-        charClass += 'anim-char-wave ';
+        charClass += 'char-typed-wave ';
       } else if (typingAnimation === 'slide') {
-        charClass += 'anim-char-slide ';
+        charClass += 'char-typed-slide ';
       } else if (typingAnimation === 'pulse') {
-        charClass += 'anim-char-pulse ';
+        charClass += 'char-typed-pulse ';
       }
     } else {
       // Mistyped character - trigger shake & error styling (Uzbektype error reaction)
@@ -60,7 +60,7 @@ const CharItem = memo<CharItemProps>(
       <span
         ref={(el) => onRef(el, globalIndex)}
         className={charClass}
-        style={{ transform: 'translateZ(0)' }}
+        style={{ transform: 'translateZ(0)', animationDuration: 'var(--typing-anim-duration, 260ms)' }}
       >
         {char}
       </span>
@@ -98,12 +98,22 @@ const SpaceItem = memo<SpaceItemProps>(
       spaceClass += 'text-[var(--sub-color)] opacity-70 ';
     } else if (isCorrectSpace) {
       spaceClass += 'text-[var(--text-color)] ';
-      if (typingAnimation === 'pop' || !typingAnimation) {
+      if (typingAnimation === 'pop' || (!typingAnimation && typingAnimation !== 'none')) {
         spaceClass += 'char-typed-pop ';
       } else if (typingAnimation === 'bounce' || typingAnimation === 'bounceUp') {
         spaceClass += 'char-typed-bounce ';
       } else if (typingAnimation === 'bounceDown') {
         spaceClass += 'char-typed-bounceDown ';
+      } else if (typingAnimation === 'jump') {
+        spaceClass += 'char-typed-jump ';
+      } else if (typingAnimation === 'glow') {
+        spaceClass += 'char-typed-glow ';
+      } else if (typingAnimation === 'wave') {
+        spaceClass += 'char-typed-wave ';
+      } else if (typingAnimation === 'slide') {
+        spaceClass += 'char-typed-slide ';
+      } else if (typingAnimation === 'pulse') {
+        spaceClass += 'char-typed-pulse ';
       }
     } else {
       spaceClass += 'text-[var(--error-color,#ef4444)] bg-red-500/25 border-b-2 border-[var(--error-color,#ef4444)] rounded-xs char-error-shake ';
@@ -113,7 +123,7 @@ const SpaceItem = memo<SpaceItemProps>(
       <span
         ref={(el) => onRef(el, spaceIdx)}
         className={spaceClass}
-        style={{ transform: 'translateZ(0)' }}
+        style={{ transform: 'translateZ(0)', animationDuration: 'var(--typing-anim-duration, 260ms)' }}
       >
         {'\u00A0'}
       </span>
