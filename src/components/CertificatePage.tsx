@@ -259,44 +259,47 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
   }
 
   // =========================================================================
-  // Main Certificate Screen (Screenshot ready, 10s auto-closing)
+  // Main Certificate Screen (Screenshot ready, landscape, 10s auto-closing)
   // =========================================================================
   return (
-    <div className="min-h-[90vh] py-4 px-2 sm:px-4 max-w-4xl mx-auto flex flex-col items-center justify-center relative animate-in fade-in duration-300">
+    <div className="min-h-[85vh] py-2 sm:py-4 px-2 sm:px-4 max-w-4xl mx-auto flex flex-col items-center justify-center relative animate-in fade-in duration-300">
       {/* Screen flash effect for screenshot */}
       {isFlashActive && (
         <div className="fixed inset-0 z-50 bg-white opacity-80 pointer-events-none transition-opacity duration-300" />
       )}
 
       {/* Top Controller Bar: Countdown timer & Quick Screenshot Button */}
-      <div className="w-full max-w-3xl flex flex-col gap-2.5 mb-4 bg-slate-900/95 border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-xl backdrop-blur-md">
-        <div className="flex items-center justify-between gap-3">
+      <div className="w-full max-w-4xl flex flex-col gap-2 mb-3 bg-slate-900/95 border border-slate-800/80 p-2.5 sm:p-3 rounded-2xl shadow-lg backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           <button
+            type="button"
             onClick={onBackToHome}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Bosh sahifaga</span>
           </button>
 
           {/* 10 Second Auto-Close Countdown Badge */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-black">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-black">
               <Timer className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '3s' }} />
               <span>
-                Avtomatik yopilish: <strong className="text-white text-sm ml-1 font-mono">{secondsRemaining}s</strong>
+                Avtomatik yopilish: <strong className="text-white text-xs sm:text-sm ml-1 font-mono">{secondsRemaining}s</strong>
               </span>
             </div>
           </div>
 
           {/* Screenshot Shutter Button */}
           <button
+            type="button"
             onClick={handleTriggerScreenshotMode}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
             title="Ekraningizni bemalol screenshot qilib oling"
           >
             <Camera className="w-3.5 h-3.5 text-amber-300" />
-            <span>Screenshot olish</span>
+            <span className="hidden sm:inline">Screenshot olish</span>
+            <span className="sm:hidden">Rasmga olish</span>
           </button>
         </div>
 
@@ -310,179 +313,217 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
       </div>
 
       {screenshotNotified && (
-        <div className="w-full max-w-3xl mb-3 p-2.5 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-center text-xs text-emerald-400 font-medium flex items-center justify-center gap-2 animate-in fade-in">
+        <div className="w-full max-w-4xl mb-2.5 p-2 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-center text-xs text-emerald-400 font-medium flex items-center justify-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Telefoningizda skrinshot (Power+Ovoz) yoki kompyuterda (Win+Shift+S) orqali saqlab oling!</span>
+          <span>Telefoningizda (Power+Ovoz) yoki kompyuterda (Win+Shift+S) orqali saqlab oling!</span>
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* ================= ULTRA LUXURY CERTIFICATE ============= */}
+      {/* ============ LUXURY LANDSCAPE CERTIFICATE ============== */}
       {/* ======================================================== */}
       <div
         ref={certCardRef}
         id="official-certificate-card"
-        className="w-full max-w-3xl relative rounded-3xl p-6 sm:p-10 border-4 border-amber-500/40 shadow-2xl overflow-hidden select-none bg-gradient-to-br from-[#0a0f1d] via-[#0f172a] to-[#060913] text-white"
+        className="w-full max-w-4xl relative rounded-3xl p-3 sm:p-5 md:p-6 border-2 sm:border-3 border-amber-400/50 shadow-2xl overflow-hidden select-none bg-gradient-to-br from-[#060a14] via-[#0c1426] to-[#04060c] text-white"
         style={{
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(59, 130, 246, 0.15)'
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 45px rgba(59, 130, 246, 0.12)'
         }}
       >
-        {/* Luxury Gold/Cyan Corner Ornaments */}
-        <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-amber-400/80 rounded-tl-3xl pointer-events-none" />
-        <div className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-amber-400/80 rounded-tr-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-amber-400/80 rounded-bl-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-amber-400/80 rounded-br-3xl pointer-events-none" />
+        {/* Luxury Gold Corner Ornaments (Scale safely without overlapping text) */}
+        <div className="absolute top-0 left-0 w-8 h-8 sm:w-14 sm:h-14 border-t-2 sm:border-t-3 border-l-2 sm:border-l-3 border-amber-400/70 rounded-tl-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-8 h-8 sm:w-14 sm:h-14 border-t-2 sm:border-t-3 border-r-2 sm:border-r-3 border-amber-400/70 rounded-tr-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-8 h-8 sm:w-14 sm:h-14 border-b-2 sm:border-b-3 border-l-2 sm:border-l-3 border-amber-400/70 rounded-bl-2xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-14 sm:h-14 border-b-2 sm:border-b-3 border-r-2 sm:border-r-3 border-amber-400/70 rounded-br-2xl pointer-events-none" />
 
-        {/* Ambient Radial Lights */}
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 right-10 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Ambient Radial Glows */}
+        <div className="absolute -top-16 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Watermark Pattern */}
+        {/* Subtle Watermark Matrix */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="absolute inset-0 opacity-[0.025] pointer-events-none"
           style={{
             backgroundImage: `radial-gradient(circle, #fff 1px, transparent 1px)`,
-            backgroundSize: '24px 24px'
+            backgroundSize: '20px 20px'
           }}
         />
 
-        {/* Inner Border Line */}
-        <div className="border border-amber-400/20 rounded-2xl p-5 sm:p-8 relative z-10 flex flex-col items-center text-center">
+        {/* Inner Border Frame */}
+        <div className="border border-amber-400/25 rounded-2xl p-3.5 sm:p-5 md:p-6 relative z-10 flex flex-col justify-between">
           {/* 1. Header: Platform Emblem & Official Title */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-400/30 shadow-md">
-              <Award className="w-6 h-6 sm:w-7 sm:h-7" />
-            </div>
-            <div className="text-left">
-              <span className="text-xs sm:text-sm font-black tracking-widest text-blue-400 font-mono block">
-                YOLNOMA TYPING
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider block">
-                O'zbekiston №1 Klaviatura Trenajyori
-              </span>
-            </div>
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 uppercase mt-3 mb-1">
-            Rasmiy Mahorat Sertifikati
-          </h1>
-          <p className="text-[11px] sm:text-xs text-slate-300 font-mono max-w-lg mb-6">
-            Ushbu sertifikat egasining kompyuter klaviaturasida tez va aniq matn terish bo'yicha yuqori darajadagi professional ko'nikmaga ega ekanligini tasdiqlaydi.
-          </p>
-
-          {/* 2. User Profile Picture & Name (Centered at the very top of certificate) */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="relative mb-3 group">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-amber-400 via-blue-500 to-indigo-500 shadow-xl">
-                <img
-                  src={avatarUrl}
-                  alt={userDisplayName}
-                  className="w-full h-full rounded-full object-cover bg-slate-900 border-2 border-slate-900"
-                  onError={(e) => {
-                    (e.target as HTMLElement).setAttribute('src', `https://api.dicebear.com/7.x/bottts/svg?seed=Yolnoma`);
-                  }}
-                />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-amber-400/20 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-400/30 shadow-md">
+                <Award className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-emerald-500 text-white shadow-md border-2 border-slate-900" title="Tasdiqlangan Foydalanuvchi">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-            </div>
-
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <span>{userDisplayName}</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                Tasdiqlangan
-              </span>
-            </h2>
-            <div className="mt-1 flex items-center gap-1.5">
-              <span
-                className="px-3 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider border shadow-sm"
-                style={{
-                  backgroundColor: `${rankColor}20`,
-                  borderColor: `${rankColor}50`,
-                  color: rankColor
-                }}
-              >
-                {rankBadge} • {rankTitle}
-              </span>
-            </div>
-          </div>
-
-          {/* 3. Hero WPM Indicator */}
-          <div className="w-full max-w-md bg-slate-950/70 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 relative overflow-hidden shadow-inner">
-            <div className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-1">
-              Qayd Etilgan Tezlik
-            </div>
-            <div className="flex items-baseline justify-center gap-2">
-              <span className="text-5xl sm:text-7xl font-black font-mono tracking-tight text-white drop-shadow-md">
-                {bestWpm}
-              </span>
-              <span className="text-lg sm:text-2xl font-black font-mono text-blue-400">
-                WPM
-              </span>
-            </div>
-            <div className="text-xs text-slate-400 font-mono mt-1">
-              (daqiqasiga so'z soni / Words Per Minute)
-            </div>
-          </div>
-
-          {/* 4. Detailed Metrics 4-Box Grid: Aniqlik, Davomiylik, Mashqlar soni, Streak */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 w-full mb-6">
-            <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex flex-col items-center">
-              <Target className="w-4 h-4 text-emerald-400 mb-1" />
-              <span className="text-[10px] text-slate-400 font-bold uppercase font-mono">Aniqlik (Acc)</span>
-              <span className="text-lg sm:text-xl font-black font-mono text-emerald-400">{bestAccuracy}%</span>
-            </div>
-
-            <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex flex-col items-center">
-              <Clock className="w-4 h-4 text-sky-400 mb-1" />
-              <span className="text-[10px] text-slate-400 font-bold uppercase font-mono">Yozish Vaqti</span>
-              <span className="text-lg sm:text-xl font-black font-mono text-sky-400">{testDuration} soniya</span>
-            </div>
-
-            <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex flex-col items-center">
-              <Activity className="w-4 h-4 text-purple-400 mb-1" />
-              <span className="text-[10px] text-slate-400 font-bold uppercase font-mono">Mashqlar Soni</span>
-              <span className="text-lg sm:text-xl font-black font-mono text-purple-400">{totalCompletedTests} marta</span>
-            </div>
-
-            <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex flex-col items-center">
-              <Flame className="w-4 h-4 text-amber-400 mb-1" />
-              <span className="text-[10px] text-slate-400 font-bold uppercase font-mono">Faol Ketma-ketlik</span>
-              <span className="text-lg sm:text-xl font-black font-mono text-amber-400">{currentStreak} kun</span>
-            </div>
-          </div>
-
-          {/* 5. Official Verification Stamp & Serial ID */}
-          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800/90 text-left">
-            <div className="flex items-center gap-3">
-              {/* Gold Official Stamp */}
-              <div className="w-14 h-14 rounded-full border-2 border-dashed border-amber-400/70 p-1 flex items-center justify-center text-amber-400 shrink-0">
-                <div className="w-full h-full rounded-full border border-amber-400/50 flex flex-col items-center justify-center text-[8px] font-mono font-black uppercase leading-tight text-center">
-                  <span>YOLNOMA</span>
-                  <span className="text-[6px] text-amber-200">VERIFIED</span>
-                  <span>★★★★★</span>
-                </div>
-              </div>
-
               <div>
-                <span className="text-[10px] text-slate-400 font-mono block">Sertifikat Seriyasi:</span>
-                <span className="text-xs font-mono font-bold text-amber-300 block">{certificateNumber}</span>
-                <span className="text-[10px] text-slate-500 font-mono block">Berilgan sana: {issueDate}</span>
+                <span className="text-xs sm:text-sm font-black tracking-widest text-blue-400 font-mono block">
+                  YOLNOMA TYPING
+                </span>
+                <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono uppercase tracking-wider block">
+                  O'zbekiston №1 Klaviatura Trenajyori
+                </span>
               </div>
             </div>
 
             <div className="text-center sm:text-right">
-              <span className="text-[10px] text-slate-400 font-mono block">Rasmiy Manzil:</span>
-              <span className="text-xs font-mono font-bold text-blue-400 block">https://www.yolnoma.uz</span>
-              <span className="text-[9px] text-slate-500 font-mono block">Elektron tekshiruvdan o'tgan</span>
+              <h1 className="text-base sm:text-xl md:text-2xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 uppercase">
+                Rasmiy Mahorat Sertifikati
+              </h1>
+              <span className="text-[9px] sm:text-[10px] text-amber-300/80 font-mono block tracking-wider uppercase">
+                Rasmiy Tasdiqlangan Hujjat • Official Skill Certificate
+              </span>
+            </div>
+          </div>
+
+          {/* 2. Main Horizontal 2-Column Body */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:gap-6 items-stretch my-3.5">
+            {/* Left Column (5 cols): User Identity & Official Seal */}
+            <div className="md:col-span-5 flex flex-col justify-between bg-slate-950/40 border border-slate-800/80 rounded-2xl p-3.5 sm:p-4 text-center sm:text-left">
+              {/* User Identity */}
+              <div>
+                <div className="flex items-center justify-center sm:justify-start gap-3 mb-2.5">
+                  <div className="relative shrink-0">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-blue-500 to-indigo-500 shadow-md">
+                      <img
+                        src={avatarUrl}
+                        alt={userDisplayName}
+                        className="w-full h-full rounded-full object-cover bg-slate-900 border-2 border-slate-900"
+                        onError={(e) => {
+                          (e.target as HTMLElement).setAttribute('src', `https://api.dicebear.com/7.x/bottts/svg?seed=Yolnoma`);
+                        }}
+                      />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-emerald-500 text-white shadow-md border-2 border-slate-900" title="Tasdiqlangan Foydalanuvchi">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                      <h2 className="text-base sm:text-lg font-black text-white tracking-tight truncate max-w-[170px] sm:max-w-[200px]">
+                        {userDisplayName}
+                      </h2>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 shrink-0">
+                        Tasdiqlangan
+                      </span>
+                    </div>
+
+                    <div className="mt-1">
+                      <span
+                        className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider border shadow-xs"
+                        style={{
+                          backgroundColor: `${rankColor}15`,
+                          borderColor: `${rankColor}40`,
+                          color: rankColor
+                        }}
+                      >
+                        {rankBadge} • {rankTitle}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[10px] sm:text-[11px] text-slate-300/90 font-mono leading-relaxed mt-2">
+                  Ushbu sertifikat egasining kompyuter klaviaturasida yuqori professional tezlik va aniqlikda matn terish mahoratiga ega ekanligini tasdiqlaydi.
+                </p>
+              </div>
+
+              {/* Stamp & Serial Bar */}
+              <div className="flex items-center justify-center sm:justify-start gap-3 pt-3 mt-3 border-t border-slate-800/80">
+                {/* Official Gold Seal Stamp */}
+                <div className="w-12 h-12 rounded-full border-2 border-dashed border-amber-400/70 p-0.5 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                  <div className="w-full h-full rounded-full border border-amber-400/40 flex flex-col items-center justify-center text-[7px] font-mono font-black uppercase leading-tight text-center">
+                    <span>YOLNOMA</span>
+                    <span className="text-[5px] text-amber-200">VERIFIED</span>
+                    <span>★★★★★</span>
+                  </div>
+                </div>
+
+                <div className="text-left font-mono">
+                  <span className="text-[9px] text-slate-400 block">Sertifikat Seriyasi:</span>
+                  <span className="text-xs font-bold text-amber-300 block">{certificateNumber}</span>
+                  <span className="text-[9px] text-slate-500 block">Berilgan: {issueDate}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column (7 cols): Speed Hero & 4 Metrics */}
+            <div className="md:col-span-7 flex flex-col justify-between gap-2.5 bg-slate-950/40 border border-slate-800/80 rounded-2xl p-3.5 sm:p-4">
+              {/* Hero WPM Display Card */}
+              <div className="bg-gradient-to-r from-slate-950/90 via-slate-900/80 to-slate-950/90 border border-slate-800/90 rounded-xl p-3 sm:p-4 text-center relative overflow-hidden shadow-inner">
+                <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                  Qayd Etilgan Tezlik
+                </div>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-4xl sm:text-6xl font-black font-mono tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-amber-200 drop-shadow-md">
+                    {bestWpm}
+                  </span>
+                  <span className="text-base sm:text-2xl font-black font-mono text-blue-400">
+                    WPM
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono">
+                  (daqiqasiga so'z soni / Words Per Minute)
+                </div>
+              </div>
+
+              {/* 4 Key Metrics (2x2 Grid) */}
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <div className="bg-slate-900/80 border border-slate-800 p-2 sm:p-2.5 rounded-xl flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">
+                    <Target className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block truncate">Aniqlik (Acc)</span>
+                    <span className="text-sm sm:text-base font-black font-mono text-emerald-400 block">{bestAccuracy}%</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 p-2 sm:p-2.5 rounded-xl flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-sky-500/15 text-sky-400 shrink-0">
+                    <Clock className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block truncate">Yozish Vaqti</span>
+                    <span className="text-sm sm:text-base font-black font-mono text-sky-400 block">{testDuration} soniya</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 p-2 sm:p-2.5 rounded-xl flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-purple-500/15 text-purple-400 shrink-0">
+                    <Activity className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block truncate">Mashqlar Soni</span>
+                    <span className="text-sm sm:text-base font-black font-mono text-purple-400 block">{totalCompletedTests} marta</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 p-2 sm:p-2.5 rounded-xl flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+                    <Flame className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block truncate">Ketma-ketlik</span>
+                    <span className="text-sm sm:text-base font-black font-mono text-amber-400 block">{currentStreak} kun</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Verification Footer */}
+              <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80 px-1">
+                <span>Manzil: <strong className="text-blue-400">https://www.yolnoma.uz</strong></span>
+                <span className="text-slate-500">Elektron tekshiruvdan o'tgan</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Helper notice */}
-      <p className="mt-4 text-[11px] text-slate-400 font-mono text-center max-w-md">
+      <p className="mt-2.5 text-[10px] sm:text-[11px] text-slate-400 font-mono text-center max-w-lg">
         📸 <span className="text-amber-300 font-bold">Screenshot qilib oling:</span> Telefoningiz yoki kompyuteringiz orqali ushbu sahifani rasmga olib saqlang. 10 soniyadan so'ng eski sertifikat o'chiriladi va bosh sahifaga qaytiladi.
       </p>
     </div>

@@ -812,9 +812,9 @@ function MainAppContent() {
     }
   }, [user, profile, mode, timeMode, wordCountMode, difficulty, language, quoteMeta, codeLang, saveTestResult]);
 
-  // Timer loop
+  // Timer loop: Only runs when test is active AND user is on typing tab
   useEffect(() => {
-    if (isTestActive) {
+    if (isTestActive && activeTab === 'typing') {
       if (startTimeRef.current === 0) {
         startTimeRef.current = Date.now();
       }
@@ -854,6 +854,11 @@ function MainAppContent() {
         wpmHistoryRef.current.push(newPoint);
         setWpmHistory((prev) => [...prev, newPoint]);
       }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
 
     return () => {
@@ -862,7 +867,18 @@ function MainAppContent() {
         timerRef.current = null;
       }
     };
-  }, [isTestActive, timeMode, finishTest]);
+  }, [isTestActive, activeTab, timeMode, finishTest]);
+
+  // Reset test state cleanly whenever navigating away from 'typing' or entering 'typing'
+  const prevTabRef = useRef<string>(activeTab);
+  useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      if (prevTabRef.current === 'typing' || activeTab === 'typing') {
+        initTestText();
+      }
+      prevTabRef.current = activeTab;
+    }
+  }, [activeTab, initTestText]);
 
   // Feature 5: Targeted practice on error-prone keys (Hook declared before ANY early returns)
   const handleStartTargetedPractice = useCallback((keys: string[]) => {
@@ -938,6 +954,7 @@ function MainAppContent() {
   }, []);
 
   const handleStartHero = useCallback((targetMode?: string) => {
+    initTestText();
     if (targetMode && typeof targetMode === 'string') {
       if (targetMode === '15' || targetMode === '30' || targetMode === '60') {
         setTimeMode(Number(targetMode));
@@ -947,6 +964,10 @@ function MainAppContent() {
           const arena = document.getElementById('typing-arena');
           if (arena) {
             arena.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          const input = document.getElementById('typing-input-field') || document.querySelector('input[type="text"]');
+          if (input) {
+            (input as HTMLInputElement).focus();
           }
         }, 150);
         return;
@@ -965,7 +986,7 @@ function MainAppContent() {
         (input as HTMLInputElement).focus();
       }
     }, 100);
-  }, [handleThematicAction]);
+  }, [handleThematicAction, initTestText]);
 
   // DevTools Security Gate (Runs before loading, login, and application screens)
   if (isDevToolsBlocked) {
