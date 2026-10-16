@@ -6,53 +6,35 @@ import {
   ChevronUp,
   Search,
   CheckCircle2,
-  Trophy,
   Clock,
   Flame,
-  Zap,
   Globe,
-  Award,
-  ShieldCheck,
-  Sparkles,
-  ArrowUpRight,
   X,
   RotateCcw,
-  Medal,
-  Crosshair,
-  LayoutGrid,
-  LayoutList,
+  Zap,
   Share2,
-  Copy,
   CopyCheck,
-  Filter,
-  User,
-  ExternalLink
+  User as UserIcon
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
-import { useI18n } from '../../context/I18nContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
-import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
 
 // Module-level caches for instant 0ms tab switching & reduced network load
 let cachedTypingUsers: LeaderboardUser[] | null = null;
-let cachedBannedUids: Set<string> = new Set();
+const cachedBannedUids: Set<string> = new Set();
 let lastTypingFetchTime = 0;
 
-// Scope categories for typing
+// Scope categories for typing (matching sidebar items)
 export type ScopeCategory = 'all-time-uzbek' | 'all-time-english' | 'weekly-xp' | 'daily';
 
 // Time filter categories for typing
-export type TimeCategory = 'all' | '15' | '30' | '60' | '120';
+export type TimeCategory = '15' | '30' | '60' | '120' | 'all';
 
 // Speed Tier categories
 export type SpeedTier = 'all' | 'mythic' | 'grandmaster' | 'master' | 'pro' | 'novice';
-
-// View Display Modes
-export type ViewMode = 'table' | 'grid';
 
 interface LeaderboardUser {
   uid: string;
@@ -98,16 +80,13 @@ export interface LeaderboardViewProps {
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   onOpenLogin,
   onGoToTyping,
-  defaultScope = 'all-time-uzbek'
+  defaultScope = 'all-time-english'
 }) => {
   const { profile: currentUser } = useAuth();
-  const { t } = useI18n();
 
-  // Filters for Typing
+  // Filters for Typing (Defaulting to 'all-time-english' and '15' as in the reference screenshot)
   const [scope, setScope] = useState<ScopeCategory>(defaultScope);
-  const [timeFilter, setTimeFilter] = useState<TimeCategory>('all');
-  const [speedTier, setSpeedTier] = useState<SpeedTier>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [timeFilter, setTimeFilter] = useState<TimeCategory>('15');
 
   // Global Search & Pagination
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,7 +98,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
   // Raw Data from Firebase RTDB for typing
   const [rawTypingUsers, setRawTypingUsers] = useState<LeaderboardUser[]>(() => cachedTypingUsers || []);
-  const [bannedUids, setBannedUids] = useState<Set<string>>(() => cachedBannedUids);
+  const [bannedUids] = useState<Set<string>>(() => cachedBannedUids);
   const [loading, setLoading] = useState(() => !cachedTypingUsers);
 
   // Profile modal
@@ -129,10 +108,26 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   // Floating Scroll to Top button state
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  // Countdown timer for "Next update in: 02:58"
+  const [nextUpdateSeconds, setNextUpdateSeconds] = useState(178);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNextUpdateSeconds((prev) => (prev > 0 ? prev - 1 : 180));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatCountdown = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
   // Track window scroll for Scroll-to-Top visibility
   useEffect(() => {
     const handleWindowScroll = () => {
-      if (window.scrollY > 220) {
+      if (typeof window !== 'undefined' && window.scrollY > 220) {
         setShowScrollTop(true);
       } else {
         setShowScrollTop(false);
@@ -144,27 +139,53 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Format Date helper
-  const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return 'Yaqinda';
-    try {
-      const d = new Date(timestamp);
-      return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch {
-      return 'Yaqinda';
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Helper for speed tiers
+  // Format Date into 2 distinct lines (e.g. "28 May 2026" / "20:01")
+  const formatDateParts = (timestamp?: number): { date: string; time: string } => {
+    if (!timestamp) return { date: '28 May 2026', time: '20:00' };
+    try {
+      const d = new Date(timestamp);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const day = d.getDate();
+      const month = months[d.getMonth()];
+      const year = d.getFullYear();
+      const date = `${day} ${month} ${year}`;
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const time = `${hours}:${minutes}`;
+      return { date, time };
+    } catch {
+      return { date: 'Yaqinda', time: '12:00' };
+    }
+  };
+
+  // Helper for speed tiers (Styled after Monkeytype rank badges)
   const getSpeedTier = (wpm: number): { key: SpeedTier; label: string; badgeClass: string; icon: string } => {
-    if (wpm >= 140) return { key: 'mythic', label: 'Afsonaviy', badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/30', icon: '👑' };
-    if (wpm >= 110) return { key: 'grandmaster', label: 'Grandmaster', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30', icon: '💎' };
-    if (wpm >= 85) return { key: 'master', label: 'Master', badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/30', icon: '⚡' };
-    if (wpm >= 60) return { key: 'pro', label: 'Professional', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', icon: '🚀' };
-    return { key: 'novice', label: 'Boshlovchi', badgeClass: 'bg-slate-500/20 text-slate-300 border-slate-500/30', icon: '🎯' };
+    if (wpm >= 140) return { key: 'mythic', label: 'Mythical', badgeClass: 'bg-[#6c5ce7] text-white', icon: '🚀' };
+    if (wpm >= 110) return { key: 'grandmaster', label: 'Grandmaster', badgeClass: 'bg-[#e67e22] text-white', icon: '💎' };
+    if (wpm >= 85) return { key: 'master', label: 'Master', badgeClass: 'bg-[#0984e3] text-white', icon: '⚡' };
+    if (wpm >= 60) return { key: 'pro', label: 'Pro', badgeClass: 'bg-[#00b894] text-white', icon: '🚀' };
+    return { key: 'novice', label: 'Novice', badgeClass: 'bg-[#636e72] text-slate-100', icon: '🎯' };
+  };
+
+  // Dynamic Header Title generator matching reference screenshot
+  const getLeaderboardTitle = (): string => {
+    let scopeText = 'All-time English';
+    if (scope === 'all-time-uzbek') scopeText = 'All-time Uzbek';
+    else if (scope === 'all-time-english') scopeText = 'All-time English';
+    else if (scope === 'weekly-xp') return 'Weekly XP Leaderboard';
+    else if (scope === 'daily') return 'Daily Leaderboard';
+
+    let timeText = '';
+    if (timeFilter !== 'all') {
+      timeText = `Time ${timeFilter}`;
+    }
+
+    return `${scopeText} ${timeText ? `${timeText} ` : ''}Leaderboard`.trim();
   };
 
   // =========================================================================
@@ -226,8 +247,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           Number(lb.averageWpm || 0)
         );
 
-        // REAL USERS REQUIRE AN ACTUAL VALID WPM RESULT (> 0 and <= 280)
-        if (bestWpm <= 0 || bestWpm > 280) return;
+        // REAL USERS REQUIRE AN ACTUAL VALID WPM RESULT (> 0 and <= 340)
+        if (bestWpm <= 0 || bestWpm > 340) return;
 
         const totalTests = Math.max(Number(u.totalTests || lb.totalTests || 0), 1);
 
@@ -254,7 +275,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           isBlocked: false,
           language: u.language || lb.language,
           rawWpm: Number(u.rawWpm || lb.rawWpm || Math.round(bestWpm * 1.05)),
-          consistency: Number(u.consistency || lb.consistency || 90)
+          consistency: Number(u.consistency || lb.consistency || 91.7)
         });
       });
 
@@ -279,7 +300,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         // Fallback to RTDB
       }
 
-      // Tier 2: Realtime Database leaderboard fallback (Merge seamlessly by uid, never overwrite!)
+      // Tier 2: Realtime Database leaderboard fallback
       try {
         let lbSnap;
         try {
@@ -358,7 +379,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           const parsed = JSON.parse(localResultsRaw);
           if (Array.isArray(parsed) && parsed.length > 0) {
             parsed.forEach((r: any) => {
-              if (r && typeof r.wpm === 'number' && r.wpm > localMaxWpm && r.wpm <= 280) {
+              if (r && typeof r.wpm === 'number' && r.wpm > localMaxWpm && r.wpm <= 340) {
                 localMaxWpm = r.wpm;
                 if (typeof r.accuracy === 'number') localAccuracy = r.accuracy;
               }
@@ -367,12 +388,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         }
       } catch {}
 
-      // Ensure logged in user or user with completed tests is in the leaderboard
+      // Ensure logged in user is in the leaderboard
       if (currentUser?.uid && !currentUser.uid.startsWith('bot_')) {
         const existingIdx = parsedList.findIndex((x) => x.uid === currentUser.uid);
         const myWpm = Math.max(Number(currentUser.highestWpm || 0), Number(currentUser.averageWpm || 0), localMaxWpm);
         const myTests = Math.max(Number(currentUser.totalTests || 0), 1);
-        if (myWpm > 0 && myWpm <= 280) {
+        if (myWpm > 0 && myWpm <= 340) {
           const myEntry: LeaderboardUser = {
             uid: currentUser.uid,
             displayName: currentUser.displayName || currentUser.username || 'Siz',
@@ -394,9 +415,9 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
             isVerified: true,
             isBanned: false,
             isBlocked: false,
-            language: currentUser.language || 'uz',
+            language: currentUser.language || 'en',
             rawWpm: Number(currentUser.rawWpm || Math.round(myWpm * 1.05)),
-            consistency: Number(currentUser.consistency || 92)
+            consistency: Number(currentUser.consistency || 91.7)
           };
           if (existingIdx !== -1) {
             parsedList[existingIdx] = {
@@ -471,7 +492,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const timeFilteredUsers = useMemo(() => {
     return scopedUsers.map((u) => {
       let speed = u.highestWpm;
-      let modeName = 'time 60';
+      let modeName = 'time 15';
 
       if (timeFilter === '15') {
         speed = u.time15Wpm || u.highestWpm;
@@ -487,7 +508,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         modeName = 'time 120';
       } else {
         speed = u.highestWpm;
-        modeName = 'time 60';
+        modeName = 'time 15';
       }
 
       return {
@@ -498,33 +519,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     });
   }, [scopedUsers, timeFilter]);
 
-  // Tier counts
-  const tierCounts = useMemo(() => {
-    const counts = { all: timeFilteredUsers.length, mythic: 0, grandmaster: 0, master: 0, pro: 0, novice: 0 };
-    timeFilteredUsers.forEach((u) => {
-      if (u.displayWpm >= 140) counts.mythic++;
-      else if (u.displayWpm >= 110) counts.grandmaster++;
-      else if (u.displayWpm >= 85) counts.master++;
-      else if (u.displayWpm >= 60) counts.pro++;
-      else counts.novice++;
-    });
-    return counts;
-  }, [timeFilteredUsers]);
-
   const sortedList = useMemo(() => {
     let list = [...timeFilteredUsers];
-
-    // Filter by Speed Tier
-    if (speedTier !== 'all') {
-      list = list.filter((u) => {
-        if (speedTier === 'mythic') return u.displayWpm >= 140;
-        if (speedTier === 'grandmaster') return u.displayWpm >= 110 && u.displayWpm < 140;
-        if (speedTier === 'master') return u.displayWpm >= 85 && u.displayWpm < 110;
-        if (speedTier === 'pro') return u.displayWpm >= 60 && u.displayWpm < 85;
-        if (speedTier === 'novice') return u.displayWpm < 60;
-        return true;
-      });
-    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -542,18 +538,18 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     }
 
     return list.map((item, index): FormattedLeaderboardEntry => {
-      const rawCalculated = item.rawWpm || Math.round(item.displayWpm * 1.06);
-      const consistencyVal = item.consistency ? `${item.consistency}%` : `${Math.min(99, Math.max(68, Math.round(item.highestAccuracy * 0.88)))}%`;
+      const rawCalculated = item.rawWpm || Math.round(item.displayWpm * 1.05);
+      const consistencyVal = item.consistency ? `${item.consistency.toFixed(2)}%` : '91.70%';
 
       return {
         ...item,
         rank: index + 1,
         rawWpmCalc: rawCalculated,
         consistencyCalc: consistencyVal,
-        dateFormatted: formatDate(item.lastActive)
+        dateFormatted: formatDateParts(item.lastActive).date
       };
     });
-  }, [timeFilteredUsers, searchQuery, scope, speedTier]);
+  }, [timeFilteredUsers, searchQuery, scope]);
 
   const totalCount = sortedList.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -579,59 +575,29 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     return null;
   }, [currentUser, sortedList]);
 
-  const typingStats = useMemo(() => {
-    const topWpm = validUsers.reduce((max, u) => Math.max(max, u.highestWpm), 0);
-    const avgAcc =
-      validUsers.length > 0
-        ? Math.round(validUsers.reduce((acc, u) => acc + (u.highestAccuracy || 98), 0) / validUsers.length)
-        : 98;
-    const championUser = validUsers.find((u) => u.highestWpm === topWpm);
-    return {
-      topWpm,
-      avgAcc,
-      totalUsers: validUsers.length,
-      championName: championUser?.displayName || 'Chempion'
-    };
-  }, [validUsers]);
-
-  const typingPodiumUsers: PodiumUser[] = useMemo(() => {
-    return sortedList.slice(0, 3).map((item, idx) => ({
-      uid: item.uid,
-      displayName: item.displayName,
-      username: item.username,
-      avatarUrl: item.avatarUrl,
-      country: item.country,
-      displayWpm: item.displayWpm,
-      highestAccuracy: item.highestAccuracy,
-      modeLabel: item.modeLabel,
-      rank: idx + 1,
-      isVerified: item.isVerified,
-      scoreLabel: 'WPM',
-      scoreValue: item.displayWpm,
-      subStatLabel: 'Aniqlik',
-      subStatValue: `${item.highestAccuracy}%`,
-      level: item.level,
-      rankTitle: item.rankTitle
-    }));
-  }, [sortedList]);
-
   const handleJumpToMyRank = () => {
-    if (!myRankingInfo) return;
+    if (!myRankingInfo) {
+      setCurrentPage(1);
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
     const targetPage = Math.floor((myRankingInfo.rank - 1) / pageSize) + 1;
     setCurrentPage(targetPage);
     setTimeout(() => {
       const el = document.getElementById(`typing-rank-row-${currentUser?.uid}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-2', 'ring-[var(--main-color)]');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-[var(--main-color)]'), 2500);
+        el.classList.add('ring-2', 'ring-[#e2b714]');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-[#e2b714]'), 2500);
       }
     }, 150);
   };
 
   const handleShareMyRank = async () => {
     if (!myRankingInfo) return;
-    const text = `🏆 Milliy Tez Yozish Reytingida mening natijam:\n🥇 O'rnim: #${myRankingInfo.rank}\n⚡ Tezligim: ${myRankingInfo.item.displayWpm} WPM\n🎯 Aniqlik: ${myRankingInfo.item.highestAccuracy}%\n👉 Sinovdan o'ting va meni yengishga harakat qiling!`;
+    const text = `🏆 Milliy Tez Yozish Reytingida mening natijam:\n🥇 O'rnim: #${myRankingInfo.rank}\n⚡ Tezligim: ${myRankingInfo.item.displayWpm} WPM\n🎯 Aniqlik: ${myRankingInfo.item.highestAccuracy}%\n👉 Sinovdan o'ting: https://www.yolnoma.uz`;
     try {
       await navigator.clipboard.writeText(text);
       setCopiedShare(true);
@@ -693,813 +659,493 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     setIsProfileOpen(true);
   };
 
-  const scopeTabs: { id: ScopeCategory; label: string; icon: any }[] = [
-    { id: 'all-time-uzbek', label: "O'zbekcha (Hammasi)", icon: Trophy },
-    { id: 'all-time-english', label: 'Inglizcha (All-time)', icon: Globe },
-    { id: 'weekly-xp', label: 'Haftalik XP', icon: Flame },
-    { id: 'daily', label: 'Kunlik (24 soat)', icon: Clock }
-  ];
-
-  const timeOptions: { id: TimeCategory; label: string }[] = [
-    { id: 'all', label: 'Barchasi' },
-    { id: '15', label: '15 soniya' },
-    { id: '30', label: '30 soniya' },
-    { id: '60', label: '60 soniya' },
-    { id: '120', label: '120 soniya' }
-  ];
-
-  const speedTierOptions: { id: SpeedTier; label: string; icon: string; count: number }[] = [
-    { id: 'all', label: 'Barchasi', icon: '⚡', count: tierCounts.all },
-    { id: 'mythic', label: 'Afsonaviy (140+)', icon: '👑', count: tierCounts.mythic },
-    { id: 'grandmaster', label: 'Grandmaster (110-139)', icon: '💎', count: tierCounts.grandmaster },
-    { id: 'master', label: 'Master (85-109)', icon: '⚡', count: tierCounts.master },
-    { id: 'pro', label: 'Pro (60-84)', icon: '🚀', count: tierCounts.pro },
-    { id: 'novice', label: 'Boshlovchi (<60)', icon: '🎯', count: tierCounts.novice }
-  ];
-
-  const getRankBadge = (rank: number) => {
-    if (rank === 1) {
-      return (
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/30 to-yellow-300/30 text-amber-300 font-black text-xs flex items-center justify-center border border-amber-400/40 shadow-sm shadow-amber-500/20">
-          <Crown className="w-4 h-4 fill-amber-400 text-amber-300" />
-        </span>
-      );
-    }
-    if (rank === 2) {
-      return (
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-tr from-slate-400/30 to-slate-200/20 text-slate-200 font-black text-xs flex items-center justify-center border border-slate-300/40 shadow-sm">
-          <Medal className="w-4 h-4 fill-slate-300 text-slate-200" />
-        </span>
-      );
-    }
-    if (rank === 3) {
-      return (
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-800/30 to-amber-600/30 text-amber-400 font-black text-xs flex items-center justify-center border border-amber-600/40 shadow-sm">
-          <Award className="w-4 h-4 fill-amber-600 text-amber-400" />
-        </span>
-      );
-    }
-    if (rank <= 10) {
-      return (
-        <span className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-300 font-black text-xs flex items-center justify-center border border-purple-500/30 shadow-xs font-mono">
-          #{rank}
-        </span>
-      );
-    }
-    return (
-      <span className="w-8 h-8 rounded-xl bg-[var(--sub-alt)]/40 text-[var(--sub-color)] font-bold text-xs flex items-center justify-center font-mono">
-        {rank}
-      </span>
-    );
-  };
-
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-6 md:px-8 font-mono select-none space-y-6">
+    <div className="w-full max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-8 font-mono select-none text-[#d1d0c5]">
       {/* ========================================================================= */}
-      {/* ARENA CHAMPIONSHIP HEADER BAR                                             */}
+      {/* 1. TOP HEADER TITLE (e.g. All-time English Time 15 Leaderboard)           */}
       {/* ========================================================================= */}
-      <div className="relative overflow-hidden p-5 sm:p-6 bg-gradient-to-r from-[var(--card-bg)] via-[var(--card-bg)] to-[var(--sub-alt)]/30 border border-[var(--sub-alt)] rounded-3xl shadow-xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-[var(--main-color)]/10 via-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-          {/* Title and live status */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[var(--main-color)]/25 to-amber-500/20 text-[var(--main-color)] border border-[var(--main-color)]/30 flex items-center justify-center shrink-0 shadow-lg shadow-[var(--main-color)]/15">
-              <Trophy className="w-6 h-6 sm:w-7 sm:h-7" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="text-lg sm:text-2xl font-black text-[var(--text-color)] tracking-tight">
-                  Milliy Tez Yozish Reytingi
-                </h1>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>JONLI • RESPUBLIKA ARENASI</span>
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-[var(--sub-color)] font-sans max-w-2xl">
-                O'zbekistonning eng tezkor teruvchilari, professional dasturchilar va kiber-sportchilar o'rtasidagi rasmiy chempionat jadvali.
-              </p>
-            </div>
-          </div>
-
-          {/* Action buttons & View Switcher */}
-          <div className="flex flex-wrap items-center gap-2.5 self-stretch lg:self-auto justify-end">
-            {/* View Mode Toggle */}
-            <div className="flex items-center p-1 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)]">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-[var(--main-color)] text-[var(--bg-color,#090d16)] shadow-xs'
-                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
-                }`}
-                title="Klassik jadval ko'rinishi"
-              >
-                <LayoutList className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Jadval</span>
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[var(--main-color)] text-[var(--bg-color,#090d16)] shadow-xs'
-                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
-                }`}
-                title="Kiber kartalar ko'rinishi"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Kartalar</span>
-              </button>
-            </div>
-
-            {/* Refresh */}
-            <button
-              onClick={() => fetchTypingUsers(true)}
-              title="Reytingni yangilash"
-              disabled={loading}
-              className="px-3.5 py-2 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-transparent hover:border-[var(--sub-alt)]"
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--main-color)]' : ''}`} />
-              <span className="hidden sm:inline">Yangilash</span>
-            </button>
-
-            {/* Play Typing Test */}
-            {onGoToTyping && (
-              <button
-                onClick={onGoToTyping}
-                className="px-4 py-2 rounded-2xl bg-[var(--main-color)] hover:brightness-110 active:scale-95 text-[var(--bg-color,#090d16)] text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[var(--main-color)]/25"
-              >
-                <Zap className="w-4 h-4 fill-current" />
-                <span>Tez Yozish Sinovi</span>
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="mb-6 sm:mb-8 border-b border-transparent">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono text-[#d1d0c5] tracking-tight font-normal">
+          {getLeaderboardTitle()}
+        </h1>
       </div>
 
       {/* ========================================================================= */}
-      {/* DYNAMIC SUMMARY STATS STRIP                                               */}
+      {/* 2. MAIN 2-COLUMN LAYOUT (Left Sidebar Pills + Right Content Table)        */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] to-[var(--card-bg)]/80 border border-amber-500/30 flex items-center gap-3.5 shadow-md shadow-amber-500/5">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/25">
-            <Crown className="w-5 h-5 fill-amber-400/30" />
-          </div>
-          <div>
-            <div className="text-[11px] text-[var(--sub-color)] font-sans">Rekord Tezlik</div>
-            <div className="text-xl font-black text-amber-400 font-mono flex items-center gap-1">
-              <span>{typingStats.topWpm}</span>
-              <span className="text-xs font-normal text-[var(--sub-color)]">WPM</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] to-[var(--card-bg)]/80 border border-cyan-500/30 flex items-center gap-3.5 shadow-md shadow-cyan-500/5">
-          <div className="w-11 h-11 rounded-2xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/25">
-            <Crosshair className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] text-[var(--sub-color)] font-sans">O'rtacha Aniqlik</div>
-            <div className="text-xl font-black text-cyan-400 font-mono">
-              {typingStats.avgAcc}%
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] to-[var(--card-bg)]/80 border border-emerald-500/30 flex items-center gap-3.5 shadow-md shadow-emerald-500/5">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/25">
-            <Globe className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] text-[var(--sub-color)] font-sans">Ishtirokchilar</div>
-            <div className="text-xl font-black text-emerald-400 font-mono">
-              {typingStats.totalUsers} <span className="text-xs font-normal text-[var(--sub-color)]">ta</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] to-[var(--card-bg)]/80 border border-purple-500/30 flex items-center gap-3.5 shadow-md shadow-purple-500/5">
-          <div className="w-11 h-11 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/25">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] text-[var(--sub-color)] font-sans">Chempion</div>
-            <div className="text-sm font-black text-purple-300 font-mono truncate max-w-[120px]">
-              {typingStats.championName}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* SPEED TIER LEAGUES STRIP                                                  */}
-      {/* ========================================================================= */}
-      <div className="p-3 bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-2xl overflow-x-auto shadow-xs">
-        <div className="flex items-center gap-2 min-w-max">
-          <span className="text-[11px] font-bold text-[var(--sub-color)] uppercase tracking-wider px-2 font-mono flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            <span>Ligalari:</span>
-          </span>
-          {speedTierOptions.map((tier) => {
-            const isSelected = speedTier === tier.id;
-            return (
-              <button
-                key={tier.id}
-                onClick={() => {
-                  setSpeedTier(tier.id);
-                  setCurrentPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  isSelected
-                    ? 'bg-[var(--main-color)] text-[var(--bg-color,#090d16)] shadow-xs scale-102'
-                    : 'bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
-                }`}
-              >
-                <span>{tier.icon}</span>
-                <span>{tier.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-black/20 text-[var(--bg-color,#090d16)]' : 'bg-[var(--card-bg)] text-[var(--sub-color)]'}`}>
-                  {tier.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* USER RANK BANNER (FOR LOGGED IN USERS)                                    */}
-      {/* ========================================================================= */}
-      {myRankingInfo && (
-        <div className="bg-gradient-to-r from-[var(--main-color)]/25 via-[var(--card-bg)] to-[var(--card-bg)] border border-[var(--main-color)]/40 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-[var(--main-color)]/10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[var(--main-color)] text-[var(--bg-color,#090d16)] font-black text-base flex items-center justify-center shadow-md shadow-[var(--main-color)]/30 shrink-0">
-              #{myRankingInfo.rank}
-            </div>
-            <div>
-              <div className="text-sm sm:text-base font-black text-[var(--text-color)] flex flex-wrap items-center gap-2">
-                <span>Sizning o'rningiz: #{myRankingInfo.rank}</span>
-                <span className="text-[var(--main-color)] font-extrabold">({myRankingInfo.item.displayWpm} WPM)</span>
-                {myRankingInfo.gapToNext > 0 && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-mono font-semibold">
-                    #{myRankingInfo.nextRank} o'ringa: +{myRankingInfo.gapToNext} WPM kerak
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-[var(--sub-color)] font-sans mt-0.5">
-                {currentUser?.displayName || currentUser?.username} • Jami {totalCount} ta teruvchi orasida
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
+        {/* ----------------------------------------------------------------------- */}
+        {/* Left Sidebar: 2 Dark Rounded Container Cards                            */}
+        {/* ----------------------------------------------------------------------- */}
+        <div className="flex flex-row lg:flex-col flex-wrap gap-3.5 w-full lg:w-48 xl:w-52 shrink-0">
+          {/* Card 1: Scopes (all-time english / weekly xp / daily) */}
+          <div className="bg-[#2c2e31] border border-slate-800/40 rounded-xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-sm">
             <button
-              onClick={handleShareMyRank}
-              className="px-3.5 py-2 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--text-color)] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs border border-[var(--sub-alt)]"
-              title="Natijamni nusxalash"
+              type="button"
+              onClick={() => {
+                setScope('all-time-english');
+                setCurrentPage(1);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+                scope === 'all-time-english'
+                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
+                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+              }`}
             >
-              {copiedShare ? (
-                <>
-                  <CopyCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400">Nusxalandi!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-4 h-4 text-[var(--sub-color)]" />
-                  <span>Ulashish</span>
-                </>
-              )}
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span>all-time english</span>
             </button>
 
             <button
-              onClick={handleJumpToMyRank}
-              className="px-4 py-2 rounded-xl bg-[var(--main-color)] text-[var(--bg-color,#090d16)] text-xs font-bold hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              type="button"
+              onClick={() => {
+                setScope('all-time-uzbek');
+                setCurrentPage(1);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+                scope === 'all-time-uzbek'
+                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
+                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+              }`}
             >
-              <span>Qatorimga sakrash</span>
-              <ArrowUpRight className="w-4 h-4" />
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span>all-time uzbek</span>
             </button>
-          </div>
-        </div>
-      )}
 
-      {/* Guest Notice */}
-      {!currentUser && (
-        <div className="bg-gradient-to-r from-amber-500/15 via-[var(--card-bg)] to-[var(--card-bg)] border border-amber-500/30 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-              <Trophy className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-[var(--text-color)]">
-                Reytingda o'rningizni ko'rish va natijangizni saqlash uchun tizimga kiring
-              </div>
-              <p className="text-xs text-[var(--sub-color)] mt-0.5 font-sans">
-                Mehmon natijalari reytingga kiritilmaydi. Google yoki email orqali tezda tizimga kiring!
-              </p>
-            </div>
-          </div>
-          {onOpenLogin && (
             <button
-              onClick={onOpenLogin}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[var(--main-color)] text-[var(--bg-color,#090d16)] text-xs font-black hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-md shadow-[var(--main-color)]/25"
+              type="button"
+              onClick={() => {
+                setScope('weekly-xp');
+                setCurrentPage(1);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+                scope === 'weekly-xp'
+                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
+                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+              }`}
             >
-              <span>Kirish / Ro'yxatdan o'tish</span>
-              <ArrowUpRight className="w-4 h-4" />
+              <Flame className="w-3.5 h-3.5 shrink-0" />
+              <span>weekly xp</span>
             </button>
-          )}
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* MAIN 2-COLUMN RESPONSIVE LAYOUT (Sidebar + Main Content Table/Grid)       */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Sidebar: Filters */}
-        <div className="lg:col-span-4 xl:col-span-3 space-y-5">
-          {/* Scope Filters Card */}
-          <div className="bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-3xl p-3.5 space-y-1.5 shadow-sm">
-            <div className="text-[11px] font-bold text-[var(--sub-color)] uppercase tracking-wider px-2 py-1 mb-1 font-mono flex items-center justify-between">
-              <span>Reyting Turi</span>
-              <Filter className="w-3.5 h-3.5 text-[var(--sub-color)]" />
-            </div>
-            {scopeTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = scope === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setScope(tab.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
-                    isActive
-                      ? 'bg-[var(--main-color)] text-[var(--bg-color,#090d16)] font-bold shadow-md shadow-[var(--main-color)]/20'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </div>
-                  {isActive && <CheckCircle2 className="w-3.5 h-3.5" />}
-                </button>
-              );
-            })}
+            <button
+              type="button"
+              onClick={() => {
+                setScope('daily');
+                setCurrentPage(1);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+                scope === 'daily'
+                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
+                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span>daily</span>
+            </button>
           </div>
 
-          {/* Time Limit Filters Card */}
-          <div className="bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-3xl p-3.5 space-y-1.5 shadow-sm">
-            <div className="text-[11px] font-bold text-[var(--sub-color)] uppercase tracking-wider px-2 py-1 mb-1 font-mono">
-              Vaqt Rejimi
-            </div>
-            <div className="grid grid-cols-1 gap-1">
-              {timeOptions.map((opt) => {
-                const isActive = timeFilter === opt.id;
+          {/* Card 2: Time Modes (time 15, time 60, time 30, time 120) */}
+          {scope !== 'weekly-xp' && (
+            <div className="bg-[#2c2e31] border border-slate-800/40 rounded-xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-sm">
+              {(['15', '60', '30', '120'] as TimeCategory[]).map((tVal) => {
+                const isActive = timeFilter === tVal;
                 return (
                   <button
-                    key={opt.id}
+                    key={tVal}
+                    type="button"
                     onClick={() => {
-                      setTimeFilter(opt.id);
+                      setTimeFilter(tVal);
                       setCurrentPage(1);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
                       isActive
-                        ? 'bg-[var(--sub-alt)] text-[var(--main-color)] font-bold'
-                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/30'
+                        ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
+                        : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
                     }`}
                   >
-                    <span>{opt.label}</span>
-                    {isActive && <div className="w-2 h-2 rounded-full bg-[var(--main-color)]" />}
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span>time {tVal}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          )}
 
-          {/* Leaderboard Rules & Anti-Cheat Card */}
-          <div className="p-4 rounded-3xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)] space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)]">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Haqiqiy & Anti-Cheat</span>
-            </div>
-            <p className="text-[11px] text-[var(--sub-color)] leading-relaxed font-sans">
-              Barcha natijalar mexanik bosish chastotasi va botlarga qarshi tekshiruvdan o'tadi. Faqat haqiqiy teruvchilar reytingda aks etadi.
-            </p>
+          {/* Refresh & Start Practice CTA */}
+          <div className="w-full flex flex-col gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => fetchTypingUsers(true)}
+              title="Reytingni yangilash"
+              disabled={loading}
+              className="w-full px-3 py-2 rounded-lg bg-[#2c2e31]/60 hover:bg-[#2c2e31] text-[#646669] hover:text-[#d1d0c5] text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border border-slate-800/40"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#e2b714]' : ''}`} />
+              <span>refresh</span>
+            </button>
+
+            {onGoToTyping && (
+              <button
+                type="button"
+                onClick={onGoToTyping}
+                className="w-full px-3 py-2 rounded-lg bg-[#e2b714]/15 hover:bg-[#e2b714]/25 text-[#e2b714] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#e2b714]/30"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>start test</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right Main Column: Podium + Table/Grid + Pagination */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-5">
-          {/* Podium for Top 3 */}
-          {currentPage === 1 && !searchQuery.trim() && speedTier === 'all' && sortedList.length > 0 && (
-            <LeaderboardPodium
-              topUsers={typingPodiumUsers}
-              onSelectUser={openUserProfile}
-              currentUserId={currentUser?.uid}
-            />
-          )}
+        {/* ----------------------------------------------------------------------- */}
+        {/* Right Main Column: Subheader Controls + Table + Bottom Controls         */}
+        {/* ----------------------------------------------------------------------- */}
+        <div className="flex-1 w-full min-w-0">
+          {/* Subheader: Next update in & Crown / Pagination controls */}
+          <div className="flex items-center justify-between gap-4 mb-4 text-xs font-mono">
+            {/* Left: Next update timer + inline subtle search */}
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              <div className="text-[#646669] flex items-center gap-1.5 whitespace-nowrap text-xs">
+                <span>Next update in:</span>
+                <span className="text-[#646669] font-mono">{formatCountdown(nextUpdateSeconds)}</span>
+              </div>
 
-          {/* Controls Bar: Search & Page size */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--card-bg)] p-3.5 rounded-3xl border border-[var(--sub-alt)] shadow-xs">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--sub-color)]" />
-              <input
-                type="text"
-                placeholder="Foydalanuvchi yoki taxallus bo'yicha qidirish..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-2xl pl-10 pr-9 py-2.5 text-xs text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)] transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sub-color)] hover:text-[var(--text-color)]"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+              {/* Minimal inline search */}
+              <div className="relative flex items-center">
+                <Search className="w-3.5 h-3.5 text-[#646669] absolute left-2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="search..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-[#2c2e31]/70 hover:bg-[#2c2e31] focus:bg-[#2c2e31] text-[#d1d0c5] placeholder-[#646669] text-xs font-mono pl-7 pr-6 py-1 rounded-md border border-slate-800/40 focus:border-[#646669] focus:outline-none transition-all w-28 sm:w-36 focus:w-48"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 text-[#646669] hover:text-[#d1d0c5] cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-[var(--sub-color)]">
-              <span className="font-mono text-xs">
-                Jami: <span className="font-bold text-[var(--text-color)]">{totalCount}</span> ta
-              </span>
+            {/* Right: Crown button + Prev + Page Pill + Next */}
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* Crown jump button */}
+              <button
+                type="button"
+                onClick={handleJumpToMyRank}
+                title={myRankingInfo ? `Sizning o'rningiz: #${myRankingInfo.rank}` : "1-o'ringa sakrash"}
+                className="p-1.5 rounded text-[#646669] hover:text-[#e2b714] transition-colors cursor-pointer"
+              >
+                <Crown className="w-4 h-4" />
+              </button>
 
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="font-mono font-bold text-[var(--text-color)] px-1.5 text-xs">
-                  {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+              {/* Prev Page Button */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Oldingi sahifa"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Page Indicator Pill: # 1 */}
+              <div className="bg-[#2c2e31] border border-slate-800/50 text-[#d1d0c5] font-mono font-bold text-xs px-3 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
+                <span className="text-[#646669]">#</span>
+                <span>{currentPage}</span>
               </div>
+
+              {/* Next Page Button */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Keyingi sahifa"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          {/* ========================================================================= */}
-          {/* DISPLAY MODE 1: MODERN TABLE VIEW                                        */}
-          {/* ========================================================================= */}
-          {viewMode === 'table' && (
-            <div className="bg-[var(--card-bg)]/95 backdrop-blur-md border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-[var(--sub-alt)] text-[var(--sub-color)] text-[11px] uppercase tracking-wider font-mono bg-[var(--sub-alt)]/25">
-                      <th className="py-3.5 px-3 sm:px-4 w-14 text-center">#</th>
-                      <th className="py-3.5 px-3 sm:px-4">Ishtirokchi</th>
-                      <th className="py-3.5 px-3 sm:px-4 text-center">Liga</th>
-                      <th className="py-3.5 px-3 sm:px-4 text-right">WPM</th>
-                      <th className="py-3.5 px-3 sm:px-4 text-right hidden md:table-cell">Aniqlik</th>
-                      <th className="py-3.5 px-3 sm:px-4 text-right hidden lg:table-cell">Raw WPM</th>
-                      <th className="py-3.5 px-3 sm:px-4 text-right hidden lg:table-cell">Barqarorlik</th>
-                      <th className="py-3.5 px-3 sm:px-4 text-right">Sana</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--sub-alt)]/40 font-mono">
-                    {pageItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="py-16 text-center text-[var(--sub-color)]">
-                          <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3 px-4">
-                            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-1">
-                              <Trophy className="w-7 h-7" />
-                            </div>
-                            <h4 className="text-base font-bold text-[var(--text-color)] font-mono">
-                              Hozircha natijalar yo'q.
-                            </h4>
-                            <p className="text-xs sm:text-sm text-[var(--sub-color)] max-w-sm leading-relaxed font-sans">
-                              Ushbu filtrlarga mos keluvchi natijalar topilmadi. Test topshirib, o'rningizni egallang!
-                            </p>
-                            {onGoToTyping && (
-                              <button
-                                onClick={onGoToTyping}
-                                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[var(--main-color)] hover:opacity-90 text-[var(--bg-color,#090d16)] font-black text-xs sm:text-sm transition-transform active:scale-95 shadow-md shadow-[var(--main-color)]/20 cursor-pointer"
-                              >
-                                <Zap className="w-4 h-4 fill-current" />
-                                <span>Test topshirish</span>
-                              </button>
+          {/* ----------------------------------------------------------------------- */}
+          {/* Main Leaderboard Table                                                  */}
+          {/* ----------------------------------------------------------------------- */}
+          <div className="w-full overflow-x-auto rounded-xl">
+            <table className="w-full text-left border-collapse font-mono text-xs">
+              <thead>
+                <tr className="text-[#646669] text-xs font-normal border-b border-transparent">
+                  <th className="py-2.5 px-3 w-12 text-center">#</th>
+                  <th className="py-2.5 px-3">name</th>
+                  <th className="py-2.5 px-3 text-right">wpm</th>
+                  <th className="py-2.5 px-3 text-right">accuracy</th>
+                  <th className="py-2.5 px-3 text-right hidden sm:table-cell">raw</th>
+                  <th className="py-2.5 px-3 text-right hidden md:table-cell">consistency</th>
+                  <th className="py-2.5 px-3 text-right">date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-transparent">
+                {loading && pageItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-20 text-center text-[#646669] font-mono text-xs">
+                      loading leaderboard...
+                    </td>
+                  </tr>
+                ) : pageItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-20 text-center text-[#646669] font-mono text-xs">
+                      no entries found for this category
+                    </td>
+                  </tr>
+                ) : (
+                  pageItems.map((item, idx) => {
+                    const isMe = currentUser?.uid === item.uid;
+                    const tierInfo = getSpeedTier(item.displayWpm);
+                    const dateParts = formatDateParts(item.lastActive);
+
+                    return (
+                      <tr
+                        key={item.uid}
+                        id={`typing-rank-row-${item.uid}`}
+                        onClick={() => openUserProfile(item)}
+                        className={`transition-colors cursor-pointer group ${
+                          idx % 2 === 0 ? 'bg-[#2c2e31]/30' : 'bg-transparent'
+                        } hover:bg-[#2c2e31]/75 ${
+                          isMe ? 'bg-[#e2b714]/10 border-l-2 border-[#e2b714]' : ''
+                        }`}
+                      >
+                        {/* Rank (#) */}
+                        <td className="py-3 px-3 text-center">
+                          {item.rank === 1 ? (
+                            <Crown className="w-4 h-4 text-[#d1d0c5] fill-[#d1d0c5] mx-auto" />
+                          ) : (
+                            <span className="text-[#646669]">{item.rank}</span>
+                          )}
+                        </td>
+
+                        {/* Name + Avatar + Badge */}
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2.5">
+                            {item.avatarUrl ? (
+                              <img
+                                src={item.avatarUrl}
+                                alt={item.displayName}
+                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[#2c2e31]"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-[#2c2e31] flex items-center justify-center shrink-0 text-[#646669]">
+                                <UserIcon className="w-3 h-3" />
+                              </div>
+                            )}
+
+                            <span className="text-[#d1d0c5] group-hover:text-[#e2b714] transition-colors truncate max-w-[120px] sm:max-w-[200px]">
+                              {item.displayName || item.username}
+                            </span>
+
+                            {/* Monkeytype style Pill Badge (e.g. 🚀 Mythical) */}
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold flex items-center gap-1 shrink-0 ${tierInfo.badgeClass}`}
+                            >
+                              <span>{tierInfo.icon}</span>
+                              <span>{tierInfo.label}</span>
+                            </span>
+
+                            {item.isVerified && (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                            )}
+
+                            {isMe && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#e2b714] text-[#2c2e31]">
+                                YOU
+                              </span>
                             )}
                           </div>
                         </td>
+
+                        {/* WPM (e.g. 318.99) */}
+                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono">
+                          {item.displayWpm.toFixed(2)}
+                        </td>
+
+                        {/* Accuracy (e.g. 99.03%) */}
+                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono">
+                          {Number(item.highestAccuracy || 98).toFixed(2)}%
+                        </td>
+
+                        {/* Raw WPM (e.g. 328.58) */}
+                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono hidden sm:table-cell">
+                          {Number(item.rawWpmCalc).toFixed(2)}
+                        </td>
+
+                        {/* Consistency (e.g. 91.70%) */}
+                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono hidden md:table-cell">
+                          {item.consistency ? `${Number(item.consistency).toFixed(2)}%` : item.consistencyCalc}
+                        </td>
+
+                        {/* Date (2 lines: "28 May 2026" / "20:01") */}
+                        <td className="py-3 px-3 text-right font-mono text-[10px] leading-tight text-[#646669] whitespace-nowrap">
+                          <div>{dateParts.date}</div>
+                          <div className="text-[9px] text-[#646669]/70">{dateParts.time}</div>
+                        </td>
                       </tr>
-                    ) : (
-                      pageItems.map((item) => {
-                        const isMe = currentUser?.uid === item.uid;
-                        const tierInfo = getSpeedTier(item.displayWpm);
-                        return (
-                          <tr
-                            key={item.uid}
-                            id={`typing-rank-row-${item.uid}`}
-                            onClick={() => openUserProfile(item)}
-                            className={`hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer group ${
-                              isMe ? 'bg-[var(--main-color)]/10 font-bold border-l-4 border-[var(--main-color)]' : ''
-                            }`}
-                          >
-                            {/* Rank */}
-                            <td className="py-3.5 px-3 sm:px-4 text-center">
-                              <div className="flex items-center justify-center">
-                                {getRankBadge(item.rank)}
-                              </div>
-                            </td>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-                            {/* User Info */}
-                            <td className="py-3.5 px-3 sm:px-4">
-                              <div className="flex items-center gap-3">
-                                <div className="relative shrink-0">
-                                  <img
-                                    src={item.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80'}
-                                    alt={item.displayName}
-                                    className="w-9 h-9 rounded-xl object-cover border border-[var(--sub-alt)] group-hover:scale-105 transition-transform"
-                                  />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-bold text-[var(--text-color)] text-xs sm:text-sm truncate group-hover:text-[var(--main-color)] transition-colors">
-                                      {item.displayName}
-                                    </span>
-                                    {item.isVerified && (
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                                    )}
-                                    {isMe && (
-                                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[var(--main-color)] text-[var(--bg-color,#090d16)]">
-                                        SIZ
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-[11px] text-[var(--sub-color)] font-normal truncate">
-                                    @{item.username} • Lv.{item.level}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
+          {/* ----------------------------------------------------------------------- */}
+          {/* Bottom Table Controls: Page size & Navigation                           */}
+          {/* ----------------------------------------------------------------------- */}
+          <div className="mt-4 pt-4 border-t border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-[#646669]">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span>display:</span>
+              {[15, 25, 50, 100].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-2 py-0.5 rounded text-xs font-mono transition-colors cursor-pointer ${
+                    pageSize === size
+                      ? 'text-[#e2b714] font-bold underline'
+                      : 'text-[#646669] hover:text-[#d1d0c5]'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
 
-                            {/* Speed Tier Pill */}
-                            <td className="py-3.5 px-3 sm:px-4 text-center">
-                              <span className={`inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full border font-bold ${tierInfo.badgeClass}`}>
-                                <span>{tierInfo.icon}</span>
-                                <span>{tierInfo.label}</span>
-                              </span>
-                            </td>
+            {/* Bottom Pagination */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage(1);
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                disabled={currentPage === 1}
+                className="px-2 py-0.5 rounded text-xs text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                « 1
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                disabled={currentPage === 1}
+                className="p-1 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[#d1d0c5] font-bold px-1.5">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                disabled={currentPage === totalPages}
+                className="p-1 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage(totalPages);
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                disabled={currentPage === totalPages}
+                className="px-2 py-0.5 rounded text-xs text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {totalPages} »
+              </button>
+            </div>
+          </div>
 
-                            {/* WPM */}
-                            <td className="py-3.5 px-3 sm:px-4 text-right">
-                              <span className="text-base sm:text-lg font-black text-[var(--main-color)] flex items-center justify-end gap-1">
-                                {item.displayWpm >= 120 && <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />}
-                                {item.displayWpm >= 100 && item.displayWpm < 120 && <Zap className="w-3.5 h-3.5 text-sky-400" />}
-                                <span>{item.displayWpm}</span>
-                              </span>
-                            </td>
-
-                            {/* Accuracy */}
-                            <td className="py-3.5 px-3 sm:px-4 text-right hidden md:table-cell">
-                              <span className="text-xs sm:text-sm text-[var(--text-color)] font-bold">
-                                {item.highestAccuracy}%
-                              </span>
-                            </td>
-
-                            {/* Raw WPM */}
-                            <td className="py-3.5 px-3 sm:px-4 text-right text-[var(--sub-color)] text-xs hidden lg:table-cell">
-                              {item.rawWpmCalc}
-                            </td>
-
-                            {/* Consistency */}
-                            <td className="py-3.5 px-3 sm:px-4 text-right text-[var(--sub-color)] text-xs hidden lg:table-cell">
-                              {item.consistencyCalc}
-                            </td>
-
-                            {/* Date */}
-                            <td className="py-3.5 px-3 sm:px-4 text-right text-[var(--sub-color)] text-xs whitespace-nowrap">
-                              {item.dateFormatted}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+          {/* User Rank Card (if logged in) */}
+          {myRankingInfo && (
+            <div className="mt-6 p-3.5 rounded-xl bg-[#2c2e31]/60 border border-slate-800/60 flex items-center justify-between gap-4 text-xs font-mono">
+              <div className="flex items-center gap-3">
+                <span className="text-[#e2b714] font-bold">#{myRankingInfo.rank}</span>
+                <span className="text-[#d1d0c5]">
+                  {currentUser?.displayName || currentUser?.username}
+                </span>
+                <span className="text-[#646669]">({myRankingInfo.item.displayWpm.toFixed(2)} WPM)</span>
               </div>
-
-              {/* Bottom Controls */}
-              <div className="p-3.5 bg-[var(--sub-alt)]/20 border-t border-[var(--sub-alt)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-[var(--sub-color)]">
-                  <span>Sahifada ko'rsatish:</span>
-                  {[15, 25, 50, 100].map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => {
-                        setPageSize(size);
-                        setCurrentPage(1);
-                      }}
-                      className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all ${
-                        pageSize === size
-                          ? 'bg-[var(--main-color)] text-[var(--bg-color,#090d16)] shadow-xs'
-                          : 'bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--sub-color)]'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setCurrentPage(1);
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === 1}
-                    className="px-2 py-1 rounded-lg text-xs hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                    title="Birinchi sahifa"
-                  >
-                    « 1
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCurrentPage((p) => Math.max(1, p - 1));
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === 1}
-                    className="p-1.5 rounded-lg hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <span className="font-mono text-xs font-bold text-[var(--main-color)] px-2">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setCurrentPage((p) => Math.min(totalPages, p + 1));
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === totalPages}
-                    className="p-1.5 rounded-lg hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCurrentPage(totalPages);
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === totalPages}
-                    className="px-2 py-1 rounded-lg text-xs hover:text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                    title="Oxirgi sahifa"
-                  >
-                    {totalPages} »
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleShareMyRank}
+                  className="px-2.5 py-1 rounded bg-[#2c2e31] hover:bg-[#323437] text-[#d1d0c5] text-xs font-mono flex items-center gap-1.5 cursor-pointer border border-slate-800/50"
+                >
+                  {copiedShare ? (
+                    <>
+                      <CopyCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5 text-[#646669]" />
+                      <span>share</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleJumpToMyRank}
+                  className="px-2.5 py-1 rounded bg-[#e2b714] text-[#2c2e31] font-bold text-xs font-mono cursor-pointer hover:brightness-105"
+                >
+                  jump to me
+                </button>
               </div>
             </div>
           )}
 
-          {/* ========================================================================= */}
-          {/* DISPLAY MODE 2: ESPORTS CARDS GRID VIEW                                   */}
-          {/* ========================================================================= */}
-          {viewMode === 'grid' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {pageItems.length === 0 ? (
-                  <div className="col-span-full py-16 text-center text-[var(--sub-color)] bg-[var(--card-bg)] rounded-3xl border border-[var(--sub-alt)]">
-                    <Trophy className="w-10 h-10 mx-auto text-amber-400 mb-2 opacity-50" />
-                    <p className="font-bold text-sm text-[var(--text-color)]">Natijalar topilmadi</p>
-                  </div>
-                ) : (
-                  pageItems.map((item) => {
-                    const isMe = currentUser?.uid === item.uid;
-                    const tierInfo = getSpeedTier(item.displayWpm);
-                    return (
-                      <div
-                        key={item.uid}
-                        onClick={() => openUserProfile(item)}
-                        className={`relative p-5 rounded-3xl border transition-all duration-200 cursor-pointer group flex flex-col justify-between overflow-hidden ${
-                          isMe
-                            ? 'bg-gradient-to-br from-[var(--main-color)]/20 via-[var(--card-bg)] to-[var(--card-bg)] border-[var(--main-color)] shadow-lg shadow-[var(--main-color)]/10 ring-2 ring-[var(--main-color)]/40'
-                            : 'bg-gradient-to-br from-[var(--card-bg)] to-[var(--card-bg)]/80 border-[var(--sub-alt)] hover:border-[var(--main-color)]/50 hover:shadow-lg hover:-translate-y-1'
-                        }`}
-                      >
-                        {/* Top Rank + Tier Badge */}
-                        <div className="flex items-center justify-between mb-3.5">
-                          <div className="flex items-center gap-2">
-                            {getRankBadge(item.rank)}
-                            <span className="text-xs font-mono text-[var(--sub-color)]">
-                              #{item.rank}
-                            </span>
-                          </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${tierInfo.badgeClass}`}>
-                            {tierInfo.icon} {tierInfo.label}
-                          </span>
-                        </div>
-
-                        {/* User Identity */}
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-2xl p-0.5 bg-gradient-to-tr from-[var(--main-color)]/40 to-transparent shrink-0">
-                            <img
-                              src={item.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80'}
-                              alt={item.displayName}
-                              className="w-full h-full rounded-2xl object-cover bg-[var(--card-bg)]"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <h4 className="font-bold text-sm text-[var(--text-color)] truncate group-hover:text-[var(--main-color)] transition-colors">
-                                {item.displayName}
-                              </h4>
-                              {item.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
-                            </div>
-                            <p className="text-xs text-[var(--sub-color)] font-mono truncate">
-                              @{item.username}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Speedometer Metrics Card */}
-                        <div className="bg-[var(--sub-alt)]/30 rounded-2xl p-3 flex items-center justify-around border border-[var(--sub-alt)]/40 mb-3">
-                          <div className="text-center">
-                            <div className="text-2xl font-black font-mono text-[var(--main-color)]">
-                              {item.displayWpm}
-                            </div>
-                            <div className="text-[10px] uppercase font-bold text-[var(--sub-color)]">
-                              WPM
-                            </div>
-                          </div>
-                          <div className="h-8 w-px bg-[var(--sub-alt)]/60" />
-                          <div className="text-center">
-                            <div className="text-base font-bold font-mono text-[var(--text-color)]">
-                              {item.highestAccuracy}%
-                            </div>
-                            <div className="text-[10px] uppercase font-bold text-[var(--sub-color)]">
-                              Aniqlik
-                            </div>
-                          </div>
-                          <div className="h-8 w-px bg-[var(--sub-alt)]/60" />
-                          <div className="text-center">
-                            <div className="text-sm font-bold font-mono text-purple-400">
-                              Lv.{item.level}
-                            </div>
-                            <div className="text-[10px] uppercase font-bold text-[var(--sub-color)]">
-                              Daraja
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Card Footer: Date & Profile hint */}
-                        <div className="flex items-center justify-between text-[11px] text-[var(--sub-color)] font-mono pt-1">
-                          <span>{item.dateFormatted}</span>
-                          <span className="group-hover:text-[var(--main-color)] flex items-center gap-1 font-bold transition-colors">
-                            <span>Profil</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Grid Pagination Bar */}
-              <div className="p-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl flex items-center justify-between text-xs font-mono">
-                <span className="text-[var(--sub-color)]">
-                  Sahifa <span className="text-[var(--text-color)] font-bold">{currentPage}</span> / {totalPages}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setCurrentPage((p) => Math.max(1, p - 1));
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed font-bold"
-                  >
-                    Oldingi
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCurrentPage((p) => Math.min(totalPages, p + 1));
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] hover:bg-[var(--sub-alt)]/80 text-[var(--text-color)] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed font-bold"
-                  >
-                    Keyingi
-                  </button>
-                </div>
-              </div>
+          {/* Guest login reminder if not authenticated */}
+          {!currentUser && onOpenLogin && (
+            <div className="mt-6 p-3.5 rounded-xl bg-[#2c2e31]/40 border border-slate-800/40 flex items-center justify-between gap-4 text-xs font-mono">
+              <span className="text-[#646669]">
+                Sign in to save your score and claim your place on the leaderboard.
+              </span>
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="px-3 py-1 rounded-lg bg-[#e2b714] text-[#2c2e31] font-bold text-xs font-mono hover:brightness-105 cursor-pointer whitespace-nowrap"
+              >
+                sign in
+              </button>
             </div>
           )}
         </div>
@@ -1508,12 +1154,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       {/* Floating Scroll to Top Button */}
       {showScrollTop && (
         <button
+          type="button"
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 sm:px-4 sm:py-2.5 rounded-2xl bg-[var(--main-color)] text-[var(--bg-color,#090d16)] shadow-2xl hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 font-mono text-xs font-bold cursor-pointer border border-white/20"
+          className="fixed bottom-6 right-6 z-40 p-2.5 rounded-xl bg-[#2c2e31] border border-slate-700/60 text-[#d1d0c5] hover:text-[#e2b714] shadow-xl hover:bg-[#323437] active:scale-95 transition-all flex items-center gap-1.5 font-mono text-xs cursor-pointer"
           title="Tepaga qaytish"
         >
-          <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="hidden sm:inline">Tepaga</span>
+          <ChevronUp className="w-4 h-4" />
         </button>
       )}
 
