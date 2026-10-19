@@ -166,7 +166,7 @@ const WordItem = memo<WordItemProps>(
     return (
       <div
         ref={(el) => onWordRef(el, idx)}
-        className={`inline-block whitespace-nowrap max-w-full ${isTape ? 'mr-0' : 'my-0.5'}`}
+        className={`inline-block whitespace-nowrap max-w-full ${isTape ? 'mr-0 shrink-0' : 'my-0.5'}`}
         style={{ transform: 'translateZ(0)' }}
       >
         {wordObj.chars.map(({ char, globalIndex }) => {
@@ -248,6 +248,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [tapeOffset, setTapeOffset] = useState(0);
+  const [anchorX, setAnchorX] = useState<number>(() =>
+    typeof window !== 'undefined' ? Math.round(window.innerWidth * 0.35) : 320
+  );
   const [isFocused, setIsFocused] = useState(true);
   const [mouseHidden, setMouseHidden] = useState(false);
   const mouseTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -481,6 +484,15 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
           setMeasuredLineHeight(h);
         }
       }
+
+      const vpEl = tapeViewportRef.current;
+      if (vpEl) {
+        const vpWidth = vpEl.clientWidth;
+        if (vpWidth > 0) {
+          const ratio = vpWidth < 640 ? 0.30 : 0.38;
+          setAnchorX(Math.round(vpWidth * ratio));
+        }
+      }
     };
 
     updateLineHeight();
@@ -524,35 +536,53 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     setScrollOffset((prev) => (prev !== targetOffset ? targetOffset : prev));
   }, [activeWordIdx, measuredLineHeight, tapeMode]);
 
-  // Smooth horizontal scrolling for Tape mode
+  // Smooth horizontal scrolling for Tape mode (Letter & Word conveyor)
   useLayoutEffect(() => {
     if (tapeMode === 'off' || tapeMode === 'drum') return;
     const vpEl = tapeViewportRef.current;
-    if (!vpEl) return;
+    const wrapperEl = wordsWrapperRef.current;
+    if (!vpEl || !wrapperEl) return;
 
     const vpWidth = vpEl.clientWidth;
-    const anchorX = vpWidth * 0.35;
+    const effAnchorX = anchorX > 0 ? anchorX : Math.round(vpWidth * (vpWidth < 640 ? 0.30 : 0.38));
+
+    if (currentTypedLen === 0) {
+      setTapeOffset(0);
+      return;
+    }
+
+    const wrapperRect = wrapperEl.getBoundingClientRect();
 
     if (tapeMode === 'letter') {
-      const activeCharEl = charRefs.current[currentTypedLen];
-      if (activeCharEl) {
-        const charCenter = activeCharEl.offsetLeft + activeCharEl.offsetWidth / 2;
-        const targetOffset = Math.max(0, charCenter - anchorX);
+      const isEnd = currentTypedLen >= targetText.length;
+      const targetCharEl = isEnd
+        ? (targetText.length > 0 ? charRefs.current[targetText.length - 1] : null)
+        : (charRefs.current[currentTypedLen] || charRefs.current[0]);
+
+      if (targetCharEl) {
+        const charRect = targetCharEl.getBoundingClientRect();
+        // True static position of the character relative to the unshifted wordsWrapper
+        let charX = charRect.left - wrapperRect.left;
+        if (isEnd) {
+          charX += charRect.width > 0 ? charRect.width : 16;
+          const extraChars = typedInput.length - targetText.length;
+          if (extraChars > 0) {
+            charX += extraChars * (charRect.width > 0 ? charRect.width : 16);
+          }
+        }
+        const targetOffset = Math.max(0, Math.round(charX - effAnchorX));
         setTapeOffset((prev) => (prev !== targetOffset ? targetOffset : prev));
-      } else if (currentTypedLen === 0) {
-        setTapeOffset(0);
       }
     } else if (tapeMode === 'word') {
-      const activeWordEl = wordRefs.current[activeWordIdx];
+      const activeWordEl = wordRefs.current[activeWordIdx] || wordRefs.current[0];
       if (activeWordEl) {
-        const wordCenter = activeWordEl.offsetLeft + activeWordEl.offsetWidth / 2;
-        const targetOffset = Math.max(0, wordCenter - anchorX);
+        const wordRect = activeWordEl.getBoundingClientRect();
+        const wordX = wordRect.left - wrapperRect.left;
+        const targetOffset = Math.max(0, Math.round(wordX - effAnchorX));
         setTapeOffset((prev) => (prev !== targetOffset ? targetOffset : prev));
-      } else if (activeWordIdx === 0) {
-        setTapeOffset(0);
       }
     }
-  }, [tapeMode, currentTypedLen, activeWordIdx]);
+  }, [tapeMode, currentTypedLen, activeWordIdx, anchorX, targetText.length, typedInput.length]);
 
   const baseFontSize = Math.max(20, fontSize || 28);
   const lineHeightMultiplier = 1.55;
@@ -560,7 +590,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const isTape = tapeMode === 'letter' || tapeMode === 'word';
   const effHeight = measuredLineHeight > 0 ? measuredLineHeight : Math.round(baseFontSize * lineHeightMultiplier);
   const containerHeight = isTape
-    ? Math.round(effHeight * 1.35)
+    ? Math.max(68, Math.round(effHeight * 1.65))
     : Math.round(effHeight * 3 + 8);
 
   const handleWordRef = useCallback((el: HTMLDivElement | null, idx: number) => {
@@ -743,81 +773,102 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
           onRestart={onRestart}
         />
       ) : (
-        /* Scroll Viewport with Hardware Acceleration */
-        <div
-          ref={tapeViewportRef}
-          key={`${targetText.slice(0, 15)}-${tapeMode}`}
-          className={`relative w-full overflow-hidden ${isTape ? 'flex items-center' : ''}`}
-          style={{
-            height: `${containerHeight}px`,
-            transform: 'translateZ(0)',
-            willChange: 'transform',
-            ...(isTape
-              ? {
-                  WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
-                  maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)'
-                }
-              : {})
-          }}
-        >
+        <>
+          {/* Scroll Viewport with Hardware Acceleration */}
           <div
-            ref={wordsWrapperRef}
-            className={`relative text-left ${
-              isTape
-                ? 'flex flex-nowrap whitespace-nowrap items-center pl-[28%] sm:pl-[35%]'
-                : 'flex flex-wrap'
-            }`}
+            ref={tapeViewportRef}
+            key={`${targetText.slice(0, 15)}-${tapeMode}`}
+            className={`relative w-full overflow-hidden ${isTape ? 'flex items-center' : ''}`}
             style={{
-              transform: isTape
-                ? `translateX(-${tapeOffset}px) translateZ(0)`
-                : `translateY(-${scrollOffset}px) translateZ(0)`,
+              height: `${containerHeight}px`,
+              transform: 'translateZ(0)',
               willChange: 'transform',
-              transition: smoothCaret
-                ? isTape
-                  ? 'transform 85ms cubic-bezier(0.2, 0, 0, 1)'
-                  : 'transform 150ms ease-out'
-                : 'none',
-              lineHeight: lineHeightMultiplier,
-              direction: isRtl ? 'rtl' : 'ltr'
+              ...(isTape
+                ? {
+                    WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 3%, rgba(0,0,0,0.85) 7%, black 14%, black 86%, rgba(0,0,0,0.85) 93%, rgba(0,0,0,0.15) 97%, transparent 100%)',
+                    maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 3%, rgba(0,0,0,0.85) 7%, black 14%, black 86%, rgba(0,0,0,0.85) 93%, rgba(0,0,0,0.15) 97%, transparent 100%)'
+                  }
+                : {})
             }}
           >
-            {/* Smooth floating caret */}
+            {/* Tape Mode Focus Guide: Subtle precision indicator at anchor position */}
+            {isTape && (
+              <div
+                className="pointer-events-none absolute top-0 bottom-0 z-20 flex flex-col justify-between items-center transition-opacity duration-300"
+                style={{
+                  left: `${anchorX > 0 ? anchorX : (tapeViewportRef.current?.clientWidth ? Math.round(tapeViewportRef.current.clientWidth * 0.35) : 320)}px`,
+                  width: '2px',
+                  transform: 'translateX(-50%)',
+                  opacity: isFocused && !isTestFinished ? 0.35 : 0.15
+                }}
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--main-color)] shadow-[0_0_8px_var(--main-color)]" />
+                <div className="w-[1px] h-full bg-gradient-to-b from-[var(--main-color)]/30 via-transparent to-[var(--main-color)]/30" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--main-color)] shadow-[0_0_8px_var(--main-color)]" />
+              </div>
+            )}
+
             <div
-              ref={caretElRef}
-              className="smooth-caret"
+              ref={wordsWrapperRef}
+              className={`relative text-left ${
+                isTape
+                  ? 'flex flex-nowrap whitespace-nowrap items-center'
+                  : 'flex flex-wrap'
+              }`}
               style={{
-                display: 'none',
-                position: 'absolute',
-                top: 0,
-                left: 0,
+                paddingLeft: isTape ? `${anchorX > 0 ? anchorX : 320}px` : undefined,
+                paddingRight: isTape ? `${anchorX > 0 ? anchorX : 320}px` : undefined,
+                transform: isTape
+                  ? `translate3d(-${tapeOffset}px, 0, 0)`
+                  : `translate3d(0, -${scrollOffset}px, 0)`,
                 willChange: 'transform',
-                pointerEvents: 'none',
-                zIndex: 10
+                transition: smoothCaret
+                  ? isTape
+                    ? 'transform 85ms cubic-bezier(0.16, 1, 0.3, 1)'
+                    : 'transform 150ms ease-out'
+                  : 'none',
+                lineHeight: lineHeightMultiplier,
+                direction: isRtl ? 'rtl' : 'ltr'
               }}
-            />
-
-            {parsedWords.map((wordObj) => (
-              <WordItem
-                key={`w-${wordObj.wordIdx}`}
-                wordObj={wordObj}
-                typedInput={typedInput}
-                typingAnimation={typingAnimation}
-                isTape={isTape}
-                onWordRef={handleWordRef}
-                onCharRef={handleCharRef}
+            >
+              {/* Smooth floating caret */}
+              <div
+                ref={caretElRef}
+                className="smooth-caret"
+                style={{
+                  display: 'none',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  willChange: 'transform',
+                  pointerEvents: 'none',
+                  zIndex: 10
+                }}
               />
-            ))}
 
-            {/* Extra characters typed past targetText */}
-            {typedInput.length > targetText.length &&
-              typedInput.slice(targetText.length).split('').map((extraChar, extraIdx) => (
-                <span
-                  key={`extra-${extraIdx}`}
-                  className="text-[var(--error-color,#ef4444)] border-b-2 border-red-500 font-semibold opacity-90"
-                >
-                  {extraChar === ' ' ? '\u00A0' : extraChar}
-                </span>
+              {parsedWords.map((wordObj) => (
+                <WordItem
+                  key={`w-${wordObj.wordIdx}`}
+                  wordObj={wordObj}
+                  typedInput={typedInput}
+                  typingAnimation={typingAnimation}
+                  isTape={isTape}
+                  onWordRef={handleWordRef}
+                  onCharRef={handleCharRef}
+                />
               ))}
+
+              {/* Extra characters typed past targetText */}
+              {typedInput.length > targetText.length &&
+                typedInput.slice(targetText.length).split('').map((extraChar, extraIdx) => (
+                  <span
+                    key={`extra-${extraIdx}`}
+                    className="text-[var(--error-color,#ef4444)] border-b-2 border-red-500 font-semibold opacity-90"
+                  >
+                    {extraChar === ' ' ? '\u00A0' : extraChar}
+                  </span>
+                ))}
+            </div>
           </div>
 
           {quoteMeta && (
@@ -832,7 +883,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               </span>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Quick Restart Button */}

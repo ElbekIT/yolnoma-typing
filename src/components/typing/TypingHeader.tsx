@@ -224,7 +224,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                 ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10 ring-1 ring-[var(--main-color)]/20'
                 : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
             }`}
-            title="Lenta rejimini almashtirish (off -> letter -> word -> drum/baraban)"
+            title={`Lenta rejimi: ${tapeMode === 'off' ? 'Oʻchiq (klassik 3 qator)' : tapeMode === 'letter' ? 'Harfma-harf gorizontal oqim' : tapeMode === 'word' ? 'Soʻzma-soʻz gorizontal lenta' : 'Aylanuvchi futuristik baraban'}`}
           >
             {tapeMode === 'drum' ? (
               <Disc className="w-3.5 h-3.5 animate-spin [animation-duration:8s]" />
