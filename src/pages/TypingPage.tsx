@@ -8,6 +8,7 @@ import { ResultModal } from '../components/typing/ResultModal';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode, TypingResult } from '../types';
 import { CodeLanguage } from '../data/codeSnippets';
 import { useI18n } from '../context/I18nContext';
+import { useSettings } from '../context/SettingsContext';
 
 interface TypingPageProps {
   mode: TextMode;
@@ -45,6 +46,7 @@ interface TypingPageProps {
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
   onStartTargetedPractice: (keys: string[]) => void;
+  onPracticeMissedWords?: (words: string[]) => void;
   onBackToHome?: () => void;
   onGoToCertificate?: () => void;
 }
@@ -85,16 +87,18 @@ export const TypingPage: React.FC<TypingPageProps> = ({
   onGoToLeaderboard,
   onOpenLogin,
   onStartTargetedPractice,
+  onPracticeMissedWords,
   onBackToHome,
   onGoToCertificate
 }) => {
   const { t } = useI18n();
+  const { zenMode } = useSettings();
 
   return (
     <div id="typing-arena" className="w-full flex flex-col items-center justify-center py-2 sm:py-4 animate-fade-in">
       {/* Top Bar with Back button */}
       {onBackToHome && (
-        <div className="w-full max-w-4xl flex items-center justify-between pb-3 px-2">
+        <div className={`w-full max-w-4xl flex items-center justify-between pb-3 px-2 transition-opacity duration-300 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <button
             onClick={onBackToHome}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono font-semibold transition-all duration-200 cursor-pointer active:scale-95"
@@ -112,7 +116,7 @@ export const TypingPage: React.FC<TypingPageProps> = ({
 
       {/* Viral Social Challenge Banner */}
       {challengeBanner && (
-        <div className="w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-3 text-amber-400 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className={`w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-3 text-amber-400 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex items-center gap-3 overflow-hidden">
             <span className="text-xl shrink-0">⚡</span>
             <div className="text-xs sm:text-sm font-bold text-[var(--text-color)]">
@@ -137,33 +141,37 @@ export const TypingPage: React.FC<TypingPageProps> = ({
       )}
 
       {/* Typing Header Controls */}
-      <TypingHeader
-        mode={mode}
-        setMode={setMode}
-        timeMode={timeMode}
-        setTimeMode={setTimeMode}
-        wordCountMode={wordCountMode}
-        setWordCountMode={setWordCountMode}
-        difficulty={difficulty}
-        setDifficulty={setDifficulty}
-        customText={customText}
-        setCustomText={setCustomText}
-        onReset={initTestText}
-        isTestActive={isTestActive}
-        onOpenLanguagePage={onOpenLanguagePage}
-        codeLanguage={codeLanguage}
-        setCodeLanguage={setCodeLanguage}
-      />
+      <div className={`w-full transition-all duration-300 ${zenMode && isTestActive ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'}`}>
+        <TypingHeader
+          mode={mode}
+          setMode={setMode}
+          timeMode={timeMode}
+          setTimeMode={setTimeMode}
+          wordCountMode={wordCountMode}
+          setWordCountMode={setWordCountMode}
+          difficulty={difficulty}
+          setDifficulty={setDifficulty}
+          customText={customText}
+          setCustomText={setCustomText}
+          onReset={initTestText}
+          isTestActive={isTestActive}
+          onOpenLanguagePage={onOpenLanguagePage}
+          codeLanguage={codeLanguage}
+          setCodeLanguage={setCodeLanguage}
+        />
+      </div>
 
       {/* Live Stats */}
-      <LiveStats
-        wpm={liveWpm}
-        cpm={liveCpm}
-        accuracy={liveAcc}
-        timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
-        progressPercent={progressPercent}
-        isTestActive={isTestActive}
-      />
+      <div className={`w-full transition-all duration-300 ${zenMode && isTestActive ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'}`}>
+        <LiveStats
+          wpm={liveWpm}
+          cpm={liveCpm}
+          accuracy={liveAcc}
+          timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
+          progressPercent={progressPercent}
+          isTestActive={isTestActive}
+        />
+      </div>
 
       {/* Interactive Typing Display */}
       <TypingDisplay
@@ -195,6 +203,7 @@ export const TypingPage: React.FC<TypingPageProps> = ({
           onOpenLogin();
         }}
         onStartTargetedPractice={onStartTargetedPractice}
+        onPracticeMissedWords={onPracticeMissedWords}
         onGoToCertificate={() => {
           setIsTestFinished(false);
           if (onGoToCertificate) onGoToCertificate();

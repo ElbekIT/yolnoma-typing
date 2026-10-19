@@ -88,7 +88,7 @@ import {
   DifficultyMode,
   TypingResult
 } from './types';
-import { generateTestText, calculateWpm, calculateRawWpm, calculateCpm, calculateAccuracy } from './utils/typingEngine';
+import { generateTestText, calculateWpm, calculateRawWpm, calculateCpm, calculateAccuracy, extractMissedWords } from './utils/typingEngine';
 import { CodeLanguage } from './data/codeSnippets';
 
 function MainAppContent() {
@@ -767,6 +767,7 @@ function MainAppContent() {
 
     const previousBest = profile ? profile.highestWpm : Number(localStorage.getItem('yolnoma_guest_best_wpm') || 0);
     const isPersonalBest = wpm > previousBest && wpm > 0 && wpm <= 280;
+    const missedWords = extractMissedWords(targetTextRef.current, typedInputRef.current);
 
     const resultObj: TypingResult = {
       wpm,
@@ -788,6 +789,7 @@ function MainAppContent() {
       timestamp: Date.now(),
       wpmHistory: [...wpmHistoryRef.current],
       charStats: { ...charStatsRef.current },
+      missedWords,
       quoteMeta,
       codeLang,
       userId: currentUserId,
@@ -899,6 +901,28 @@ function MainAppContent() {
     setTimeMode(0);
     setFinalResult(null);
     setIsTestFinished(false);
+  }, []);
+
+  // Practice Missed Words handler
+  const handlePracticeMissedWords = useCallback((words: string[]) => {
+    if (!words || words.length === 0) return;
+    let practiceList: string[] = [];
+    while (practiceList.length < 16) {
+      practiceList = practiceList.concat(words);
+    }
+    const customContent = practiceList.slice(0, 20).join(' ');
+    setCustomText(customContent);
+    setMode('custom');
+    setTimeMode(0);
+    setFinalResult(null);
+    setIsTestFinished(false);
+    setActiveTab('typing');
+    setTimeout(() => {
+      const arena = document.getElementById('typing-arena');
+      if (arena) arena.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const input = document.getElementById('typing-input-field') || document.querySelector('input[type="text"]');
+      if (input) (input as HTMLInputElement).focus();
+    }, 100);
   }, []);
 
   const handleThematicAction = useCallback((action: ThematicActionType) => {
@@ -1297,6 +1321,7 @@ function MainAppContent() {
               setActiveTab('login');
             }}
             onStartTargetedPractice={handleStartTargetedPractice}
+            onPracticeMissedWords={handlePracticeMissedWords}
             onBackToHome={() => setActiveTab('home')}
             onGoToCertificate={() => setActiveTab('certificate')}
           />
@@ -1330,9 +1355,19 @@ function MainAppContent() {
             />
           )}
           {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'statistics' && <StatisticsView />}
+          {activeTab === 'statistics' && (
+            <StatisticsView
+              onStartTargetedPractice={handleStartTargetedPractice}
+              onGoToTyping={() => setActiveTab('typing')}
+            />
+          )}
           {activeTab === 'achievements' && <AchievementsView />}
-          {activeTab === 'challenges' && <ChallengesView onStartChallenge={() => setActiveTab('typing')} />}
+          {activeTab === 'challenges' && (
+            <ChallengesView
+              onStartChallenge={() => setActiveTab('typing')}
+              onGoToBattle={() => setActiveTab('battle')}
+            />
+          )}
           {activeTab === 'partners' && <PartnersView />}
           {activeTab === 'owner' && (
             <OwnerAboutView

@@ -321,3 +321,41 @@ export function getNextWordStartIndexOnSpace(targetText: string, typedInput: str
 
   return null;
 }
+
+/**
+ * Extracts words that had mistyped characters or discrepancies during the test.
+ */
+export function extractMissedWords(targetText: string, typedInput: string): string[] {
+  if (!targetText || !typedInput) return [];
+
+  const targetWords = targetText.split(' ');
+  const missed: string[] = [];
+  let charOffset = 0;
+
+  for (let i = 0; i < targetWords.length; i++) {
+    const word = targetWords[i];
+    const wordEnd = charOffset + word.length;
+
+    // Check if the user typed into this word's range
+    if (typedInput.length > charOffset) {
+      const typedWordPart = typedInput.slice(charOffset, Math.min(typedInput.length, wordEnd));
+      const targetWordPart = word.slice(0, typedWordPart.length);
+
+      const isMismatch = typedWordPart !== targetWordPart;
+      const isWordIncompleteOnSpace =
+        typedInput.length > wordEnd &&
+        typedInput[wordEnd] === ' ' &&
+        typedWordPart.length < word.length;
+
+      if (isMismatch || isWordIncompleteOnSpace) {
+        const clean = word.replace(/^[.,!?;:"'()«»]+|[.,!?;:"'()«»]+$/g, '').trim();
+        if (clean.length > 1 && !missed.includes(clean)) {
+          missed.push(clean);
+        }
+      }
+    }
+    charOffset += word.length + 1; // +1 for the space separator
+  }
+
+  return missed;
+}

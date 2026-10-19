@@ -8,7 +8,9 @@ import {
   TrendingUp,
   Award,
   Sparkles,
-  Download
+  Download,
+  Target,
+  Smartphone
 } from 'lucide-react';
 import { TypingResult } from '../../types';
 import { useSettings } from '../../context/SettingsContext';
@@ -24,6 +26,7 @@ interface ResultModalProps {
   onGoToLeaderboard?: () => void;
   onOpenLogin?: () => void;
   onStartTargetedPractice?: (keys: string[]) => void;
+  onPracticeMissedWords?: (words: string[]) => void;
   onGoToCertificate?: () => void;
 }
 
@@ -204,6 +207,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   onGoToLeaderboard,
   onOpenLogin,
   onStartTargetedPractice,
+  onPracticeMissedWords,
   onGoToCertificate
 }) => {
   const { themeConfig } = useSettings();
@@ -324,6 +328,37 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           </div>
         )}
 
+        {/* Feature: Practice Missed Words Banner */}
+        {result.missedWords && result.missedWords.length > 0 && onPracticeMissedWords && (
+          <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-rose-500/15 border border-rose-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in duration-200 shadow-sm">
+            <div className="flex items-center gap-3 text-left w-full sm:w-auto">
+              <span className="p-2.5 rounded-xl bg-rose-500/20 text-rose-400 shrink-0 shadow-xs">
+                <Target className="w-5 h-5" />
+              </span>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-color)] flex items-center gap-1.5">
+                  <span>Xatolar Ustida Ishlash</span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-mono text-[10px] font-extrabold">
+                    {result.missedWords.length} ta soʻz
+                  </span>
+                </h4>
+                <p className="text-[11px] text-[var(--sub-color)] line-clamp-1 mt-0.5">
+                  Adashilgan soʻzlar: <span className="font-mono text-rose-400 font-semibold">{result.missedWords.slice(0, 6).join(', ')}{result.missedWords.length > 6 ? '...' : ''}</span>
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onPracticeMissedWords(result.missedWords!)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-95 shrink-0"
+              title="Xato ketgan soʻzlarni qayta mashq qilish"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Xatolarni Mashq Qilish</span>
+            </button>
+          </div>
+        )}
+
         {/* Feature 5: Keyboard Heatmap & Error Analysis */}
         <KeyboardHeatmap
           charStats={result.charStats}
@@ -423,6 +458,16 @@ export const ResultModal: React.FC<ResultModalProps> = ({
             >
               <Award className="w-3.5 h-3.5 text-amber-300" />
               <span>Sertifikat</span>
+            </button>
+
+            {/* Story Button (Instagram / Telegram 9:16) */}
+            <button
+              onClick={() => setShowCertificateModal(true)}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm"
+              title="Instagram va Telegram Story uchun 9:16 formatda yuklab olish"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-purple-400" />
+              <span>Story</span>
             </button>
 
             {/* Share button */}

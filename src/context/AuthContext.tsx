@@ -40,6 +40,7 @@ interface AuthContextType {
   exportPersonalData: () => void;
   adminUpdateUser: (targetUid: string, updates: Partial<UserProfile>) => Promise<void>;
   saveTestResult: (result: Omit<TypingResult, 'userId' | 'username'>) => Promise<TypingResult>;
+  addXp: (amount: number) => Promise<void>;
   userResultsHistory: TypingResult[];
   refreshHistory: () => Promise<void>;
 }
@@ -720,6 +721,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const addXp = async (amount: number) => {
+    if (amount <= 0) return;
+    if (profile) {
+      const newXp = Math.min(250000, (profile.xp || 0) + amount);
+      const newLevel = Math.min(100, Math.floor(newXp / 500) + 1);
+      const levelUp = newLevel > (profile.level || 1);
+
+      let rankTitle = profile.rankTitle;
+      if (newLevel >= 5) rankTitle = 'Keyboard Warrior';
+      if (newLevel >= 10) rankTitle = 'Speed Demon';
+      if (newLevel >= 20) rankTitle = 'Cyber Legend';
+
+      if (levelUp) {
+        addNotification('YANGI DARAJA! 🎉', `Tabriklaymiz! ${newLevel}-darajaga erishdingiz!`, 'level_up');
+      }
+
+      await updateProfileInternalStats({
+        xp: newXp,
+        level: newLevel,
+        rankTitle
+      });
+    } else {
+      try {
+        const guestXp = Number(localStorage.getItem('yolnoma_guest_xp') || 0) + amount;
+        localStorage.setItem('yolnoma_guest_xp', String(guestXp));
+      } catch {}
+    }
+  };
+
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!profile) return;
 
@@ -938,6 +968,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newHighestAccuracy = isPersonalBest || !profile.highestAccuracy ? fullResult.accuracy : profile.highestAccuracy;
       const newAvgWpm = Math.min(280, Math.round((profile.averageWpm * profile.totalTests + fullResult.wpm) / newTotalTests));
 
+      // Calculate daily streak
+      const today = new Date().toISOString().split('T')[0];
+      const lastDate = profile.lastTestDate;
+      let currentStreak = profile.currentStreak || 0;
+      if (!lastDate) {
+        currentStreak = 1;
+      } else if (lastDate === today) {
+        currentStreak = Math.max(1, currentStreak);
+      } else {
+        const lastDateTime = new Date(lastDate).getTime();
+        const todayTime = new Date(today).getTime();
+        const diffDays = Math.round((todayTime - lastDateTime) / (1000 * 3600 * 24));
+        if (diffDays === 1) {
+          currentStreak += 1;
+        } else {
+          currentStreak = 1;
+        }
+      }
+      const longestStreak = Math.max(profile.longestStreak || 0, currentStreak);
+
       const profileUpdates: Partial<UserProfile> = {
         totalTests: newTotalTests,
         totalTimeTypedSeconds: newTimeTyped,
@@ -953,6 +1003,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         xp: newXp,
         level: newLevel,
         rankTitle,
+        currentStreak,
+        longestStreak,
+        lastTestDate: today,
         lastActive: Date.now()
       };
 
@@ -1058,6 +1111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         exportPersonalData,
         adminUpdateUser,
         saveTestResult,
+        addXp,
         userResultsHistory,
         refreshHistory
       }}

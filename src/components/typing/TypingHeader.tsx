@@ -37,7 +37,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   codeLanguage = 'javascript',
   setCodeLanguage
 }) => {
-  const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode } = useSettings();
+  const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode, zenMode, setZenMode } = useSettings();
 
   const timeOptions: TimeMode[] = [15, 30, 60, 120];
   const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
@@ -232,6 +232,21 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
               <Film className="w-3.5 h-3.5" />
             )}
             <span>tape: {tapeMode === 'drum' ? 'baraban' : tapeMode}</span>
+          </button>
+
+          <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
+
+          <button
+            onClick={() => setZenMode(!zenMode)}
+            className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+              zenMode
+                ? 'text-emerald-400 font-semibold bg-emerald-500/10 ring-1 ring-emerald-500/20'
+                : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
+            }`}
+            title="Zen Mode: Chalg'ituvchi ko'rsatkichlarsiz sokin yozish rejimi"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span>zen: {zenMode ? 'yoqilgan' : 'oʻchiq'}</span>
           </button>
         </div>
 

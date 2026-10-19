@@ -45,6 +45,8 @@ interface SettingsContextType {
   setShowKeyboard: (show: boolean) => void;
   showLiveWpm: boolean;
   setShowLiveWpm: (show: boolean) => void;
+  zenMode: boolean;
+  setZenMode: (zen: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -118,6 +120,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [showLiveWpm, setShowLiveWpmState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_live_wpm') !== 'false';
   });
+  const [zenMode, setZenModeState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('yolnoma_zen_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const setZenMode = (zen: boolean) => {
+    setZenModeState(zen);
+    try {
+      localStorage.setItem('yolnoma_zen_mode', String(zen));
+    } catch {}
+  };
 
   const setTheme = (t: ThemeMode) => {
     setThemeState(t);
@@ -310,7 +326,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         showKeyboard,
         setShowKeyboard,
         showLiveWpm,
-        setShowLiveWpm
+        setShowLiveWpm,
+        zenMode,
+        setZenMode
       }}
     >
       {children}

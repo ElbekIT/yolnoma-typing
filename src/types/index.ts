@@ -173,9 +173,12 @@ export interface TypingResult {
   isPersonalBest?: boolean;
   consistency?: number;
   charStats?: Record<string, { total: number; errors: number }>;
+  missedWords?: string[];
   quoteMeta?: { author: string; source?: string };
   codeLang?: string;
 }
+
+export type BotDifficulty = 'beginner' | 'medium' | 'pro' | 'cyber';
 
 export interface Achievement {
   id: string;

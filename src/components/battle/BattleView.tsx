@@ -37,6 +37,7 @@ import { ref, set, onValue, update, get } from 'firebase/database';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { getRandomBattleText } from '../../data/battleTexts';
 import { sanitizeRoomCode, sanitizeText } from '../../utils/security';
+import { BotDifficulty } from '../../types';
 
 interface RealPlayerItem {
   uid: string;
@@ -89,6 +90,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
   const [isBotMatch, setIsBotMatch] = useState(false);
   const isBotMatchRef = useRef<boolean>(false);
+  const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>('medium');
+  const botDifficultyRef = useRef<BotDifficulty>('medium');
 
   // Room custom configurations (Host selects before creating)
   const [selectedDuration, setSelectedDuration] = useState<number>(30); // 15, 30, 60, 120 (0 = cheksiz)
@@ -415,10 +418,27 @@ export const BattleView: React.FC<BattleViewProps> = ({
     concludeMatch(declaredWinner, 'timeout');
   }, [currentUid, concludeMatch]);
 
-  // Cyber Bot simulation engine (natural variance, realistic typing rhythm)
+  // Multi-tier Bot simulation engine (natural variance, realistic typing rhythm)
   const startBotEngine = useCallback(() => {
     let botProgress = 0;
-    const botWpm = 55 + Math.floor(Math.random() * 25); // 55-80 WPM
+    let targetMin = 60;
+    let targetRange = 15;
+
+    if (botDifficultyRef.current === 'beginner') {
+      targetMin = 35;
+      targetRange = 10;
+    } else if (botDifficultyRef.current === 'medium') {
+      targetMin = 60;
+      targetRange = 15;
+    } else if (botDifficultyRef.current === 'pro') {
+      targetMin = 90;
+      targetRange = 15;
+    } else if (botDifficultyRef.current === 'cyber') {
+      targetMin = 130;
+      targetRange = 15;
+    }
+
+    const botWpm = targetMin + Math.floor(Math.random() * targetRange);
     const intervalMs = 200;
     const stepIncrement = (botWpm / 60) * 5 * (intervalMs / 1000);
 
@@ -657,8 +677,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }, 600);
   }, [applyRoomUpdate]);
 
-  // 1. 🤖 Play vs Robot (Cyber Bot)
-  const handleStartBotMatch = () => {
+  // 1. 🤖 Play vs Robot (Multi-tier Bot Arena)
+  const handleStartBotMatch = (diff?: BotDifficulty) => {
+    const activeDiff = diff || botDifficulty;
+    setBotDifficulty(activeDiff);
+    botDifficultyRef.current = activeDiff;
+
     setIsBotMatch(true);
     isBotMatchRef.current = true;
     setIsHost(true);
@@ -686,12 +710,30 @@ export const BattleView: React.FC<BattleViewProps> = ({
       isBot: false
     };
 
+    let botName = 'Havaskor Bot 🥈';
+    let botSeed = 'MediumBot';
+    let botEstimatedWpm = 68;
+
+    if (activeDiff === 'beginner') {
+      botName = 'Boshlangʻich Bot 🥉';
+      botSeed = 'BeginnerBot';
+      botEstimatedWpm = 40;
+    } else if (activeDiff === 'pro') {
+      botName = 'Pro Master Bot 🥇';
+      botSeed = 'ProBot';
+      botEstimatedWpm = 98;
+    } else if (activeDiff === 'cyber') {
+      botName = 'Kiber Xaker Bot ⚡';
+      botSeed = 'CyberHackerBot';
+      botEstimatedWpm = 135;
+    }
+
     const botData: RacerProgress = {
       id: 'bot_cyber',
-      name: 'Cyber Bot 🤖',
-      avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberBotBattle',
+      name: botName,
+      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${botSeed}`,
       progressPercent: 0,
-      wpm: 65,
+      wpm: botEstimatedWpm,
       accuracy: 99,
       isWinner: false,
       isBot: true
@@ -1220,29 +1262,56 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           {/* Main 3 Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Card 1: 🤖 Robot Bilan O'ynash (Cyber Bot) */}
+            {/* Card 1: 🤖 Robot Bilan O'ynash (Multi-tier Cyber Bot) */}
             <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-purple-500/60 p-5 sm:p-6 rounded-3xl space-y-4 transition-all shadow-lg flex flex-col justify-between group">
               <div className="space-y-2.5">
                 <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-inner group-hover:scale-105 transition-transform">
                   <Bot className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm sm:text-base font-black text-[var(--text-color)] flex items-center gap-1.5">
-                  <span>Robot Bilan O'ynash</span>
+                  <span>Robot Bilan Oʻynash</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">
-                    CYBER BOT
+                    AI DUEL
                   </span>
                 </h3>
                 <p className="text-xs text-[var(--sub-color)] leading-relaxed">
-                  Kutmasdan tanlangan vaqt ({selectedDuration}s) va tilda sun'iy intellektli Robot bilan duelga kiring.
+                  Sun'iy intellektli botga qarshi poyga. Oʻzingizga mos qiyinlik darajasini tanlang:
                 </p>
+
+                {/* Bot Difficulty Selector Pills */}
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  {[
+                    { id: 'beginner' as BotDifficulty, label: 'Oson (40 WPM)', badge: '🥉' },
+                    { id: 'medium' as BotDifficulty, label: 'Oʻrtacha (68 WPM)', badge: '🥈' },
+                    { id: 'pro' as BotDifficulty, label: 'Pro (98 WPM)', badge: '🥇' },
+                    { id: 'cyber' as BotDifficulty, label: 'Kiber (135 WPM)', badge: '⚡' },
+                  ].map((lvl) => (
+                    <button
+                      key={lvl.id}
+                      type="button"
+                      onClick={() => {
+                        setBotDifficulty(lvl.id);
+                        botDifficultyRef.current = lvl.id;
+                      }}
+                      className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer flex items-center justify-between ${
+                        botDifficulty === lvl.id
+                          ? 'bg-purple-600 text-white border-purple-400 shadow-sm scale-[1.02]'
+                          : 'bg-[var(--bg-color)] border-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                      }`}
+                    >
+                      <span className="truncate">{lvl.label}</span>
+                      <span>{lvl.badge}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <button
-                onClick={handleStartBotMatch}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-600/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => handleStartBotMatch(botDifficulty)}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-600/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 <Bot className="w-4 h-4" />
-                <span>ROBOT BILAN O'YNASH 🤖</span>
+                <span>ROBOT BILAN JANGNI BOSHLASH 🤖</span>
               </button>
             </div>
 
