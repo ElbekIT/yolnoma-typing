@@ -136,3 +136,81 @@ export const getRandomBattleText = (lang: 'uz-latn' | 'uz-cyrl' | 'en' | 'ru' | 
   const randomIndex = Math.floor(Math.random() * pool.length);
   return pool[randomIndex];
 };
+
+/**
+ * Normalizes characters for typing comparisons:
+ * - Apostrophes / single quotes: ' ’ ‘ ʻ ʼ ` ´ -> '
+ * - Double quotes: " “ ” « » -> "
+ * - Hyphens / dashes: - — – − -> -
+ * - Whitespace: \u00A0 (NBSP) -> ' '
+ */
+export const normalizeBattleChar = (ch: string): string => {
+  if (!ch) return '';
+  if ("'‘’ʻʼ`´".includes(ch)) return "'";
+  if ('"“”«»'.includes(ch)) return '"';
+  if ('-—–−'.includes(ch)) return '-';
+  if (ch === '\u00A0') return ' ';
+  return ch;
+};
+
+/**
+ * Normalizes full text using character normalization
+ */
+export const normalizeBattleText = (text: string): string => {
+  if (!text) return '';
+  return text
+    .split('')
+    .map(normalizeBattleChar)
+    .join('');
+};
+
+/**
+ * Robust completion check:
+ * Returns true if:
+ * 1. User reached or exceeded the target length (typed all characters to the end!)
+ * 2. Exact match
+ * 3. Normalized match (handles apostrophes/quotes variations)
+ * 4. Word-by-word complete (even if trailing period or space differed)
+ * 5. Calculated progress is 100%
+ */
+export const isBattleTextFinished = (
+  typed: string,
+  target: string,
+  calculatedProgress?: number
+): boolean => {
+  if (!target || target.length === 0) return false;
+  if (!typed || typed.length === 0) return false;
+
+  // 1. Reached or passed the end of text length
+  if (typed.length >= target.length) {
+    return true;
+  }
+
+  // 2. Exact string match
+  if (typed === target) {
+    return true;
+  }
+
+  // 3. Normalized comparison (handling Uzbek apostrophes, smart quotes, etc.)
+  const normTyped = normalizeBattleText(typed).trim();
+  const normTarget = normalizeBattleText(target).trim();
+  if (normTyped === normTarget) {
+    return true;
+  }
+
+  // 4. Word-level complete (ignoring trailing punctuation like . ? ! , : ;)
+  const stripPunct = (s: string) => s.replace(/[.,?!:;'"’‘`ʻʼ\s]+$/g, '').trim();
+  const cleanTyped = stripPunct(normTyped);
+  const cleanTarget = stripPunct(normTarget);
+  if (cleanTarget.length > 5 && cleanTyped === cleanTarget) {
+    return true;
+  }
+
+  // 5. Progress percent 100%
+  if (typeof calculatedProgress === 'number' && calculatedProgress >= 100) {
+    return true;
+  }
+
+  return false;
+};
+

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Disc, Zap, Flame, Trophy, Crown, User, Bot, Target } from 'lucide-react';
+import { normalizeBattleChar } from '../../data/battleTexts';
 
 export interface RacerProgress {
   id: string;
@@ -39,9 +40,10 @@ const SingleBattleDrum: React.FC<SingleDrumProps> = ({
   const angularStep = 6.2; // degrees per character
 
   // Target text length & progress
-  const currentTyped = Math.max(0, Math.min(targetText.length, typedLen));
+  const isFinished = racer.progressPercent >= 100 || racer.isWinner || (typedLen >= targetText.length && targetText.length > 0);
+  const currentTyped = isFinished ? targetText.length : Math.max(0, Math.min(targetText.length, typedLen));
   const totalChars = targetText.length || 1;
-  const progressPercent = Math.min(100, Math.round((currentTyped / totalChars) * 100));
+  const progressPercent = isFinished ? 100 : Math.min(100, Math.round((currentTyped / totalChars) * 100));
 
   // Current active word being typed
   const activeWord = useMemo(() => {
@@ -77,8 +79,8 @@ const SingleBattleDrum: React.FC<SingleDrumProps> = ({
       const isTyped = i < currentTyped;
       const isCurrent = i === currentTyped;
       const typedChar = isPlayer ? typedInput[i] : undefined;
-      const isCorrect = isTyped && (isPlayer ? typedChar === char : true);
-      const isWrong = isTyped && isPlayer && typedChar !== undefined && typedChar !== char;
+      const isCorrect = isTyped && (isPlayer ? (typedChar !== undefined && normalizeBattleChar(typedChar) === normalizeBattleChar(char)) : true);
+      const isWrong = isTyped && isPlayer && typedChar !== undefined && normalizeBattleChar(typedChar) !== normalizeBattleChar(char);
 
       const angle = i * angularStep - 90;
       const rad = (angle * Math.PI) / 180;

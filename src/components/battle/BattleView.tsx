@@ -32,12 +32,18 @@ import { DualBattleDrumView, RacerProgress } from './DualBattleDrumView';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { soundSynth } from '../../utils/audio';
-import { rtdb, db } from '../../config/firebase';
+import { rtdb, db, ensureFirebaseAuth } from '../../config/firebase';
 import { ref, set, onValue, update, get } from 'firebase/database';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { getRandomBattleText } from '../../data/battleTexts';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import {
+  getRandomBattleText,
+  normalizeBattleChar,
+  normalizeBattleText,
+  isBattleTextFinished
+} from '../../data/battleTexts';
 import { sanitizeRoomCode, sanitizeText } from '../../utils/security';
 import { BotDifficulty } from '../../types';
+import confetti from 'canvas-confetti';
 
 interface RealPlayerItem {
   uid: string;
@@ -158,6 +164,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const botTimerRef = useRef<any>(null);
   const roomUnsubRef = useRef<any>(null);
+  const fsUnsubRef = useRef<any>(null);
   const countdownTimerRef = useRef<any>(null);
   const pollIntervalRef = useRef<any>(null);
   const matchTimerRef = useRef<any>(null);
@@ -213,10 +220,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
     roomLanguageRef.current = selectedLanguage;
   }, [selectedLanguage]);
 
+  // Ensure anonymous/authenticated Firebase session for RTDB writes
+  useEffect(() => {
+    ensureFirebaseAuth().catch(() => {});
+  }, []);
+
   // Cleanup all timers on unmount
   useEffect(() => {
     return () => {
       if (roomUnsubRef.current) roomUnsubRef.current();
+      if (fsUnsubRef.current) fsUnsubRef.current();
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       if (botTimerRef.current) clearInterval(botTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
@@ -351,6 +364,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
     if (amIWinner) {
       playSoundSafe('win');
       if (addXp) addXp(150);
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      } catch {}
     } else {
       playSoundSafe('lose');
       if (addXp) addXp(50);
@@ -375,6 +395,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
     if (!isBotMatchRef.current && code) {
       try {
         update(ref(rtdb, `battle_rooms/${code}`), {
+          winner: winnerUid,
+          status: 'finished',
+          finishReason: reason
+        }).catch(() => {});
+
+        updateDoc(doc(db, 'battle_rooms', code), {
           winner: winnerUid,
           status: 'finished',
           finishReason: reason
@@ -502,6 +528,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         const raceNow = Date.now();
         updateGameState('racing');
         setStartTime(raceNow);
+        startTimeRef.current = raceNow;
         playSoundSafe('go');
 
         // Set up match duration countdown timer
@@ -524,11 +551,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
           }
         }, 1000);
 
-        // Notify server and RTDB that match is now 'racing'
+        // Notify server, RTDB and Firestore that match is now 'racing'
         const code = activeRoomCodeRef.current;
         if (!isBotMatchRef.current && code) {
           try {
             update(ref(rtdb, `battle_rooms/${code}`), {
+              status: 'racing',
+              startedAt: raceNow
+            }).catch(() => {});
+
+            updateDoc(doc(db, 'battle_rooms', code), {
               status: 'racing',
               startedAt: raceNow
             }).catch(() => {});
@@ -601,6 +633,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
         const now = data.startedAt || Date.now();
         updateGameState('racing');
         setStartTime(now);
+        startTimeRef.current = now;
 
         const dur = data.duration || roomDurationRef.current || 30;
         const elapsed = Math.floor((Date.now() - now) / 1000);
@@ -626,35 +659,31 @@ export const BattleView: React.FC<BattleViewProps> = ({
       }
     }
 
-    // Remote winner completion
-    if (data.winner) {
-      setWinnerId(data.winner);
-      setFinishReason(data.finishReason || 'completed');
-      updateGameState('finished');
-      if (matchTimerRef.current) {
-        clearInterval(matchTimerRef.current);
-        matchTimerRef.current = null;
-      }
-      if (countdownTimerRef.current) {
-        clearInterval(countdownTimerRef.current);
-        countdownTimerRef.current = null;
-      }
-      if (botTimerRef.current) {
-        clearInterval(botTimerRef.current);
-        botTimerRef.current = null;
+    // Remote winner completion or opponent finished
+    const isOpponentFinished = Boolean(
+      opponentRoleData && (opponentRoleData.progressPercent >= 100 || opponentRoleData.isWinner)
+    );
+    const isRoomFinished = data.status === 'finished' || Boolean(data.winner);
+
+    if (isRoomFinished || isOpponentFinished) {
+      if (gameStateRef.current !== 'finished') {
+        const declaredWinner = data.winner || (isOpponentFinished ? opponentRoleData?.id : null);
+        concludeMatch(declaredWinner, data.finishReason || 'completed');
+        return;
       }
     }
-  }, [updateGameState, startCountdownSequence, handleMatchTimeout]);
+  }, [updateGameState, startCountdownSequence, handleMatchTimeout, concludeMatch]);
 
-  // Listen to room updates via RTDB + Server Polling
+  // Listen to room updates via RTDB + Firestore Realtime Listeners
   const listenToRoom = useCallback((code: string, amIHost: boolean) => {
     if (roomUnsubRef.current) roomUnsubRef.current();
+    if (fsUnsubRef.current) fsUnsubRef.current();
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
     isHostRef.current = amIHost;
     activeRoomCodeRef.current = code;
 
-    // 1. RTDB live listener
+    // 1. RTDB live listener (Ultra-fast sub-50ms WebSocket)
     try {
       const roomRef = ref(rtdb, `battle_rooms/${code}`);
       roomUnsubRef.current = onValue(roomRef, (snapshot) => {
@@ -663,18 +692,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
       });
     } catch {}
 
-    // 2. High-speed server polling (every 600ms) ensuring instant room connection even without RTDB
-    pollIntervalRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/battle/room/${code}`);
-        if (res.ok) {
-          const sData = await res.json();
-          if (sData.success && sData.room) {
-            applyRoomUpdate(sData.room);
-          }
-        }
-      } catch {}
-    }, 600);
+    // 2. Firestore fallback live listener (100% resilient real-time listener)
+    try {
+      fsUnsubRef.current = onSnapshot(doc(db, 'battle_rooms', code), (snapshot) => {
+        if (!snapshot.exists()) return;
+        applyRoomUpdate(snapshot.data());
+      });
+    } catch {}
   }, [applyRoomUpdate]);
 
   // 1. 🤖 Play vs Robot (Multi-tier Bot Arena)
@@ -879,7 +903,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
       } catch {}
 
       try {
-        updateDoc(doc(db, 'battle_rooms', code), { guest: guestData, status: 'ready' }).catch(() => {});
+        const fsDocRef = doc(db, 'battle_rooms', code);
+        const fsSnap = await getDoc(fsDocRef);
+        if (fsSnap.exists()) {
+          if (!roomVal) roomVal = fsSnap.data();
+          updateDoc(fsDocRef, { guest: guestData, status: 'ready' }).catch(() => {});
+        }
       } catch {}
 
       if (!roomVal) {
@@ -1014,44 +1043,50 @@ export const BattleView: React.FC<BattleViewProps> = ({
     if (gameStateRef.current !== 'racing') return;
     const val = e.target.value;
     const targetText = battleTextRef.current;
+    const targetLength = targetText.length;
 
-    // Do not allow typing beyond text length
-    if (val.length > targetText.length) return;
+    // Clamp value to targetText length so we don't drop the event if user types fast
+    const currentVal = val.length > targetLength ? val.slice(0, targetLength) : val;
 
-    setUserInput(val);
+    setUserInput(currentVal);
+    userInputRef.current = currentVal;
 
-    // Audio feedback & mistakes tracking
+    // Audio feedback & mistakes tracking with character normalization (handles Uzbek apostrophes etc.)
     let mistakes = 0;
-    for (let i = 0; i < val.length; i++) {
-      if (val[i] !== targetText[i]) mistakes++;
+    let correctCount = 0;
+    for (let i = 0; i < currentVal.length; i++) {
+      if (normalizeBattleChar(currentVal[i]) === normalizeBattleChar(targetText[i])) {
+        correctCount++;
+      } else {
+        mistakes++;
+      }
     }
     setMyMistakes(mistakes);
 
-    if (val.length > 0) {
-      const lastIndex = val.length - 1;
-      const isCorrectChar = val[lastIndex] === targetText[lastIndex];
+    if (currentVal.length > 0) {
+      const lastIndex = currentVal.length - 1;
+      const isCorrectChar = normalizeBattleChar(currentVal[lastIndex]) === normalizeBattleChar(targetText[lastIndex]);
       playSoundSafe(isCorrectChar ? 'key' : 'error');
     }
 
-    const targetLength = targetText.length;
-    const correctCount = val.split('').filter((c, i) => c === targetText[i]).length;
-    const calculatedProgress = Math.min(100, Math.round((correctCount / targetLength) * 100));
-
+    const calculatedProgress = targetLength > 0 ? Math.min(100, Math.round((correctCount / targetLength) * 100)) : 0;
     const timeMinutes = Math.max(0.01, (Date.now() - (startTimeRef.current || Date.now())) / 60000);
-    const calculatedWpm = Math.round(val.length / 5 / timeMinutes);
-    const accuracy = val.length === 0 ? 100 : Math.round((correctCount / val.length) * 100);
+    const calculatedWpm = Math.max(1, Math.round(currentVal.length / 5 / timeMinutes));
+    const accuracy = currentVal.length === 0 ? 100 : Math.round((correctCount / currentVal.length) * 100);
 
-    const isFinished = val === targetText;
+    // CRITICAL: Determine if player has completed the text!
+    const isFinished = isBattleTextFinished(currentVal, targetText, calculatedProgress);
 
     const updatedState: RacerProgress = {
       ...myProgress,
-      progressPercent: calculatedProgress,
+      progressPercent: isFinished ? 100 : calculatedProgress,
       wpm: calculatedWpm,
       accuracy,
       isWinner: isFinished
     };
 
     setMyProgress(updatedState);
+    myProgressRef.current = updatedState;
 
     // Sync progress in real time
     const code = activeRoomCodeRef.current;
@@ -1059,6 +1094,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
       const role = isHostRef.current ? 'host' : 'guest';
       try {
         update(ref(rtdb, `battle_rooms/${code}/${role}`), updatedState).catch(() => {});
+        updateDoc(doc(db, 'battle_rooms', code), { [role]: updatedState }).catch(() => {});
         fetch('/api/battle/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1077,12 +1113,26 @@ export const BattleView: React.FC<BattleViewProps> = ({
     }
   };
 
+  // Keyboard shortcut to conclude on Enter if text is finished
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const currentVal = userInputRef.current;
+      const targetText = battleTextRef.current;
+      if (isBattleTextFinished(currentVal, targetText) || currentVal.length >= targetText.length * 0.95) {
+        e.preventDefault();
+        concludeMatch(currentUid, 'completed');
+      }
+    }
+  };
+
   // Rematch with fresh random text
   const handleRematch = async () => {
     const freshText = getRandomBattleText(selectedLanguage);
     setBattleText(freshText);
     battleTextRef.current = freshText;
     setUserInput('');
+    userInputRef.current = '';
+    startTimeRef.current = null;
     setWinnerId(null);
     setFinishReason('completed');
     setMyMistakes(0);
@@ -1098,6 +1148,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
       isWinner: false
     };
     setMyProgress(resetMyData);
+    myProgressRef.current = resetMyData;
+
+    if (isBotMatchRef.current) {
+      setOpponentProgress((prev) => ({
+        ...prev,
+        progressPercent: 0,
+        isWinner: false
+      }));
+    }
 
     const code = activeRoomCodeRef.current;
     if (!isBotMatchRef.current && code) {
@@ -1109,6 +1168,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
           status: 'ready'
         };
         await update(ref(rtdb, `battle_rooms/${code}`), payload);
+        await updateDoc(doc(db, 'battle_rooms', code), payload);
         await fetch('/api/battle/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1677,7 +1737,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   let cls = 'text-slate-400';
                   if (idx < userInput.length) {
                     cls =
-                      userInput[idx] === char
+                      normalizeBattleChar(userInput[idx]) === normalizeBattleChar(char)
                         ? 'text-cyan-400 font-bold bg-cyan-500/10'
                         : 'text-rose-400 bg-rose-500/20 underline font-bold';
                   } else if (idx === userInput.length) {
@@ -1698,6 +1758,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   type="text"
                   value={userInput}
                   onChange={handleInputChange}
+                  onKeyDown={handleInputKeyDown}
                   autoFocus
                   autoComplete="off"
                   autoCorrect="off"
@@ -1709,6 +1770,12 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-1 rounded-md border border-cyan-500/30">
                   {userInput.length} / {battleText.length}
                 </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1">
+                <span className="flex items-center gap-1 text-cyan-400/90 font-medium">
+                  ⚡ Matnni birinchi to'liq yozib tugatgan ishtirokchi darhol g'olib bo'ladi!
+                </span>
+                <span>(Enter bosish ham mumkin)</span>
               </div>
             </div>
           )}
