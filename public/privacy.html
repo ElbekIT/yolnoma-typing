@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  
+  <!-- Primary Meta Tags -->
+  <title>Privacy Policy - Algorix Calculator | YOLNOMA</title>
+  <meta name="title" content="Privacy Policy - Algorix Calculator | YOLNOMA" />
+  <meta name="description" content="Official Privacy Policy for Algorix, a Flutter-based calculator application developed by the YOLNOMA team. Zero personal data collection, 100% on-device offline processing, no trackers." />
+  <meta name="author" content="YOLNOMA Team" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.yolnoma.uz/privacy.html" />
+
+  <!-- Open Graph / Social Meta -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.yolnoma.uz/privacy.html" />
+  <meta property="og:title" content="Privacy Policy - Algorix Calculator" />
+  <meta property="og:description" content="Official Privacy Policy for Algorix Flutter calculator application. Zero data collection, 100% on-device local calculations, completely safe for all ages." />
+  <meta property="og:image" content="https://www.yolnoma.uz/og-banner.jpg" />
+
+  <!-- Favicons -->
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" type="image/svg+xml" href="/yolnoma_icon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#090d16" />
+
+  <!-- Google Fonts Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* -------------------------------------------------------------
+       BASE CSS & MODERN DARK THEME DESIGN SYSTEM (YOLNOMA IT STYLE)
+       ------------------------------------------------------------- */
+    :root {
+      --bg-color: #090d16;
+      --card-bg: rgba(15, 23, 42, 0.72);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(226, 183, 20, 0.35);
+      --main-color: #e2b714;
+      --main-color-glow: rgba(226, 183, 20, 0.18);
+      --accent-blue: #0088ff;
+      --accent-cyan: #00d2ff;
+      --accent-green: #10b981;
+      --accent-rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-sub: #64748b;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.65;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 102, 255, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(226, 183, 20, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* -------------------------------------------------------------
+       NAVBAR
+       ------------------------------------------------------------- */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 0;
+      transition: all 0.2s ease;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .brand-logo-img {
+      height: 32px;
+      width: auto;
+    }
+
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 9999px;
+      background: rgba(226, 183, 20, 0.15);
+      color: var(--main-color);
+      border: 1px solid rgba(226, 183, 20, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-nav-primary {
+      background: rgba(226, 183, 20, 0.12);
+      border-color: rgba(226, 183, 20, 0.35);
+      color: var(--main-color);
+    }
+
+    .btn-nav-primary:hover {
+      background: rgba(226, 183, 20, 0.22);
+      border-color: var(--main-color);
+    }
+
+    /* -------------------------------------------------------------
+       HERO HEADER
+       ------------------------------------------------------------- */
+    .hero {
+      padding: 3rem 0 2rem;
+      text-align: center;
+    }
+
+    .hero-badge-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-green);
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .hero-title {
+      font-size: 2.35rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 0.85rem;
+      color: #ffffff;
+    }
+
+    .hero-title .app-name-highlight {
+      background: linear-gradient(135deg, #e2b714 0%, #ffdf58 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    .hero-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto 1.75rem;
+      line-height: 1.6;
+    }
+
+    /* Metadata Bar */
+    .meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem 1.5rem;
+      padding: 0.9rem 1.25rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .meta-item strong {
+      color: var(--text-main);
+    }
+
+    .meta-item a {
+      color: var(--main-color);
+      text-decoration: none;
+    }
+
+    .meta-item a:hover {
+      text-decoration: underline;
+    }
+
+    /* -------------------------------------------------------------
+       KEY HIGHLIGHTS GRID (FAST-SCAN CARDS FOR GOOGLE REVIEWERS)
+       ------------------------------------------------------------- */
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin: 2.25rem 0 2.5rem;
+    }
+
+    .highlight-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .highlight-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--card-accent, var(--main-color)), transparent);
+      opacity: 0.6;
+    }
+
+    .highlight-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.85rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-text {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* -------------------------------------------------------------
+       MAIN CONTENT LAYOUT (TOC + LEGAL TEXT)
+       ------------------------------------------------------------- */
+    .content-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 2.25rem;
+      align-items: start;
+      margin-bottom: 4rem;
+    }
+
+    @media (max-width: 820px) {
+      .content-layout {
+        grid-template-columns: 1fr;
+      }
+      .toc-wrapper {
+        display: none;
+      }
+      .hero-title {
+        font-size: 1.85rem;
+      }
+    }
+
+    /* Sticky Table of Contents */
+    .toc-wrapper {
+      position: sticky;
+      top: 5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.15rem;
+      max-height: calc(100vh - 6.5rem);
+      overflow-y: auto;
+    }
+
+    .toc-title {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .toc-link {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      display: block;
+      line-height: 1.35;
+    }
+
+    .toc-link:hover {
+      color: var(--main-color);
+      background: rgba(226, 183, 20, 0.08);
+      padding-left: 0.75rem;
+    }
+
+    /* Legal Content Container */
+    .legal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 2.25rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 600px) {
+      .legal-content {
+        padding: 1.5rem 1.15rem;
+      }
+    }
+
+    .policy-section {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .policy-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .section-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--main-color);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.25rem;
+      display: inline-block;
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .policy-text {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      line-height: 1.75;
+      margin-bottom: 1rem;
+    }
+
+    .policy-text strong {
+      color: #ffffff;
+    }
+
+    .policy-list {
+      margin: 0.75rem 0 1.25rem 1.25rem;
+      color: #cbd5e1;
+      font-size: 0.92rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .policy-list li {
+      padding-left: 0.25rem;
+      line-height: 1.6;
+    }
+
+    .policy-list li strong {
+      color: #ffffff;
+    }
+
+    /* Callout Boxes */
+    .callout {
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+    }
+
+    .callout-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+    }
+
+    .callout-success {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #a7f3d0;
+    }
+
+    .callout-success strong {
+      color: #34d399;
+    }
+
+    .callout-info {
+      background: rgba(0, 136, 255, 0.08);
+      border: 1px solid rgba(0, 136, 255, 0.25);
+      color: #bae6fd;
+    }
+
+    .callout-info strong {
+      color: #38bdf8;
+    }
+
+    .callout-warning {
+      background: rgba(226, 183, 20, 0.08);
+      border: 1px solid rgba(226, 183, 20, 0.25);
+      color: #fef08a;
+    }
+
+    .callout-warning strong {
+      color: #facc15;
+    }
+
+    /* Permissions Table */
+    .table-responsive {
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+    }
+
+    .perm-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .perm-table th, .perm-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .perm-table th {
+      background: rgba(255, 255, 255, 0.03);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .perm-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .perm-badge-no {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    /* Contact Box */
+    .contact-card {
+      background: linear-gradient(135deg, rgba(226, 183, 20, 0.06) 0%, rgba(0, 102, 255, 0.06) 100%);
+      border: 1px solid rgba(226, 183, 20, 0.25);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .contact-field {
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+
+    .contact-label {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+
+    .contact-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ffffff;
+      word-break: break-all;
+    }
+
+    .contact-value a {
+      color: var(--main-color);
+      text-decoration: none;
+    }
+
+    .contact-value a:hover {
+      text-decoration: underline;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(226, 183, 20, 0.15);
+      border-color: var(--main-color);
+      color: var(--main-color);
+    }
+
+    /* -------------------------------------------------------------
+       FOOTER
+       ------------------------------------------------------------- */
+    .footer {
+      margin-top: auto;
+      border-top: 1px solid var(--card-border);
+      background: rgba(9, 13, 22, 0.95);
+      padding: 2rem 0;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.25rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--main-color);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .navbar, .toc-wrapper, .nav-actions, .copy-btn, .footer {
+        display: none !important;
+      }
+      .content-layout {
+        display: block !important;
+      }
+      .legal-content, .highlight-card, .meta-bar {
+        background: transparent !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+      }
+      .policy-text, .policy-list, .section-title, .card-title, .card-text {
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       TOP NAVIGATION BAR
+       ============================================================ -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand-link" title="Return to Yolnoma">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" class="brand-logo-img" style="height: 28px; width: 28px;">
+          <defs>
+            <linearGradient id="navIconLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0066FF" />
+              <stop offset="100%" stop-color="#00D2FF" />
+            </linearGradient>
+            <linearGradient id="navIconRight" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0B132B" />
+              <stop offset="100%" stop-color="#0044AA" />
+            </linearGradient>
+          </defs>
+          <g transform="translate(9, 5.5)">
+            <path d="M 40 10 L 85 55 C 92 62 90 74 80 82 L 48 102 C 40 107 30 103 28 94 L 20 60 L 40 10 Z" fill="url(#navIconRight)" />
+            <path d="M 12 18 C 10 10 18 2 28 8 L 60 32 C 68 38 68 50 60 56 L 28 88 C 22 94 12 90 10 82 L 12 18 Z" fill="url(#navIconLeft)" />
+            <path d="M 32 40 C 44 28 62 40 50 56 C 40 68 22 80 14 62 Z" fill="#0088FF" opacity="0.85" />
+          </g>
+        </svg>
+        <div class="brand-meta">
+          <div class="brand-title">
+            <span>YOLNOMA</span>
+            <span class="brand-badge">Policy Center</span>
+          </div>
+          <span class="brand-sub">Algorix Mobile Application</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <button onclick="window.print()" class="btn-nav" title="Print or save as PDF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          <span>Print / PDF</span>
+        </button>
+
+        <a href="/" class="btn-nav btn-nav-primary" title="Go to Yolnoma Platform">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>yolnoma.uz</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       HERO SECTION
+       ============================================================ -->
+  <main class="container">
+    <section class="hero">
+      <div class="hero-badge-wrap">
+        <span class="pulse-dot"></span>
+        <span>Google Play Compliant &bull; Official Legal Document</span>
+      </div>
+
+      <h1 class="hero-title">
+        Privacy Policy for <span class="app-name-highlight">Algorix</span>
+      </h1>
+
+      <p class="hero-desc">
+        This official Privacy Policy describes how the <strong>Algorix</strong> calculator application, developed by the <strong>YOLNOMA Team</strong>, handles user data with an uncompromising commitment to privacy, offline security, and zero personal data tracking.
+      </p>
+
+      <div class="meta-bar">
+        <div class="meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Effective Date: <strong>October 2026</strong></span>
+        </div>
+        <div class="meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Developer: <strong>YOLNOMA Team</strong></span>
+        </div>
+        <div class="meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <span>Contact: <a href="mailto:qoriyevagavharoy@gmail.com">qoriyevagavharoy@gmail.com</a></span>
+        </div>
+        <div class="meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <span>Domain: <a href="https://www.yolnoma.uz" target="_blank" rel="noopener">yolnoma.uz</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         HIGHLIGHTS GRID (FOR FAST MODERATOR SCANNING)
+         ============================================================ -->
+    <section class="highlights-grid">
+      <div class="highlight-card" style="--card-accent: #10b981;">
+        <div class="card-icon" style="color: #10b981;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+        </div>
+        <h3 class="card-title">Zero Data Collection</h3>
+        <p class="card-text">We do not collect, store, transmit, or monetize any Personally Identifiable Information (PII) or user records.</p>
+      </div>
+
+      <div class="highlight-card" style="--card-accent: #00d2ff;">
+        <div class="card-icon" style="color: #00d2ff;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="16" y1="18" x2="16" y2="18.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line></svg>
+        </div>
+        <h3 class="card-title">100% On-Device</h3>
+        <p class="card-text">All arithmetic, scientific formulas, and calculation history operate strictly within local device memory.</p>
+      </div>
+
+      <div class="highlight-card" style="--card-accent: #e2b714;">
+        <div class="card-icon" style="color: #e2b714;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+        </div>
+        <h3 class="card-title">No Tracking or Ads</h3>
+        <p class="card-text">No third-party advertising SDKs, diagnostic telemetry, behavioral profiling, or tracking cookies are included.</p>
+      </div>
+
+      <div class="highlight-card" style="--card-accent: #f43f5e;">
+        <div class="card-icon" style="color: #f43f5e;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        </div>
+        <h3 class="card-title">Family & Child Safe</h3>
+        <p class="card-text">Fully compliant with COPPA, GDPR-K, and Google Play Families Policy. Safe and educational for all ages.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CONTENT LAYOUT (STICKY TOC + FORMAL SECTIONS)
+         ============================================================ -->
+    <div class="content-layout">
+      <!-- Sticky Navigation Table of Contents -->
+      <aside class="toc-wrapper">
+        <div class="toc-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span>Contents</span>
+        </div>
+        <ul class="toc-list">
+          <li><a href="#section-1" class="toc-link">1. Introduction & Scope</a></li>
+          <li><a href="#section-2" class="toc-link">2. Zero Data Collection</a></li>
+          <li><a href="#section-3" class="toc-link">3. Local On-Device Computation</a></li>
+          <li><a href="#section-4" class="toc-link">4. Third-Party Services & SDKs</a></li>
+          <li><a href="#section-5" class="toc-link">5. Device Permissions</a></li>
+          <li><a href="#section-6" class="toc-link">6. Children's Privacy (COPPA)</a></li>
+          <li><a href="#section-7" class="toc-link">7. Data Retention & Deletion</a></li>
+          <li><a href="#section-8" class="toc-link">8. Application Security</a></li>
+          <li><a href="#section-9" class="toc-link">9. Changes to this Policy</a></li>
+          <li><a href="#section-10" class="toc-link">10. Contact Information</a></li>
+        </ul>
+      </aside>
+
+      <!-- Legal Content -->
+      <article class="legal-content">
+
+        <!-- 1. Introduction -->
+        <section id="section-1" class="policy-section">
+          <span class="section-num">Section 01</span>
+          <h2 class="section-title">Introduction & Scope</h2>
+          <p class="policy-text">
+            Welcome to the official Privacy Policy for <strong>Algorix</strong> (hereinafter referred to as the <em>"Application"</em> or <em>"App"</em>). The Application is an intuitive, modern, high-precision mobile calculator built using Google's Flutter framework, proudly developed and maintained by the <strong>YOLNOMA Team</strong> (<em>"we"</em>, <em>"our"</em>, or <em>"us"</em>).
+          </p>
+          <p class="policy-text">
+            We are firmly committed to protecting the privacy of everyone who installs and uses Algorix. This document explains in clear, transparent, and binding terms our data handling practices. By installing and using Algorix, you acknowledge and agree to the terms outlined in this Privacy Policy.
+          </p>
+          <div class="callout callout-info">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div>
+              <strong>Key Principle:</strong> Algorix is designed as a pure utility. It does not require user accounts, logins, cloud synchronization, or telemetry to fulfill its core functionality.
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Zero Data Collection -->
+        <section id="section-2" class="policy-section">
+          <span class="section-num">Section 02</span>
+          <h2 class="section-title">Information We Do Not Collect (Zero Data Collection)</h2>
+          <p class="policy-text">
+            Unlike many mobile utilities, <strong>Algorix does NOT collect, harvest, store, transmit, or sell any personal or non-personal user data</strong>. Specifically, the Application does NOT gather any of the following:
+          </p>
+          <ul class="policy-list">
+            <li><strong>Personally Identifiable Information (PII):</strong> We do not ask for or collect names, home addresses, phone numbers, email addresses, usernames, passwords, or government identification numbers.</li>
+            <li><strong>Location Data:</strong> We do not access, track, or record your precise or approximate geographical coordinates (GPS, cellular tower triangulation, or Wi-Fi location).</li>
+            <li><strong>User Files & Device Storage:</strong> We do not read, scan, upload, or access any documents, photos, videos, audio recordings, or downloads saved on your physical device.</li>
+            <li><strong>Contacts & Communications:</strong> We do not access your address book, contact list, text messages, phone logs, or messaging history.</li>
+            <li><strong>Biometric Data:</strong> No fingerprint, facial recognition, or iris scanning data is ever captured, requested, or processed by the Application.</li>
+            <li><strong>Device Identifiers & Fingerprinting:</strong> We do not collect hardware identifiers such as IMEI numbers, MAC addresses, Android Advertising IDs (AAID), or hardware serial numbers for tracking or profiling purposes.</li>
+          </ul>
+          <div class="callout callout-success">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <div>
+              <strong>Zero Server Ingestion:</strong> Algorix maintains no external cloud databases or intake endpoints. There is no remote repository where your interactions could be stored.
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Local On-Device Computation -->
+        <section id="section-3" class="policy-section">
+          <span class="section-num">Section 03</span>
+          <h2 class="section-title">Local On-Device Computation & Offline Architecture</h2>
+          <p class="policy-text">
+            Every mathematical operation performed within Algorix—including standard arithmetic, scientific functions, trigonometry, percentage algorithms, memory registers (M+, M-, MR), and calculation history—is executed <strong>exclusively within your device's local memory (RAM) and application sandbox</strong>.
+          </p>
+          <ul class="policy-list">
+            <li><strong>100% Offline Functionality:</strong> Algorix is an offline-first application. It requires zero network connectivity to execute calculations. You can freely use Algorix while completely offline or in Airplane Mode.</li>
+            <li><strong>Ephemeral & Local Storage:</strong> If you choose to save custom calculation history or interface preferences (such as light/dark mode theme or decimal precision), this information is written strictly to Android's private, encrypted-by-default app-specific storage. It is never transmitted across the internet.</li>
+            <li><strong>Isolated Sandboxing:</strong> In full alignment with modern Android operating system security standards, Algorix runs in an isolated process sandbox, preventing any third-party app from intercepting your keystrokes or numerical outputs.</li>
+          </ul>
+        </section>
+
+        <!-- 4. Third-Party Services & SDKs -->
+        <section id="section-4" class="policy-section">
+          <span class="section-num">Section 04</span>
+          <h2 class="section-title">Third-Party Services, SDKs & Tracking Technologies</h2>
+          <p class="policy-text">
+            To provide an untainted, uninterrupted, and privacy-respecting user experience, Algorix strictly adheres to a <strong>zero-tracking policy</strong>:
+          </p>
+          <ul class="policy-list">
+            <li><strong>No Analytics SDKs:</strong> Algorix does not embed Google Analytics for Firebase, Flurry, Mixpanel, AppsFlyer, Amplitude, or any other diagnostic telemetry SDKs that monitor user behavior.</li>
+            <li><strong>No Advertising Networks:</strong> We do not include third-party ad frameworks such as Google AdMob, Unity Ads, AppLovin, ironSource, or Meta Audience Network. You will not see intrusive banners, interstitial videos, or targeted advertisements inside Algorix.</li>
+            <li><strong>No Tracking Cookies or Fingerprinting:</strong> The Application does not generate, store, or communicate tracking cookies, web beacons, or unique device fingerprints across sessions or applications.</li>
+          </ul>
+        </section>
+
+        <!-- 5. Device Permissions -->
+        <section id="section-5" class="policy-section">
+          <span class="section-num">Section 05</span>
+          <h2 class="section-title">Device Permissions (App Permissions Disclosure)</h2>
+          <p class="policy-text">
+            Algorix follows the principle of least privilege. The Application does <strong>NOT request or utilize any dangerous or sensitive Android runtime permissions</strong>:
+          </p>
+
+          <div class="table-responsive">
+            <table class="perm-table">
+              <thead>
+                <tr>
+                  <th>Permission Category</th>
+                  <th>Permission State</th>
+                  <th>Technical Disclosure</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Camera & Video</strong></td>
+                  <td><span class="perm-badge-no">NOT REQUESTED</span></td>
+                  <td>No camera access or photo capturing capabilities.</td>
+                </tr>
+                <tr>
+                  <td><strong>Microphone & Audio</strong></td>
+                  <td><span class="perm-badge-no">NOT REQUESTED</span></td>
+                  <td>No audio recording or voice recognition capabilities.</td>
+                </tr>
+                <tr>
+                  <td><strong>Location (GPS / Network)</strong></td>
+                  <td><span class="perm-badge-no">NOT REQUESTED</span></td>
+                  <td>No access to fine or coarse geographic coordinates.</td>
+                </tr>
+                <tr>
+                  <td><strong>Storage & Media Files</strong></td>
+                  <td><span class="perm-badge-no">NOT REQUESTED</span></td>
+                  <td>No access to external photos, media, or shared documents.</td>
+                </tr>
+                <tr>
+                  <td><strong>Contacts & Phone State</strong></td>
+                  <td><span class="perm-badge-no">NOT REQUESTED</span></td>
+                  <td>No access to phone numbers, caller ID, or address books.</td>
+                </tr>
+                <tr>
+                  <td><strong>Sensors & Body Tracking</strong></td>
+                  <td><span class="perm-badge-no">NOT REQUESTED</span></td>
+                  <td>No access to step counters, heart rate, or biometric sensors.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="policy-text" style="font-size: 0.88rem; color: var(--text-sub);">
+            <em>Note on Standard Manifest Boilerplate:</em> If the underlying Flutter runtime template contains baseline manifest entries (such as <code>android.permission.INTERNET</code> for engine debugging), Algorix does not employ this permission in production to send user data, calculations, or telemetry to any remote server.
+          </p>
+        </section>
+
+        <!-- 6. Children's Privacy -->
+        <section id="section-6" class="policy-section">
+          <span class="section-num">Section 06</span>
+          <h2 class="section-title">Children's Privacy (COPPA & GDPR-K Compliance)</h2>
+          <p class="policy-text">
+            Protecting the privacy of children is of paramount importance to the YOLNOMA Team. Algorix is designed as a general educational and everyday calculation tool suitable for users of all ages, including students and minors.
+          </p>
+          <ul class="policy-list">
+            <li><strong>Full COPPA Compliance:</strong> In accordance with the United States <em>Children's Online Privacy Protection Act (COPPA)</em>, we do not knowingly request, collect, maintain, or disclose personal information from children under 13 years of age.</li>
+            <li><strong>Full GDPR-K Compliance:</strong> In compliance with the European Union <em>General Data Protection Regulation (GDPR)</em> and Article 8 regarding minors, we do not process personal data of children under 16 years of age.</li>
+            <li><strong>Google Play Families Policy:</strong> Algorix complies in full with Google Play's Families Policy requirements. Because zero personal data is collected or transmitted, parents and educators can rest assured that children's online privacy and safety are completely uncompromised.</li>
+          </ul>
+        </section>
+
+        <!-- 7. Data Retention & Deletion -->
+        <section id="section-7" class="policy-section">
+          <span class="section-num">Section 07</span>
+          <h2 class="section-title">Data Retention, User Rights & Deletion Guarantee</h2>
+          <p class="policy-text">
+            Because Algorix collects zero personal data and maintains no remote servers or centralized accounts:
+          </p>
+          <ul class="policy-list">
+            <li><strong>No Cloud Records:</strong> There are no server-side records, databases, user profiles, or cloud backups to delete, modify, or export.</li>
+            <li><strong>Immediate Local Purging:</strong> Any ephemeral calculation history or preferences retained on your local device can be deleted at any moment:
+              <br/>&bull; By tapping the <strong>"Clear History"</strong> button inside the Application's interface.
+              <br/>&bull; By going to your device's <strong>Settings &rarr; Apps &rarr; Algorix &rarr; Storage &rarr; Clear Data</strong>.
+              <br/>&bull; By simply <strong>uninstalling</strong> the Application from your device, which automatically causes the operating system to permanently wipe all private sandbox files.
+            </li>
+            <li><strong>Global Privacy Rights (GDPR & CCPA):</strong> Under international frameworks including GDPR and CCPA, users possess rights to access, rectify, and erase personal information. Because we retain zero personal data, your right to privacy is intrinsically guaranteed by the application's offline architecture.</li>
+          </ul>
+        </section>
+
+        <!-- 8. Application Security -->
+        <section id="section-8" class="policy-section">
+          <span class="section-num">Section 08</span>
+          <h2 class="section-title">Application Security & Integrity</h2>
+          <p class="policy-text">
+            The security of your device is a top priority. Algorix is compiled using verified, production-grade Flutter toolchains with strict code optimization and zero unnecessary external dependencies. By removing the need for remote network communications, the Application eliminates attack surfaces associated with man-in-the-middle (MITM) interceptions, unencrypted network transit, or remote data breach vulnerabilities.
+          </p>
+        </section>
+
+        <!-- 9. Changes to this Policy -->
+        <section id="section-9" class="policy-section">
+          <span class="section-num">Section 09</span>
+          <h2 class="section-title">Changes and Updates to this Privacy Policy</h2>
+          <p class="policy-text">
+            We may periodically update this Privacy Policy to reflect future application updates, new feature implementations, or evolving legal and regulatory standards. When changes are made, we will update the <strong>"Effective Date"</strong> at the top of this document.
+          </p>
+          <p class="policy-text">
+            This page represents the permanent, authoritative public record of Algorix's Privacy Policy. We encourage users and review personnel to review this document periodically at:
+            <br />
+            <a href="https://www.yolnoma.uz/privacy.html" style="color: var(--main-color); word-break: break-all; font-family: var(--font-mono); font-size: 0.88rem;">https://www.yolnoma.uz/privacy.html</a>
+          </p>
+        </section>
+
+        <!-- 10. Contact Information -->
+        <section id="section-10" class="policy-section">
+          <span class="section-num">Section 10</span>
+          <h2 class="section-title">Developer Identity & Contact Information</h2>
+          <p class="policy-text">
+            If you have any questions, clarifications, feedback, or legal inquiries regarding this Privacy Policy, our data protection commitments, or the Algorix mobile application, please contact our dedicated developer support team:
+          </p>
+
+          <div class="contact-card">
+            <h4 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--main-color);"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <span>Official Developer Inquiries</span>
+            </h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              All privacy-related inquiries will be addressed promptly by our core development team.
+            </p>
+
+            <div class="contact-grid">
+              <div class="contact-field">
+                <div class="contact-label">Application</div>
+                <div class="contact-value">Algorix (Flutter Calculator)</div>
+              </div>
+
+              <div class="contact-field">
+                <div class="contact-label">Development Team</div>
+                <div class="contact-value">YOLNOMA Team (YOLNOMA jamoasi)</div>
+              </div>
+
+              <div class="contact-field">
+                <div class="contact-label">Official Support Email</div>
+                <div class="contact-value">
+                  <a href="mailto:qoriyevagavharoy@gmail.com" id="emailText">qoriyevagavharoy@gmail.com</a>
+                </div>
+                <button type="button" class="copy-btn" onclick="copyEmail()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span id="copyBtnLabel">Copy Email</span>
+                </button>
+              </div>
+
+              <div class="contact-field">
+                <div class="contact-label">Developer Website</div>
+                <div class="contact-value">
+                  <a href="https://www.yolnoma.uz" target="_blank" rel="noopener">https://www.yolnoma.uz</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </article>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--main-color);"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="6" y2="8.01"></line><line x1="10" y1="8" x2="10" y2="8.01"></line><line x1="14" y1="8" x2="14" y2="8.01"></line><line x1="18" y1="8" x2="18" y2="8.01"></line><line x1="6" y1="12" x2="6" y2="12.01"></line><line x1="10" y1="12" x2="10" y2="12.01"></line><line x1="14" y1="12" x2="14" y2="12.01"></line><line x1="18" y1="12" x2="18" y2="12.01"></line><line x1="6" y1="16" x2="18" y2="16"></line></svg>
+        <span>&copy; 2026 YOLNOMA. All rights reserved.</span>
+      </div>
+
+      <ul class="footer-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/privacy.html" style="color: var(--main-color); font-weight: 600;">Algorix Privacy Policy</a></li>
+        <li><a href="https://t.me/yolnoma_uz1" target="_blank" rel="noopener">Telegram Channel</a></li>
+        <li><a href="mailto:qoriyevagavharoy@gmail.com">Contact Support</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Simple script for copying email address -->
+  <script>
+    function copyEmail() {
+      const email = 'qoriyevagavharoy@gmail.com';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(() => {
+          showCopied();
+        }).catch(() => fallbackCopy(email));
+      } else {
+        fallbackCopy(email);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const input = document.createElement('input');
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      showCopied();
+    }
+
+    function showCopied() {
+      const label = document.getElementById('copyBtnLabel');
+      if (label) {
+        const orig = label.textContent;
+        label.textContent = 'Copied to clipboard!';
+        setTimeout(() => {
+          label.textContent = orig;
+        }, 2200);
+      }
+    }
+  </script>
+</body>
+</html>

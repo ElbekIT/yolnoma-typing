@@ -745,6 +745,17 @@ app.get('/ads.txt', (req, res) => {
   res.status(404).send('ads.txt not found');
 });
 
+// Official Privacy Policy Endpoint (Google Play Console Compliant)
+app.get(['/privacy', '/privacy.html'], (req, res) => {
+  const privacyFile = path.resolve(process.cwd(), 'public/privacy.html');
+  if (fs.existsSync(privacyFile)) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.sendFile(privacyFile);
+  }
+  res.status(404).send('Privacy policy not found');
+});
+
 // Security & Body parsing with receipt photo support
 app.use(cookieParser());
 app.use(express.json({ limit: '30mb' }));

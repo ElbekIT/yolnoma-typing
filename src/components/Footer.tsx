@@ -253,6 +253,15 @@ export const Footer = React.memo<FooterProps>(({
               <Info className="w-3 h-3" />
               <span>qoidalar & faq</span>
             </button>
+
+            <a
+              href="/privacy.html"
+              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1"
+              title="Algorix ilovasi va rasmiy Maxfiylik Siyosati"
+            >
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <span>maxfiylik</span>
+            </a>
           </div>
         </div>
       </div>
