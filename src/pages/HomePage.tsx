@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ArrowRight, Video } from 'lucide-react';
+import { Heart, ArrowRight, Video, Languages, Sparkles } from 'lucide-react';
 import { HeroSection } from '../components/home/HeroSection';
 import { InteractiveModesHub } from '../components/home/InteractiveModesHub';
 import { FeaturesSection } from '../components/home/FeaturesSection';
@@ -13,6 +13,7 @@ interface HomePageProps {
   onStartTyping: (mode?: string) => void;
   onGoToBattle: () => void;
   onGoToLessons: () => void;
+  onGoToEnglish?: () => void;
   onGoToLeaderboard: () => void;
   onOpenLogin: () => void;
   onGoToSupport?: () => void;
@@ -23,6 +24,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onStartTyping,
   onGoToBattle,
   onGoToLessons,
+  onGoToEnglish,
   onGoToLeaderboard,
   onOpenLogin,
   onGoToSupport,
@@ -31,6 +33,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   const handleThematicAction = (action: ThematicActionType) => {
     if (action === 'battle') {
       onGoToBattle();
+    } else if (action === 'english') {
+      if (onGoToEnglish) onGoToEnglish();
     } else {
       onStartTyping(action);
     }
@@ -49,6 +53,39 @@ export const HomePage: React.FC<HomePageProps> = ({
             <LanguageSwitcher />
           </div>
         </div>
+
+        {/* Grand English Learning Banner (0 dan IELTS 9 gacha) */}
+        {onGoToEnglish && (
+          <button
+            onClick={onGoToEnglish}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-sky-500/15 hover:from-amber-500/25 hover:via-emerald-500/20 hover:to-sky-500/25 border border-amber-500/35 transition-all text-xs font-semibold group cursor-pointer shadow-lg"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-black shrink-0 shadow-sm">
+                <Languages className="w-4 h-4" />
+              </span>
+              <div className="text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400 font-black text-xs sm:text-sm tracking-tight flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>YANGI: Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish!</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 hidden sm:inline">
+                    7 Bosqich &bull; 35 Dars
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 hidden sm:block">
+                  Alifbodan boshlab hayotiy dialoglar, kundalik iboralar va IELTS Band 9 akademik insho jumlalarigacha klaviaturada terib o'rganing.
+                </p>
+              </div>
+            </div>
+
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--main-color)] text-slate-950 font-black text-xs shrink-0 shadow-md group-hover:scale-105 transition-transform">
+              <span>Boshlash</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </button>
+        )}
 
         {/* Dual Highlight Banners: Support & Video Guide */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">

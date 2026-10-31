@@ -61,6 +61,7 @@ const SettingsView = lazyWithRetry(() => import('./components/settings/SettingsV
 const PartnersView = lazyWithRetry(() => import('./components/partners/PartnersView').then(m => ({ default: m.PartnersView })));
 const BattleView = lazyWithRetry(() => import('./components/battle/BattleView').then(m => ({ default: m.BattleView })));
 const LessonsView = lazyWithRetry(() => import('./components/lessons/LessonsView').then(m => ({ default: m.LessonsView })));
+const EnglishLearnView = lazyWithRetry(() => import('./components/english/EnglishLearnView').then(m => ({ default: m.EnglishLearnView })));
 const AdminView = lazyWithRetry(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
 const OwnerAboutView = lazyWithRetry(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = lazyWithRetry(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
@@ -117,6 +118,7 @@ function MainAppContent() {
     reviews: 'reviews',
     dashboard: 'dashboard',
     certificate: 'certificate',
+    english: 'english',
     admin: atob('YWRtaW4=')
   };
 
@@ -127,6 +129,7 @@ function MainAppContent() {
     languages: '125+ Jahon Tillari - Yolnoma Typing',
     battle: 'Speedway Battle Arena - Yolnoma Typing',
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
+    english: "Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish - Yolnoma English",
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
     profile: 'Foydalanuvchi Profili - Yolnoma Typing',
     login: 'Kirish & Ro\'yxatdan o\'tish - Yolnoma Typing',
@@ -167,6 +170,7 @@ function MainAppContent() {
     if (['languages', 'tillar', 'language', 'til'].includes(subpath)) return { lang: detectedLang, tab: 'languages' };
     if (['battle', 'arena', 'duel', 'jang'].includes(subpath)) return { lang: detectedLang, tab: 'battle' };
     if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
+    if (['english', 'ingliz', 'inglizcha', 'learn-english', 'ielts'].includes(subpath)) return { lang: detectedLang, tab: 'english' };
     if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
     if (['profile', 'profil'].includes(subpath)) return { lang: detectedLang, tab: 'profile' };
     if (['settings', 'sozlamalar'].includes(subpath)) return { lang: detectedLang, tab: 'settings' };
@@ -1269,6 +1273,7 @@ function MainAppContent() {
             onStartTyping={handleStartHero}
             onGoToBattle={() => setActiveTab('battle')}
             onGoToLessons={() => setActiveTab('lessons')}
+            onGoToEnglish={() => setActiveTab('english')}
             onGoToLeaderboard={() => {
               setActiveTab('leaderboard');
             }}
@@ -1348,6 +1353,7 @@ function MainAppContent() {
           )}
 
           {activeTab === 'lessons' && <LessonsView />}
+          {activeTab === 'english' && <EnglishLearnView />}
           {activeTab === 'battle' && (
             <BattleView
               initialRoomCode={pendingBattleRoomCode}

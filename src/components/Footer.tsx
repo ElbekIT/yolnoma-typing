@@ -17,7 +17,8 @@ import {
   Rocket,
   Heart,
   Video,
-  MessageSquare
+  MessageSquare,
+  Languages
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -82,6 +83,16 @@ export const Footer = React.memo<FooterProps>(({
             >
               <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
               <span>{t('navLessons')}</span>
+            </a>
+
+            <a
+              href="/english"
+              onClick={(e) => handleNav('english', e)}
+              className="hover:text-amber-400 transition-colors flex items-center gap-1.5 py-0.5 text-amber-400 font-bold"
+              title="Ingliz tilini 0 dan IELTS 9 gacha yozib o'rganish"
+            >
+              <Languages className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ingliz Tili</span>
             </a>
 
             <a
@@ -253,15 +264,6 @@ export const Footer = React.memo<FooterProps>(({
               <Info className="w-3 h-3" />
               <span>qoidalar & faq</span>
             </button>
-
-            <a
-              href="/privacy.html"
-              className="hover:text-[var(--main-color)] transition-colors flex items-center gap-1"
-              title="Algorix ilovasi va rasmiy Maxfiylik Siyosati"
-            >
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>maxfiylik</span>
-            </a>
           </div>
         </div>
       </div>

@@ -31,7 +31,8 @@ import {
   Share2,
   BookOpen,
   Heart,
-  Video
+  Video,
+  Languages
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -102,6 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'leaderboard', label: currMenu.leaderboard, icon: Trophy },
     { id: 'languages', label: currMenu.languages, icon: Globe },
     { id: 'lessons', label: currMenu.lessons, icon: BookOpen },
+    { id: 'english', label: currMenu.english, icon: Languages },
     { id: 'battle', label: currMenu.battleArena, icon: Swords },
     { id: 'dashboard', label: currMenu.dashboard, icon: BarChart2 },
     { id: 'statistics', label: currMenu.statistics, icon: Clock },
@@ -213,6 +215,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title={currMenu.lessons}
               >
                 <GraduationCap className={iconDimensions} />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('english')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'english' ? 'text-amber-400 bg-[var(--sub-alt)]/70' : 'hover:text-amber-400 hover:bg-[var(--sub-alt)]/30'
+                }`}
+                title={currMenu.english}
+              >
+                <Languages className={iconDimensions} />
+                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-amber-500 text-slate-950 font-mono shadow-xs">
+                  EN
+                </span>
               </button>
 
               <button

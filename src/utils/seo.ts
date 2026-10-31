@@ -55,6 +55,13 @@ export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
     canonicalUrl: "https://www.yolnoma.uz/languages",
     image: "https://www.yolnoma.uz/og-languages.jpg"
   },
+  english: {
+    title: "Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish | Yolnoma English",
+    description: "Ingliz tilini klaviaturada yozib o'rganing! Boshlang'ich alifbodan tortib, jonli dialoglar, murakkab grammatika va IELTS 8.5-9.0 Band akademik leksika.",
+    keywords: "ingliz tili yozib organish, english typing, ielts 9 vocabulary, learn english by typing, beginner to ielts 9, yolnoma english",
+    canonicalUrl: "https://www.yolnoma.uz/english",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
+  },
   statistics: {
     title: "Shaxsiy Statistika & Tahlil - Tezlik O'sish Grafigi | Yolnoma",
     description: "Barcha topshirilgan testlar tarixi, WPM va aniqlik dinamikasi, eng ko'p adashilgan harflar tahlili.",

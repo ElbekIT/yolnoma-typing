@@ -6,11 +6,12 @@ import {
   BookOpen,
   Swords,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Languages
 } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
-export type ThematicActionType = 'code' | 'uzbek-drills' | 'symbols' | 'quotes' | 'battle';
+export type ThematicActionType = 'code' | 'uzbek-drills' | 'symbols' | 'quotes' | 'battle' | 'english';
 
 interface ThematicTestsProps {
   onSelectAction: (action: ThematicActionType) => void;
@@ -74,6 +75,17 @@ export const ThematicTests: React.FC<ThematicTestsProps> = ({ onSelectAction }) 
       iconColor: 'text-rose-400',
       badgeText: 'Multiplayer 1v1',
       actionText: t('enterBattle')
+    },
+    {
+      id: 'english' as ThematicActionType,
+      title: "Ingliz Tili (0 dan IELTS 9 gacha)",
+      desc: "Alifbodan boshlab hayotiy dialoglar va IELTS 9 akademik darajagacha yozib o'rganing.",
+      icon: Languages,
+      accentColor: 'from-amber-500/20 to-yellow-500/20',
+      borderColor: 'border-amber-500/30 hover:border-amber-400/60',
+      iconColor: 'text-amber-400',
+      badgeText: '0 dan IELTS 9',
+      actionText: "Darslarni boshlash"
     }
   ];
 

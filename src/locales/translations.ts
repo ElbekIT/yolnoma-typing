@@ -16,6 +16,7 @@ export interface MenuTranslation {
   about: string;
   support: string;
   videoGuide: string;
+  english: string;
   close: string;
 }
 
@@ -36,6 +37,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     about: "Sayt Haqida & Muallif",
     support: "Qo'llab-quvvatlash",
     videoGuide: "Sayt Haqida Video",
+    english: "Ingliz Tili (0 - IELTS 9)",
     close: "Yopish"
   },
   ru: {
@@ -54,6 +56,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     about: "О сайте и авторе",
     support: "Поддержать проект",
     videoGuide: "Видео о сайте",
+    english: "Английский (0 - IELTS 9)",
     close: "Закрыть"
   },
   en: {
@@ -72,6 +75,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     about: "About & Author",
     support: "Support Project",
     videoGuide: "Video Guide",
+    english: "English (0 - IELTS 9)",
     close: "Close"
   }
 };
