@@ -24,7 +24,12 @@ import {
   Zap,
   Clock,
   Compass,
-  Trophy
+  Trophy,
+  Lock,
+  ShieldAlert,
+  LogIn,
+  Home,
+  Crown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -36,6 +41,7 @@ import {
   TOTAL_ENGLISH_LESSONS
 } from '../../data/englishCourseData';
 import { soundSynth } from '../../utils/audio';
+import { useAuth } from '../../context/AuthContext';
 
 interface LessonProgress {
   completed: boolean;
@@ -44,7 +50,25 @@ interface LessonProgress {
   bestAcc: number;
 }
 
-export const EnglishLearnView: React.FC = () => {
+export interface EnglishLearnViewProps {
+  onBackToHome?: () => void;
+  onOpenAuth?: () => void;
+  onGoToLessons?: () => void;
+}
+
+export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
+  onBackToHome,
+  onOpenAuth,
+  onGoToLessons
+}) => {
+  const { user, loading } = useAuth();
+
+  const isAuthorizedOwner = Boolean(
+    user?.email && (
+      user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
+      user.email.toLowerCase().startsWith('yuldashivagavharoy')
+    )
+  );
   // -------------------------------------------------------------
   // STATE MANAGEMENT
   // -------------------------------------------------------------
@@ -356,9 +380,132 @@ export const EnglishLearnView: React.FC = () => {
   const totalCompletedLessons = Object.values(progressMap).filter(p => p.completed).length;
   const totalStars = Object.values(progressMap).reduce((acc, p) => acc + (p.stars || 0), 0);
 
+  // -------------------------------------------------------------
+  // TEMPORARY RESTRICTION: ONLY yuldashivagavharoy@gmail.com CAN ACCESS
+  // -------------------------------------------------------------
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] w-full py-16 text-center select-none">
+        <div className="w-10 h-10 rounded-full border-3 border-[var(--sub-alt)] border-t-amber-400 animate-spin mb-4" />
+        <p className="text-xs font-mono font-bold tracking-wider text-[var(--sub-color)] uppercase">
+          Tekshirilmoqda...
+        </p>
+      </div>
+    );
+  }
+
+  if (!isAuthorizedOwner) {
+    return (
+      <div className="w-full max-w-2xl mx-auto px-4 py-8 sm:py-16 text-center select-none animate-in fade-in duration-300">
+        <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/30 p-6 sm:p-10 shadow-2xl overflow-hidden backdrop-blur-md">
+          {/* Glowing background circles */}
+          <div className="absolute -top-24 -left-24 w-60 h-60 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-60 h-60 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
+
+          {/* Animated Lock Icon Badge */}
+          <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500/20 via-yellow-400/15 to-transparent border border-amber-500/40 text-amber-400 mb-6 shadow-lg shadow-amber-500/10">
+            <Lock className="w-9 h-9 text-amber-400 animate-pulse" />
+            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500"></span>
+            </span>
+          </div>
+
+          {/* Main Title Required by User */}
+          <div className="space-y-3 max-w-xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Yangi Dastur &bull; Test Rejimi</span>
+            </div>
+
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+              ASSALOMU ALAYKUM, BU SAHIFA VAQTINCHALIK YOPIQ!
+            </h1>
+
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1">
+              Hozirda ushbu yangi <strong>"Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish"</strong> kursi ustida yakuniy sozlash, test va optimallashtirish ishlari olib borilmoqda.
+            </p>
+          </div>
+
+          {/* Explanatory Info Card */}
+          <div className="mt-6 p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-left max-w-lg mx-auto space-y-2 text-xs">
+            <div className="flex items-start gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1 text-slate-300">
+                <span className="font-bold text-white block">Kirish cheklovi:</span>
+                <p className="text-[11px] text-slate-400 leading-normal">
+                  Ushbu sahifaga hozircha faqat loyiha muallifi (<code className="text-amber-400 font-mono">yuldashivagavharoy@gmail.com</code>) hisobidan kirish mumkin. Tez kunda barcha foydalanuvchilar uchun to'liq bepul ochiladi!
+                </p>
+              </div>
+            </div>
+
+            {user?.email && (
+              <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>Hozirgi hisobingiz:</span>
+                <span className="font-mono text-slate-200 font-bold">{user.email}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {!user ? (
+              <button
+                onClick={onOpenAuth}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Ruxsat etilgan hisobga kirish (Login)</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Boshqa hisobga o'tish</span>
+              </button>
+            )}
+
+            {onBackToHome && (
+              <button
+                onClick={onBackToHome}
+                className="px-5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <Home className="w-4 h-4" />
+                <span>Bosh sahifaga qaytish</span>
+              </button>
+            )}
+
+            {onGoToLessons && (
+              <button
+                onClick={onGoToLessons}
+                className="px-5 py-2.5 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span>10 Barmoq Mashqlari</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6 select-none animate-in fade-in duration-200">
       
+      {/* Authorized VIP / Owner Notice Banner */}
+      <div className="rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border border-amber-500/40 p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2 text-amber-300 font-bold">
+          <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>Muallif Rejimi: Siz <strong className="text-white font-mono">yuldashivagavharoy@gmail.com</strong> hisobi bilan kirdingiz. Barcha 35 ta dars va 7 ta unit siz uchun to'liq ochiq!</span>
+        </div>
+        <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-mono font-black shrink-0 shadow-xs">
+          VIP ACCESS
+        </span>
+      </div>
+
       {/* ============================================================
           TOP HEADER: HERO BANNER & STATS
           ============================================================ */}
