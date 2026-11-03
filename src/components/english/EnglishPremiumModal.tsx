@@ -28,28 +28,28 @@ const PLANS: PlanDetails[] = [
     title: 'Kunlik Sinov',
     price: 10000,
     priceLabel: "10,000 so'm",
-    durationLabel: '24 soat to'liq kirish',
-    badge: 'Sinab ko'rish',
-    description: 'Barcha 35 ta dars va IELTS 9 mashqlari 24 soatga'
+    durationLabel: "24 soat to'liq kirish",
+    badge: "Sinab ko'rish",
+    description: "Barcha 35 ta dars va IELTS 9 mashqlari 24 soatga"
   },
   {
     id: 'weekly',
     title: 'Haftalik Obuna',
     price: 15000,
     priceLabel: "15,000 so'm",
-    durationLabel: '7 kun to'liq kirish',
+    durationLabel: "7 kun to'liq kirish",
     popular: true,
-    badge: 'Eng Ommabop 🔥',
-    description: '1 hafta davomida to'liq cheksiz inglizcha yozib o'rganish'
+    badge: "Eng Ommabop 🔥",
+    description: "1 hafta davomida to'liq cheksiz inglizcha yozib o'rganish"
   },
   {
     id: 'yearly',
     title: 'Yillik Cheksiz',
     price: 350000,
     priceLabel: "350,000 so'm",
-    durationLabel: '365 kun VIP kirish',
-    badge: 'Katta Tejamkorlik',
-    description: 'To'liq 1 yil barcha yangi darajalar va VIP tezlik tahlili'
+    durationLabel: "365 kun VIP kirish",
+    badge: "Katta Tejamkorlik",
+    description: "To'liq 1 yil barcha yangi darajalar va VIP tezlik tahlili"
   }
 ];
 

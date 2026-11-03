@@ -45,13 +45,13 @@ const PLANS: PlanCard[] = [
     title: 'Kunlik Sinov',
     price: 10000,
     priceLabel: "10,000 so'm",
-    durationLabel: '24 soat to'liq kirish',
-    badge: 'Sinab ko'rish',
+    durationLabel: "24 soat to'liq kirish",
+    badge: "Sinab ko'rish",
     features: [
-      '24 soat davomida to'liq cheksiz kirish',
-      'Barcha 35 ta dars va 7 ta unit ochiq',
-      'Inglizcha jonli talaffuz (Speech Synthesis)',
-      'Klaviaturada tez yozish tahlili'
+      "24 soat davomida to'liq cheksiz kirish",
+      "Barcha 35 ta dars va 7 ta unit ochiq",
+      "Inglizcha jonli talaffuz (Speech Synthesis)",
+      "Klaviaturada tez yozish tahlili"
     ]
   },
   {
@@ -59,15 +59,15 @@ const PLANS: PlanCard[] = [
     title: 'Haftalik Obuna',
     price: 15000,
     priceLabel: "15,000 so'm",
-    durationLabel: '7 kun to'liq kirish',
+    durationLabel: "7 kun to'liq kirish",
     popular: true,
-    badge: 'Eng Ommabop 🔥',
+    badge: "Eng Ommabop 🔥",
     features: [
-      '7 kun davomida to'liq cheksiz o'rganish',
-      'Pre-A1 dan to IELTS 9 gacha barcha darslar',
-      'Julebu.ai uslubidagi interaktiv mashqlar',
-      'So'zma-so'z tekshirish va ovozli talaffuz',
-      'Kunlik streak va yulduzchalar hisobi'
+      "7 kun davomida to'liq cheksiz o'rganish",
+      "Pre-A1 dan to IELTS 9 gacha barcha darslar",
+      "Julebu.ai uslubidagi interaktiv mashqlar",
+      "So'zma-so'z tekshirish va ovozli talaffuz",
+      "Kunlik streak va yulduzchalar hisobi"
     ]
   },
   {
@@ -75,14 +75,14 @@ const PLANS: PlanCard[] = [
     title: 'Yillik Cheksiz',
     price: 350000,
     priceLabel: "350,000 so'm",
-    durationLabel: '365 kun VIP kirish',
-    badge: 'Katta Tejamkorlik',
+    durationLabel: "365 kun VIP kirish",
+    badge: "Katta Tejamkorlik",
     features: [
-      'To'liq 1 yil (365 kun) barcha bo'limlarga kirish',
-      'Kelgusida qo'shiladigan barcha yangi darslar bepul',
+      "To'liq 1 yil (365 kun) barcha bo'limlarga kirish",
+      "Kelgusida qo'shiladigan barcha yangi darslar bepul",
       'Profilga oltin "VIP PREMIUM" unvoni',
-      'IELTS 8.5–9.0 akademik insho jumlalari',
-      '24/7 ustuvor texnik yordam'
+      "IELTS 8.5–9.0 akademik insho jumlalari",
+      "24/7 ustuvor texnik yordam"
     ]
   }
 ];
