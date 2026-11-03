@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
@@ -3319,6 +3320,363 @@ app.get('/api/admin/design-orders', (req, res) => {
     success: true,
     orders: storedDesignOrders,
     count: storedDesignOrders.length
+  });
+});
+
+// -------------------------------------------------------------
+// CLICK MERCHANT API & ENGLISH PREMIUM SUBSCRIPTION ENGINE
+// -------------------------------------------------------------
+
+interface StoredClickTransaction {
+  click_trans_id: string;
+  service_id: string;
+  merchant_trans_id: string;
+  merchant_prepare_id: string;
+  amount: number;
+  userId: string;
+  planId: 'daily' | 'weekly' | 'yearly';
+  status: 'prepared' | 'paid' | 'cancelled';
+  createdAt: number;
+  paidAt?: number;
+}
+
+interface StoredUserSubscription {
+  userId: string;
+  planId: 'daily' | 'weekly' | 'yearly';
+  amount: number;
+  status: 'active' | 'expired';
+  activatedAt: number;
+  expiresAt: number;
+  clickTransId: string;
+}
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const CLICK_TRANSACTIONS_FILE = path.join(DATA_DIR, 'click_transactions.json');
+const USER_SUBSCRIPTIONS_FILE = path.join(DATA_DIR, 'user_subscriptions.json');
+
+const clickTransactionsMap = new Map<string, StoredClickTransaction>();
+const userSubscriptionsMap = new Map<string, StoredUserSubscription>();
+
+// Load from disk
+try {
+  if (fs.existsSync(CLICK_TRANSACTIONS_FILE)) {
+    const list: StoredClickTransaction[] = JSON.parse(fs.readFileSync(CLICK_TRANSACTIONS_FILE, 'utf-8'));
+    list.forEach(t => clickTransactionsMap.set(String(t.click_trans_id), t));
+  }
+} catch (e) {
+  console.warn('Failed to load click transactions', e);
+}
+
+try {
+  if (fs.existsSync(USER_SUBSCRIPTIONS_FILE)) {
+    const list: StoredUserSubscription[] = JSON.parse(fs.readFileSync(USER_SUBSCRIPTIONS_FILE, 'utf-8'));
+    list.forEach(s => userSubscriptionsMap.set(String(s.userId).toLowerCase(), s));
+  }
+} catch (e) {
+  console.warn('Failed to load user subscriptions', e);
+}
+
+const saveClickTransactions = () => {
+  try {
+    fs.writeFileSync(CLICK_TRANSACTIONS_FILE, JSON.stringify(Array.from(clickTransactionsMap.values()), null, 2), 'utf-8');
+  } catch {}
+};
+
+const saveUserSubscriptions = () => {
+  try {
+    fs.writeFileSync(USER_SUBSCRIPTIONS_FILE, JSON.stringify(Array.from(userSubscriptionsMap.values()), null, 2), 'utf-8');
+  } catch {}
+};
+
+const CLICK_PLAN_PRICES: Record<string, number> = {
+  daily: 10000,
+  weekly: 15000,
+  yearly: 350000
+};
+
+// 1. Public endpoint to provide Click service_id & merchant_id to frontend
+app.get('/api/click/config', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  return res.json({
+    success: true,
+    service_id: process.env.CLICK_SERVICE_ID || '',
+    merchant_id: process.env.CLICK_MERCHANT_ID || ''
+  });
+});
+
+// 2. User subscription status check
+app.get('/api/user/subscription', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const queryUser = String(req.query.userId || req.query.email || '').trim().toLowerCase();
+  if (!queryUser) {
+    return res.json({ active: false });
+  }
+
+  // Owner always has lifetime unlimited active subscription
+  if (queryUser === 'yuldashivagavharoy@gmail.com' || queryUser.startsWith('yuldashivagavharoy')) {
+    return res.json({
+      active: true,
+      isOwner: true,
+      planId: 'yearly',
+      expiresAt: Date.now() + 100 * 365 * 24 * 60 * 60 * 1000,
+      remainingDays: 36500
+    });
+  }
+
+  const sub = userSubscriptionsMap.get(queryUser);
+  if (!sub) {
+    return res.json({ active: false });
+  }
+
+  const now = Date.now();
+  const isActive = sub.expiresAt > now;
+  return res.json({
+    active: isActive,
+    planId: sub.planId,
+    expiresAt: sub.expiresAt,
+    remainingDays: Math.max(0, Math.ceil((sub.expiresAt - now) / (1000 * 60 * 60 * 24)))
+  });
+});
+
+// 3. Click Prepare Endpoint (/api/click/prepare)
+app.post('/api/click/prepare', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const {
+    click_trans_id,
+    service_id,
+    click_paydoc_id,
+    merchant_trans_id,
+    amount,
+    action,
+    error,
+    error_note,
+    sign_time,
+    sign_string
+  } = req.body || {};
+
+  console.log('[Click Prepare Request]:', { click_trans_id, service_id, merchant_trans_id, amount, action });
+
+  const secretKey = process.env.CLICK_SECRET_KEY || '';
+
+  // 1. Verify Sign string
+  // Formula: md5(click_trans_id + service_id + SECRET_KEY + merchant_trans_id + amount + action + sign_time)
+  const mySignString = crypto
+    .createHash('md5')
+    .update(`${click_trans_id}${service_id}${secretKey}${merchant_trans_id}${amount}${action}${sign_time}`)
+    .digest('hex');
+
+  if (String(sign_string).toLowerCase() !== mySignString.toLowerCase()) {
+    console.error('[Click Prepare] Signature mismatch!', { received: sign_string, expected: mySignString });
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_prepare_id: null,
+      error: -1,
+      error_note: 'SIGN CHECK FAILED'
+    });
+  }
+
+  // 2. Action verification (0 for Prepare)
+  if (parseInt(action, 10) !== 0) {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_prepare_id: null,
+      error: -3,
+      error_note: 'Action not found'
+    });
+  }
+
+  // 3. Validate merchant_trans_id ("userId__planId__timestamp")
+  const parts = String(merchant_trans_id || '').split('__');
+  const userId = (parts[0] || '').trim().toLowerCase();
+  const planId = (parts[1] || '').trim();
+
+  if (!userId || !planId || !CLICK_PLAN_PRICES[planId]) {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_prepare_id: null,
+      error: -5,
+      error_note: 'User or order does not exist'
+    });
+  }
+
+  // 4. Validate Amount
+  const expectedAmount = CLICK_PLAN_PRICES[planId];
+  if (Math.abs(parseFloat(amount) - expectedAmount) > 0.01) {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_prepare_id: null,
+      error: -2,
+      error_note: 'Incorrect parameter amount'
+    });
+  }
+
+  // 5. Check if already completed
+  const existingTrans = clickTransactionsMap.get(String(click_trans_id));
+  if (existingTrans && existingTrans.status === 'paid') {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_prepare_id: existingTrans.merchant_prepare_id,
+      error: -4,
+      error_note: 'Already paid'
+    });
+  }
+
+  // 6. Generate merchant_prepare_id and record transaction
+  const merchant_prepare_id = `prep_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+  clickTransactionsMap.set(String(click_trans_id), {
+    click_trans_id: String(click_trans_id),
+    service_id: String(service_id),
+    merchant_trans_id: String(merchant_trans_id),
+    merchant_prepare_id,
+    amount: parseFloat(amount),
+    userId,
+    planId: planId as 'daily' | 'weekly' | 'yearly',
+    status: 'prepared',
+    createdAt: Date.now()
+  });
+  saveClickTransactions();
+
+  return res.json({
+    click_trans_id,
+    merchant_trans_id,
+    merchant_prepare_id,
+    error: 0,
+    error_note: 'Success'
+  });
+});
+
+// 4. Click Complete Endpoint (/api/click/complete)
+app.post('/api/click/complete', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const {
+    click_trans_id,
+    service_id,
+    click_paydoc_id,
+    merchant_trans_id,
+    merchant_prepare_id,
+    amount,
+    action,
+    error,
+    error_note,
+    sign_time,
+    sign_string
+  } = req.body || {};
+
+  console.log('[Click Complete Request]:', { click_trans_id, service_id, merchant_trans_id, merchant_prepare_id, amount, action, error });
+
+  const secretKey = process.env.CLICK_SECRET_KEY || '';
+
+  // 1. Verify Sign string
+  // Formula: md5(click_trans_id + service_id + SECRET_KEY + merchant_trans_id + merchant_prepare_id + amount + action + sign_time)
+  const mySignString = crypto
+    .createHash('md5')
+    .update(`${click_trans_id}${service_id}${secretKey}${merchant_trans_id}${merchant_prepare_id}${amount}${action}${sign_time}`)
+    .digest('hex');
+
+  if (String(sign_string).toLowerCase() !== mySignString.toLowerCase()) {
+    console.error('[Click Complete] Signature mismatch!', { received: sign_string, expected: mySignString });
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_confirm_id: null,
+      error: -1,
+      error_note: 'SIGN CHECK FAILED'
+    });
+  }
+
+  // 2. Action verification (1 for Complete)
+  if (parseInt(action, 10) !== 1) {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_confirm_id: null,
+      error: -3,
+      error_note: 'Action not found'
+    });
+  }
+
+  // 3. Find prepared transaction
+  const transaction = clickTransactionsMap.get(String(click_trans_id));
+  if (!transaction) {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_confirm_id: null,
+      error: -6,
+      error_note: 'Transaction does not exist'
+    });
+  }
+
+  // 4. Handle cancellation from Click (error < 0)
+  if (parseInt(error, 10) < 0) {
+    transaction.status = 'cancelled';
+    saveClickTransactions();
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_confirm_id: null,
+      error: -9,
+      error_note: 'Transaction cancelled'
+    });
+  }
+
+  // 5. Check if already paid
+  if (transaction.status === 'paid') {
+    return res.json({
+      click_trans_id,
+      merchant_trans_id,
+      merchant_confirm_id: click_trans_id,
+      error: 0,
+      error_note: 'Success'
+    });
+  }
+
+  // 6. Complete transaction & activate subscription
+  transaction.status = 'paid';
+  transaction.paidAt = Date.now();
+  saveClickTransactions();
+
+  // Duration in milliseconds:
+  // daily: 24h
+  // weekly: 7 days
+  // yearly: 365 days
+  let durationMs = 24 * 60 * 60 * 1000;
+  if (transaction.planId === 'weekly') durationMs = 7 * 24 * 60 * 60 * 1000;
+  if (transaction.planId === 'yearly') durationMs = 365 * 24 * 60 * 60 * 1000;
+
+  const currentSub = userSubscriptionsMap.get(transaction.userId);
+  const now = Date.now();
+  const baseTime = (currentSub && currentSub.expiresAt > now) ? currentSub.expiresAt : now;
+  const newExpiresAt = baseTime + durationMs;
+
+  userSubscriptionsMap.set(transaction.userId, {
+    userId: transaction.userId,
+    planId: transaction.planId,
+    amount: transaction.amount,
+    status: 'active',
+    activatedAt: now,
+    expiresAt: newExpiresAt,
+    clickTransId: String(click_trans_id)
+  });
+  saveUserSubscriptions();
+
+  console.log(`[PREMIUM SUCCEEDED]: User ${transaction.userId} activated ${transaction.planId} until ${new Date(newExpiresAt).toISOString()}`);
+
+  return res.json({
+    click_trans_id,
+    merchant_trans_id,
+    merchant_confirm_id: click_trans_id,
+    error: 0,
+    error_note: 'Success'
   });
 });
 

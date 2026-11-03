@@ -34,6 +34,7 @@ import {
 } from '../../data/englishCourseData';
 import { soundSynth } from '../../utils/audio';
 import { useAuth } from '../../context/AuthContext';
+import { EnglishPremiumModal } from './EnglishPremiumModal';
 
 interface LessonProgress {
   completed: boolean;
@@ -72,13 +73,68 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 }) => {
   const { user, loading } = useAuth();
 
-  // Temporary owner check (only yuldashivagavharoy@gmail.com can enter)
+  // Temporary owner check (only yuldashivagavharoy@gmail.com can enter by default)
   const isAuthorizedOwner = Boolean(
     user?.email && (
       user.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' ||
       user.email.toLowerCase().startsWith('yuldashivagavharoy')
     )
   );
+
+  // -------------------------------------------------------------
+  // PREMIUM SUBSCRIPTION & FREEMIUM 3-WORD TRIAL ENGINE
+  // -------------------------------------------------------------
+  const [isPremiumActive, setIsPremiumActive] = useState<boolean>(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+  const [remainingDays, setRemainingDays] = useState<number | null>(null);
+  const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
+  const [isLimitReached, setIsLimitReached] = useState<boolean>(false);
+  const [showPaymentSuccessAlert, setShowPaymentSuccessAlert] = useState<boolean>(false);
+
+  // Free practiced count (max 3 for free users)
+  const [freePracticedCount, setFreePracticedCount] = useState<number>(() => {
+    try {
+      return parseInt(localStorage.getItem('yolnoma_english_free_count') || '0', 10);
+    } catch {
+      return 0;
+    }
+  });
+
+  // Check subscription from backend
+  const checkSubscription = useCallback(() => {
+    const userIdentifier = user?.uid || user?.email;
+    if (!userIdentifier) return;
+
+    fetch(`/api/user/subscription?userId=${encodeURIComponent(userIdentifier)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.active) {
+          setIsPremiumActive(true);
+          setSubscriptionPlan(data.planId || 'premium');
+          setRemainingDays(data.remainingDays);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    checkSubscription();
+  }, [checkSubscription]);
+
+  // Check URL params for payment return
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment') === 'success') {
+        setShowPaymentSuccessAlert(true);
+        setIsPremiumActive(true);
+        // Refresh subscription
+        checkSubscription();
+        confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 } });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch {}
+  }, [checkSubscription]);
 
   // -------------------------------------------------------------
   // STATE MANAGEMENT
@@ -157,15 +213,6 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       return parseInt(localStorage.getItem('yolnoma_english_xp') || '1900', 10);
     } catch {
       return 1900;
-    }
-  });
-
-  const [streakDays, setStreakDays] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('yolnoma_english_streak');
-      return saved ? parseInt(saved, 10) : 3;
-    } catch {
-      return 3;
     }
   });
 
@@ -332,6 +379,13 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
   const verifyCurrentSentence = useCallback(() => {
     if (!currentItem || isVerifying || isSuccess) return;
 
+    // Check if free trial limit of 3 words has already been reached
+    if (!isPremiumActive && !isAuthorizedOwner && freePracticedCount >= 3) {
+      setIsLimitReached(true);
+      setShowPremiumModal(true);
+      return;
+    }
+
     if (!sessionStartTime) {
       setSessionStartTime(Date.now());
     }
@@ -372,6 +426,13 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         return next;
       });
 
+      // Update free count
+      const newFreeCount = freePracticedCount + 1;
+      setFreePracticedCount(newFreeCount);
+      try {
+        localStorage.setItem('yolnoma_english_free_count', newFreeCount.toString());
+      } catch {}
+
       // Confetti burst
       try {
         confetti({
@@ -385,6 +446,12 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       speakEnglish(currentItem.english, () => {
         setTimeout(() => {
           setFloatingXp(null);
+          // If free trial reached 3 words and user is not premium / owner:
+          if (!isPremiumActive && !isAuthorizedOwner && newFreeCount >= 3) {
+            setIsLimitReached(true);
+            setShowPremiumModal(true);
+            return;
+          }
           goToNextSentence();
         }, 350);
       });
@@ -402,7 +469,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         setErrorMessage(null);
       }, 3000);
     }
-  }, [currentItem, isVerifying, isSuccess, sessionStartTime, targetTokens, userWords, speakEnglish, goToNextSentence]);
+  }, [currentItem, isVerifying, isSuccess, isPremiumActive, isAuthorizedOwner, freePracticedCount, sessionStartTime, targetTokens, userWords, speakEnglish, goToNextSentence]);
 
   // -------------------------------------------------------------
   // KEYBOARD INPUT & WORD SLOT NAVIGATION
@@ -503,6 +570,13 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 
   // Start specific lesson
   const startLesson = (lessonId: number) => {
+    // If trial limit reached:
+    if (!isPremiumActive && !isAuthorizedOwner && freePracticedCount >= 3) {
+      setIsLimitReached(true);
+      setShowPremiumModal(true);
+      return;
+    }
+
     setActiveLessonId(lessonId);
     setCurrentItemIndex(0);
     setUserWords([]);
@@ -527,7 +601,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
   };
 
   // -------------------------------------------------------------
-  // TEMPORARY RESTRICTION: ONLY yuldashivagavharoy@gmail.com CAN ACCESS
+  // ACCESS RESTRICTION: ONLY OWNER OR PREMIUM USERS (OR FREE 3-WORD TRIAL)
   // -------------------------------------------------------------
   if (loading) {
     return (
@@ -540,7 +614,8 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
     );
   }
 
-  if (!isAuthorizedOwner) {
+  // If user is not authorized owner and page is temporarily closed:
+  if (!isAuthorizedOwner && !isPremiumActive && freePracticedCount >= 3) {
     return (
       <div className="w-full max-w-2xl mx-auto px-4 py-8 sm:py-16 text-center select-none animate-in fade-in duration-300">
         <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/30 p-6 sm:p-10 shadow-2xl overflow-hidden backdrop-blur-md">
@@ -558,7 +633,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
           <div className="space-y-3 max-w-xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Yangi Dastur &bull; Test Rejimi</span>
+              <span>3 ta Bepul Sinov Yakunlandi</span>
             </div>
 
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
@@ -566,37 +641,29 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1">
-              Hozirda ushbu yangi <strong>"Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish"</strong> kursi ustida yakuniy sozlash, test va optimallashtirish ishlari olib borilmoqda.
+              Siz bepul sinovdagi 3 ta mashqni bajardingiz. English tilini 0 dan IELTS 9 gacha to'liq o'rganish va cheksiz mashq qilish uchun <strong>Click orqali Premium</strong> oling yoki muallif hisobiga kiring.
             </p>
           </div>
 
-          <div className="mt-6 p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-left max-w-lg mx-auto space-y-2 text-xs">
-            <div className="flex items-start gap-2.5">
-              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-1 text-slate-300">
-                <span className="font-bold text-white block">Kirish cheklovi:</span>
-                <p className="text-[11px] text-slate-400 leading-normal">
-                  Ushbu sahifaga hozircha faqat loyiha muallifi (<code className="text-amber-400 font-mono">yuldashivagavharoy@gmail.com</code>) hisobidan kirish mumkin. Tez kunda barcha foydalanuvchilar uchun to'liq bepul ochiladi!
-                </p>
-              </div>
-            </div>
-
-            {user?.email && (
-              <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
-                <span>Hozirgi hisobingiz:</span>
-                <span className="font-mono text-slate-200 font-bold">{user.email}</span>
-              </div>
-            )}
-          </div>
-
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setIsLimitReached(true);
+                setShowPremiumModal(true);
+              }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95"
+            >
+              <Crown className="w-4 h-4" />
+              <span>Click orqali Premium Olish (10,000 so'mdan)</span>
+            </button>
+
             {!user ? (
               <button
                 onClick={onOpenAuth}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Ruxsat etilgan hisobga kirish (Login)</span>
+                <span>Muallif hisobiga kirish</span>
               </button>
             ) : (
               <button
@@ -617,17 +684,16 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
                 <span>Bosh sahifaga qaytish</span>
               </button>
             )}
-
-            {onGoToLessons && (
-              <button
-                onClick={onGoToLessons}
-                className="px-5 py-2.5 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                <span>10 Barmoq Mashqlari</span>
-              </button>
-            )}
           </div>
         </div>
+
+        <EnglishPremiumModal
+          isOpen={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+          userId={user?.uid || user?.email || 'guest'}
+          userEmail={user?.email || undefined}
+          isLimitReached={true}
+        />
       </div>
     );
   }
@@ -641,15 +707,56 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6 select-none animate-in fade-in duration-200">
       
-      {/* Authorized VIP / Owner Notice Banner */}
+      {/* Payment Success Alert */}
+      {showPaymentSuccessAlert && (
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border border-emerald-500/50 p-4 flex items-center justify-between gap-3 text-xs text-emerald-200 shadow-xl animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div>
+              <span className="font-bold text-white block text-sm">To'lov muvaffaqiyatli qabul qilindi! 🎉</span>
+              <span>English kursi uchun Premium obunangiz faollashtirildi. Barcha darslar to'liq ochiq!</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPaymentSuccessAlert(false)}
+            className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold hover:brightness-110 cursor-pointer"
+          >
+            Tushundim
+          </button>
+        </div>
+      )}
+
+      {/* Top Banner: Owner or Premium Status */}
       <div className="rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border border-amber-500/40 p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2 text-amber-300 font-bold">
           <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>Muallif Rejimi: Siz <strong className="text-white font-mono">yuldashivagavharoy@gmail.com</strong> hisobi bilan kirdingiz. Barcha 35 ta dars siz uchun to'liq ochiq!</span>
+          {isAuthorizedOwner ? (
+            <span>Muallif Rejimi: Siz <strong className="text-white font-mono">yuldashivagavharoy@gmail.com</strong> hisobi bilan kirdingiz. Barcha 35 ta dars siz uchun to'liq ochiq!</span>
+          ) : isPremiumActive ? (
+            <span>VIP Premium Faol: {subscriptionPlan?.toUpperCase()} &bull; Barcha darslar cheksiz ochiq! ({remainingDays ? `${remainingDays} kun qoldi` : 'Aktiv'})</span>
+          ) : (
+            <span>Sinov Rejimi: 3 ta bepul mashqdan <strong>{Math.min(3, freePracticedCount)}/3</strong> tasi bajarildi.</span>
+          )}
         </div>
-        <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-mono font-black shrink-0 shadow-xs">
-          VIP ACCESS
-        </span>
+
+        <div className="flex items-center gap-2">
+          {!isPremiumActive && !isAuthorizedOwner && (
+            <button
+              onClick={() => {
+                setIsLimitReached(false);
+                setShowPremiumModal(true);
+              }}
+              className="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 text-[11px] font-mono font-black flex items-center gap-1 cursor-pointer shadow-md"
+            >
+              <Crown className="w-3.5 h-3.5" />
+              <span>Premium Olish</span>
+            </button>
+          )}
+
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-mono font-black shrink-0 shadow-xs">
+            {isAuthorizedOwner ? "VIP OWNER" : isPremiumActive ? "PREMIUM VIP" : "FREE TRIAL"}
+          </span>
+        </div>
       </div>
 
       {/* ============================================================
@@ -1043,6 +1150,15 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* English Premium Modal */}
+      <EnglishPremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        userId={user?.uid || user?.email || 'guest'}
+        userEmail={user?.email || undefined}
+        isLimitReached={isLimitReached}
+      />
 
     </div>
   );
