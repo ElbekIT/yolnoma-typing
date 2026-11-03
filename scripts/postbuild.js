@@ -66,6 +66,18 @@ const ROUTE_CONFIGS = {
     description: "Barcha topshirilgan testlar tarixi, WPM va aniqlik dinamikasi, eng ko'p adashilgan harflar tahlili.",
     image: "https://www.yolnoma.uz/og-banner.jpg",
     slug: "statistics"
+  },
+  english: {
+    title: "Ingliz Tili Yozish Mashqlari (0 - IELTS 9) - Julebu Uslubida | Yolnoma",
+    description: "Ingliz tilida tez yozish va so'z boyligini oshirish. So'z katakchalari, klaviatura mashqlari va to'g'ri audio talaffuz.",
+    image: "https://www.yolnoma.uz/og-banner.jpg",
+    slug: "english"
+  },
+  premium: {
+    title: "Premium VIP Obuna - Cheksiz Ingliz Tili & Maxsus Imkoniyatlar | Yolnoma",
+    description: "Yolnoma Premium VIP: Barcha 35 ta ingliz tili darslariga to'liq kirish, cheksiz audio talaffuz va VIP nishon.",
+    image: "https://www.yolnoma.uz/og-banner.jpg",
+    slug: "premium"
   }
 };
 
@@ -93,7 +105,12 @@ const ALIAS_MAP = {
   'qollab-quvvatlash': 'support',
   sponsor: 'support',
   tutorial: 'video',
-  qollanma: 'video'
+  qollanma: 'video',
+  ingliz: 'english',
+  ingliztili: 'english',
+  tarifs: 'premium',
+  tariflar: 'premium',
+  vip: 'premium'
 };
 
 function injectMetadata(template, meta, currentUrl) {
