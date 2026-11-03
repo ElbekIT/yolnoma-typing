@@ -62,6 +62,7 @@ const PartnersView = lazyWithRetry(() => import('./components/partners/PartnersV
 const BattleView = lazyWithRetry(() => import('./components/battle/BattleView').then(m => ({ default: m.BattleView })));
 const LessonsView = lazyWithRetry(() => import('./components/lessons/LessonsView').then(m => ({ default: m.LessonsView })));
 const EnglishLearnView = lazyWithRetry(() => import('./components/english/EnglishLearnView').then(m => ({ default: m.EnglishLearnView })));
+const PremiumPage = lazyWithRetry(() => import('./pages/PremiumPage').then(m => ({ default: m.PremiumPage })));
 const AdminView = lazyWithRetry(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
 const OwnerAboutView = lazyWithRetry(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = lazyWithRetry(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
@@ -119,6 +120,7 @@ function MainAppContent() {
     dashboard: 'dashboard',
     certificate: 'certificate',
     english: 'english',
+    premium: 'premium',
     admin: atob('YWRtaW4=')
   };
 
@@ -130,6 +132,7 @@ function MainAppContent() {
     battle: 'Speedway Battle Arena - Yolnoma Typing',
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
     english: "Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish - Yolnoma English",
+    premium: "Yolnoma English VIP & Premium Obuna - Click To'lov",
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
     profile: 'Foydalanuvchi Profili - Yolnoma Typing',
     login: 'Kirish & Ro\'yxatdan o\'tish - Yolnoma Typing',
@@ -171,6 +174,7 @@ function MainAppContent() {
     if (['battle', 'arena', 'duel', 'jang'].includes(subpath)) return { lang: detectedLang, tab: 'battle' };
     if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
     if (['english', 'ingliz', 'inglizcha', 'learn-english', 'ielts'].includes(subpath)) return { lang: detectedLang, tab: 'english' };
+    if (['premium', 'vip', 'obuna', 'subscription', 'click-pay'].includes(subpath)) return { lang: detectedLang, tab: 'premium' };
     if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
     if (['profile', 'profil'].includes(subpath)) return { lang: detectedLang, tab: 'profile' };
     if (['settings', 'sozlamalar'].includes(subpath)) return { lang: detectedLang, tab: 'settings' };
@@ -1353,7 +1357,20 @@ function MainAppContent() {
           )}
 
           {activeTab === 'lessons' && <LessonsView />}
-          {activeTab === 'english' && <EnglishLearnView />}
+          {activeTab === 'english' && (
+            <EnglishLearnView
+              onBackToHome={() => setActiveTab('home')}
+              onOpenAuth={() => setShowAuthModal(true)}
+              onGoToLessons={() => setActiveTab('lessons')}
+              onGoToPremium={() => setActiveTab('premium')}
+            />
+          )}
+          {activeTab === 'premium' && (
+            <PremiumPage
+              onGoToEnglish={() => setActiveTab('english')}
+              onOpenAuth={() => setShowAuthModal(true)}
+            />
+          )}
           {activeTab === 'battle' && (
             <BattleView
               initialRoomCode={pendingBattleRoomCode}

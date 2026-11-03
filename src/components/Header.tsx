@@ -104,6 +104,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'languages', label: currMenu.languages, icon: Globe },
     { id: 'lessons', label: currMenu.lessons, icon: BookOpen },
     { id: 'english', label: currMenu.english, icon: Languages },
+    { id: 'premium', label: 'Premium VIP 👑', icon: Crown },
     { id: 'battle', label: currMenu.battleArena, icon: Swords },
     { id: 'dashboard', label: currMenu.dashboard, icon: BarChart2 },
     { id: 'statistics', label: currMenu.statistics, icon: Clock },
@@ -227,6 +228,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 <Languages className={iconDimensions} />
                 <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-amber-500 text-slate-950 font-mono shadow-xs">
                   EN
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('premium')}
+                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
+                  activeTab === 'premium' ? 'text-amber-400 bg-amber-500/20 ring-1 ring-amber-400/50' : 'text-amber-400/90 hover:text-amber-300 hover:bg-amber-500/10'
+                }`}
+                title="Yolnoma English VIP & Premium"
+              >
+                <Crown className={iconDimensions} />
+                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-mono shadow-xs">
+                  VIP
                 </span>
               </button>
 

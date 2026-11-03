@@ -62,6 +62,13 @@ export const SEO_PAGE_CONFIG: Record<string, PageSEOInfo> = {
     canonicalUrl: "https://www.yolnoma.uz/english",
     image: "https://www.yolnoma.uz/og-banner.jpg"
   },
+  premium: {
+    title: "Yolnoma English VIP & Premium Obuna - Click To'lov | Yolnoma",
+    description: "Yolnoma English kursiga to'liq cheksiz kirish! 0 dan IELTS 9 gacha barcha 35 dars, interaktiv klaviatura tahlili va ovozli talaffuz. Click orqali tezkor to'lov.",
+    keywords: "yolnoma premium, click tolov english, ingliz tili obuna, english vip, yolnoma vip, click merchant tolov",
+    canonicalUrl: "https://www.yolnoma.uz/premium",
+    image: "https://www.yolnoma.uz/og-banner.jpg"
+  },
   statistics: {
     title: "Shaxsiy Statistika & Tahlil - Tezlik O'sish Grafigi | Yolnoma",
     description: "Barcha topshirilgan testlar tarixi, WPM va aniqlik dinamikasi, eng ko'p adashilgan harflar tahlili.",

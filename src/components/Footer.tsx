@@ -18,7 +18,8 @@ import {
   Heart,
   Video,
   MessageSquare,
-  Languages
+  Languages,
+  Crown
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -93,6 +94,16 @@ export const Footer = React.memo<FooterProps>(({
             >
               <Languages className="w-3.5 h-3.5 text-amber-400" />
               <span>Ingliz Tili</span>
+            </a>
+
+            <a
+              href="/premium"
+              onClick={(e) => handleNav('premium', e)}
+              className="hover:text-amber-300 transition-colors flex items-center gap-1.5 py-0.5 text-amber-400 font-bold"
+              title="Yolnoma English VIP & Premium Obuna"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>Premium VIP 👑</span>
             </a>
 
             <a
