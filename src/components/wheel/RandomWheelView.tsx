@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   WHEEL_THEMES,
-  WheelThemeId,
-  WheelTheme
+  WheelThemeId
 } from './wheelThemes';
 import { WheelCanvas, SpinSpeed } from './WheelCanvas';
 import { CharacterRevealCanvas, RevealSpeed } from './CharacterRevealCanvas';
@@ -16,15 +15,10 @@ import {
   Shuffle,
   ArrowDownAZ,
   Trash2,
-  Sparkles,
   Trophy,
-  History,
   FileText,
   ListOrdered,
-  RotateCw,
-  Check,
   X,
-  Play,
   Palette,
   Gauge
 } from 'lucide-react';
@@ -50,7 +44,7 @@ const DEFAULT_SAMPLE_NAMES = [
   "Fotima Yoqubova"
 ];
 
-export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }) => {
+export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: _onBackToHome }) => {
   // Mode: wheel or character
   const [mode, setMode] = useState<ViewMode>('wheel');
 
@@ -302,7 +296,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
                 Random Baraban
               </h1>
               <p className="text-xs text-[var(--sub-color)] hidden sm:block">
-                Wheel of Names & Sehrli Varaq Ochish
+                Wheel of Names & Sehrli Oltin Sandiq
               </p>
             </div>
           </div>

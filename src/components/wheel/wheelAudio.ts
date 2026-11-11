@@ -207,6 +207,89 @@ class WheelAudioManager {
       osc.stop(now + 0.065);
     } catch {}
   }
+
+  // Chest lid close / lock snap sound
+  public playChestClose() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Low wooden thud
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 0.08);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+
+      // Metallic lock snap click
+      setTimeout(() => {
+        if (!this.ctx) return;
+        const clickOsc = this.ctx.createOscillator();
+        const clickGain = this.ctx.createGain();
+        clickOsc.type = 'triangle';
+        clickOsc.frequency.setValueAtTime(950, this.ctx.currentTime);
+        clickOsc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.04);
+        clickGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+        clickOsc.connect(clickGain);
+        clickGain.connect(this.ctx.destination);
+        clickOsc.start();
+        clickOsc.stop(this.ctx.currentTime + 0.05);
+      }, 50);
+    } catch {}
+  }
+
+  // Chest shake rattle / tumble sound
+  public playChestShake() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220 + Math.random() * 80, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.05);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch {}
+  }
+
+  // Magical light beam chime when chest opens
+  public playMagicChime() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const notes = [659.25, 830.61, 987.77, 1318.5]; // E5, G#5, B5, E6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const time = now + idx * 0.06;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(0.18, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + 0.55);
+      });
+    } catch {}
+  }
 }
 
 export const wheelAudio = new WheelAudioManager();
