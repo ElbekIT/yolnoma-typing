@@ -4,8 +4,8 @@ import {
   WheelThemeId,
   WheelTheme
 } from './wheelThemes';
-import { WheelCanvas } from './WheelCanvas';
-import { CharacterRevealCanvas } from './CharacterRevealCanvas';
+import { WheelCanvas, SpinSpeed } from './WheelCanvas';
+import { CharacterRevealCanvas, RevealSpeed } from './CharacterRevealCanvas';
 import { wheelAudio } from './wheelAudio';
 import {
   Volume2,
@@ -25,7 +25,8 @@ import {
   Check,
   X,
   Play,
-  Palette
+  Palette,
+  Gauge
 } from 'lucide-react';
 
 interface RandomWheelViewProps {
@@ -60,6 +61,25 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
       return (saved as WheelThemeId) || 'classic';
     } catch {
       return 'classic';
+    }
+  });
+
+  // Speed controls
+  const [spinSpeed, setSpinSpeed] = useState<SpinSpeed>(() => {
+    try {
+      const saved = localStorage.getItem('yolnoma_wheel_spin_speed');
+      return (saved as SpinSpeed) || 'normal';
+    } catch {
+      return 'normal';
+    }
+  });
+
+  const [revealSpeed, setRevealSpeed] = useState<RevealSpeed>(() => {
+    try {
+      const saved = localStorage.getItem('yolnoma_wheel_reveal_speed');
+      return (saved as RevealSpeed) || 'normal';
+    } catch {
+      return 'normal';
     }
   });
 
@@ -126,6 +146,19 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
       localStorage.setItem('yolnoma_wheel_theme', themeId);
     } catch {}
   }, [themeId]);
+
+  // Persist speeds
+  useEffect(() => {
+    try {
+      localStorage.setItem('yolnoma_wheel_spin_speed', spinSpeed);
+    } catch {}
+  }, [spinSpeed]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('yolnoma_wheel_reveal_speed', revealSpeed);
+    } catch {}
+  }, [revealSpeed]);
 
   // Sync textarea with entries
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -258,7 +291,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
       {/* ============================================================
           TOP HEADER & CONTROLS BAR
           ============================================================ */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg backdrop-blur-md">
         
         {/* Left: Title & Mode Switcher */}
         <div className="flex items-center gap-4 flex-wrap justify-center sm:justify-start">
@@ -303,8 +336,98 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
           </div>
         </div>
 
-        {/* Right: Sound, Theme, Fullscreen */}
+        {/* Right: Speed Controls, Theme, Sound, Fullscreen */}
         <div className="flex items-center gap-2 flex-wrap justify-center">
+          
+          {/* Speed Selector */}
+          {mode === 'wheel' ? (
+            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+              <span className="text-[11px] text-[var(--sub-color)] px-1.5 font-medium flex items-center gap-1">
+                <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Tezlik:</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSpinSpeed('fast')}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                  spinSpeed === 'fast'
+                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+                title="Tez aylanish (3 soniya)"
+              >
+                ⚡ 3s
+              </button>
+              <button
+                type="button"
+                onClick={() => setSpinSpeed('normal')}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                  spinSpeed === 'normal'
+                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+                title="O'rtacha aylanish (6 soniya)"
+              >
+                ⏱️ 6s
+              </button>
+              <button
+                type="button"
+                onClick={() => setSpinSpeed('slow')}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                  spinSpeed === 'slow'
+                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+                title="Sekin, hayajonli aylanish (10 soniya)"
+              >
+                ⏳ 10s
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+              <span className="text-[11px] text-[var(--sub-color)] px-1.5 font-medium flex items-center gap-1">
+                <Gauge className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden sm:inline">Tezlik:</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setRevealSpeed('fast')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  revealSpeed === 'fast'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+                title="Tezkor yurish va yozish"
+              >
+                ⚡ Tez
+              </button>
+              <button
+                type="button"
+                onClick={() => setRevealSpeed('normal')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  revealSpeed === 'normal'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+                title="O'rtacha yurish va yozish"
+              >
+                ⏱️ Oʻrtacha
+              </button>
+              <button
+                type="button"
+                onClick={() => setRevealSpeed('slow')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  revealSpeed === 'slow'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+                title="Sekin va hayajonli"
+              >
+                ⏳ Sekin
+              </button>
+            </div>
+          )}
+
           {/* Theme Dropdown (for wheel mode) */}
           {mode === 'wheel' && (
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
@@ -378,12 +501,14 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
               entries={entries}
               theme={currentTheme}
               isSpinning={isSpinning}
+              spinSpeed={spinSpeed}
               onSpinStart={handleSpinStart}
               onSpinEnd={handleSpinEnd}
             />
           ) : (
             <CharacterRevealCanvas
               entries={entries}
+              speed={revealSpeed}
               onWinnerSelected={(name, idx) => handleSpinEnd(name, idx)}
             />
           )}
@@ -576,10 +701,10 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
       </div>
 
       {/* ============================================================
-          WINNER CELEBRATION MODAL
+          WINNER CELEBRATION MODAL (Clean, Static, Zero Lag, No Bouncing)
           ============================================================ */}
       {showWinnerModal && winner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
           <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-2 border-amber-500/50 shadow-2xl text-center space-y-6">
             
             {/* Close Button */}
@@ -591,8 +716,8 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
               <X className="w-5 h-5" />
             </button>
 
-            {/* Glowing Trophy Icon */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-400 text-4xl shadow-xl shadow-amber-500/30 animate-bounce">
+            {/* Static Clean Glowing Trophy Badge (No jump / bounce) */}
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-400 text-4xl shadow-lg shadow-amber-500/25">
               🏆
             </div>
 
@@ -600,7 +725,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
               <span className="text-xs uppercase tracking-widest font-black text-amber-400">
                 Gʻolib Aniqlandi!
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight break-words">
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight break-words px-2">
                 {winner.name}
               </h2>
             </div>
@@ -610,7 +735,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
               <button
                 type="button"
                 onClick={handleRemoveWinner}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-sm transition-all shadow-lg"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-sm transition-all shadow-lg active:scale-98"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Gʻolibni roʻyxatdan oʻchirish</span>
@@ -619,7 +744,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome }
               <button
                 type="button"
                 onClick={() => setShowWinnerModal(false)}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all"
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all active:scale-98"
               >
                 Roʻyxatda qoldirish va yopish
               </button>

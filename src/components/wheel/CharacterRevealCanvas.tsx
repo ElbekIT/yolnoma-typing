@@ -1,18 +1,66 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { wheelAudio } from './wheelAudio';
 import confetti from 'canvas-confetti';
-import { Sparkles, User, RefreshCw, Volume2, VolumeX, Play } from 'lucide-react';
+import { Sparkles, RefreshCw, Play, Gauge } from 'lucide-react';
+
+export type RevealSpeed = 'fast' | 'normal' | 'slow';
 
 interface CharacterRevealProps {
   entries: string[];
+  speed?: RevealSpeed;
   onWinnerSelected: (winner: string, index: number) => void;
 }
 
 type CharacterType = 'boy' | 'girl';
 type AnimationPhase = 'idle' | 'walking' | 'unfurling' | 'writing' | 'revealed';
 
+// Helper: Word wrap text into lines fitting within maxLineWidth
+function wrapCanvasText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] {
+  if (!text) return [];
+  // Split by words first
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+
+    if (ctx.measureText(testLine).width <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+
+      // If single word itself exceeds maxWidth, break it into character chunks
+      if (ctx.measureText(word).width > maxWidth) {
+        let chunk = '';
+        for (let c = 0; c < word.length; c++) {
+          const char = word[c];
+          if (ctx.measureText(chunk + char).width <= maxWidth) {
+            chunk += char;
+          } else {
+            if (chunk) lines.push(chunk);
+            chunk = char;
+          }
+        }
+        currentLine = chunk;
+      } else {
+        currentLine = word;
+      }
+    }
+  }
+
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
 export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
   entries,
+  speed = 'normal',
   onWinnerSelected
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,15 +69,19 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
 
   const [character, setCharacter] = useState<CharacterType>('boy');
   const [phase, setPhase] = useState<AnimationPhase>('idle');
-  const [winnerName, setWinnerName] = useState<string>('');
   const [winningIndex, setWinningIndex] = useState<number>(-1);
-  const [revealedCharsCount, setRevealedCharsCount] = useState<number>(0);
+
+  // Speed timings in ms
+  const speedTimings = {
+    fast: { walk: 900, unfurl: 500, write: 1000, drum: 1800 },
+    normal: { walk: 2000, unfurl: 900, write: 1800, drum: 3200 },
+    slow: { walk: 3400, unfurl: 1400, write: 2800, drum: 5000 }
+  }[speed];
 
   // Animation internal variables
   const animStateRef = useRef({
-    charX: -120, // starts offscreen left
-    charY: 0,
-    targetX: 250,
+    charX: 40,
+    targetX: 260,
     walkCycle: 0,
     scrollOpenProgress: 0,
     liftProgress: 0,
@@ -48,8 +100,6 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
     const randIdx = Math.floor(Math.random() * entries.length);
     const chosenWinner = entries[randIdx];
     setWinningIndex(randIdx);
-    setWinnerName(chosenWinner);
-    setRevealedCharsCount(0);
 
     const s = animStateRef.current;
     s.charX = 40;
@@ -64,8 +114,8 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
     setPhase('walking');
 
     // Suspenseful drumroll starts
-    wheelAudio.playDrumRoll(3200);
-  }, [entries, phase]);
+    wheelAudio.playDrumRoll(speedTimings.drum);
+  }, [entries, phase, speedTimings.drum]);
 
   // Main Canvas Render Loop
   useEffect(() => {
@@ -85,8 +135,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
       ctx.clearRect(0, 0, width, height);
       const s = animStateRef.current;
 
-      // 1. Draw Spotlight & Stage Floor
-      // Stage gradient
+      // 1. Draw Spotlight & Stage Floor (Smooth and zero lag)
       const stageGrad = ctx.createRadialGradient(width / 2, height - 80, 20, width / 2, height - 80, 320);
       stageGrad.addColorStop(0, 'rgba(59, 130, 246, 0.28)');
       stageGrad.addColorStop(0.5, 'rgba(139, 92, 246, 0.12)');
@@ -122,10 +171,9 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
       // State machine logic
       if (s.phase === 'walking') {
         const elapsed = time - s.startTime;
-        // Walk for 2.2 seconds to reach center stage
-        const walkProgress = Math.min(elapsed / 2200, 1);
+        const walkProgress = Math.min(elapsed / speedTimings.walk, 1);
         s.charX = 40 + (s.targetX - 40) * (1 - Math.pow(1 - walkProgress, 2));
-        s.walkCycle = elapsed * 0.012;
+        s.walkCycle = elapsed * 0.014;
 
         if (walkProgress >= 1) {
           s.phase = 'unfurling';
@@ -135,7 +183,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
         }
       } else if (s.phase === 'unfurling') {
         const elapsed = time - s.startTime;
-        const unfurlProgress = Math.min(elapsed / 1200, 1);
+        const unfurlProgress = Math.min(elapsed / speedTimings.unfurl, 1);
         s.scrollOpenProgress = 1 - Math.pow(1 - unfurlProgress, 3);
 
         if (unfurlProgress >= 1) {
@@ -145,28 +193,22 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
         }
       } else if (s.phase === 'writing') {
         const elapsed = time - s.startTime;
-        const writeDuration = 1800;
-        const writeProgress = Math.min(elapsed / writeDuration, 1);
+        const writeProgress = Math.min(elapsed / speedTimings.write, 1);
         s.penProgress = writeProgress;
 
-        // Animate writing sound intermittently
+        // Writing sound
         if (Math.random() < 0.25) {
           wheelAudio.playWriting();
         }
-
-        const winnerLen = s.winner.length || 1;
-        const currentChars = Math.floor(writeProgress * winnerLen);
-        setRevealedCharsCount(currentChars);
 
         if (writeProgress >= 1) {
           s.phase = 'revealed';
           s.startTime = time;
           setPhase('revealed');
 
-          // Grand victory moment!
           wheelAudio.playVictory();
           confetti({
-            particleCount: 160,
+            particleCount: 140,
             spread: 90,
             origin: { y: 0.55 },
             colors: ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6']
@@ -176,19 +218,18 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
         }
       } else if (s.phase === 'revealed') {
         const elapsed = time - s.startTime;
-        s.liftProgress = Math.min(elapsed / 600, 1);
+        s.liftProgress = Math.min(elapsed / 500, 1);
       }
 
       // Draw Character
       const currentX = s.phase === 'idle' ? width / 2 : s.charX;
       const currentY = height - 120;
       const isWalking = s.phase === 'walking';
-      const bobbing = isWalking ? Math.sin(s.walkCycle * 2) * 6 : Math.sin(time * 0.003) * 2;
+      const bobbing = isWalking ? Math.sin(s.walkCycle * 2) * 5 : Math.sin(time * 0.003) * 2;
 
       ctx.save();
       ctx.translate(currentX, currentY + bobbing);
 
-      // 2. Character Body & Outfit
       const isBoy = character === 'boy';
 
       // Character shadow
@@ -224,7 +265,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
       // Torso / Clothing
       ctx.beginPath();
       ctx.roundRect(-24, -25, 48, 54, 12);
-      ctx.fillStyle = isBoy ? '#2563eb' : '#db2777'; // Blue blazer for boy, magenta dress for girl
+      ctx.fillStyle = isBoy ? '#2563eb' : '#db2777';
       ctx.fill();
 
       // Uzbek national vest embroidery or collar accent
@@ -242,7 +283,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
       ctx.fill();
 
       // Head & Neck
-      ctx.fillStyle = '#fed7aa'; // Natural skin tone
+      ctx.fillStyle = '#fed7aa';
       ctx.beginPath();
       ctx.roundRect(-7, -35, 14, 14, 4);
       ctx.fill();
@@ -254,20 +295,18 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
       ctx.fill();
 
       // Hair
-      ctx.fillStyle = '#1e1b4b'; // Dark black hair
+      ctx.fillStyle = '#1e1b4b';
       if (isBoy) {
-        // Boy hair + Traditional Uzbek Do'ppi!
         ctx.beginPath();
         ctx.arc(0, -62, 26, Math.PI, 2 * Math.PI);
         ctx.fill();
 
-        // Do'ppi (Tubeteika) with Uzbek white almond/bodom pattern!
+        // Do'ppi with white embroidery
         ctx.beginPath();
         ctx.roundRect(-22, -88, 44, 24, [8, 8, 2, 2]);
         ctx.fillStyle = '#0f172a';
         ctx.fill();
 
-        // Do'ppi White bodom embroidery
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(-11, -76, 3, 0, 2 * Math.PI);
@@ -275,81 +314,74 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
         ctx.arc(11, -76, 3, 0, 2 * Math.PI);
         ctx.fill();
       } else {
-        // Girl hair with cute side braids and head accessory
         ctx.beginPath();
         ctx.arc(0, -60, 28, Math.PI * 0.9, 2.1 * Math.PI);
         ctx.fill();
 
-        // Left Braid
+        // Braids
         ctx.beginPath();
         ctx.roundRect(-28, -50, 10, 48, 5);
         ctx.fill();
-
-        // Right Braid
         ctx.beginPath();
         ctx.roundRect(18, -50, 10, 48, 5);
         ctx.fill();
 
-        // Cute gold hair ribbon
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
         ctx.arc(0, -80, 5, 0, 2 * Math.PI);
         ctx.fill();
       }
 
-      // Friendly Face: Eyes, Blush, Smile
-      // Eyes (sparkling)
+      // Friendly Face
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
       ctx.arc(-8, -56, 3, 0, 2 * Math.PI);
       ctx.arc(8, -56, 3, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Eye highlights
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(-9, -57, 1.2, 0, 2 * Math.PI);
       ctx.arc(7, -57, 1.2, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Cheerful blush
+      // Blush
       ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
       ctx.beginPath();
       ctx.arc(-14, -50, 4, 0, 2 * Math.PI);
       ctx.arc(14, -50, 4, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Warm Smile
+      // Smile
       ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(0, -48, 7, 0.2, Math.PI - 0.2);
       ctx.stroke();
 
-      // 3. Parchment / Scroll Reveal Animation
+      // 3. Parchment / Scroll Reveal Animation with Multi-line Wrapping
       const openProg = s.scrollOpenProgress;
       const liftProg = s.liftProgress;
 
-      // Scroll dimensions
-      const scrollMaxW = 260;
-      const scrollMaxH = 150;
+      // Expandable Scroll Dimensions
+      const scrollMaxW = 280;
+      const scrollMaxH = 165;
       const currentScrollW = 40 + (scrollMaxW - 40) * openProg;
       const currentScrollH = 40 + (scrollMaxH - 40) * openProg;
 
-      // When character reveals, they lift it up towards camera!
       const scrollYOffset = -15 - (liftProg * 45);
-      const scrollScale = 1 + (liftProg * 0.25);
+      const scrollScale = 1 + (liftProg * 0.22);
 
       ctx.save();
       ctx.translate(0, scrollYOffset);
       ctx.scale(scrollScale, scrollScale);
 
-      // Draw Parchment Paper (Golden Antique Parchment)
+      // Draw Parchment Paper
       ctx.beginPath();
       ctx.roundRect(-currentScrollW / 2, -currentScrollH / 2, currentScrollW, currentScrollH, 10);
-      ctx.fillStyle = '#fef3c7'; // Warm parchment amber
+      ctx.fillStyle = '#fef3c7'; // Warm parchment
       ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 16;
       ctx.fill();
 
       // Ornate Border on paper
@@ -373,35 +405,60 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
       // Text written onto parchment:
       if (s.phase === 'writing' || s.phase === 'revealed') {
         const fullWinner = s.winner || 'Gʻolib';
-        const charsToShow = s.phase === 'revealed' ? fullWinner.length : Math.max(1, Math.floor(s.penProgress * fullWinner.length));
+        const charsToShow = s.phase === 'revealed'
+          ? fullWinner.length
+          : Math.max(1, Math.floor(s.penProgress * fullWinner.length));
         const partialName = fullWinner.slice(0, charsToShow);
 
         // Header Title
         ctx.fillStyle = '#b45309';
-        ctx.font = 'bold 12px system-ui, sans-serif';
+        ctx.font = 'bold 11px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('🌟 GʻOLIB TANLANDI 🌟', 0, -currentScrollH / 2 + 28);
+        ctx.fillText('🌟 GʻOLIB TANLANDI 🌟', 0, -currentScrollH / 2 + 24);
 
-        // Winner Name (Ornate Calligraphy)
+        // Multi-line Word Wrap Calculation:
+        // Available width inside paper
+        const maxTextWidth = currentScrollW - 28;
+
+        // Choose appropriate font size based on length
+        let fontSize = 22;
+        if (fullWinner.length > 50) fontSize = 12;
+        else if (fullWinner.length > 30) fontSize = 14;
+        else if (fullWinner.length > 18) fontSize = 16;
+        else if (fullWinner.length > 10) fontSize = 18;
+
+        ctx.font = `bold ${fontSize}px "Georgia", serif, system-ui`;
+        const lines = wrapCanvasText(ctx, partialName, maxTextWidth);
+
+        // Render each line centered vertically
         ctx.fillStyle = '#1e1b4b';
-        let nameFontSize = 26;
-        if (fullWinner.length > 20) nameFontSize = 16;
-        else if (fullWinner.length > 12) nameFontSize = 20;
+        const lineHeight = fontSize * 1.25;
+        const totalTextHeight = lines.length * lineHeight;
+        const startY = -(totalTextHeight / 2) + (lineHeight / 2) + 2;
 
-        ctx.font = `bold ${nameFontSize}px "Georgia", serif, system-ui`;
-        ctx.fillText(partialName, 0, 4);
+        let lastLineX = 0;
+        let lastLineY = 0;
+
+        lines.forEach((lineText, idx) => {
+          const lineY = startY + (idx * lineHeight);
+          ctx.fillText(lineText, 0, lineY);
+          if (idx === lines.length - 1) {
+            lastLineX = ctx.measureText(lineText).width / 2;
+            lastLineY = lineY;
+          }
+        });
 
         // Lucky badge/emblem on parchment
         if (s.phase === 'revealed') {
           ctx.fillStyle = '#d97706';
           ctx.font = '900 11px system-ui, sans-serif';
-          ctx.fillText('🏆 TABRIKLAYMIZ! 🏆', 0, currentScrollH / 2 - 20);
+          ctx.fillText('🏆 TABRIKLAYMIZ! 🏆', 0, currentScrollH / 2 - 16);
         }
 
         // Feather Quill Pen Animation during writing phase
-        if (s.phase === 'writing') {
-          const penX = ctx.measureText(partialName).width / 2 + 10;
-          const penY = 4 + Math.sin(time * 0.04) * 6;
+        if (s.phase === 'writing' && lines.length > 0) {
+          const penX = lastLineX + 8;
+          const penY = lastLineY + Math.sin(time * 0.04) * 4;
 
           ctx.save();
           ctx.translate(penX, penY);
@@ -425,7 +482,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
         }
       } else if (openProg < 0.3) {
         // Sealed envelope badge
-        ctx.fillStyle = '#dc2626'; // Red wax seal
+        ctx.fillStyle = '#dc2626';
         ctx.beginPath();
         ctx.arc(0, 0, 10, 0, 2 * Math.PI);
         ctx.fill();
@@ -450,7 +507,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [character, winningIndex, onWinnerSelected]);
+  }, [character, winningIndex, onWinnerSelected, speedTimings]);
 
   return (
     <div
@@ -506,7 +563,7 @@ export const CharacterRevealCanvas: React.FC<CharacterRevealProps> = ({
               type="button"
               onClick={handleStartReveal}
               disabled={entries.length === 0}
-              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 text-base sm:text-lg font-black rounded-2xl shadow-xl shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none animate-pulse"
+              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 text-base sm:text-lg font-black rounded-2xl shadow-xl shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
               <Play className="w-5 h-5 fill-current" />
               <span>GʻOLIBNI ANIQLASH (START)</span>

@@ -3,10 +3,13 @@ import { WheelTheme, getContrastColor } from './wheelThemes';
 import { wheelAudio } from './wheelAudio';
 import confetti from 'canvas-confetti';
 
+export type SpinSpeed = 'fast' | 'normal' | 'slow';
+
 interface WheelCanvasProps {
   entries: string[];
   theme: WheelTheme;
   isSpinning: boolean;
+  spinSpeed?: SpinSpeed;
   onSpinStart: () => void;
   onSpinEnd: (winner: string, index: number) => void;
 }
@@ -15,6 +18,7 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
   entries,
   theme,
   isSpinning,
+  spinSpeed = 'normal',
   onSpinStart,
   onSpinEnd
 }) => {
@@ -70,13 +74,13 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     const arc = (2 * Math.PI) / count;
     const currentRotation = rotationRef.current;
 
-    // 1. Draw outer ambient shadow & rim
+    // 1. Draw outer rim
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, outerRadius + 8, 0, 2 * Math.PI);
     ctx.fillStyle = theme.outerBorderColor;
     ctx.shadowColor = theme.glowColor;
-    ctx.shadowBlur = 24;
+    ctx.shadowBlur = 18;
     ctx.fill();
 
     // Outer ring accent
@@ -95,7 +99,6 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
       const sliceStartAngle = i * arc;
       const sliceEndAngle = sliceStartAngle + arc;
 
-      // Ensure adjacent slices don't have matching color
       let colorIndex = i % palette.length;
       if (i === count - 1 && colorIndex === 0 && count > 1) {
         colorIndex = (palette.length > 2) ? 1 : 0;
@@ -112,7 +115,7 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
 
       // Border between slices
       ctx.lineWidth = count > 60 ? 1 : 1.5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.stroke();
 
       // Draw Sector Text
@@ -155,25 +158,22 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     ctx.save();
     ctx.translate(centerX, centerY);
 
-    // Hub Outer Ring
     ctx.beginPath();
     ctx.arc(0, 0, hubRadius, 0, 2 * Math.PI);
     ctx.fillStyle = theme.hubColor;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 10;
     ctx.fill();
 
     ctx.lineWidth = 5;
     ctx.strokeStyle = theme.hubBorderColor;
     ctx.stroke();
 
-    // Inner Button Ring
     ctx.beginPath();
     ctx.arc(0, 0, hubRadius * 0.76, 0, 2 * Math.PI);
     ctx.fillStyle = theme.hubBorderColor;
     ctx.fill();
 
-    // Hub Text "AYLANTIR"
     ctx.fillStyle = theme.hubColor;
     const hubFontSize = Math.max(10, Math.floor(hubRadius * 0.32));
     ctx.font = `900 ${hubFontSize}px system-ui, sans-serif`;
@@ -184,7 +184,6 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     ctx.restore();
 
     // 4. Draw Right Pointer Arrow (at 3 o'clock, pointing leftwards)
-    // Ticker angle deflection simulates physical click peg
     const pointerDeflection = pointerDeflectionRef.current;
     ctx.save();
     const pointerTipX = centerX + outerRadius + 2;
@@ -194,7 +193,6 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     ctx.rotate(pointerDeflection);
 
     ctx.beginPath();
-    // Wedge pointing leftwards into the wheel
     ctx.moveTo(0, 0);
     ctx.lineTo(24, -14);
     ctx.lineTo(28, -10);
@@ -204,14 +202,13 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
 
     ctx.fillStyle = theme.pointerColor;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 6;
     ctx.fill();
 
     ctx.lineWidth = 2.5;
     ctx.strokeStyle = theme.pointerAccent;
     ctx.stroke();
 
-    // Pointer pivot pin
     ctx.beginPath();
     ctx.arc(22, 0, 4, 0, 2 * Math.PI);
     ctx.fillStyle = '#ffffff';
@@ -220,12 +217,11 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     ctx.restore();
   }, [canvasSize, entries, theme]);
 
-  // Redraw whenever canvas size, theme, or entries change
   useEffect(() => {
     drawWheel();
   }, [drawWheel]);
 
-  // Physical Spin Animation Routine
+  // Physical Spin Animation Routine with Speed Settings
   const spinWheel = useCallback(() => {
     if (isSpinning || entries.length === 0) return;
 
@@ -233,32 +229,33 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
 
     const count = entries.length;
     const arc = (2 * Math.PI) / count;
-
-    // Pick random target winner
     const winningIndex = Math.floor(Math.random() * count);
 
-    // Calculate target angle so the winning slice lands at pointer (3 o'clock / angle 0)
-    // Pointer is at angle 0. Slice i covers [i*arc, (i+1)*arc].
-    // Center of slice i is (i + 0.5) * arc.
-    // To land slice center at 0, wheel rotation mod 2PI must be: 2PI - (i + 0.5)*arc
     const currentAngle = rotationRef.current;
     const currentBase = currentAngle % (2 * Math.PI);
     const targetSliceCenter = (winningIndex + 0.5) * arc;
     const targetOffset = (2 * Math.PI) - targetSliceCenter;
 
-    // Spin multiple full revolutions for drama (between 6 and 9 full turns)
-    const fullSpins = (6 + Math.floor(Math.random() * 3)) * (2 * Math.PI);
+    // Speed configuration
+    let duration = 6000;
+    let minSpins = 7;
+    if (spinSpeed === 'fast') {
+      duration = 3200;
+      minSpins = 4;
+    } else if (spinSpeed === 'slow') {
+      duration = 9800;
+      minSpins = 11;
+    }
 
-    // Total delta angle to rotate
+    const fullSpins = (minSpins + Math.floor(Math.random() * 2)) * (2 * Math.PI);
+
     let deltaAngle = (targetOffset - currentBase) + fullSpins;
     if (deltaAngle < fullSpins) deltaAngle += (2 * Math.PI);
 
     const startAngle = currentAngle;
     const finalAngle = startAngle + deltaAngle;
-    const duration = 6500; // 6.5 seconds smooth realistic spin
     const startTime = performance.now();
 
-    // Spring physics for ticker pointer bounce
     let pointerVelocity = 0;
     let pointerAngle = 0;
 
@@ -266,32 +263,24 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Ease out cubic with slight deceleration curve
-      // f(t) = 1 - (1 - t)^3.6
-      const easeProgress = 1 - Math.pow(1 - progress, 3.6);
+      const easeProgress = 1 - Math.pow(1 - progress, 3.5);
       const angleNow = startAngle + deltaAngle * easeProgress;
       rotationRef.current = angleNow;
 
-      // Calculate instantaneous angular velocity
       const speedRatio = Math.max(0, (1 - progress) * 2.5);
 
-      // Check which sector boundary is passing pointer (3 o'clock = angle 0)
       const normalized = ((2 * Math.PI) - (angleNow % (2 * Math.PI))) % (2 * Math.PI);
       const currentSector = Math.floor(normalized / arc);
 
       if (currentSector !== lastSectorRef.current) {
         lastSectorRef.current = currentSector;
-        // Trigger mechanical tick sound
         wheelAudio.playTick(speedRatio);
-
-        // Pointer bounces upwards when sector line strikes peg
-        pointerVelocity = -0.32 * Math.min(speedRatio + 0.4, 1.2);
+        pointerVelocity = -0.3 * Math.min(speedRatio + 0.4, 1.2);
       }
 
-      // Pointer spring physics
       pointerAngle += pointerVelocity;
-      pointerVelocity += (0 - pointerAngle) * 0.28; // Spring force towards 0
-      pointerVelocity *= 0.72; // Damping
+      pointerVelocity += (0 - pointerAngle) * 0.28;
+      pointerVelocity *= 0.72;
       pointerDeflectionRef.current = pointerAngle;
 
       drawWheel();
@@ -299,32 +288,27 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
       if (progress < 1) {
         animFrameRef.current = requestAnimationFrame(animate);
       } else {
-        // Spin finished!
         rotationRef.current = finalAngle;
         pointerDeflectionRef.current = 0;
         drawWheel();
 
-        // Confetti celebration
         confetti({
-          particleCount: 120,
+          particleCount: 110,
           spread: 80,
           origin: { y: 0.6 },
           colors: theme.colors
         });
 
-        // Play victory sound
         wheelAudio.playVictory();
 
-        // Notify parent
         const winner = entries[winningIndex] || `Variant ${winningIndex + 1}`;
         onSpinEnd(winner, winningIndex);
       }
     };
 
     animFrameRef.current = requestAnimationFrame(animate);
-  }, [entries, isSpinning, onSpinStart, onSpinEnd, drawWheel, theme.colors]);
+  }, [entries, isSpinning, onSpinStart, onSpinEnd, drawWheel, theme.colors, spinSpeed]);
 
-  // Clean up animation on unmount
   useEffect(() => {
     return () => {
       if (animFrameRef.current) {
@@ -341,8 +325,8 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
       <canvas
         ref={canvasRef}
         onClick={spinWheel}
-        className={`w-full h-full block rounded-full transition-transform ${
-          isSpinning ? 'cursor-wait' : 'cursor-pointer hover:scale-[1.01]'
+        className={`w-full h-full block rounded-full ${
+          isSpinning ? 'cursor-wait' : 'cursor-pointer hover:scale-[1.01] transition-transform'
         }`}
         style={{ touchAction: 'none' }}
         title="Barabanni aylantirish uchun bosing!"
