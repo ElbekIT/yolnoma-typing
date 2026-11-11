@@ -78,6 +78,12 @@ const ROUTE_CONFIGS = {
     description: "Yolnoma Premium VIP: Barcha 35 ta ingliz tili darslariga to'liq kirish, cheksiz audio talaffuz va VIP nishon.",
     image: "https://www.yolnoma.uz/og-banner.jpg",
     slug: "premium"
+  },
+  baraban: {
+    title: "Random Baraban (Omad G'ildiragi) - Ismlar & Sonlar Tanlash | Yolnoma",
+    description: "Wheel of Names uslubidagi 60 FPS qotmaydigan Random Baraban va animatsiyali sehrli varaq ochish. Ismlar, lotereya va tanlovlar uchun eng qulay vosita.",
+    image: "https://www.yolnoma.uz/og-banner.jpg",
+    slug: "baraban"
   }
 };
 
@@ -110,7 +116,12 @@ const ALIAS_MAP = {
   ingliztili: 'english',
   tarifs: 'premium',
   tariflar: 'premium',
-  vip: 'premium'
+  vip: 'premium',
+  wheel: 'baraban',
+  random: 'baraban',
+  roulette: 'baraban',
+  lotereya: 'baraban',
+  omad: 'baraban'
 };
 
 function injectMetadata(template, meta, currentUrl) {

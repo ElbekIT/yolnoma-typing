@@ -32,7 +32,8 @@ import {
   BookOpen,
   Heart,
   Video,
-  Languages
+  Languages,
+  Disc
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -105,6 +106,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'lessons', label: currMenu.lessons, icon: BookOpen },
     { id: 'english', label: currMenu.english, icon: Languages },
     { id: 'premium', label: 'Premium VIP 👑', icon: Crown },
+    { id: 'baraban', label: currMenu.wheel || "Random Baraban 🎡", icon: Disc },
     { id: 'battle', label: currMenu.battleArena, icon: Swords },
     { id: 'dashboard', label: currMenu.dashboard, icon: BarChart2 },
     { id: 'statistics', label: currMenu.statistics, icon: Clock },

@@ -19,7 +19,8 @@ import {
   Video,
   MessageSquare,
   Languages,
-  Crown
+  Crown,
+  Disc
 } from 'lucide-react';
 import { ShareModal } from './share/ShareModal';
 import { useI18n } from '../context/I18nContext';
@@ -104,6 +105,16 @@ export const Footer = React.memo<FooterProps>(({
             >
               <Crown className="w-3.5 h-3.5 text-amber-400" />
               <span>Premium VIP 👑</span>
+            </a>
+
+            <a
+              href="/baraban"
+              onClick={(e) => handleNav('baraban', e)}
+              className="hover:text-amber-400 transition-colors flex items-center gap-1.5 py-0.5 text-amber-400 font-bold"
+              title="Random Baraban & Wheel of Names"
+            >
+              <Disc className="w-3.5 h-3.5 text-amber-400" />
+              <span>Random Baraban 🎡</span>
             </a>
 
             <a

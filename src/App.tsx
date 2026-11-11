@@ -63,6 +63,7 @@ const BattleView = lazyWithRetry(() => import('./components/battle/BattleView').
 const LessonsView = lazyWithRetry(() => import('./components/lessons/LessonsView').then(m => ({ default: m.LessonsView })));
 const EnglishLearnView = lazyWithRetry(() => import('./components/english/EnglishLearnView').then(m => ({ default: m.EnglishLearnView })));
 const PremiumPage = lazyWithRetry(() => import('./pages/PremiumPage').then(m => ({ default: m.PremiumPage })));
+const RandomWheelView = lazyWithRetry(() => import('./components/wheel/RandomWheelView').then(m => ({ default: m.RandomWheelView })));
 const AdminView = lazyWithRetry(() => import('./components/admin/AdminView').then(m => ({ default: m.AdminView })));
 const OwnerAboutView = lazyWithRetry(() => import('./components/owner/OwnerAboutView').then(m => ({ default: m.OwnerAboutView })));
 const LanguageSelectView = lazyWithRetry(() => import('./components/languages/LanguageSelectView').then(m => ({ default: m.LanguageSelectView })));
@@ -121,6 +122,7 @@ function MainAppContent() {
     certificate: 'certificate',
     english: 'english',
     premium: 'premium',
+    baraban: 'baraban',
     admin: atob('YWRtaW4=')
   };
 
@@ -133,6 +135,7 @@ function MainAppContent() {
     lessons: '10 Barmoq Mashqlari & Saboqlar - Yolnoma Typing',
     english: "Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish - Yolnoma English",
     premium: "Yolnoma English VIP & Premium Obuna - Click To'lov",
+    baraban: "Random Baraban (Omad G'ildiragi & Sehrli Varaq) - Yolnoma Typing",
     statistics: 'Shaxsiy Statistika & Tahlil - Yolnoma Typing',
     profile: 'Foydalanuvchi Profili - Yolnoma Typing',
     login: 'Kirish & Ro\'yxatdan o\'tish - Yolnoma Typing',
@@ -175,6 +178,7 @@ function MainAppContent() {
     if (['lessons', 'darslar', 'saboqlar'].includes(subpath)) return { lang: detectedLang, tab: 'lessons' };
     if (['english', 'ingliz', 'inglizcha', 'learn-english', 'ielts'].includes(subpath)) return { lang: detectedLang, tab: 'english' };
     if (['premium', 'vip', 'obuna', 'subscription', 'click-pay'].includes(subpath)) return { lang: detectedLang, tab: 'premium' };
+    if (['baraban', 'wheel', 'random', 'roulette', 'lotereya', 'omad', 'omad-shousi', 'fortune'].includes(subpath)) return { lang: detectedLang, tab: 'baraban' };
     if (['statistics', 'statistika', 'stats'].includes(subpath)) return { lang: detectedLang, tab: 'statistics' };
     if (['profile', 'profil'].includes(subpath)) return { lang: detectedLang, tab: 'profile' };
     if (['settings', 'sozlamalar'].includes(subpath)) return { lang: detectedLang, tab: 'settings' };
@@ -1369,6 +1373,11 @@ function MainAppContent() {
             <PremiumPage
               onGoToEnglish={() => setActiveTab('english')}
               onOpenAuth={() => setShowAuthModal(true)}
+            />
+          )}
+          {activeTab === 'baraban' && (
+            <RandomWheelView
+              onBackToHome={() => setActiveTab('home')}
             />
           )}
           {activeTab === 'battle' && (

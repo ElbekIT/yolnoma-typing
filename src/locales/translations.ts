@@ -18,6 +18,7 @@ export interface MenuTranslation {
   videoGuide: string;
   english: string;
   premium: string;
+  wheel: string;
   close: string;
 }
 
@@ -40,6 +41,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     videoGuide: "Sayt Haqida Video",
     english: "Ingliz Tili (0 - IELTS 9)",
     premium: "Premium VIP 👑",
+    wheel: "Random Baraban 🎡",
     close: "Yopish"
   },
   ru: {
@@ -60,6 +62,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     videoGuide: "Видео о сайте",
     english: "Английский (0 - IELTS 9)",
     premium: "Премиум VIP 👑",
+    wheel: "Колесо Фортуны 🎡",
     close: "Закрыть"
   },
   en: {
@@ -80,6 +83,7 @@ export const menuTranslations: Record<UiLanguage, MenuTranslation> = {
     videoGuide: "Video Guide",
     english: "English (0 - IELTS 9)",
     premium: "Premium VIP 👑",
+    wheel: "Wheel of Names 🎡",
     close: "Close"
   }
 };
