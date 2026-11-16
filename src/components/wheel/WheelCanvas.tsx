@@ -10,6 +10,7 @@ interface WheelCanvasProps {
   theme: WheelTheme;
   isSpinning: boolean;
   spinSpeed?: SpinSpeed;
+  centerLogoUrl?: string;
   onSpinStart: () => void;
   onSpinEnd: (winner: string, index: number) => void;
 }
@@ -19,6 +20,7 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
   theme,
   isSpinning,
   spinSpeed = 'normal',
+  centerLogoUrl = '/wheel_center_logo.png',
   onSpinStart,
   onSpinEnd
 }) => {
@@ -33,6 +35,31 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
 
   // Responsive size
   const [canvasSize, setCanvasSize] = useState<number>(560);
+
+  // Center logo image preloader
+  const logoImageRef = useRef<HTMLImageElement | null>(null);
+  const [logoReady, setLogoReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const img = new Image();
+    img.src = centerLogoUrl;
+    img.onload = () => {
+      if (isMounted) {
+        logoImageRef.current = img;
+        setLogoReady(true);
+      }
+    };
+    img.onerror = () => {
+      if (isMounted) {
+        logoImageRef.current = null;
+        setLogoReady(false);
+      }
+    };
+    return () => {
+      isMounted = false;
+    };
+  }, [centerLogoUrl]);
 
   // Update canvas dimensions on container resize
   useEffect(() => {
@@ -68,7 +95,7 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     const centerX = size / 2;
     const centerY = size / 2;
     const outerRadius = (size / 2) - 22;
-    const hubRadius = Math.max(38, outerRadius * 0.18);
+    const hubRadius = Math.max(46, Math.floor(outerRadius * 0.22));
 
     const count = Math.max(entries.length, 1);
     const arc = (2 * Math.PI) / count;
@@ -154,32 +181,70 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     }
     ctx.restore();
 
-    // 3. Draw Center Hub (Clickable Spin Button)
+    // 3. Draw Center Hub (Clickable Spin Button with University / Custom Logo)
     ctx.save();
     ctx.translate(centerX, centerY);
 
+    // Deep shadow under the center pin
     ctx.beginPath();
-    ctx.arc(0, 0, hubRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = theme.hubColor;
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 10;
+    ctx.arc(0, 0, hubRadius + 3, 0, 2 * Math.PI);
+    ctx.fillStyle = theme.hubBorderColor;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 2;
     ctx.fill();
 
-    ctx.lineWidth = 5;
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    // Dark circular background
+    ctx.beginPath();
+    ctx.arc(0, 0, hubRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#041f42';
+    ctx.fill();
+
+    // Draw the Logo if loaded
+    const logoImg = logoImageRef.current;
+    if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, hubRadius - 1.5, 0, 2 * Math.PI);
+      ctx.clip();
+      ctx.drawImage(
+        logoImg,
+        -(hubRadius - 1.5),
+        -(hubRadius - 1.5),
+        (hubRadius - 1.5) * 2,
+        (hubRadius - 1.5) * 2
+      );
+      ctx.restore();
+    } else {
+      // Fallback text while loading or if logo fails
+      ctx.fillStyle = theme.hubColor;
+      const hubFontSize = Math.max(10, Math.floor(hubRadius * 0.3));
+      ctx.font = `900 ${hubFontSize}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('AYLANTIR', 0, 0);
+    }
+
+    // Outer luxury metallic ring matching current theme
+    ctx.beginPath();
+    ctx.arc(0, 0, hubRadius, 0, 2 * Math.PI);
+    ctx.lineWidth = 4;
     ctx.strokeStyle = theme.hubBorderColor;
     ctx.stroke();
 
+    // Subtle glossy reflection arc across top of the medallion
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(0, 0, hubRadius * 0.76, 0, 2 * Math.PI);
-    ctx.fillStyle = theme.hubBorderColor;
-    ctx.fill();
-
-    ctx.fillStyle = theme.hubColor;
-    const hubFontSize = Math.max(10, Math.floor(hubRadius * 0.32));
-    ctx.font = `900 ${hubFontSize}px system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('AYLANTIR', 0, 0);
+    ctx.arc(0, 0, hubRadius - 3, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.stroke();
+    ctx.restore();
 
     ctx.restore();
 
@@ -215,11 +280,11 @@ export const WheelCanvas: React.FC<WheelCanvasProps> = ({
     ctx.fill();
 
     ctx.restore();
-  }, [canvasSize, entries, theme]);
+  }, [canvasSize, entries, theme, logoReady]);
 
   useEffect(() => {
     drawWheel();
-  }, [drawWheel]);
+  }, [drawWheel, logoReady]);
 
   // Physical Spin Animation Routine with Speed Settings
   const spinWheel = useCallback(() => {

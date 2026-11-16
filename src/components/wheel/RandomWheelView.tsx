@@ -20,7 +20,9 @@ import {
   ListOrdered,
   X,
   Palette,
-  Gauge
+  Gauge,
+  Image as ImageIcon,
+  RotateCcw
 } from 'lucide-react';
 
 interface RandomWheelViewProps {
@@ -79,6 +81,40 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
 
   // Sound mute state
   const [isMuted, setIsMuted] = useState<boolean>(() => wheelAudio.getMuted());
+
+  // Center logo state (defaults to Tashkent Institute of Management and Economics logo)
+  const [centerLogoUrl, setCenterLogoUrl] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('yolnoma_wheel_center_logo');
+      return saved || '/wheel_center_logo.png';
+    } catch {
+      return '/wheel_center_logo.png';
+    }
+  });
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setCenterLogoUrl(result);
+        try {
+          localStorage.setItem('yolnoma_wheel_center_logo', result);
+        } catch {}
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetLogo = () => {
+    setCenterLogoUrl('/wheel_center_logo.png');
+    try {
+      localStorage.removeItem('yolnoma_wheel_center_logo');
+    } catch {}
+  };
 
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -440,6 +476,38 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
             </div>
           )}
 
+          {/* Center Logo Controls (for wheel mode) */}
+          {mode === 'wheel' && (
+            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold text-[var(--sub-color)] hover:text-white hover:bg-slate-800 transition-all"
+                title="Boshqa logotip yuklash (PNG, JPG)"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-blue-400" />
+                <span className="hidden sm:inline">Logotip</span>
+              </button>
+              {centerLogoUrl !== '/wheel_center_logo.png' && (
+                <button
+                  type="button"
+                  onClick={handleResetLogo}
+                  className="p-1 rounded-lg text-xs text-amber-400 hover:bg-amber-500/20 transition-all"
+                  title="TIME logotipiga qaytarish"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Sound Toggle Button */}
           <button
             type="button"
@@ -496,6 +564,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
               theme={currentTheme}
               isSpinning={isSpinning}
               spinSpeed={spinSpeed}
+              centerLogoUrl={centerLogoUrl}
               onSpinStart={handleSpinStart}
               onSpinEnd={handleSpinEnd}
             />
@@ -511,7 +580,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           <div className="mt-4 text-center">
             <p className="text-xs text-[var(--sub-color)]">
               {mode === 'wheel'
-                ? "💡 Baraban markazidagi «AYLANTIR» tugmasini yoki g'ildirakni bosing"
+                ? "💡 Barabanni aylantirish uchun markaziy logotipni yoki g'ildirakni bosing"
                 : "💡 Qahramonni tanlang va «START» tugmasini bosib g'olibni aniqlang"}
             </p>
           </div>
