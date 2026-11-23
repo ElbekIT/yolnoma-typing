@@ -350,4 +350,62 @@
   contain-intrinsic-size: 0 48px;
 }
 
+/* =========================================================
+   MODERN NEO-UI / GLASSMORPHISM & AMBIENT GLOW UTILITIES
+   ========================================================= */
+
+.glass-card {
+  background: color-mix(in srgb, var(--card-bg, #181d28) 75%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 80%, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: color-mix(in srgb, var(--main-color, #e2b714) 40%, var(--sub-alt, #242c3d));
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.5), 0 0 20px -8px var(--main-color, #e2b714);
+}
+
+.glass-pill {
+  background: color-mix(in srgb, var(--sub-alt, #242c3d) 65%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 90%, rgba(255, 255, 255, 0.08));
+}
+
+.glow-primary {
+  box-shadow: 0 0 25px -5px var(--main-color, #e2b714);
+}
+
+.glow-border {
+  border-color: var(--main-color, #e2b714);
+  box-shadow: 0 0 15px -3px var(--main-color, #e2b714);
+}
+
+.neon-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.badge-free {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+
 
