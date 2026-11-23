@@ -1366,13 +1366,15 @@ function MainAppContent() {
               onBackToHome={() => setActiveTab('home')}
               onOpenAuth={() => setShowAuthModal(true)}
               onGoToLessons={() => setActiveTab('lessons')}
-              onGoToPremium={() => setActiveTab('premium')}
+              onGoToPremium={() => setActiveTab('english')}
             />
           )}
           {activeTab === 'premium' && (
-            <PremiumPage
-              onGoToEnglish={() => setActiveTab('english')}
+            <EnglishLearnView
+              onBackToHome={() => setActiveTab('home')}
               onOpenAuth={() => setShowAuthModal(true)}
+              onGoToLessons={() => setActiveTab('lessons')}
+              onGoToPremium={() => setActiveTab('english')}
             />
           )}
           {activeTab === 'baraban' && (

@@ -42,29 +42,29 @@ interface PlanCard {
 const PLANS: PlanCard[] = [
   {
     id: 'daily',
-    title: 'Kunlik Sinov',
-    price: 10000,
-    priceLabel: "10,000 so'm",
-    durationLabel: "24 soat to'liq kirish",
-    badge: "Sinab ko'rish",
+    title: "Pre-A1 & A1 Boshlang'ich",
+    price: 0,
+    priceLabel: "0 so'm (100% Bepul)",
+    durationLabel: "To'liq va cheksiz ochiq",
+    badge: "Boshlang'ich",
     features: [
-      "24 soat davomida to'liq cheksiz kirish",
-      "Barcha 35 ta dars va 7 ta unit ochiq",
+      "Barcha boshlang'ich 10 ta dars ochiq",
+      "Alifbo va sodda kundalik so'zlar",
       "Inglizcha jonli talaffuz (Speech Synthesis)",
       "Klaviaturada tez yozish tahlili"
     ]
   },
   {
     id: 'weekly',
-    title: 'Haftalik Obuna',
-    price: 15000,
-    priceLabel: "15,000 so'm",
-    durationLabel: "7 kun to'liq kirish",
+    title: 'A2 & B1 Kundalik Muloqot',
+    price: 0,
+    priceLabel: "0 so'm (100% Bepul)",
+    durationLabel: "To'liq va cheksiz ochiq",
     popular: true,
     badge: "Eng Ommabop 🔥",
     features: [
-      "7 kun davomida to'liq cheksiz o'rganish",
-      "Pre-A1 dan to IELTS 9 gacha barcha darslar",
+      "Cheksiz o'rganish va mashq qilish",
+      "Kundalik iboralar va suhbat jumlalari",
       "Julebu.ai uslubidagi interaktiv mashqlar",
       "So'zma-so'z tekshirish va ovozli talaffuz",
       "Kunlik streak va yulduzchalar hisobi"
@@ -72,17 +72,17 @@ const PLANS: PlanCard[] = [
   },
   {
     id: 'yearly',
-    title: 'Yillik Cheksiz',
-    price: 350000,
-    priceLabel: "350,000 so'm",
-    durationLabel: "365 kun VIP kirish",
-    badge: "Katta Tejamkorlik",
+    title: 'B2 & IELTS 9.0 Akademik',
+    price: 0,
+    priceLabel: "0 so'm (100% Bepul)",
+    durationLabel: "To'liq va cheksiz ochiq",
+    badge: "Eng Yuqori Bosqich",
     features: [
-      "To'liq 1 yil (365 kun) barcha bo'limlarga kirish",
-      "Kelgusida qo'shiladigan barcha yangi darslar bepul",
-      'Profilga oltin "VIP PREMIUM" unvoni',
       "IELTS 8.5–9.0 akademik insho jumlalari",
-      "24/7 ustuvor texnik yordam"
+      "Murakkab grammatik strukturalar",
+      "Kelgusida qo'shiladigan barcha yangi darslar",
+      "Sertifikat olish imkoniyati",
+      "100% bepul ochiq platforma"
     ]
   }
 ];
@@ -132,26 +132,11 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
     }
   }, [user]);
 
-  // Click pay handler
-  const handlePay = (planId: PlanType) => {
-    setIsRedirecting(true);
-    const plan = PLANS.find(p => p.id === planId) || PLANS[1];
-
-    const serviceId = clickConfig?.service_id || '38827';
-    const merchantId = clickConfig?.merchant_id || '29603';
-
-    const actualUserId = (user?.uid || user?.email || 'guest_' + Math.floor(1000 + Math.random() * 9000)).toLowerCase();
-    const transactionParam = `${actualUserId}__${plan.id}__${Date.now()}`;
-    const returnUrl = `${window.location.origin}/english?payment=success&plan=${plan.id}`;
-
-    const clickUrl = new URL('https://my.click.uz/services/pay');
-    clickUrl.searchParams.append('service_id', serviceId);
-    clickUrl.searchParams.append('merchant_id', merchantId);
-    clickUrl.searchParams.append('amount', plan.price.toFixed(2));
-    clickUrl.searchParams.append('transaction_param', transactionParam);
-    clickUrl.searchParams.append('return_url', returnUrl);
-
-    window.location.href = clickUrl.toString();
+  // Free access handler (Click removed)
+  const handlePay = (_planId: PlanType) => {
+    if (onGoToEnglish) {
+      onGoToEnglish();
+    }
   };
 
   const FAQS = [
@@ -302,20 +287,19 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
                       e.stopPropagation();
                       handlePay(plan.id);
                     }}
-                    disabled={isRedirecting}
-                    className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 disabled:opacity-60 ${
+                    className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 ${
                       plan.popular
-                        ? 'bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:brightness-110 text-white shadow-blue-500/25'
+                        ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 shadow-emerald-500/25'
                         : 'bg-slate-800 hover:bg-slate-700 text-white'
                     }`}
                   >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Click orqali to'lash</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <BookOpen className="w-4 h-4" />
+                    <span>Darslarni Boshlash (100% Bepul)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
 
-                  <div className="text-[10px] text-center text-slate-400">
-                    Bir zumda avtomatik faollashadi
+                  <div className="text-[10px] text-center text-emerald-400 font-mono font-bold">
+                    Hech qanday to'lov talab qilinmaydi &bull; 100% Bepul
                   </div>
                 </div>
 

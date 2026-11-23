@@ -3408,37 +3408,15 @@ app.get('/api/click/config', (req, res) => {
   });
 });
 
-// 2. User subscription status check
+// 2. User subscription status check (100% Free Platform)
 app.get('/api/user/subscription', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  const queryUser = String(req.query.userId || req.query.email || '').trim().toLowerCase();
-  if (!queryUser) {
-    return res.json({ active: false });
-  }
-
-  // Owner always has lifetime unlimited active subscription
-  if (queryUser === 'yuldashivagavharoy@gmail.com' || queryUser.startsWith('yuldashivagavharoy')) {
-    return res.json({
-      active: true,
-      isOwner: true,
-      planId: 'yearly',
-      expiresAt: Date.now() + 100 * 365 * 24 * 60 * 60 * 1000,
-      remainingDays: 36500
-    });
-  }
-
-  const sub = userSubscriptionsMap.get(queryUser);
-  if (!sub) {
-    return res.json({ active: false });
-  }
-
-  const now = Date.now();
-  const isActive = sub.expiresAt > now;
   return res.json({
-    active: isActive,
-    planId: sub.planId,
-    expiresAt: sub.expiresAt,
-    remainingDays: Math.max(0, Math.ceil((sub.expiresAt - now) / (1000 * 60 * 60 * 24)))
+    active: true,
+    planId: 'free_unlimited',
+    expiresAt: Date.now() + 100 * 365 * 24 * 60 * 60 * 1000,
+    remainingDays: 36500,
+    isFreePlatform: true
   });
 });
 

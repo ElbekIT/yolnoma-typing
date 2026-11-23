@@ -195,15 +195,18 @@ export const InteractiveModesHub: React.FC<InteractiveModesHubProps> = ({
             <div
               key={mode.id}
               onClick={mode.onClick}
-              className={`rounded-3xl bg-[var(--card-bg)] border ${mode.borderColor} p-5 sm:p-6 shadow-xs transition-colors cursor-pointer group flex flex-col justify-between select-none`}
+              className={`glass-card rounded-3xl border ${mode.borderColor} p-5 sm:p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl cursor-pointer group flex flex-col justify-between select-none relative overflow-hidden`}
             >
-              <div>
+              {/* Ambient Glowing Gradient Orb */}
+              <div className={`absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br ${mode.gradient} blur-2xl opacity-30 group-hover:opacity-70 transition-opacity pointer-events-none`} />
+
+              <div className="relative z-10">
                 {/* Top Badge & Icon */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-11 h-11 rounded-2xl bg-[var(--sub-alt)]/80 border border-[var(--sub-alt)] flex items-center justify-center ${mode.iconColor} shadow-xs`}>
+                  <div className={`w-12 h-12 rounded-2xl bg-[var(--sub-alt)]/80 border border-[var(--sub-alt)] flex items-center justify-center ${mode.iconColor} shadow-md group-hover:scale-105 transition-transform`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border ${mode.badgeColor} uppercase tracking-wider`}>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border ${mode.badgeColor} uppercase tracking-wider shadow-xs`}>
                     {mode.badge}
                   </span>
                 </div>
@@ -223,11 +226,11 @@ export const InteractiveModesHub: React.FC<InteractiveModesHubProps> = ({
               </div>
 
               {/* Bottom Action Row */}
-              <div className="pt-5 mt-4 border-t border-[var(--sub-alt)]/50 flex items-center justify-between text-xs">
+              <div className="relative z-10 pt-5 mt-4 border-t border-[var(--sub-alt)]/50 flex items-center justify-between text-xs">
                 <span className="text-[11px] font-mono text-[var(--sub-color)] group-hover:text-[var(--text-color)] transition-colors">
                   {uiLanguage === 'ru' ? 'Нажмите для старта' : uiLanguage === 'en' ? 'Click to launch' : 'Boshlash uchun bosing'}
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-[var(--sub-alt)]/80 text-[var(--text-color)] group-hover:bg-[var(--main-color)] group-hover:text-[var(--bg-color,#090d16)] flex items-center justify-center transition-colors shadow-xs">
+                <div className="w-8 h-8 rounded-xl bg-[var(--sub-alt)]/80 text-[var(--text-color)] group-hover:bg-[var(--main-color)] group-hover:text-[var(--bg-color,#090d16)] flex items-center justify-center transition-all group-hover:scale-110 shadow-sm">
                   <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </div>
               </div>

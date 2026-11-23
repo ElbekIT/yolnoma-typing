@@ -33,7 +33,6 @@ import {
 } from '../../data/englishCourseData';
 import { soundSynth } from '../../utils/audio';
 import { useAuth } from '../../context/AuthContext';
-import { EnglishPremiumModal } from './EnglishPremiumModal';
 
 interface LessonProgress {
   completed: boolean;
@@ -83,61 +82,9 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
   );
 
   // -------------------------------------------------------------
-  // PREMIUM SUBSCRIPTION & 3-WORD FREEMIUM ENGINE
+  // 100% FREE & UNLIMITED ACCESS ENGINE (CLICK / FREEMIUM REMOVED)
   // -------------------------------------------------------------
-  const [isPremiumActive, setIsPremiumActive] = useState<boolean>(false);
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
-  const [remainingDays, setRemainingDays] = useState<number | null>(null);
-  const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
-  const [showPaymentSuccessAlert, setShowPaymentSuccessAlert] = useState<boolean>(false);
-
-  // Free practiced count (max 3 for non-premium users)
-  const [freePracticedCount, setFreePracticedCount] = useState<number>(() => {
-    try {
-      return parseInt(localStorage.getItem('yolnoma_english_free_count') || '0', 10);
-    } catch {
-      return 0;
-    }
-  });
-
-  // Check subscription from backend
-  const checkSubscription = useCallback(() => {
-    const userIdentifier = user?.uid || user?.email;
-    if (!userIdentifier) return;
-
-    fetch(`/api/user/subscription?userId=${encodeURIComponent(userIdentifier)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data?.active) {
-          setIsPremiumActive(true);
-          setSubscriptionPlan(data.planId || 'premium');
-          setRemainingDays(data.remainingDays);
-        }
-      })
-      .catch(() => {});
-  }, [user]);
-
-  useEffect(() => {
-    checkSubscription();
-  }, [checkSubscription]);
-
-  // Check URL params for payment return
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('payment') === 'success') {
-        setShowPaymentSuccessAlert(true);
-        setIsPremiumActive(true);
-        checkSubscription();
-        confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 } });
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    } catch {}
-  }, [checkSubscription]);
-
-  // Check if trial limit is reached (3 sentences finished and neither owner nor premium)
-  const hasUnlimitedAccess = isAuthorizedOwner || isPremiumActive;
-  const isTrialFinished = !hasUnlimitedAccess && freePracticedCount >= 3;
+  const hasUnlimitedAccess = true;
 
   // -------------------------------------------------------------
   // STATE MANAGEMENT
@@ -235,20 +182,17 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 
   // Keep input focused automatically
   const focusInput = useCallback(() => {
-    if (isTrialFinished) return;
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isTrialFinished]);
+  }, []);
 
   useEffect(() => {
-    if (!isTrialFinished) {
-      const timer = setTimeout(() => {
-        focusInput();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [currentItemIndex, activeLessonId, isTrialFinished, focusInput]);
+    const timer = setTimeout(() => {
+      focusInput();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [currentItemIndex, activeLessonId, focusInput]);
 
   // -------------------------------------------------------------
   // TEXT-TO-SPEECH (NATIVE PRONUNCIATION)
@@ -385,12 +329,6 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
   const verifyCurrentSentence = useCallback(() => {
     if (!currentItem || isVerifying || isSuccess) return;
 
-    // Check if free trial limit of 3 words has already been reached
-    if (isTrialFinished) {
-      setShowPremiumModal(true);
-      return;
-    }
-
     if (!sessionStartTime) {
       setSessionStartTime(Date.now());
     }
@@ -431,13 +369,6 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         return next;
       });
 
-      // Update free count for trial
-      const newFreeCount = freePracticedCount + 1;
-      setFreePracticedCount(newFreeCount);
-      try {
-        localStorage.setItem('yolnoma_english_free_count', newFreeCount.toString());
-      } catch {}
-
       // Confetti burst
       try {
         confetti({
@@ -451,11 +382,6 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       speakEnglish(currentItem.english, () => {
         setTimeout(() => {
           setFloatingXp(null);
-          // If free trial reached 3 words and user is not premium / owner:
-          if (!hasUnlimitedAccess && newFreeCount >= 3) {
-            setShowPremiumModal(true);
-            return;
-          }
           goToNextSentence();
         }, 350);
       });
@@ -473,18 +399,13 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         setErrorMessage(null);
       }, 3000);
     }
-  }, [currentItem, isVerifying, isSuccess, isTrialFinished, hasUnlimitedAccess, freePracticedCount, sessionStartTime, targetTokens, userWords, speakEnglish, goToNextSentence]);
+  }, [currentItem, isVerifying, isSuccess, sessionStartTime, targetTokens, userWords, speakEnglish, goToNextSentence]);
 
   // -------------------------------------------------------------
   // KEYBOARD INPUT & WORD SLOT NAVIGATION
   // -------------------------------------------------------------
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (isSuccess || !currentItem) return;
-
-    if (isTrialFinished) {
-      setShowPremiumModal(true);
-      return;
-    }
 
     if (!sessionStartTime) {
       setSessionStartTime(Date.now());
@@ -547,7 +468,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isSuccess || !currentItem || isTrialFinished) return;
+    if (isSuccess || !currentItem) return;
 
     const val = e.target.value;
 
@@ -579,11 +500,6 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 
   // Start specific lesson
   const startLesson = (lessonId: number) => {
-    if (isTrialFinished) {
-      setShowPremiumModal(true);
-      return;
-    }
-
     setActiveLessonId(lessonId);
     setCurrentItemIndex(0);
     setUserWords([]);
@@ -627,59 +543,29 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
     <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6 select-none animate-in fade-in duration-200">
       
       {/* Payment Success Toast */}
-      {showPaymentSuccessAlert && (
-        <div className="rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border border-emerald-500/50 p-4 flex items-center justify-between gap-3 text-xs text-emerald-200 shadow-xl animate-in slide-in-from-top duration-300">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-            <div>
-              <span className="font-bold text-white block text-sm">To'lov muvaffaqiyatli qabul qilindi! 🎉</span>
-              <span>English kursi uchun Premium obunangiz faollashtirildi. Barcha darslar to'liq ochiq!</span>
-            </div>
+      {/* Top Banner: Status & 100% Free Open Platform Indicator */}
+      <div className="glass-card rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs border border-emerald-500/30 bg-emerald-950/20">
+        <div className="flex items-center gap-2.5 text-emerald-300 font-bold">
+          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </span>
+          <div>
+            <span className="text-white text-sm font-black flex items-center gap-1.5">
+              100% Mutlaqo Bepul Ta'lim Platformasi 🚀
+            </span>
+            <span className="text-[11px] text-emerald-400 font-mono">
+              Barcha 7 ta Unit va 35 ta dars barcha foydalanuvchilar uchun cheksiz ochiq!
+            </span>
           </div>
-          <button
-            onClick={() => setShowPaymentSuccessAlert(false)}
-            className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold hover:brightness-110 cursor-pointer"
-          >
-            Tushundim
-          </button>
-        </div>
-      )}
-
-      {/* Top Banner: Status & Premium Call-To-Action */}
-      <div className="rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border border-amber-500/40 p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-amber-300 font-bold">
-          <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-          {isAuthorizedOwner ? (
-            <span>Muallif Rejimi: Siz <strong className="text-white font-mono">yuldashivagavharoy@gmail.com</strong> hisobi bilan kirdingiz. Barcha 35 ta dars siz uchun to'liq ochiq!</span>
-          ) : isPremiumActive ? (
-            <span>VIP Premium Faol: {subscriptionPlan?.toUpperCase()} &bull; Barcha darslar cheksiz ochiq! ({remainingDays ? `${remainingDays} kun qoldi` : 'Aktiv'})</span>
-          ) : (
-            <span>Sinov Rejimi: 3 ta bepul mashqdan <strong>{Math.min(3, freePracticedCount)}/3</strong> tasi bajarildi.</span>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {!hasUnlimitedAccess && (
-            <button
-              onClick={() => setShowPremiumModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 text-xs font-mono font-black flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>Premium Olish (10,000 so'mdan)</span>
-            </button>
-          )}
-
-          {onGoToPremium && (
-            <button
-              onClick={onGoToPremium}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-mono font-bold transition-colors cursor-pointer"
-            >
-              Tariflar
-            </button>
-          )}
-
-          <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-mono font-black shrink-0 shadow-xs">
-            {isAuthorizedOwner ? "VIP OWNER" : isPremiumActive ? "PREMIUM VIP" : "FREE TRIAL"}
+          <span className="badge-free px-3 py-1 rounded-full text-xs font-mono font-black shrink-0 flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>100% BEPUL</span>
+          </span>
+          <span className="px-2.5 py-1 rounded-full bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px] font-mono font-bold">
+            35/35 Dars Ochiq
           </span>
         </div>
       </div>
@@ -794,101 +680,67 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
             </div>
           )}
 
-          {/* If free trial limit reached, show friendly upgrade notice */}
-          {isTrialFinished ? (
-            <div className="w-full max-w-xl p-6 rounded-3xl bg-gradient-to-b from-slate-900/95 to-slate-950/95 border border-amber-500/50 text-center space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 mx-auto">
-                <Lock className="w-6 h-6 animate-pulse" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-black text-white">
-                  3 ta Bepul Sinov Yakunlandi! 🚀
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
-                  Siz bepul rejimdagi 3 ta mashqni bajardingiz. Kursni 0 dan IELTS 9 gacha to'liq davom ettirish va cheksiz mashqlar uchun Premium obuna oling.
-                </p>
-              </div>
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={() => setShowPremiumModal(true)}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95"
+          {/* WORD SLOTS WITH INDIVIDUAL UNDERLINES (JULEBU SIGNATURE) */}
+          <div className="w-full max-w-3xl flex flex-wrap items-end justify-center gap-x-4 sm:gap-x-6 gap-y-6 pt-2">
+            {targetTokens.map((token, idx) => {
+              const userWord = userWords[idx] || '';
+              const isActive = idx === activeWordIndex;
+              const hasContent = userWord.length > 0;
+
+              const baseUnderlineColor = SLOT_UNDERLINE_COLORS[idx % SLOT_UNDERLINE_COLORS.length];
+              const underlineColor = isSuccess 
+                ? '#10b981' 
+                : isActive 
+                ? '#38bdf8' 
+                : hasContent 
+                ? baseUnderlineColor 
+                : baseUnderlineColor;
+
+              const minWidthPx = Math.max(54, token.core.length * 16);
+
+              return (
+                <div
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveWordIndex(idx);
+                    focusInput();
+                  }}
+                  className={`group relative flex flex-col items-center cursor-pointer transition-all ${
+                    isActive ? 'scale-105' : 'hover:opacity-90'
+                  }`}
+                  style={{ minWidth: `${minWidthPx}px` }}
                 >
-                  <Crown className="w-4 h-4" />
-                  <span>Click orqali Premium Olish (10,000 so'mdan)</span>
-                </button>
-                {onGoToPremium && (
-                  <button
-                    onClick={onGoToPremium}
-                    className="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    Tariflar sahifasi
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : (
-            /* WORD SLOTS WITH INDIVIDUAL UNDERLINES (JULEBU SIGNATURE) */
-            <div className="w-full max-w-3xl flex flex-wrap items-end justify-center gap-x-4 sm:gap-x-6 gap-y-6 pt-2">
-              {targetTokens.map((token, idx) => {
-                const userWord = userWords[idx] || '';
-                const isActive = idx === activeWordIndex;
-                const hasContent = userWord.length > 0;
+                  <div className="h-9 sm:h-11 flex items-center justify-center px-1 font-mono text-xl sm:text-2xl md:text-3xl font-black tracking-wider transition-colors duration-150">
+                    <span className={isSuccess ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-emerald-400'}>
+                      {userWord}
+                    </span>
 
-                const baseUnderlineColor = SLOT_UNDERLINE_COLORS[idx % SLOT_UNDERLINE_COLORS.length];
-                const underlineColor = isSuccess 
-                  ? '#10b981' 
-                  : isActive 
-                  ? '#38bdf8' 
-                  : hasContent 
-                  ? baseUnderlineColor 
-                  : baseUnderlineColor;
+                    {isActive && !isSuccess && (
+                      <span className="w-0.5 h-6 sm:h-7 bg-amber-400 ml-0.5 animate-pulse rounded-full" />
+                    )}
 
-                const minWidthPx = Math.max(54, token.core.length * 16);
-
-                return (
-                  <div
-                    key={idx}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveWordIndex(idx);
-                      focusInput();
-                    }}
-                    className={`group relative flex flex-col items-center cursor-pointer transition-all ${
-                      isActive ? 'scale-105' : 'hover:opacity-90'
-                    }`}
-                    style={{ minWidth: `${minWidthPx}px` }}
-                  >
-                    <div className="h-9 sm:h-11 flex items-center justify-center px-1 font-mono text-xl sm:text-2xl md:text-3xl font-black tracking-wider transition-colors duration-150">
-                      <span className={isSuccess ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-emerald-400'}>
-                        {userWord}
+                    {token.trailingPunc && (
+                      <span className="text-slate-400 text-lg sm:text-xl font-bold ml-0.5">
+                        {token.trailingPunc}
                       </span>
-
-                      {isActive && !isSuccess && (
-                        <span className="w-0.5 h-6 sm:h-7 bg-amber-400 ml-0.5 animate-pulse rounded-full" />
-                      )}
-
-                      {token.trailingPunc && (
-                        <span className="text-slate-400 text-lg sm:text-xl font-bold ml-0.5">
-                          {token.trailingPunc}
-                        </span>
-                      )}
-                    </div>
-
-                    <div
-                      className="w-full h-[3px] rounded-full transition-all duration-200"
-                      style={{
-                        backgroundColor: underlineColor,
-                        boxShadow: isActive || isSuccess 
-                          ? `0 0 10px ${underlineColor}` 
-                          : 'none',
-                        opacity: isActive ? 1 : hasContent ? 0.9 : 0.6
-                      }}
-                    />
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  <div
+                    className="w-full h-[3px] rounded-full transition-all duration-200"
+                    style={{
+                      backgroundColor: underlineColor,
+                      boxShadow: isActive || isSuccess 
+                        ? `0 0 10px ${underlineColor}` 
+                        : 'none',
+                      opacity: isActive ? 1 : hasContent ? 0.9 : 0.6
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
 
         </div>
 
@@ -913,7 +765,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
               e.stopPropagation();
               verifyCurrentSentence();
             }}
-            disabled={isSuccess || isTrialFinished}
+            disabled={isSuccess}
             className="flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <CornerDownLeft className="w-4 h-4 text-emerald-400" />
@@ -951,7 +803,6 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           autoFocus
-          disabled={isTrialFinished}
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck="false"
@@ -1111,15 +962,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         </div>
       )}
 
-      {/* English Premium Modal */}
-      <EnglishPremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        userId={user?.uid || user?.email || 'guest'}
-        userEmail={user?.email || undefined}
-        isLimitReached={isTrialFinished}
-      />
-
+      {/* English Learn View Finished */}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Globe, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Globe, Shield, Zap, Languages, Sparkles } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 import { HeroCharacter } from './HeroCharacter';
 
@@ -9,12 +9,14 @@ interface HeroSectionProps {
   onOpenLogin: () => void;
   onGoToLessons?: () => void;
   onGoToLeaderboard?: () => void;
+  onGoToEnglish?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onStartTyping,
   onGoToBattle,
-  onGoToLessons
+  onGoToLessons,
+  onGoToEnglish
 }) => {
   const { uiLanguage } = useI18n();
 
@@ -215,51 +217,92 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
                 </button>
               )}
+
+              {/* 4. English Course Button (100% Free) */}
+              {onGoToEnglish && (
+                <button
+                  type="button"
+                  onClick={onGoToEnglish}
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-950/85 via-teal-950/85 to-slate-900 border border-emerald-500/50 text-emerald-100 font-bold text-sm transition-all flex items-center justify-center gap-3 cursor-pointer shadow-md hover:border-emerald-400 active:scale-95 group select-none"
+                >
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                    <Languages className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col items-start leading-tight text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span className="tracking-wide text-emerald-200">
+                        {uiLanguage === 'ru' ? 'English Курс' : uiLanguage === 'en' ? 'English Course' : 'English Kursi'}
+                      </span>
+                      <span className="badge-free px-1.5 py-0.2 rounded-md font-mono text-[9px] font-black">
+                        BEPUL
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-300/80">
+                      0 dan IELTS 9 gacha (35 Dars)
+                    </span>
+                  </div>
+                </button>
+              )}
             </div>
 
-            {/* 3 Core Highlights (125+ Til, 1v1 Arena, 100% Bepul) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-3 border-t border-[var(--sub-alt)]/60 w-full max-w-xl text-xs">
+            {/* 4 Core Highlights (125+ Til, 1v1 Arena, English Kursi, 100% Bepul) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-3 border-t border-[var(--sub-alt)]/60 w-full max-w-2xl text-xs">
               {/* Highlight 1: 125+ Til */}
-              <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-cyan-400/50 transition-colors group">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-400/25 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Globe className="w-4 h-4" />
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-cyan-400/50 transition-colors group">
+                <div className="w-7 h-7 rounded-xl bg-cyan-500/15 border border-cyan-400/25 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Globe className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <strong className="block text-[var(--text-color)] font-bold text-xs sm:text-sm">
+                  <strong className="block text-[var(--text-color)] font-bold text-xs">
                     125+ Til
                   </strong>
-                  <span className="text-[10px] sm:text-[11px] text-[var(--sub-color)]">
-                    {uiLanguage === 'ru' ? 'Узбекский, Русский, Код' : uiLanguage === 'en' ? 'Uzbek, Russian, Code' : "O'zbek, Rus, Kod"}
+                  <span className="text-[9px] text-[var(--sub-color)] block leading-tight">
+                    {uiLanguage === 'ru' ? 'Узбек, Рус, Код' : "O'zbek, Rus, Kod"}
                   </span>
                 </div>
               </div>
 
               {/* Highlight 2: 1v1 Arena */}
-              <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-emerald-400/50 transition-colors group">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Zap className="w-4 h-4" />
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-rose-400/50 transition-colors group">
+                <div className="w-7 h-7 rounded-xl bg-rose-500/15 border border-rose-400/25 text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Zap className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <strong className="block text-[var(--text-color)] font-bold text-xs sm:text-sm">
-                    1v1 Arena
+                  <strong className="block text-[var(--text-color)] font-bold text-xs">
+                    1v1 PvP
                   </strong>
-                  <span className="text-[10px] sm:text-[11px] text-[var(--sub-color)]">
-                    {uiLanguage === 'ru' ? 'Гонка в реальном времени' : uiLanguage === 'en' ? 'Real-time race' : 'Real-vaqtda poyga'}
+                  <span className="text-[9px] text-[var(--sub-color)] block leading-tight">
+                    Real-vaqtda duel
                   </span>
                 </div>
               </div>
 
-              {/* Highlight 3: 100% Bepul */}
-              <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-amber-400/50 transition-colors group">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-400/25 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Shield className="w-4 h-4" />
+              {/* Highlight 3: English */}
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-[var(--sub-alt)]/70 text-left hover:border-emerald-400/50 transition-colors group">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Languages className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <strong className="block text-[var(--text-color)] font-bold text-xs sm:text-sm">
+                  <strong className="block text-[var(--text-color)] font-bold text-xs">
+                    IELTS 9
+                  </strong>
+                  <span className="text-[9px] text-emerald-400 block leading-tight font-medium">
+                    35 ta bepul dars
+                  </span>
+                </div>
+              </div>
+
+              {/* Highlight 4: 100% Bepul */}
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--sub-alt)]/50 backdrop-blur-md border border-emerald-500/30 text-left hover:border-emerald-400/60 transition-colors group">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Shield className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <strong className="block text-emerald-400 font-bold text-xs">
                     100% Bepul
                   </strong>
-                  <span className="text-[10px] sm:text-[11px] text-[var(--sub-color)]">
-                    {uiLanguage === 'ru' ? 'Без рекламы, чисто' : uiLanguage === 'en' ? 'No ads, clean' : 'Reklamasiz, toza'}
+                  <span className="text-[9px] text-[var(--sub-color)] block leading-tight">
+                    Cheksiz kirish
                   </span>
                 </div>
               </div>

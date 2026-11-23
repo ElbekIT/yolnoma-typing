@@ -105,7 +105,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
     { id: 'languages', label: currMenu.languages, icon: Globe },
     { id: 'lessons', label: currMenu.lessons, icon: BookOpen },
     { id: 'english', label: currMenu.english, icon: Languages },
-    { id: 'premium', label: 'Premium VIP 👑', icon: Crown },
     { id: 'baraban', label: currMenu.wheel || "Random Baraban 🎡", icon: Disc },
     { id: 'battle', label: currMenu.battleArena, icon: Swords },
     { id: 'dashboard', label: currMenu.dashboard, icon: BarChart2 },
@@ -131,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/90 backdrop-blur-md border-b border-[var(--sub-alt)] px-3 sm:px-4 py-2.5 safe-top transition-colors duration-150 shadow-xs">
+      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/80 backdrop-blur-xl border-b border-[var(--sub-alt)]/70 px-3 sm:px-4 py-2.5 safe-top transition-all duration-200 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Side: Brand Logo & Navigation Icons */}
           <div className="flex items-center gap-3 sm:gap-6">
@@ -164,6 +163,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 </span>
                 <span className="text-[var(--main-color)] font-mono text-[11px] font-bold">
                   typing
+                </span>
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-mono font-black badge-free ml-1 shadow-xs">
+                  100% BEPUL
                 </span>
               </div>
             </div>
@@ -230,19 +232,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 <Languages className={iconDimensions} />
                 <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-amber-500 text-slate-950 font-mono shadow-xs">
                   EN
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('premium')}
-                className={`${iconBtnPadding} rounded-xl transition-all cursor-pointer relative ${
-                  activeTab === 'premium' ? 'text-amber-400 bg-amber-500/20 ring-1 ring-amber-400/50' : 'text-amber-400/90 hover:text-amber-300 hover:bg-amber-500/10'
-                }`}
-                title="Yolnoma English VIP & Premium"
-              >
-                <Crown className={iconDimensions} />
-                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8px] font-black bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-mono shadow-xs">
-                  VIP
                 </span>
               </button>
 

@@ -54,33 +54,36 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
 
-        {/* Grand English Learning Banner (0 dan IELTS 9 gacha) */}
+        {/* Grand English Learning Banner (0 dan IELTS 9 gacha - 100% BEPUL) */}
         {onGoToEnglish && (
           <button
             onClick={onGoToEnglish}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-sky-500/15 hover:from-amber-500/25 hover:via-emerald-500/20 hover:to-sky-500/25 border border-amber-500/35 transition-all text-xs font-semibold group cursor-pointer shadow-lg"
+            className="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-amber-500/15 hover:from-emerald-500/25 hover:via-teal-500/20 hover:to-amber-500/25 border border-emerald-500/40 transition-all text-xs font-semibold group cursor-pointer shadow-lg"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-black shrink-0 shadow-sm">
-                <Languages className="w-4 h-4" />
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-black shrink-0 shadow-sm">
+                <Languages className="w-5 h-5" />
               </span>
               <div className="text-left">
-                <div className="flex items-center gap-2">
-                  <span className="text-amber-400 font-black text-xs sm:text-sm tracking-tight flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>YANGI: Ingliz Tilini 0 dan IELTS 9 gacha Yozib O'rganish!</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-emerald-400 font-black text-xs sm:text-sm tracking-tight flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Ingliz Tili Kursi: 0 dan IELTS 9 gacha Yozib O'rganish!</span>
+                  </span>
+                  <span className="badge-free px-2 py-0.5 rounded-full text-[9px] font-mono font-black">
+                    100% MUTLAQO BEPUL
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 hidden sm:inline">
                     7 Bosqich &bull; 35 Dars
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-300 hidden sm:block">
-                  Alifbodan boshlab hayotiy dialoglar, kundalik iboralar va IELTS Band 9 akademik insho jumlalarigacha klaviaturada terib o'rganing.
+                  Alifbodan boshlab hayotiy dialoglar, kundalik iboralar va IELTS Band 9 akademik insho jumlalarigacha klaviaturada terib bepul o'rganing.
                 </p>
               </div>
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--main-color)] text-slate-950 font-black text-xs shrink-0 shadow-md group-hover:scale-105 transition-transform">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs shrink-0 shadow-md group-hover:scale-105 transition-transform">
               <span>Boshlash</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
@@ -138,6 +141,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         onGoToLessons={onGoToLessons}
         onGoToLeaderboard={onGoToLeaderboard}
         onOpenLogin={onOpenLogin}
+        onGoToEnglish={onGoToEnglish}
       />
 
       {/* 2. Interactive Modes & Mastery Tiers Hub (Instant Play, PvP & WPM Ranks) */}
