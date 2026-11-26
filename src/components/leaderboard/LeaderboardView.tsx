@@ -21,6 +21,7 @@ import { rtdb } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserProfile } from '../../types';
 import { PublicProfileModal } from '../profile/PublicProfileModal';
+import { LeaderboardPodium, PodiumUser } from './LeaderboardPodium';
 
 // Module-level caches for instant 0ms tab switching & reduced network load
 let cachedTypingUsers: LeaderboardUser[] | null = null;
@@ -551,6 +552,23 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     });
   }, [timeFilteredUsers, searchQuery, scope]);
 
+  const topPodiumUsers = useMemo<PodiumUser[]>(() => {
+    return sortedList.slice(0, 3).map((u, i) => ({
+      uid: u.uid,
+      displayName: u.displayName,
+      username: u.username,
+      avatarUrl: u.avatarUrl,
+      country: u.country,
+      displayWpm: u.displayWpm,
+      highestAccuracy: u.highestAccuracy,
+      modeLabel: u.modeLabel,
+      rank: i + 1,
+      isVerified: u.isVerified,
+      level: u.level,
+      rankTitle: u.rankTitle
+    }));
+  }, [sortedList]);
+
   const totalCount = sortedList.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -589,8 +607,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       const el = document.getElementById(`typing-rank-row-${currentUser?.uid}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-2', 'ring-[#e2b714]');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-[#e2b714]'), 2500);
+        el.classList.add('ring-2', 'ring-[var(--main-color)]');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-[var(--main-color)]'), 2500);
       }
     }, 150);
   };
@@ -660,36 +678,56 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-8 font-mono select-none text-[#d1d0c5]">
+    <div className="w-full max-w-7xl mx-auto py-5 sm:py-7 px-3 sm:px-6 lg:px-8 font-mono select-none text-[var(--text-color)]">
       {/* ========================================================================= */}
-      {/* 1. TOP HEADER TITLE (e.g. All-time English Time 15 Leaderboard)           */}
+      {/* 1. TOP HEADER TITLE & LIVE TELEMETRY                                      */}
       {/* ========================================================================= */}
-      <div className="mb-6 sm:mb-8 border-b border-transparent">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono text-[#d1d0c5] tracking-tight font-normal">
-          {getLeaderboardTitle()}
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-6 border-b border-[var(--sub-alt)] pb-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-mono text-[var(--text-color)] tracking-tight font-bold">
+            {getLeaderboardTitle()}
+          </h1>
+          <p className="text-xs text-[var(--sub-color)] font-sans mt-0.5">
+            O'zbekiston va xalqaro teruvchilarning eng yuqori natijalari
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-mono text-[var(--sub-color)]">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Next update in: <strong className="text-[var(--text-color)]">{formatCountdown(nextUpdateSeconds)}</strong></span>
+        </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. MAIN 2-COLUMN LAYOUT (Left Sidebar Pills + Right Content Table)        */}
+      {/* 2. TOP 3 SHOHSUPA (PODIUM) - Displayed on Page 1 when not searching       */}
       {/* ========================================================================= */}
-      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
+      {currentPage === 1 && !searchQuery.trim() && topPodiumUsers.length > 0 && (
+        <LeaderboardPodium
+          topUsers={topPodiumUsers}
+          onSelectUser={openUserProfile}
+          currentUserId={currentUser?.uid}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. MAIN 2-COLUMN LAYOUT (Left Sidebar Filters + Right Table)              */}
+      {/* ========================================================================= */}
+      <div className="flex flex-col lg:flex-row gap-5 sm:gap-6 items-start">
         {/* ----------------------------------------------------------------------- */}
-        {/* Left Sidebar: 2 Dark Rounded Container Cards                            */}
+        {/* Left Sidebar: Theme-aware Category & Time Filter Cards                   */}
         {/* ----------------------------------------------------------------------- */}
         <div className="flex flex-row lg:flex-col flex-wrap gap-3.5 w-full lg:w-48 xl:w-52 shrink-0">
-          {/* Card 1: Scopes (all-time english / weekly xp / daily) */}
-          <div className="bg-[#2c2e31] border border-slate-800/40 rounded-xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-sm">
+          {/* Card 1: Scopes (all-time english / all-time uzbek / weekly xp / daily) */}
+          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-xs">
             <button
               type="button"
               onClick={() => {
                 setScope('all-time-english');
                 setCurrentPage(1);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2.5 cursor-pointer ${
                 scope === 'all-time-english'
-                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
-                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-xs'
+                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
               }`}
             >
               <Globe className="w-3.5 h-3.5 shrink-0" />
@@ -702,10 +740,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 setScope('all-time-uzbek');
                 setCurrentPage(1);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2.5 cursor-pointer ${
                 scope === 'all-time-uzbek'
-                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
-                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-xs'
+                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
               }`}
             >
               <Globe className="w-3.5 h-3.5 shrink-0" />
@@ -718,10 +756,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 setScope('weekly-xp');
                 setCurrentPage(1);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2.5 cursor-pointer ${
                 scope === 'weekly-xp'
-                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
-                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-xs'
+                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
               }`}
             >
               <Flame className="w-3.5 h-3.5 shrink-0" />
@@ -734,10 +772,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 setScope('daily');
                 setCurrentPage(1);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2.5 cursor-pointer ${
                 scope === 'daily'
-                  ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
-                  : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+                  ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-xs'
+                  : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
               }`}
             >
               <Clock className="w-3.5 h-3.5 shrink-0" />
@@ -747,7 +785,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
           {/* Card 2: Time Modes (time 15, time 60, time 30, time 120) */}
           {scope !== 'weekly-xp' && (
-            <div className="bg-[#2c2e31] border border-slate-800/40 rounded-xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-sm">
+            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-xs">
               {(['15', '60', '30', '120'] as TimeCategory[]).map((tVal) => {
                 const isActive = timeFilter === tVal;
                 return (
@@ -758,10 +796,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                       setTimeFilter(tVal);
                       setCurrentPage(1);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition-colors flex items-center gap-2.5 cursor-pointer ${
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2.5 cursor-pointer ${
                       isActive
-                        ? 'bg-[#e2b714] text-[#2c2e31] font-bold shadow-xs'
-                        : 'text-[#646669] hover:text-[#d1d0c5] hover:bg-[#323437]/60'
+                        ? 'bg-[var(--main-color)] text-[var(--bg-color)] font-bold shadow-xs'
+                        : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50'
                     }`}
                   >
                     <Clock className="w-3.5 h-3.5 shrink-0" />
@@ -773,15 +811,15 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           )}
 
           {/* Refresh & Start Practice CTA */}
-          <div className="w-full flex flex-col gap-2 pt-2">
+          <div className="w-full flex flex-col gap-2 pt-1">
             <button
               type="button"
               onClick={() => fetchTypingUsers(true)}
               title="Reytingni yangilash"
               disabled={loading}
-              className="w-full px-3 py-2 rounded-lg bg-[#2c2e31]/60 hover:bg-[#2c2e31] text-[#646669] hover:text-[#d1d0c5] text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border border-slate-800/40"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border border-[var(--sub-alt)]"
             >
-              <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#e2b714]' : ''}`} />
+              <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--main-color)]' : ''}`} />
               <span>refresh</span>
             </button>
 
@@ -789,7 +827,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               <button
                 type="button"
                 onClick={onGoToTyping}
-                className="w-full px-3 py-2 rounded-lg bg-[#e2b714]/15 hover:bg-[#e2b714]/25 text-[#e2b714] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#e2b714]/30"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--main-color)]/15 hover:bg-[var(--main-color)]/25 text-[var(--main-color)] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-[var(--main-color)]/30"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
                 <span>start test</span>
@@ -806,14 +844,14 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           <div className="flex items-center justify-between gap-4 mb-4 text-xs font-mono">
             {/* Left: Next update timer + inline subtle search */}
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <div className="text-[#646669] flex items-center gap-1.5 whitespace-nowrap text-xs">
+              <div className="text-[var(--sub-color)] flex items-center gap-1.5 whitespace-nowrap text-xs">
                 <span>Next update in:</span>
-                <span className="text-[#646669] font-mono">{formatCountdown(nextUpdateSeconds)}</span>
+                <span className="text-[var(--sub-color)] font-mono">{formatCountdown(nextUpdateSeconds)}</span>
               </div>
 
               {/* Minimal inline search */}
               <div className="relative flex items-center">
-                <Search className="w-3.5 h-3.5 text-[#646669] absolute left-2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-[var(--sub-color)] absolute left-2 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="search..."
@@ -822,13 +860,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="bg-[#2c2e31]/70 hover:bg-[#2c2e31] focus:bg-[#2c2e31] text-[#d1d0c5] placeholder-[#646669] text-xs font-mono pl-7 pr-6 py-1 rounded-md border border-slate-800/40 focus:border-[#646669] focus:outline-none transition-all w-28 sm:w-36 focus:w-48"
+                  className="bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/20 focus:bg-[var(--card-bg)] text-[var(--text-color)] placeholder-[var(--sub-color)] text-xs font-mono pl-7 pr-6 py-1 rounded-md border border-[var(--sub-alt)] focus:border-[var(--main-color)] focus:outline-none transition-all w-28 sm:w-36 focus:w-48 shadow-2xs"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 text-[#646669] hover:text-[#d1d0c5] cursor-pointer"
+                    className="absolute right-2 text-[var(--sub-color)] hover:text-[var(--text-color)] cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -843,7 +881,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 type="button"
                 onClick={handleJumpToMyRank}
                 title={myRankingInfo ? `Sizning o'rningiz: #${myRankingInfo.rank}` : "1-o'ringa sakrash"}
-                className="p-1.5 rounded text-[#646669] hover:text-[#e2b714] transition-colors cursor-pointer"
+                className="p-1.5 rounded text-[var(--sub-color)] hover:text-[var(--main-color)] transition-colors cursor-pointer"
               >
                 <Crown className="w-4 h-4" />
               </button>
@@ -853,15 +891,15 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="p-1.5 rounded text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 title="Oldingi sahifa"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
               {/* Page Indicator Pill: # 1 */}
-              <div className="bg-[#2c2e31] border border-slate-800/50 text-[#d1d0c5] font-mono font-bold text-xs px-3 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
-                <span className="text-[#646669]">#</span>
+              <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] font-mono font-bold text-xs px-3 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
+                <span className="text-[var(--sub-color)]">#</span>
                 <span>{currentPage}</span>
               </div>
 
@@ -870,7 +908,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="p-1.5 rounded text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 title="Keyingi sahifa"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -881,10 +919,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {/* ----------------------------------------------------------------------- */}
           {/* Main Leaderboard Table                                                  */}
           {/* ----------------------------------------------------------------------- */}
-          <div className="w-full overflow-x-auto rounded-xl">
+          <div className="w-full overflow-x-auto rounded-xl border border-[var(--sub-alt)] bg-[var(--card-bg)] shadow-xs">
             <table className="w-full text-left border-collapse font-mono text-xs">
               <thead>
-                <tr className="text-[#646669] text-xs font-normal border-b border-transparent">
+                <tr className="text-[var(--sub-color)] text-xs font-normal border-b border-[var(--sub-alt)] bg-[var(--sub-alt)]/20">
                   <th className="py-2.5 px-3 w-12 text-center">#</th>
                   <th className="py-2.5 px-3">name</th>
                   <th className="py-2.5 px-3 text-right">wpm</th>
@@ -894,16 +932,16 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   <th className="py-2.5 px-3 text-right">date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-transparent">
+              <tbody className="divide-y divide-[var(--sub-alt)]/40">
                 {loading && pageItems.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-20 text-center text-[#646669] font-mono text-xs">
+                    <td colSpan={7} className="py-20 text-center text-[var(--sub-color)] font-mono text-xs">
                       loading leaderboard...
                     </td>
                   </tr>
                 ) : pageItems.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-20 text-center text-[#646669] font-mono text-xs">
+                    <td colSpan={7} className="py-20 text-center text-[var(--sub-color)] font-mono text-xs">
                       no entries found for this category
                     </td>
                   </tr>
@@ -919,17 +957,21 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                         id={`typing-rank-row-${item.uid}`}
                         onClick={() => openUserProfile(item)}
                         className={`transition-colors cursor-pointer group ${
-                          idx % 2 === 0 ? 'bg-[#2c2e31]/30' : 'bg-transparent'
-                        } hover:bg-[#2c2e31]/75 ${
-                          isMe ? 'bg-[#e2b714]/10 border-l-2 border-[#e2b714]' : ''
+                          idx % 2 === 0 ? 'bg-[var(--card-bg)]' : 'bg-[var(--sub-alt)]/10'
+                        } hover:bg-[var(--sub-alt)]/30 ${
+                          isMe ? 'bg-[var(--main-color)]/10 border-l-2 border-[var(--main-color)]' : ''
                         }`}
                       >
                         {/* Rank (#) */}
                         <td className="py-3 px-3 text-center">
                           {item.rank === 1 ? (
-                            <Crown className="w-4 h-4 text-[#d1d0c5] fill-[#d1d0c5] mx-auto" />
+                            <Crown className="w-4 h-4 text-[var(--main-color)] fill-[var(--main-color)] mx-auto" />
+                          ) : item.rank === 2 ? (
+                            <span className="text-slate-400 font-bold">2</span>
+                          ) : item.rank === 3 ? (
+                            <span className="text-amber-600 font-bold">3</span>
                           ) : (
-                            <span className="text-[#646669]">{item.rank}</span>
+                            <span className="text-[var(--sub-color)]">{item.rank}</span>
                           )}
                         </td>
 
@@ -940,18 +982,18 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                               <img
                                 src={item.avatarUrl}
                                 alt={item.displayName}
-                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[#2c2e31]"
+                                className="w-5 h-5 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]/40"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).style.display = 'none';
                                 }}
                               />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-[#2c2e31] flex items-center justify-center shrink-0 text-[#646669]">
+                              <div className="w-5 h-5 rounded-full bg-[var(--sub-alt)]/40 flex items-center justify-center shrink-0 text-[var(--sub-color)]">
                                 <UserIcon className="w-3 h-3" />
                               </div>
                             )}
 
-                            <span className="text-[#d1d0c5] group-hover:text-[#e2b714] transition-colors truncate max-w-[120px] sm:max-w-[200px]">
+                            <span className="text-[var(--text-color)] group-hover:text-[var(--main-color)] transition-colors truncate max-w-[120px] sm:max-w-[200px] font-medium">
                               {item.displayName || item.username}
                             </span>
 
@@ -968,7 +1010,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                             )}
 
                             {isMe && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#e2b714] text-[#2c2e31]">
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[var(--main-color)] text-[var(--bg-color)]">
                                 YOU
                               </span>
                             )}
@@ -976,29 +1018,29 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                         </td>
 
                         {/* WPM (e.g. 318.99) */}
-                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono">
+                        <td className="py-3 px-3 text-right text-[var(--main-color)] font-mono font-bold">
                           {item.displayWpm.toFixed(2)}
                         </td>
 
                         {/* Accuracy (e.g. 99.03%) */}
-                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono">
+                        <td className="py-3 px-3 text-right text-[var(--text-color)] font-mono">
                           {Number(item.highestAccuracy || 98).toFixed(2)}%
                         </td>
 
                         {/* Raw WPM (e.g. 328.58) */}
-                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono hidden sm:table-cell">
+                        <td className="py-3 px-3 text-right text-[var(--sub-color)] font-mono hidden sm:table-cell">
                           {Number(item.rawWpmCalc).toFixed(2)}
                         </td>
 
                         {/* Consistency (e.g. 91.70%) */}
-                        <td className="py-3 px-3 text-right text-[#d1d0c5] font-mono hidden md:table-cell">
+                        <td className="py-3 px-3 text-right text-[var(--sub-color)] font-mono hidden md:table-cell">
                           {item.consistency ? `${Number(item.consistency).toFixed(2)}%` : item.consistencyCalc}
                         </td>
 
                         {/* Date (2 lines: "28 May 2026" / "20:01") */}
-                        <td className="py-3 px-3 text-right font-mono text-[10px] leading-tight text-[#646669] whitespace-nowrap">
+                        <td className="py-3 px-3 text-right font-mono text-[10px] leading-tight text-[var(--sub-color)] whitespace-nowrap">
                           <div>{dateParts.date}</div>
-                          <div className="text-[9px] text-[#646669]/70">{dateParts.time}</div>
+                          <div className="text-[9px] opacity-75">{dateParts.time}</div>
                         </td>
                       </tr>
                     );
@@ -1011,7 +1053,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {/* ----------------------------------------------------------------------- */}
           {/* Bottom Table Controls: Page size & Navigation                           */}
           {/* ----------------------------------------------------------------------- */}
-          <div className="mt-4 pt-4 border-t border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-[#646669]">
+          <div className="mt-4 pt-4 border-t border-[var(--sub-alt)]/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-[var(--sub-color)]">
             {/* Page Size Selector */}
             <div className="flex items-center gap-2">
               <span>display:</span>
@@ -1025,8 +1067,8 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   }}
                   className={`px-2 py-0.5 rounded text-xs font-mono transition-colors cursor-pointer ${
                     pageSize === size
-                      ? 'text-[#e2b714] font-bold underline'
-                      : 'text-[#646669] hover:text-[#d1d0c5]'
+                      ? 'text-[var(--main-color)] font-bold underline'
+                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
                   }`}
                 >
                   {size}
@@ -1045,7 +1087,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   }
                 }}
                 disabled={currentPage === 1}
-                className="px-2 py-0.5 rounded text-xs text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="px-2 py-0.5 rounded text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 « 1
               </button>
@@ -1058,11 +1100,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   }
                 }}
                 disabled={currentPage === 1}
-                className="p-1 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="p-1 rounded text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[#d1d0c5] font-bold px-1.5">
+              <span className="text-[var(--text-color)] font-bold px-1.5">
                 {currentPage} / {totalPages}
               </span>
               <button
@@ -1074,7 +1116,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   }
                 }}
                 disabled={currentPage === totalPages}
-                className="p-1 rounded text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="p-1 rounded text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -1087,7 +1129,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   }
                 }}
                 disabled={currentPage === totalPages}
-                className="px-2 py-0.5 rounded text-xs text-[#646669] hover:text-[#d1d0c5] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="px-2 py-0.5 rounded text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 {totalPages} »
               </button>
@@ -1096,19 +1138,19 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
           {/* User Rank Card (if logged in) */}
           {myRankingInfo && (
-            <div className="mt-6 p-3.5 rounded-xl bg-[#2c2e31]/60 border border-slate-800/60 flex items-center justify-between gap-4 text-xs font-mono">
+            <div className="mt-6 p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--main-color)]/30 flex items-center justify-between gap-4 text-xs font-mono shadow-xs">
               <div className="flex items-center gap-3">
-                <span className="text-[#e2b714] font-bold">#{myRankingInfo.rank}</span>
-                <span className="text-[#d1d0c5]">
+                <span className="text-[var(--main-color)] font-bold">#{myRankingInfo.rank}</span>
+                <span className="text-[var(--text-color)] font-medium">
                   {currentUser?.displayName || currentUser?.username}
                 </span>
-                <span className="text-[#646669]">({myRankingInfo.item.displayWpm.toFixed(2)} WPM)</span>
+                <span className="text-[var(--sub-color)]">({myRankingInfo.item.displayWpm.toFixed(2)} WPM)</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleShareMyRank}
-                  className="px-2.5 py-1 rounded bg-[#2c2e31] hover:bg-[#323437] text-[#d1d0c5] text-xs font-mono flex items-center gap-1.5 cursor-pointer border border-slate-800/50"
+                  className="px-2.5 py-1 rounded bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40 text-[var(--text-color)] text-xs font-mono flex items-center gap-1.5 cursor-pointer border border-[var(--sub-alt)] transition-colors"
                 >
                   {copiedShare ? (
                     <>
@@ -1117,7 +1159,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                     </>
                   ) : (
                     <>
-                      <Share2 className="w-3.5 h-3.5 text-[#646669]" />
+                      <Share2 className="w-3.5 h-3.5 text-[var(--sub-color)]" />
                       <span>share</span>
                     </>
                   )}
@@ -1125,7 +1167,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 <button
                   type="button"
                   onClick={handleJumpToMyRank}
-                  className="px-2.5 py-1 rounded bg-[#e2b714] text-[#2c2e31] font-bold text-xs font-mono cursor-pointer hover:brightness-105"
+                  className="px-2.5 py-1 rounded bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs font-mono cursor-pointer hover:brightness-105 transition-all shadow-xs"
                 >
                   jump to me
                 </button>
@@ -1135,14 +1177,14 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
           {/* Guest login reminder if not authenticated */}
           {!currentUser && onOpenLogin && (
-            <div className="mt-6 p-3.5 rounded-xl bg-[#2c2e31]/40 border border-slate-800/40 flex items-center justify-between gap-4 text-xs font-mono">
-              <span className="text-[#646669]">
+            <div className="mt-6 p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between gap-4 text-xs font-mono shadow-xs">
+              <span className="text-[var(--sub-color)]">
                 Sign in to save your score and claim your place on the leaderboard.
               </span>
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="px-3 py-1 rounded-lg bg-[#e2b714] text-[#2c2e31] font-bold text-xs font-mono hover:brightness-105 cursor-pointer whitespace-nowrap"
+                className="px-3 py-1 rounded-lg bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs font-mono hover:brightness-105 cursor-pointer whitespace-nowrap transition-all shadow-xs"
               >
                 sign in
               </button>
@@ -1156,7 +1198,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         <button
           type="button"
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-2.5 rounded-xl bg-[#2c2e31] border border-slate-700/60 text-[#d1d0c5] hover:text-[#e2b714] shadow-xl hover:bg-[#323437] active:scale-95 transition-all flex items-center gap-1.5 font-mono text-xs cursor-pointer"
+          className="fixed bottom-6 right-6 z-40 p-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] shadow-xl hover:bg-[var(--sub-alt)]/40 active:scale-95 transition-all flex items-center gap-1.5 font-mono text-xs cursor-pointer"
           title="Tepaga qaytish"
         >
           <ChevronUp className="w-4 h-4" />

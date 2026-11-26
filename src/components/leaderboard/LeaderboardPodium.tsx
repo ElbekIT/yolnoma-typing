@@ -57,11 +57,11 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
   };
 
   const getTierBadge = (wpm: number) => {
-    if (wpm >= 140) return { label: 'Afsonaviy', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' };
-    if (wpm >= 110) return { label: 'Grandmaster', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
-    if (wpm >= 85) return { label: 'Master', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' };
-    if (wpm >= 60) return { label: 'Pro', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
-    return { label: 'Teruvchi', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' };
+    if (wpm >= 140) return { label: 'Afsonaviy', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' };
+    if (wpm >= 110) return { label: 'Grandmaster', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' };
+    if (wpm >= 85) return { label: 'Master', color: 'bg-sky-500/20 text-sky-400 border-sky-500/30' };
+    if (wpm >= 60) return { label: 'Pro', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' };
+    return { label: 'Teruvchi', color: 'bg-[var(--sub-alt)]/40 text-[var(--sub-color)] border-[var(--sub-alt)]' };
   };
 
   return (
@@ -69,7 +69,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
       {/* Section Subtitle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500/25 via-amber-400/15 to-transparent border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
+          <div className="w-10 h-10 rounded-2xl bg-[var(--main-color)]/15 border border-[var(--main-color)]/30 flex items-center justify-center text-[var(--main-color)] shadow-md">
             <Trophy className="w-5 h-5" />
           </div>
           <div>
@@ -77,8 +77,8 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
               <h3 className="text-base sm:text-lg font-black text-[var(--text-color)] tracking-tight">
                 {t('podiumTitle')}
               </h3>
-              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/25 to-yellow-500/25 text-amber-300 border border-amber-400/30 font-mono font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
+              <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] border border-[var(--main-color)]/30 font-mono font-bold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-[var(--main-color)]" />
                 TOP 3 SHOHSUPA
               </span>
             </div>
@@ -102,18 +102,18 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
         {second ? (
           <div
             onClick={() => onSelectUser(second)}
-            className={`order-2 md:order-1 relative p-5 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden ${
+            className={`order-2 md:order-1 relative p-5 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden bg-[var(--card-bg)] ${
               currentUserId === second.uid
-                ? 'bg-gradient-to-b from-slate-300/20 via-[var(--card-bg)] to-[var(--card-bg)] border-slate-300 shadow-xl shadow-slate-400/10 ring-2 ring-slate-300/40'
-                : 'bg-gradient-to-b from-slate-400/10 via-[var(--card-bg)] to-[var(--card-bg)] border-slate-400/30 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-400/10 hover:-translate-y-1'
+                ? 'border-slate-300 shadow-xl ring-2 ring-slate-400/40'
+                : 'border-[var(--sub-alt)] hover:border-slate-300 hover:shadow-xl hover:-translate-y-1'
             }`}
           >
             {/* Top ambient glare */}
-            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-slate-300/10 to-transparent pointer-events-none" />
+            <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-slate-400/10 to-transparent pointer-events-none" />
 
             {/* Medal Pill Badge */}
-            <div className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-400/20 border border-slate-300/40 text-slate-200 text-xs font-mono font-bold mb-3 shadow-xs">
-              <Medal className="w-3.5 h-3.5 text-slate-300 fill-slate-300/30" />
+            <div className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono font-bold mb-3 shadow-xs">
+              <Medal className="w-3.5 h-3.5 text-slate-400 fill-slate-400/30" />
               <span>2-O'RIN • KUMUSH</span>
             </div>
 
@@ -127,14 +127,14 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
                   loading="lazy"
                 />
               </div>
-              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-gradient-to-tr from-slate-300 to-slate-100 text-slate-900 font-black text-xs flex items-center justify-center shadow-md border-2 border-[var(--card-bg)]">
+              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-slate-300 text-slate-900 font-black text-xs flex items-center justify-center shadow-md border-2 border-[var(--card-bg)]">
                 2
               </div>
             </div>
 
             {/* User Info */}
             <div className="flex items-center justify-center gap-1.5 max-w-[200px] mb-0.5">
-              <span className="font-bold text-sm text-[var(--text-color)] truncate group-hover:text-slate-200 transition-colors">
+              <span className="font-bold text-sm text-[var(--text-color)] truncate group-hover:text-[var(--main-color)] transition-colors">
                 {second.displayName}
               </span>
               {second.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
@@ -149,9 +149,9 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </div>
 
             {/* Metrics Pedestal Strip */}
-            <div className="w-full pt-3 border-t border-[var(--sub-alt)]/60 flex items-center justify-around bg-[var(--sub-alt)]/20 rounded-2xl px-2 py-2">
+            <div className="w-full pt-3 border-t border-[var(--sub-alt)] flex items-center justify-around bg-[var(--sub-alt)]/25 rounded-2xl px-2 py-2">
               <div className="text-center">
-                <div className="text-2xl font-black font-mono text-slate-200 tracking-tight flex items-center justify-center gap-1">
+                <div className="text-2xl font-black font-mono text-[var(--text-color)] tracking-tight flex items-center justify-center gap-1">
                   <span>{second.scoreValue !== undefined ? second.scoreValue : second.displayWpm}</span>
                   <Zap className="w-3.5 h-3.5 text-slate-400" />
                 </div>
@@ -159,9 +159,9 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
                   {second.scoreLabel || 'WPM'}
                 </div>
               </div>
-              <div className="h-8 w-px bg-[var(--sub-alt)]/60" />
+              <div className="h-8 w-px bg-[var(--sub-alt)]" />
               <div className="text-center">
-                <div className="text-base font-bold font-mono text-slate-300">
+                <div className="text-base font-bold font-mono text-[var(--text-color)]">
                   {second.subStatValue !== undefined ? second.subStatValue : (second.highestAccuracy > 0 ? `${Number(second.highestAccuracy).toFixed(1)}%` : '100%')}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)] font-semibold">
@@ -171,7 +171,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </div>
 
             {/* Inspect hover action */}
-            <div className="mt-3 text-[11px] font-mono text-[var(--sub-color)] group-hover:text-slate-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <div className="mt-3 text-[11px] font-mono text-[var(--sub-color)] group-hover:text-[var(--main-color)] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
               <span>Profilni ko'rish</span>
               <ExternalLink className="w-3 h-3" />
             </div>
@@ -198,24 +198,24 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
         {first ? (
           <div
             onClick={(e) => triggerChampionConfetti(e, first)}
-            className={`order-1 md:order-2 relative p-6 sm:p-7 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden shadow-2xl ${
+            className={`order-1 md:order-2 relative p-6 sm:p-7 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden shadow-2xl bg-[var(--card-bg)] ${
               currentUserId === first.uid
-                ? 'bg-gradient-to-b from-amber-500/25 via-[var(--card-bg)] to-[var(--card-bg)] border-amber-400 shadow-[0_0_40px_rgba(245,158,11,0.35)] ring-2 ring-amber-400/60'
-                : 'bg-gradient-to-b from-amber-500/20 via-[var(--card-bg)] to-[var(--card-bg)] border-amber-400/80 hover:border-amber-300 hover:shadow-[0_0_50px_rgba(245,158,11,0.3)] hover:-translate-y-2'
+                ? 'border-[var(--main-color)] shadow-[0_0_30px_rgba(245,158,11,0.25)] ring-2 ring-[var(--main-color)]/60'
+                : 'border-[var(--main-color)]/80 hover:border-[var(--main-color)] hover:shadow-[0_0_40px_rgba(245,158,11,0.2)] hover:-translate-y-2'
             }`}
           >
-            {/* Top crown aura / glowing gradient background */}
-            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-amber-500/25 via-amber-400/10 to-transparent pointer-events-none" />
+            {/* Top crown aura */}
+            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--main-color)]/20 via-[var(--main-color)]/5 to-transparent pointer-events-none" />
 
             {/* Glowing Top Floating Crown Banner */}
-            <div className="relative -mt-2 mb-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xs font-black tracking-wider uppercase flex items-center gap-2 shadow-lg shadow-amber-500/30">
+            <div className="relative -mt-2 mb-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xs font-black tracking-wider uppercase flex items-center gap-2 shadow-lg shadow-amber-500/20">
               <Crown className="w-4 h-4 fill-slate-950 animate-bounce" />
               <span>{t('podiumRank1')} • CHEMPION</span>
             </div>
 
-            {/* Champion Avatar with Radiant Gold Halo Ring */}
+            {/* Champion Avatar with Radiant Halo Ring */}
             <div className="relative mb-3 mt-1">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-amber-200 to-yellow-400 shadow-xl shadow-amber-500/25">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-amber-200 to-yellow-400 shadow-xl shadow-amber-500/20">
                 <img
                   src={first.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${first.uid}`}
                   alt={first.displayName}
@@ -230,45 +230,45 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
 
             {/* User Info */}
             <div className="flex items-center justify-center gap-1.5 max-w-[220px] mb-0.5">
-              <span className="font-black text-base sm:text-lg text-[var(--text-color)] truncate group-hover:text-amber-400 transition-colors">
+              <span className="font-black text-base sm:text-lg text-[var(--text-color)] truncate group-hover:text-[var(--main-color)] transition-colors">
                 {first.displayName}
               </span>
-              {first.isVerified && <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />}
+              {first.isVerified && <CheckCircle2 className="w-4 h-4 text-[var(--main-color)] shrink-0" />}
             </div>
-            <span className="text-xs text-amber-300/90 font-mono mb-2 truncate max-w-[190px]">
+            <span className="text-xs text-[var(--sub-color)] font-mono mb-2 truncate max-w-[190px]">
               @{first.username}
             </span>
 
             {/* Tier Badge */}
-            <div className="px-3 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/25 text-amber-300 border border-amber-400/40 mb-4 flex items-center gap-1 shadow-xs">
-              <Flame className="w-3 h-3 text-amber-400 fill-amber-400" />
+            <div className="px-3 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--main-color)]/20 text-[var(--main-color)] border border-[var(--main-color)]/40 mb-4 flex items-center gap-1 shadow-xs">
+              <Flame className="w-3 h-3 text-[var(--main-color)] fill-current" />
               <span>{getTierBadge(first.displayWpm).label} • {first.displayWpm >= 120 ? 'Rekordchi' : 'Lider'}</span>
             </div>
 
             {/* Metrics Pedestal Strip */}
-            <div className="w-full pt-3 border-t border-amber-500/30 flex items-center justify-around bg-amber-500/10 rounded-2xl px-3 py-2.5">
+            <div className="w-full pt-3 border-t border-[var(--sub-alt)] flex items-center justify-around bg-[var(--sub-alt)]/30 rounded-2xl px-3 py-2.5">
               <div className="text-center">
-                <div className="text-3xl sm:text-4xl font-black font-mono text-amber-400 tracking-tight flex items-center justify-center gap-1">
+                <div className="text-3xl sm:text-4xl font-black font-mono text-[var(--main-color)] tracking-tight flex items-center justify-center gap-1">
                   <span>{first.scoreValue !== undefined ? first.scoreValue : first.displayWpm}</span>
-                  <Flame className="w-5 h-5 text-amber-400 fill-amber-400/30" />
+                  <Flame className="w-5 h-5 text-[var(--main-color)] fill-[var(--main-color)]/30" />
                 </div>
-                <div className="text-[10px] uppercase tracking-wider font-mono text-amber-300 font-bold">
+                <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)] font-bold">
                   {first.scoreLabel || 'WPM (TEZLIK)'}
                 </div>
               </div>
-              <div className="h-10 w-px bg-amber-500/30" />
+              <div className="h-10 w-px bg-[var(--sub-alt)]" />
               <div className="text-center">
-                <div className="text-base sm:text-lg font-black font-mono text-amber-200">
+                <div className="text-base sm:text-lg font-black font-mono text-[var(--text-color)]">
                   {first.subStatValue !== undefined ? first.subStatValue : (first.highestAccuracy > 0 ? `${Number(first.highestAccuracy).toFixed(1)}%` : '100%')}
                 </div>
-                <div className="text-[10px] uppercase tracking-wider font-mono text-amber-300/80 font-bold">
+                <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)] font-bold">
                   {first.subStatLabel || t('accLabel')}
                 </div>
               </div>
             </div>
 
             {/* Inspect hover action */}
-            <div className="mt-3.5 text-xs font-mono text-amber-400 flex items-center gap-1.5 opacity-90 group-hover:scale-105 transition-all">
+            <div className="mt-3.5 text-xs font-mono text-[var(--main-color)] flex items-center gap-1.5 opacity-90 group-hover:scale-105 transition-all">
               <Sparkles className="w-3.5 h-3.5" />
               <span className="font-bold">Chempionni tabriklash</span>
             </div>
@@ -281,18 +281,18 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
         {third ? (
           <div
             onClick={() => onSelectUser(third)}
-            className={`order-3 relative p-5 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden ${
+            className={`order-3 relative p-5 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden bg-[var(--card-bg)] ${
               currentUserId === third.uid
-                ? 'bg-gradient-to-b from-amber-800/25 via-[var(--card-bg)] to-[var(--card-bg)] border-amber-600 shadow-xl shadow-amber-900/20 ring-2 ring-amber-600/40'
-                : 'bg-gradient-to-b from-amber-800/15 via-[var(--card-bg)] to-[var(--card-bg)] border-amber-700/40 hover:border-amber-600 hover:shadow-xl hover:shadow-amber-900/15 hover:-translate-y-1'
+                ? 'border-amber-600 shadow-xl ring-2 ring-amber-600/40'
+                : 'border-[var(--sub-alt)] hover:border-amber-600 hover:shadow-xl hover:-translate-y-1'
             }`}
           >
             {/* Top ambient glare */}
-            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-amber-700/10 to-transparent pointer-events-none" />
+            <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-amber-700/10 to-transparent pointer-events-none" />
 
             {/* Medal Pill Badge */}
-            <div className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-800/25 border border-amber-700/40 text-amber-300 text-xs font-mono font-bold mb-3 shadow-xs">
-              <Award className="w-3.5 h-3.5 text-amber-500 fill-amber-500/30" />
+            <div className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono font-bold mb-3 shadow-xs">
+              <Award className="w-3.5 h-3.5 text-amber-600 fill-amber-600/30" />
               <span>3-O'RIN • BRONZA</span>
             </div>
 
@@ -306,14 +306,14 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
                   loading="lazy"
                 />
               </div>
-              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-700 to-amber-600 text-amber-100 font-black text-xs flex items-center justify-center shadow-md border-2 border-[var(--card-bg)]">
+              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-700 text-amber-100 font-black text-xs flex items-center justify-center shadow-md border-2 border-[var(--card-bg)]">
                 3
               </div>
             </div>
 
             {/* User Info */}
             <div className="flex items-center justify-center gap-1.5 max-w-[200px] mb-0.5">
-              <span className="font-bold text-sm text-[var(--text-color)] truncate group-hover:text-amber-300 transition-colors">
+              <span className="font-bold text-sm text-[var(--text-color)] truncate group-hover:text-[var(--main-color)] transition-colors">
                 {third.displayName}
               </span>
               {third.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
@@ -328,19 +328,19 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </div>
 
             {/* Metrics Pedestal Strip */}
-            <div className="w-full pt-3 border-t border-[var(--sub-alt)]/60 flex items-center justify-around bg-[var(--sub-alt)]/20 rounded-2xl px-2 py-2">
+            <div className="w-full pt-3 border-t border-[var(--sub-alt)] flex items-center justify-around bg-[var(--sub-alt)]/25 rounded-2xl px-2 py-2">
               <div className="text-center">
-                <div className="text-2xl font-black font-mono text-amber-300 tracking-tight flex items-center justify-center gap-1">
+                <div className="text-2xl font-black font-mono text-[var(--text-color)] tracking-tight flex items-center justify-center gap-1">
                   <span>{third.scoreValue !== undefined ? third.scoreValue : third.displayWpm}</span>
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <Zap className="w-3.5 h-3.5 text-amber-600" />
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)] font-semibold">
                   {third.scoreLabel || 'WPM'}
                 </div>
               </div>
-              <div className="h-8 w-px bg-[var(--sub-alt)]/60" />
+              <div className="h-8 w-px bg-[var(--sub-alt)]" />
               <div className="text-center">
-                <div className="text-base font-bold font-mono text-amber-300">
+                <div className="text-base font-bold font-mono text-[var(--text-color)]">
                   {third.subStatValue !== undefined ? third.subStatValue : (third.highestAccuracy > 0 ? `${Number(third.highestAccuracy).toFixed(1)}%` : '100%')}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-mono text-[var(--sub-color)] font-semibold">
@@ -350,21 +350,21 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </div>
 
             {/* Inspect hover action */}
-            <div className="mt-3 text-[11px] font-mono text-[var(--sub-color)] group-hover:text-amber-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <div className="mt-3 text-[11px] font-mono text-[var(--sub-color)] group-hover:text-[var(--main-color)] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
               <span>Profilni ko'rish</span>
               <ExternalLink className="w-3 h-3" />
             </div>
           </div>
         ) : (
-          <div className="order-3 flex flex-col p-6 rounded-3xl border border-dashed border-amber-800/30 bg-amber-900/5 items-center justify-center text-center space-y-2.5 min-h-[220px]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-800/10 border border-amber-800/20 text-amber-500 text-xs font-mono font-bold">
+          <div className="order-3 flex flex-col p-6 rounded-3xl border border-dashed border-[var(--sub-alt)] bg-[var(--card-bg)]/40 items-center justify-center text-center space-y-2.5 min-h-[220px]">
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-[var(--sub-color)] text-xs font-mono font-bold">
               <span>🥉 3-o'rin</span>
-              <span className="text-[10px] text-amber-600">(Ochiq)</span>
+              <span className="text-[10px]">(Ochiq)</span>
             </div>
-            <div className="w-14 h-14 rounded-2xl border border-dashed border-amber-700/30 flex items-center justify-center text-amber-600 text-xl font-mono">
+            <div className="w-14 h-14 rounded-2xl border border-dashed border-[var(--sub-alt)] flex items-center justify-center text-[var(--sub-color)] text-xl font-mono">
               ?
             </div>
-            <p className="text-xs font-bold text-amber-300">Bronza pog'ona bo'sh</p>
+            <p className="text-xs font-bold text-[var(--text-color)]">Bronza pog'ona bo'sh</p>
             <p className="text-[11px] text-[var(--sub-color)] max-w-[160px]">
               TOP 3 talikka kirish uchun shohsupani egallang!
             </p>
