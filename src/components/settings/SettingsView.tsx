@@ -64,6 +64,8 @@ export const SettingsView: React.FC = () => {
     setLanguage,
     showKeyboard,
     setShowKeyboard,
+    handsGuide,
+    setHandsGuide,
     showLiveWpm,
     setShowLiveWpm
   } = useSettings();
@@ -548,6 +550,31 @@ export const SettingsView: React.FC = () => {
                 checked={smoothCaret}
                 onChange={(e) => setSmoothCaret(e.target.checked)}
                 className="w-4 h-4 accent-[var(--main-color)]"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--sub-alt)]/80 hover:bg-[var(--sub-alt)] border border-blue-500/20 transition-all cursor-pointer">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🙌</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-[var(--text-color)]">
+                      Interaktiv Qoʻllar Vizualizatori (Hands Guide)
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      ZOʻR TAVSIYA
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--sub-color)] mt-0.5">
+                    10 barmoq bilan koʻrmasdan yozish uchun virtual klaviatura ustida qoʻllar va harakatlanuvchi faol barmoq yoʻnalishini koʻrsatadi
+                  </p>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={handsGuide}
+                onChange={(e) => setHandsGuide(e.target.checked)}
+                className="w-5 h-5 accent-[var(--main-color)] cursor-pointer"
               />
             </label>
 

@@ -4,6 +4,7 @@ import { TypingHeader } from '../components/typing/TypingHeader';
 import { LiveStats } from '../components/typing/LiveStats';
 import { TypingDisplay } from '../components/typing/TypingDisplay';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { InteractiveHandsGuide } from '../components/typing/InteractiveHandsGuide';
 import { ResultModal } from '../components/typing/ResultModal';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode, TypingResult } from '../types';
 import { CodeLanguage } from '../data/codeSnippets';
@@ -92,11 +93,11 @@ export const TypingPage: React.FC<TypingPageProps> = ({
   onGoToCertificate
 }) => {
   const { t } = useI18n();
-  const { zenMode } = useSettings();
+  const { zenMode, handsGuide, setHandsGuide } = useSettings();
 
   return (
     <div id="typing-arena" className="w-full flex flex-col items-center justify-center py-2 sm:py-4 animate-fade-in">
-      {/* Top Bar with Back button */}
+      {/* Top Bar with Back button & Hands Guide quick toggle */}
       {onBackToHome && (
         <div className={`w-full max-w-4xl flex items-center justify-between pb-3 px-2 transition-opacity duration-300 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <button
@@ -108,8 +109,24 @@ export const TypingPage: React.FC<TypingPageProps> = ({
             <span>{t('backToHome')}</span>
           </button>
 
-          <div className="text-[11px] font-mono text-[var(--sub-color)]/70 uppercase tracking-wider">
-            {t('arenaTitle')}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setHandsGuide(!handsGuide)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                handsGuide
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-xs'
+                  : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border-[var(--sub-alt)]'
+              }`}
+              title={handsGuide ? "Qoʻllar vizualizatorini yashirish" : "Virtual qoʻllar vizualizatorini yoqish"}
+            >
+              <span>🙌</span>
+              <span className="hidden sm:inline">Qoʻllar: {handsGuide ? 'Yoniq' : 'Oʻchiq'}</span>
+            </button>
+
+            <div className="text-[11px] font-mono text-[var(--sub-color)]/70 uppercase tracking-wider">
+              {t('arenaTitle')}
+            </div>
           </div>
         </div>
       )}
@@ -186,8 +203,11 @@ export const TypingPage: React.FC<TypingPageProps> = ({
         isTestActive={isTestActive}
       />
 
-      {/* Virtual Keyboard */}
-      <VirtualKeyboard activeChar={currentTargetChar} />
+      {/* Interactive Hands & Keyboard Visualizer (matching reference image) */}
+      <InteractiveHandsGuide activeChar={currentTargetChar} />
+
+      {/* Standard Simple Virtual Keyboard (when hands guide is off and showKeyboard is on) */}
+      {!handsGuide && <VirtualKeyboard activeChar={currentTargetChar} />}
 
       {/* Result Modal */}
       <ResultModal

@@ -43,6 +43,8 @@ interface SettingsContextType {
   setLanguage: (lang: LanguageCode) => void;
   showKeyboard: boolean;
   setShowKeyboard: (show: boolean) => void;
+  handsGuide: boolean;
+  setHandsGuide: (show: boolean) => void;
   showLiveWpm: boolean;
   setShowLiveWpm: (show: boolean) => void;
   zenMode: boolean;
@@ -117,6 +119,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [showKeyboard, setShowKeyboardState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_keyboard') === 'true';
   });
+  const [handsGuide, setHandsGuideState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('yolnoma_hands_guide') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [showLiveWpm, setShowLiveWpmState] = useState<boolean>(() => {
     return localStorage.getItem('yolnoma_live_wpm') !== 'false';
   });
@@ -127,6 +136,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return false;
     }
   });
+
+  const setHandsGuide = (show: boolean) => {
+    setHandsGuideState(show);
+    try {
+      localStorage.setItem('yolnoma_hands_guide', String(show));
+    } catch {}
+  };
 
   const setZenMode = (zen: boolean) => {
     setZenModeState(zen);
@@ -325,6 +341,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setLanguage,
         showKeyboard,
         setShowKeyboard,
+        handsGuide,
+        setHandsGuide,
         showLiveWpm,
         setShowLiveWpm,
         zenMode,
