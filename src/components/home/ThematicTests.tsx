@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
-export type ThematicActionType = 'code' | 'uzbek-drills' | 'symbols' | 'quotes' | 'battle' | 'english';
+export type ThematicActionType = 'code' | 'uzbek-drills' | 'uzbek-new-drills' | 'symbols' | 'quotes' | 'battle' | 'english';
 
 interface ThematicTestsProps {
   onSelectAction: (action: ThematicActionType) => void;
@@ -21,6 +21,17 @@ export const ThematicTests: React.FC<ThematicTestsProps> = ({ onSelectAction }) 
   const { t } = useI18n();
 
   const cards = [
+    {
+      id: 'uzbek-new-drills' as ThematicActionType,
+      title: t('cardUzbekNewTitle'),
+      desc: t('cardUzbekNewDesc'),
+      icon: Sparkles,
+      accentColor: 'from-amber-500/25 to-emerald-500/25',
+      borderColor: 'border-amber-500/50 hover:border-amber-400/80 shadow-md shadow-amber-500/10',
+      iconColor: 'text-amber-400',
+      badgeText: 'YANGI: Ç Ş Ğ Õ',
+      actionText: t('startPractice')
+    },
     {
       id: 'code' as ThematicActionType,
       title: t('cardCodeTitle'),

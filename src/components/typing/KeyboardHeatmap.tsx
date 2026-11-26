@@ -58,6 +58,13 @@ const KEY_FINGER_MAP: Record<string, { finger: string; hand: string }> = {
   '[': { finger: 'jimjiloq (pinky)', hand: 'O\'ng qo\'l' },
   ']': { finger: 'jimjiloq (pinky)', hand: 'O\'ng qo\'l' },
 
+  // Uzbek reformed letters
+  ç: { finger: "o'rta barmoq (middle)", hand: "Chap qo'l" },
+  ş: { finger: "nomsiz barmoq (ring)", hand: "Chap qo'l" },
+  ğ: { finger: "ko'rsatkich barmoq (index)", hand: "Chap qo'l" },
+  õ: { finger: "nomsiz barmoq (ring)", hand: "O'ng qo'l" },
+  ö: { finger: "nomsiz barmoq (ring)", hand: "O'ng qo'l" },
+
   // Thumb
   ' ': { finger: 'bosh barmoq (thumb)', hand: 'Ikkala qo\'l' }
 };

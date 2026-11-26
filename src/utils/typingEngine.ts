@@ -29,8 +29,8 @@ export function isMeaningfulWord(word: string): boolean {
   const clean = word.trim().toLowerCase();
   if (clean.length < 2 || clean.length > 16) return false;
 
-  // 1. Natural language letter validation (Latin or Cyrillic with valid apostrophes)
-  if (!/^[a-zA-Zʻʼ'`а-яА-ЯўЎқҚғҒҳҲёЁ]+$/.test(clean)) {
+  // 1. Natural language letter validation (Latin or Cyrillic with valid apostrophes and new Uzbek letters)
+  if (!/^[a-zA-Zʻʼ'`а-яА-ЯўЎқҚғҒҳҲёЁçÇşŞğĞõÕöÖ]+$/.test(clean)) {
     return false;
   }
 
@@ -46,20 +46,44 @@ export function isMeaningfulWord(word: string): boolean {
   }
 
   // 4. Must contain at least one vowel
-  const hasLatinVowel = /[aeiouy]/.test(clean);
+  const hasLatinVowel = /[aeiouyõö]/.test(clean);
   const hasCyrillicVowel = /[аеёиоуыэюяў]/.test(clean);
   if (!hasLatinVowel && !hasCyrillicVowel) {
     return false;
   }
 
   // 5. Reject 4 or more consecutive consonants (unnatural letter soup like "jdhjshd")
-  const latinConsonantClustering = /[bcdfghjklmnpqrstvwxz]{4,}/i.test(clean);
+  const latinConsonantClustering = /[bcdfghjklmnpqrstvwxzçşğ]{4,}/i.test(clean);
   const cyrillicConsonantClustering = /[бвгджзйклмнпрстфхцчшщ]{4,}/i.test(clean);
   if (latinConsonantClustering || cyrillicConsonantClustering) {
     return false;
   }
 
   return true;
+}
+
+/**
+ * Normalizes and checks if a typed character matches the target character,
+ * handling Uzbek Latin apostrophes and smart quotes/dashes/new letters.
+ */
+export function areCharsEquivalent(typed?: string, target?: string): boolean {
+  if (typed === target) return true;
+  if (!typed || !target) return false;
+
+  // Apostrophes and single quotes (Uzbek Latin standard)
+  if ("'‘’ʻʼ`´".includes(typed) && "'‘’ʻʼ`´".includes(target)) return true;
+
+  // Double quotes
+  if ('"“”«»'.includes(typed) && '"“”«»'.includes(target)) return true;
+
+  // Hyphens / dashes
+  if ('-—–−'.includes(typed) && '-—–−'.includes(target)) return true;
+
+  // Uzbek new alphabet: õ and ö compatibility
+  if ((typed === 'õ' || typed === 'ö') && (target === 'õ' || target === 'ö')) return true;
+  if ((typed === 'Õ' || typed === 'Ö') && (target === 'Õ' || target === 'Ö')) return true;
+
+  return false;
 }
 
 export function generateTestText(

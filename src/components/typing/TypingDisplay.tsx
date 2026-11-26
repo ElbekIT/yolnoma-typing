@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { languagesList } from '../../config/languages';
 import { soundSynth } from '../../utils/audio';
 import { antiCheatManager } from '../../utils/antiCheat';
-import { getLockedMinLength, getNextWordStartIndexOnSpace } from '../../utils/typingEngine';
+import { getLockedMinLength, getNextWordStartIndexOnSpace, areCharsEquivalent } from '../../utils/typingEngine';
 import { DrumTapeView } from './DrumTapeView';
 
 // Memoized Character Component: Only re-renders when its own typed state or animation changes
@@ -26,7 +26,7 @@ const CharItem = memo<CharItemProps>(
     onRef
   }) => {
     const isTyped = typedChar !== undefined;
-    const isCorrect = isTyped && typedChar === char;
+    const isCorrect = isTyped && areCharsEquivalent(typedChar, char);
 
     let charClass = 'relative inline-block font-normal select-none ';
 
@@ -398,7 +398,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         const charAtPress = typedInput.length;
         if (e.key !== 'Backspace' && charAtPress < targetText.length) {
           const targetChar = targetText[charAtPress];
-          if (e.key === targetChar) {
+          if (areCharsEquivalent(e.key, targetChar)) {
             soundSynth.playKeyPress(soundProfile);
           } else {
             soundSynth.playErrorSound();
@@ -410,6 +410,35 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     }
   };
 
+  const isNewUzbekMode = language === 'uz-new' || /[çşğõöÇŞĞÕÖ]/.test(targetText);
+
+  const convertToNewUzbek = useCallback((text: string): string => {
+    if (!text) return text;
+    let res = text;
+    res = res.replace(/c['ʻʼ`´]/g, 'ç').replace(/C['ʻʼ`´]/g, 'Ç');
+    res = res.replace(/ch/g, 'ç').replace(/Ch/g, 'Ç').replace(/CH/g, 'Ç');
+    res = res.replace(/s['ʻʼ`´]/g, 'ş').replace(/S['ʻʼ`´]/g, 'Ş');
+    res = res.replace(/sh/g, 'ş').replace(/Sh/g, 'Ş').replace(/SH/g, 'Ş');
+    res = res.replace(/g['ʻʼ`´]/g, 'ğ').replace(/G['ʻʼ`´]/g, 'Ğ');
+    res = res.replace(/o['ʻʼ`´]/g, 'õ').replace(/O['ʻʼ`´]/g, 'Õ');
+    return res;
+  }, []);
+
+  const handleQuickCharInsert = useCallback(
+    (ch: string) => {
+      if (isTestFinished) return;
+      const nextIdx = typedInput.length;
+      const targetExpected = targetText[nextIdx];
+      const isUpper = targetExpected && targetExpected === targetExpected.toUpperCase() && targetExpected !== targetExpected.toLowerCase();
+      const toInsert = isUpper ? ch.toUpperCase() : ch.toLowerCase();
+      onInputChange(typedInput + toInsert);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    },
+    [isTestFinished, typedInput, targetText, onInputChange]
+  );
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (isTestFinished) return;
@@ -419,7 +448,11 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         return;
       }
 
-      const newValue = e.target.value;
+      let newValue = e.target.value;
+
+      if (isNewUzbekMode) {
+        newValue = convertToNewUzbek(newValue);
+      }
 
       const minLen = getLockedMinLength(targetText, typedInput);
       if (newValue.length < minLen) {
@@ -428,7 +461,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
       onInputChange(newValue);
     },
-    [isTestFinished, typedInput, targetText, onInputChange]
+    [isTestFinished, typedInput, targetText, onInputChange, isNewUzbekMode, convertToNewUzbek]
   );
 
   // Group text into whole words
@@ -774,6 +807,40 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         />
       ) : (
         <>
+          {/* Quick Helper for New Uzbek Alphabet Letters */}
+          {isNewUzbekMode && !isTestFinished && (
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)] text-xs text-[var(--sub-color)] select-none">
+              <div className="flex items-center gap-1.5 font-sans font-medium text-[11px]">
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+                  Yangi Alifbo
+                </span>
+                <span className="hidden sm:inline">Tezkor harflar:</span>
+              </div>
+              <div className="flex items-center gap-1.5 font-mono">
+                {[
+                  { lower: 'ç', upper: 'Ç', tip: "ch / c'" },
+                  { lower: 'ş', upper: 'Ş', tip: "sh / s'" },
+                  { lower: 'ğ', upper: 'Ğ', tip: "g'" },
+                  { lower: 'õ', upper: 'Õ', tip: "o'" }
+                ].map(({ lower, upper, tip }) => (
+                  <button
+                    key={lower}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickCharInsert(lower);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-[var(--card-bg)] hover:bg-[var(--main-color)] hover:text-[var(--bg-color)] border border-[var(--sub-alt)] hover:border-[var(--main-color)] text-[var(--text-color)] font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    title={`${upper} / ${lower} (klaviaturada "${tip}" bossangiz ham oʻgiriladi)`}
+                  >
+                    <span>{upper} {lower}</span>
+                    <span className="text-[10px] opacity-60 hidden md:inline">({tip})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Scroll Viewport with Hardware Acceleration */}
           <div
             ref={tapeViewportRef}

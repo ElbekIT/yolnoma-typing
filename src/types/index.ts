@@ -1,5 +1,5 @@
 export type LanguageCode =
-  | 'en' | 'uz-latn' | 'uz-cyrl' | 'ru' | 'ar' | 'tr' | 'kk' | 'ky'
+  | 'en' | 'uz-latn' | 'uz-new' | 'uz-cyrl' | 'ru' | 'ar' | 'tr' | 'kk' | 'ky'
   | 'tg' | 'tk' | 'az' | 'uk' | 'be' | 'de' | 'fr' | 'es' | 'pt'
   | 'it' | 'nl' | 'pl' | 'cs' | 'sk' | 'ro' | 'hu' | 'fi' | 'sv'
   | 'no' | 'da' | 'el' | 'he' | 'fa' | 'ur' | 'hi' | 'bn' | 'ta'

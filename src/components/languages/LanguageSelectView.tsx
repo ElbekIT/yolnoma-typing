@@ -42,7 +42,7 @@ export const LanguageSelectView: React.FC<LanguageSelectViewProps> = ({ onConfir
     const code = l.code.toLowerCase();
 
     // Turkic languages
-    if (['uz-latn', 'uz-cyrl', 'tr', 'kk', 'ky', 'tk', 'az', 'kaa', 'ug', 'tt', 'ba', 'cv', 'sah', 'crh', 'gag'].includes(code)) {
+    if (['uz-latn', 'uz-new', 'uz-cyrl', 'tr', 'kk', 'ky', 'tk', 'az', 'kaa', 'ug', 'tt', 'ba', 'cv', 'sah', 'crh', 'gag'].includes(code)) {
       cats.push('turkic');
     }
     // European languages
@@ -317,6 +317,12 @@ export const LanguageSelectView: React.FC<LanguageSelectViewProps> = ({ onConfir
                           >
                             {l.nativeName}
                           </h3>
+                          {l.code === 'uz-new' && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30 flex items-center gap-1 shrink-0">
+                              <Sparkles className="w-3 h-3 text-amber-400" />
+                              Yangi Alifbo
+                            </span>
+                          )}
                           {l.script && (
                             <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] font-mono shrink-0">
                               {l.script}

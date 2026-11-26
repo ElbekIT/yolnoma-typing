@@ -91,7 +91,7 @@ import {
   DifficultyMode,
   TypingResult
 } from './types';
-import { generateTestText, calculateWpm, calculateRawWpm, calculateCpm, calculateAccuracy, extractMissedWords } from './utils/typingEngine';
+import { generateTestText, calculateWpm, calculateRawWpm, calculateCpm, calculateAccuracy, extractMissedWords, areCharsEquivalent } from './utils/typingEngine';
 import { CodeLanguage } from './data/codeSnippets';
 
 function MainAppContent() {
@@ -760,7 +760,7 @@ function MainAppContent() {
 
     typedChars.forEach((ch, idx) => {
       if (idx < targetChars.length) {
-        if (ch === targetChars[idx]) correctCount++;
+        if (areCharsEquivalent(ch, targetChars[idx])) correctCount++;
         else wrongCount++;
       } else {
         wrongCount++;
@@ -966,6 +966,16 @@ function MainAppContent() {
 
     if (action === 'quotes') {
       setMode('quotes');
+      navigateToArena();
+      return;
+    }
+
+    if (action === 'uzbek-new-drills') {
+      const uzbekNewDrillText = "Õzbekiston — buyuk kelajak sari intilayotgan mustaqil vatan. Yoşlarimiz şijoatli, çiroyli va ğayratli qadamlari bilan yurt şon-şuhratini yuksaltirmoqda. Çeçan notiq, õtkir qalam, teran tafakkur va halol mehnat insonni ulugʻlaydi. Yangi alifbomizdagi Ç, Ş, Ğ va Õ harflari milliy yozuvimizni raqamli zamonda yanada tezkor, aniq va qulay qiladi.";
+      setCustomText(uzbekNewDrillText);
+      setLanguage('uz-new');
+      setMode('custom');
+      setTimeMode(0);
       navigateToArena();
       return;
     }
@@ -1191,7 +1201,7 @@ function MainAppContent() {
   let liveCorrect = 0;
   const typedLen = typedInput.length;
   for (let i = 0; i < typedLen; i++) {
-    if (typedInput[i] === targetText[i]) {
+    if (areCharsEquivalent(typedInput[i], targetText[i])) {
       liveCorrect++;
     }
   }

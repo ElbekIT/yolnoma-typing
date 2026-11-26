@@ -32,6 +32,38 @@ export const turkicLanguages: LanguageInfo[] = [
     ]
   },
   {
+    code: 'uz-new',
+    name: 'Uzbek (Yangi Alifbo)',
+    nativeName: "Oʻzbekcha (Yangi)",
+    flag: '🇺🇿',
+    dir: 'ltr',
+    script: 'Latin',
+    words: [
+      'va', 'bir', 'bu', 'uçun', 'ham', 'bilan', 'yoki', 'bõlib', 'şu', 'õz', 'deb', 'xazina', 'keldi', 'hamda', 'kabi', 'har', 'biz', 'sen', 'u', 'siz', 'ular', 'men', 'davlat', 'yoş', 'katta', 'yangi', 'zamon', 'iş', 'ilm', 'fan', 'texnika', 'tezlik', 'xatosiz', 'matn', 'maşq', 'natija', 'yutuq', 'dunyo', 'hayot', 'vaqt', 'kun', 'yil', 'şahar', 'inson', 'dõst', 'oila', 'kitob', 'sõz', 'maktab', 'tarix', 'kelajak', 'orzu', 'maqsad', 'yõl', 'omad', 'baxt', 'bilim', 'taʼlim', 'tarbiya', 'madaniyat', 'tizim', 'dastur', 'sahifa', 'til', 'yozuv', 'tugma', 'şeʼriyat', 'adabiyot', 'mahorat', 'çiroyli', 'yoziş', 'fikr', 'yulduz', 'quyoj', 'osmon', 'zarafşon', 'toşkent', 'samarqand', 'buxoro', 'xiva', 'farğona', 'andijon', 'namangan', 'termiz', 'qarşi', 'guliston', 'jizzax', 'navoiy', 'falsafa', 'hikmat', 'aql', 'zakovat', 'ijod', 'muvaffaqiyat', 'nur', 'kuç', 'boş', 'yaxşi', 'yomon', 'uzoq', 'yaqin', 'tez', 'sekin', 'aniq', 'ravşan', 'tinç', 'ozod', 'obod', 'ziyo', 'orasta', 'şirin', 'dono', 'kamol', 'baho', 'qadam', 'çora', 'qalb', 'mehr', 'zar', 'sim', 'gavhar', 'dur', 'surat', 'siyrat', 'sado', 'navo', 'ohang', 'zarba', 'davo', 'suhbat', 'majlis', 'xuş', 'porloq', 'yoruğ', 'oçiq', 'erkin', 'teran', 'çuqur', 'keng', 'baland', 'yuksak', 'uluğ', 'şon', 'şuhrat', 'amaliy', 'sinov', 'harakat', 'şiddat', 'çaqqon', 'ildam', 'ilgari', 'oldinga', 'marra', 'vatan', 'el', 'yurt', 'diyor', 'quvvat', 'joy', 'kõrik', 'sezgi', 'musiqa', 'tovuş', 'qalam', 'qoğoz', 'çiziq', 'harf', 'soat', 'daqiqa', 'soniya', 'fasl', 'bahor', 'yoz', 'kuz', 'qiş', 'daryo', 'toğ', 'dala', 'boğ', 'çaman', 'gul', 'lola', 'daraxt', 'barg', 'şox', 'meva', 'hosil', 'dehqon', 'işçi', 'ustoz', 'şogird', 'olim', 'fozil', 'şoir', 'yozuvçi', 'qahramon', 'jasur', 'botir', 'mard', 'halol', 'pok', 'sodiq', 'vafodor', 'mehribon', 'saxiy', 'saxovat', 'himmat', 'odob', 'axloq', 'talab', 'javob', 'savol', 'yeçim', 'usul', 'uslub', 'qoida', 'qonun', 'adolat', 'haqiqat', 'işonç', 'umid', 'sabot', 'matonat', 'jasorat', 'himoya', 'xavfsiz', 'barqaror', 'mustahkam', 'mustaqil', 'saodat', 'şodlik', 'quvonç', 'kulgu', 'tabassum', 'orom', 'huzur', 'halovat', 'xotira', 'meros', 'anʼana', 'qadriyat', 'hurmat', 'izzat', 'iltifot', 'marhamat', 'yordam', 'hamkorlik', 'ittifoq', 'birlik', 'hamjihat', 'totuv', 'inoq', 'ahil', 'tadbirkor', 'taşabbus', 'izlaniş', 'kaşfiyot', 'intiliş', 'parvoz', 'qanot', 'çeksiz', 'koinot', 'falak', 'munavvar', 'ravnaq', 'taraqqiyot', 'kamolot', 'istiqbol', 'ğalaba', 'ğayrat', 'õqituvçi', 'õquvçi', 'õrganiş', 'qõşiq', 'oş', 'baxş', 'õrmon', 'toş'
+    ],
+    sentences: [
+      "Õzbekiston — kelajagi buyuk davlat, yoşlar esa uning mustahkam tayançi va kelajak bunyodkoridir.",
+      "Ilm oliş igna bilan quduq qaziş kabidir, lekin uning mevasi har qanday xazinadan kõra şirinroqdir.",
+      "Odamiylikning boş mezoni bilimi va odabidir. Bilimsiz kişi mevasiz daraxtga õxşaydi.",
+      "Moziyga qaytib iş kõriş xayrlikdir. Õtmişdan saboq olmagan xalqning kelajak yõli ravşan bõlmaydi.",
+      "Kitob — insoniyat erişgan eng buyuk mõʼjizalardan biridir, u qalbni nurga va zehnni bilimga tõldiradi.",
+      "Klaviaturada tez va xatosiz yoziş zamonaviy texnologiyalar asrida har bir inson uçun zarur mahoratdir.",
+      "Yolnoma Typing platformasida har kuni maşq qiling, yoziş tezligingiz va aniqligingizni oşirib boring.",
+      "Muvaffaqiyat tasodif emas, u tinimsiz mehnat, sabr-toqat va buyuk maqsadlar sari intiliş natijasidir.",
+      "Yangi õzbek alifbosi — Ç, Ş, Ğ, Õ harflari milliy tilimizning raqamli zamondagi qudratini yanada yuksaltiradi."
+    ],
+    quotes: [
+      { text: "Kuç — adolatdadir.", author: "Amir Temur" },
+      { text: "Odamiylikning boş mezoni bilimi va odabidir.", author: "Alişer Navoiy" },
+      { text: "Hunarni asrabon netgumdir oxir, Õzib olamğa yoygumdir oxir.", author: "Alişer Navoiy" },
+      { text: "Moziyga qaytib iş kõriş xayrlikdir.", author: "Abdulla Qodiriy" },
+      { text: "Tiriklik — harakatdadir, harakat esa ilm va maʼrifat bilan goʻzallashadi.", author: "Çõlpon" }
+    ],
+    stories: [
+      "Alişer Navoiy bolaligidanoq şeʼriyatga va ilmga çeksiz mehr qõygan edi. U oz vaqt içida minglab ğazal va dostonlarni yod oldi, uluğ ustozlardan saboq oldi. Keyinçalik õzining maşhur Xamsa asarini yaratib, turkiy tilning naqadar boy va jozibador ekanligini butun dunyoga isbotlab berdi. Yangi õzbek alifbosi esa ajdodlarimiz merosini zamonaviy axborot texnologiyalari bilan uygʻunlaştirişga xizmat qiladi."
+    ]
+  },
+  {
     code: 'uz-cyrl',
     name: 'Uzbek (Cyrillic)',
     nativeName: 'Ўзбекча',
