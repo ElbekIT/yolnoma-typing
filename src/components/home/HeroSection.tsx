@@ -1,7 +1,6 @@
 import React from 'react';
 import { ArrowRight, Globe, Shield, Zap, Languages, Sparkles } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
-import { HeroCharacter } from './HeroCharacter';
 
 interface HeroSectionProps {
   onStartTyping: () => void;
@@ -22,72 +21,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <section className="relative w-full max-w-7xl mx-auto pt-2 sm:pt-4 pb-6 sm:pb-8 px-2 sm:px-4 lg:px-6">
-      {/* Wide Grand Panoramic Hero Banner with Cyber Speedway Arena Backdrop */}
-      <div className="relative w-full rounded-3xl lg:rounded-4xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--sub-alt)]/25 to-[var(--bg-color)] border border-[var(--sub-alt)]/90 p-5 sm:p-7 lg:p-9 shadow-2xl overflow-hidden">
+      {/* Clean Panoramic Hero Banner without heavy 3D mascots or laggy art */}
+      <div className="relative w-full rounded-3xl lg:rounded-4xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--sub-alt)]/20 to-[var(--card-bg)] border border-[var(--sub-alt)]/70 p-6 sm:p-8 lg:p-10 shadow-lg">
         
-        {/* Arena Speedway & Mechanical Cyber Keyboard Graphic Backdrop Artwork */}
-        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-20">
-          <img
-            src="/hero_banner_bg.svg"
-            alt=""
-            className="w-full h-full object-cover object-center pointer-events-none"
-            draggable={false}
-          />
-        </div>
-
-        {/* 3-Column Symmetrical Layout: Left Mascot - Center Content - Right Mascot */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-center relative z-10">
+        {/* Center Content */}
+        <div className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-5 sm:space-y-6">
           
-          {/* 1. Left Mascot Character: Girl (Facing Inward, Non-clickable, Non-draggable) */}
-          <div className="hidden md:flex md:col-span-3 lg:col-span-3 items-end justify-center pointer-events-none select-none">
-            <HeroCharacter character="girl" side="left" />
-          </div>
-
-          {/* 2. Center Content: Headings, Action Buttons with Graphic Badges & Highlights */}
-          <div className="col-span-12 md:col-span-6 lg:col-span-6 flex flex-col items-center text-center space-y-5 sm:space-y-6">
-            
-            {/* Mobile Mascot Teaser (Visible only on small phones, non-clickable & non-draggable) */}
-            <div className="flex md:hidden items-center justify-center gap-3 pointer-events-none select-none mb-1">
-              <div className="w-12 h-16 pointer-events-none select-none">
-                <img
-                  src="/hero_mascot_girl.svg"
-                  alt="Mascot Qiz"
-                  className="w-full h-full object-contain pointer-events-none select-none filter drop-shadow-sm"
-                  draggable={false}
-                  onDragStart={(e) => e.preventDefault()}
-                />
-              </div>
-
-              {/* Kicker Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--sub-alt)]/85 backdrop-blur-md border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>
-                  {uiLanguage === 'ru'
-                    ? '⚡️ Платформа №1 в Узбекистане'
-                    : uiLanguage === 'en'
-                    ? '⚡️ #1 Platform in Uzbekistan'
-                    : "⚡️ O'zbekistonda #1 Tezkor Yozuv Platformasi"}
-                </span>
-              </div>
-
-              <div
-                className="w-12 h-16 pointer-events-none select-none"
-                style={{ transform: 'scaleX(-1)' }}
-              >
-                <img
-                  src="/hero_mascot.svg"
-                  alt="Mascot O'g'il"
-                  className="w-full h-full object-contain pointer-events-none select-none filter drop-shadow-sm"
-                  draggable={false}
-                  onDragStart={(e) => e.preventDefault()}
-                />
-              </div>
-            </div>
-
-            {/* Desktop Top Pill Kicker */}
-            <div className="hidden md:inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--sub-alt)]/85 backdrop-blur-md border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>
+          {/* Top Pill Kicker */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--sub-alt)]/85 backdrop-blur-md border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>
                 {uiLanguage === 'ru'
                   ? '⚡️ Платформа №1 скоростной печати в Узбекистане'
                   : uiLanguage === 'en'
@@ -309,14 +252,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
           </div>
-
-          {/* 3. Right Mascot Character: Boy (Facing Inward, Non-clickable, Non-draggable) */}
-          <div className="hidden md:flex md:col-span-3 lg:col-span-3 items-end justify-center pointer-events-none select-none">
-            <HeroCharacter character="boy" side="right" />
-          </div>
-
         </div>
-      </div>
     </section>
   );
 };
