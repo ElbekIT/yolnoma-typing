@@ -96,7 +96,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         }`}
       >
         {/* Monkeytype Style Minimal Floating Command Bar */}
-        <div className={`w-full bg-[var(--card-bg)]/90 backdrop-blur-md border border-[var(--sub-alt)] rounded-2xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar shadow-xs transition-colors`}>
+        <div className={`w-full bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 rounded-xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar transition-colors`}>
           {/* Modes List */}
           <div className="flex items-center gap-1 sm:gap-1.5">
             {modesList.map((m) => {
@@ -227,7 +227,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             title={`Lenta rejimi: ${tapeMode === 'off' ? 'Oʻchiq (klassik 3 qator)' : tapeMode === 'letter' ? 'Harfma-harf gorizontal oqim' : tapeMode === 'word' ? 'Soʻzma-soʻz gorizontal lenta' : 'Aylanuvchi futuristik baraban'}`}
           >
             {tapeMode === 'drum' ? (
-              <Disc className="w-3.5 h-3.5 animate-spin [animation-duration:8s]" />
+              <Disc className="w-3.5 h-3.5" />
             ) : (
               <Film className="w-3.5 h-3.5" />
             )}

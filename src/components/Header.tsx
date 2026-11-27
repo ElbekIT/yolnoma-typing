@@ -51,7 +51,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenAuth }) => {
+export const Header: React.FC<HeaderProps> = React.memo(({ activeTab, setActiveTab, onOpenAuth }) => {
   const { user, profile, logout, notifications, markNotificationRead, clearNotifications } = useAuth();
   const { language, setLanguage, theme, setTheme, headerIconSize } = useSettings();
   const { t, uiLanguage } = useI18n();
@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/80 backdrop-blur-xl border-b border-[var(--sub-alt)]/70 px-3 sm:px-4 py-2.5 safe-top transition-all duration-200 shadow-md">
+      <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)] border-b border-[var(--sub-alt)]/60 px-3 sm:px-4 py-2.5 safe-top">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Side: Brand Logo & Navigation Icons */}
           <div className="flex items-center gap-3 sm:gap-6">
@@ -264,7 +264,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                 title={currMenu.videoGuide || "Sayt Haqida Video"}
               >
                 <Video className={iconDimensions} />
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400" />
               </button>
 
               {/* Support Icon Link */}
@@ -281,7 +281,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
               {/* Share & Viral Invite Button */}
               <button
                 onClick={() => setShowShareModal(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer ml-1"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-xs font-bold transition-colors cursor-pointer ml-1"
                 title={uiLanguage === 'ru' ? 'Поделиться сайтом с друзьями' : uiLanguage === 'en' ? 'Share with friends' : "Saytni do'stlarga ulashish"}
               >
                 <Share2 className="w-3.5 h-3.5 text-amber-500" />
@@ -295,10 +295,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
             {/* Dedicated Support Button (Never overflows or wraps) */}
             <button
               onClick={() => setActiveTab('support')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'support'
-                  ? 'bg-rose-500 text-white border-rose-500 shadow-sm'
-                  : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border-rose-500/30'
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500'
               }`}
               title={currMenu.support || "Qo'llab-quvvatlash"}
             >
@@ -650,9 +650,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
                     <button
                       key={item.id}
                       onClick={() => handleSelectTab(item.id)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-150 group ${
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-colors group ${
                         isActive
-                          ? 'bg-[var(--main-color)] text-white shadow-lg shadow-[var(--main-color)]/25 scale-[1.01]'
+                          ? 'bg-[var(--main-color)] text-white'
                           : 'text-[var(--text-color)] hover:bg-[var(--sub-alt)]/70 hover:text-[var(--main-color)]'
                       }`}
                     >
@@ -789,5 +789,5 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenA
       />
     </>
   );
-};
+});
 

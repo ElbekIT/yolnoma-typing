@@ -110,8 +110,8 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
   const currentPlan = PLANS.find(p => p.id === selectedPlan) || PLANS[1];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/40 p-6 sm:p-8 shadow-2xl text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/40 p-6 sm:p-8 shadow-sm text-center">
         
         {onClose && (
           <button
@@ -124,7 +124,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
         )}
 
         {/* Crown Icon with glowing shadow */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20 mb-4 animate-pulse">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 flex items-center justify-center mx-auto shadow-lg mb-4 animate-pulse">
           <Crown className="w-9 h-9 stroke-[2.5]" />
         </div>
 
@@ -154,7 +154,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
                 onClick={() => setSelectedPlan(plan.id)}
                 className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-amber-500/15 border-amber-400 ring-2 ring-amber-400/40 shadow-xl scale-[1.02]'
+                    ? 'bg-amber-500/15 border-amber-400 ring-2 ring-amber-400/40 shadow-sm scale-[1.02]'
                     : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300'
                 }`}
               >
@@ -211,7 +211,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
           <button
             onClick={handlePayWithClick}
             disabled={isRedirecting}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:brightness-110 active:scale-95 text-white font-black text-sm sm:text-base transition-all shadow-xl shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:brightness-110 active:scale-95 text-white font-black text-sm sm:text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
           >
             <ShieldCheck className="w-5 h-5 text-white" />
             <span>Click orqali to'lash ({currentPlan.priceLabel})</span>

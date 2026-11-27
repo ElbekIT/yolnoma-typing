@@ -60,7 +60,7 @@ const CharItem = memo<CharItemProps>(
       <span
         ref={(el) => onRef(el, globalIndex)}
         className={charClass}
-        style={{ transform: 'translateZ(0)', animationDuration: 'var(--typing-anim-duration, 260ms)' }}
+        style={{ animationDuration: 'var(--typing-anim-duration, 260ms)' }}
       >
         {char}
       </span>
@@ -123,7 +123,7 @@ const SpaceItem = memo<SpaceItemProps>(
       <span
         ref={(el) => onRef(el, spaceIdx)}
         className={spaceClass}
-        style={{ transform: 'translateZ(0)', animationDuration: 'var(--typing-anim-duration, 260ms)' }}
+        style={{ animationDuration: 'var(--typing-anim-duration, 260ms)' }}
       >
         {'\u00A0'}
       </span>
@@ -167,7 +167,6 @@ const WordItem = memo<WordItemProps>(
       <div
         ref={(el) => onWordRef(el, idx)}
         className={`inline-block whitespace-nowrap max-w-full ${isTape ? 'mr-0 shrink-0' : 'my-0.5'}`}
-        style={{ transform: 'translateZ(0)' }}
       >
         {wordObj.chars.map(({ char, globalIndex }) => {
           const typedChar = typedInput[globalIndex];
@@ -491,19 +490,28 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
 
   const currentTypedLen = typedInput.length;
 
-  // Active word index calculation
+  // Active word index calculation via O(log N) binary search
   const activeWordIdx = useMemo(() => {
-    for (let i = 0; i < parsedWords.length; i++) {
-      const wordObj = parsedWords[i];
+    const len = parsedWords.length;
+    if (len === 0) return 0;
+    let lo = 0;
+    let hi = len - 1;
+    let ans = len - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const wordObj = parsedWords[mid];
       const wordEndIndex =
         wordObj.spaceGlobalIndex !== null
           ? wordObj.spaceGlobalIndex
           : wordObj.chars[wordObj.chars.length - 1]?.globalIndex ?? 0;
       if (currentTypedLen <= wordEndIndex) {
-        return i;
+        ans = mid;
+        hi = mid - 1;
+      } else {
+        lo = mid + 1;
       }
     }
-    return Math.max(0, parsedWords.length - 1);
+    return ans;
   }, [parsedWords, currentTypedLen]);
 
   const [measuredLineHeight, setMeasuredLineHeight] = useState<number>(36);
@@ -841,15 +849,13 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
             </div>
           )}
 
-          {/* Scroll Viewport with Hardware Acceleration */}
+          {/* Scroll Viewport */}
           <div
             ref={tapeViewportRef}
             key={`${targetText.slice(0, 15)}-${tapeMode}`}
             className={`relative w-full overflow-hidden ${isTape ? 'flex items-center' : ''}`}
             style={{
               height: `${containerHeight}px`,
-              transform: 'translateZ(0)',
-              willChange: 'transform',
               ...(isTape
                 ? {
                     WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 3%, rgba(0,0,0,0.85) 7%, black 14%, black 86%, rgba(0,0,0,0.85) 93%, rgba(0,0,0,0.15) 97%, transparent 100%)',
@@ -861,7 +867,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
             {/* Tape Mode Focus Guide: Subtle precision indicator at anchor position */}
             {isTape && (
               <div
-                className="pointer-events-none absolute top-0 bottom-0 z-20 flex flex-col justify-between items-center transition-opacity duration-300"
+                className="pointer-events-none absolute top-0 bottom-0 z-20 flex flex-col justify-between items-center transition-opacity duration-200"
                 style={{
                   left: `${anchorX > 0 ? anchorX : (tapeViewportRef.current?.clientWidth ? Math.round(tapeViewportRef.current.clientWidth * 0.35) : 320)}px`,
                   width: '2px',
@@ -869,9 +875,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   opacity: isFocused && !isTestFinished ? 0.35 : 0.15
                 }}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-[var(--main-color)] shadow-[0_0_8px_var(--main-color)]" />
-                <div className="w-[1px] h-full bg-gradient-to-b from-[var(--main-color)]/30 via-transparent to-[var(--main-color)]/30" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[var(--main-color)] shadow-[0_0_8px_var(--main-color)]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--main-color)]" />
+                <div className="w-[1px] h-full bg-[var(--main-color)]/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--main-color)]" />
               </div>
             )}
 
@@ -967,11 +973,11 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="group flex items-center justify-center p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-all cursor-pointer border border-transparent hover:border-[var(--sub-color)]/25 active:scale-95 shadow-sm"
+          className="group flex items-center justify-center p-3 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/80 transition-colors cursor-pointer"
           title="Qayta boshlash (Tab yoki Tab + Enter)"
           aria-label="Restart Test"
         >
-          <RefreshCw className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180 group-active:rotate-360 text-[var(--sub-color)] group-hover:text-[var(--main-color)]" />
+          <RefreshCw className="w-4 h-4 text-[var(--sub-color)] group-hover:text-[var(--main-color)]" />
         </button>
 
         <div className="hidden sm:flex items-center gap-1.5 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-70">

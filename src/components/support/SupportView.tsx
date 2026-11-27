@@ -63,11 +63,11 @@ export const SupportView: React.FC<SupportViewProps> = ({
       </div>
 
       {/* Main Pitch Card: Inspiring & Powerful Call-to-Action */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--card-bg)] to-[var(--sub-alt)]/30 border border-[var(--sub-alt)] p-5 sm:p-8 lg:p-10 shadow-xl space-y-6">
+      <div className="relative overflow-hidden rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 p-5 sm:p-8 lg:p-10 space-y-6">
         
         {/* Header Title & Pitch */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/20 mb-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-500 text-white mb-1">
             <Heart className="w-6 h-6 sm:w-7 sm:h-7 fill-white" />
           </div>
 
@@ -89,10 +89,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
 
         {/* Banking Card UI (Responsive, Never Overflowing) */}
         <div className="max-w-md w-full mx-auto">
-          <div className="relative w-full rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-neutral-900 to-slate-950 text-white p-5 sm:p-7 border border-slate-700/80 shadow-2xl overflow-hidden select-none">
-            {/* Subtle card glow & aesthetic lines */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-rose-500/20 to-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative w-full rounded-2xl bg-slate-900 text-white p-5 sm:p-7 border border-slate-700/70 overflow-hidden select-none">
 
             {/* Top row: Chip & Network */}
             <div className="relative z-10 flex items-center justify-between mb-5 sm:mb-6">

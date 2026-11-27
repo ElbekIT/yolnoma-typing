@@ -195,9 +195,9 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
           </div>
 
           {/* Daily Streak Highlight Card */}
-          <div className="flex items-center gap-4 bg-[var(--card-bg)]/80 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--sub-alt)] shadow-md shrink-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20 shrink-0">
-              <Flame className="w-8 h-8 fill-white animate-bounce" />
+          <div className="flex items-center gap-4 bg-[var(--card-bg)]/80 p-4 sm:p-5 rounded-2xl border border-[var(--sub-alt)] shadow-md shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white shadow-lg shrink-0">
+              <Flame className="w-8 h-8 fill-white" />
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
@@ -241,7 +241,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
               q.isClaimed
                 ? 'border-emerald-500/40 opacity-90'
                 : q.isCompleted
-                ? 'border-amber-500/60 shadow-lg shadow-amber-500/5'
+                ? 'border-amber-500/60 shadow-lg'
                 : 'border-[var(--sub-alt)] hover:border-[var(--main-color)]/60'
             }`}
           >

@@ -308,11 +308,11 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
   return (
     <div
       id="modal-admin-permissions-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 animate-in fade-in"
     >
       <div
         id="modal-admin-permissions-content"
-        className="max-w-2xl w-full bg-[#0d1222] border-2 border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl shadow-cyan-950/50 relative text-slate-100 max-h-[92vh] flex flex-col"
+        className="max-w-2xl w-full bg-[#0d1222] border-2 border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-sm relative text-slate-100 max-h-[92vh] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
@@ -501,7 +501,7 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
                   type="submit"
                   id="btn-save-admin-permissions"
                   disabled={isSubmitting}
-                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
                   <span>{isSubmitting ? 'Saqlanmoqda...' : user.role === 'admin' ? 'Ruxsatlarni Saqlash' : 'Admin Qilish'}</span>

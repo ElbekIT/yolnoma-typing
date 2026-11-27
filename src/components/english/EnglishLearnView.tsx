@@ -575,7 +575,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
           ============================================================ */}
       <div 
         onClick={focusInput}
-        className={`relative rounded-3xl bg-[#0e121d] border border-slate-800/90 shadow-2xl p-5 sm:p-8 md:p-10 min-h-[480px] flex flex-col justify-between overflow-hidden backdrop-blur-xl transition-all duration-300 ${
+        className={`relative rounded-3xl bg-[#0e121d] border border-slate-800/90 shadow-sm p-5 sm:p-8 md:p-10 min-h-[480px] flex flex-col justify-between overflow-hidden transition-all duration-300 ${
           isShake ? 'animate-shake' : ''
         }`}
         style={{
@@ -584,13 +584,11 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
             : '0 20px 40px -15px rgba(0, 0, 0, 0.7)'
         }}
       >
-        <div className="absolute -top-32 -left-32 w-72 h-72 rounded-full bg-amber-500/5 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-72 h-72 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
 
         {/* TOP TOAST NOTIFICATION (MATCHING JULEBU.AI 不在答案页) */}
         {errorMessage && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/95 border border-rose-500/50 text-rose-300 text-xs font-medium shadow-2xl shadow-rose-950/80 backdrop-blur-md">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/95 border border-rose-500/50 text-rose-300 text-xs font-medium shadow-sm">
               <Info className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -610,7 +608,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 
             <div className="flex items-center gap-2">
               {floatingXp && (
-                <span className="text-xs font-mono font-black text-emerald-400 animate-bounce">
+                <span className="text-xs font-mono font-black text-emerald-400">
                   +{floatingXp} XP
                 </span>
               )}
@@ -641,7 +639,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
                     e.stopPropagation();
                     speakEnglish(currentItem.english);
                   }}
-                  className="group px-6 sm:px-8 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/70 hover:border-sky-500/50 shadow-xl cursor-pointer transition-all hover:scale-[1.02] flex flex-col items-center justify-center max-w-lg"
+                  className="group px-6 sm:px-8 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/70 hover:border-sky-500/50 shadow-sm cursor-pointer transition-all hover:scale-[1.02] flex flex-col items-center justify-center max-w-lg"
                   title="Talaffuzni eshitish uchun bosing"
                 >
                   <div className="flex items-center gap-2">
@@ -755,7 +753,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
             }}
             className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors cursor-pointer py-1.5 px-3 rounded-xl hover:bg-slate-800/60"
           >
-            <Volume2 className={`w-4 h-4 text-sky-400 ${isSpeaking ? 'animate-bounce' : ''}`} />
+            <Volume2 className={`w-4 h-4 text-sky-400 ${isSpeaking ? '' : ''}`} />
             <span>Talaffuzni eshitish</span>
           </button>
 
@@ -812,7 +810,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       </div>
 
       {/* COURSE NAVIGATOR: 7 UNITS & 35 LESSONS PICKER */}
-      <div className="rounded-2xl bg-[#0e121d] border border-slate-800/80 p-4 sm:p-6 space-y-4 shadow-xl">
+      <div className="rounded-2xl bg-[#0e121d] border border-slate-800/80 p-4 sm:p-6 space-y-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-amber-400" />
@@ -893,10 +891,10 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 
       {/* LESSON COMPLETE CONGRATS MODAL */}
       {showCompleteModal && lastFinishedStats && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl bg-gradient-to-b from-slate-900 to-[#0e1628] border border-amber-500/40 p-6 sm:p-8 shadow-2xl text-center space-y-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl bg-gradient-to-b from-slate-900 to-[#0e1628] border border-amber-500/40 p-6 sm:p-8 shadow-sm text-center space-y-6 relative">
             
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center mx-auto shadow-lg">
               <Check className="w-9 h-9 stroke-[3]" />
             </div>
 

@@ -67,21 +67,16 @@ export const FeaturesSection: React.FC = () => {
           return (
             <div
               key={idx}
-              className={`group relative rounded-2xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]/80 hover:border-[var(--main-color)]/50 p-6 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-1 flex flex-col justify-between overflow-hidden`}
+              className="group rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 hover:border-[var(--main-color)]/45 p-6 transition-colors flex flex-col justify-between"
             >
-              {/* Top ambient hover glow */}
-              <div
-                className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${feat.accent} rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}
-              />
-
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div
-                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feat.accent} border border-white/10 flex items-center justify-center ${feat.iconColor} shadow-inner group-hover:scale-105 transition-transform`}
+                    className={`w-11 h-11 rounded-xl bg-[var(--sub-alt)]/70 flex items-center justify-center ${feat.iconColor}`}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[10px] font-mono text-[var(--sub-color)] font-semibold tracking-wide">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/60 text-[10px] font-mono text-[var(--sub-color)] font-semibold tracking-wide">
                     {feat.badge}
                   </span>
                 </div>

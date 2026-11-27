@@ -245,7 +245,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             onClick={() => setActiveTab('profile')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'profile'
-                ? 'bg-[var(--main-color)] text-white shadow-md shadow-[var(--main-color)]/20'
+                ? 'bg-[var(--main-color)] text-white shadow-md'
                 : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
             }`}
           >
@@ -257,7 +257,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
             onClick={() => setActiveTab('notifications')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer relative ${
               activeTab === 'notifications'
-                ? 'bg-[var(--main-color)] text-white shadow-md shadow-[var(--main-color)]/20'
+                ? 'bg-[var(--main-color)] text-white shadow-md'
                 : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
             }`}
           >
@@ -275,7 +275,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
               onClick={() => setActiveTab('admin')}
               className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'admin'
-                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
+                  ? 'bg-amber-500 text-black shadow-md'
                   : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)]'
               }`}
             >
@@ -729,8 +729,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
 
       {/* Edit Profile Modal */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-2xl text-[var(--text-color)] my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm text-[var(--text-color)] my-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">Edit Profile Settings</h3>
               <button onClick={() => setIsEditing(false)} className="text-[var(--sub-color)] hover:text-[var(--text-color)]">
@@ -901,8 +901,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onOpenAuth, onSavedHom
 
       {/* Double Confirmation Account Deletion Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md bg-[var(--card-bg)] border border-rose-500/30 rounded-3xl p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-md bg-[var(--card-bg)] border border-rose-500/30 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-3 text-rose-500">
               <AlertTriangle className="w-8 h-8 shrink-0" />
               <div>

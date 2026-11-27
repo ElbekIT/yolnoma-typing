@@ -1190,9 +1190,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
   return (
     <div className="w-full max-w-5xl mx-auto space-y-4 animate-in fade-in duration-200">
       {/* Sleek Battle Header */}
-      <div className="bg-gradient-to-r from-[#0b1324] via-[#111c38] to-[#0b1324] border border-cyan-500/30 rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
+      <div className="bg-gradient-to-r from-[#0b1324] via-[#111c38] to-[#0b1324] border border-cyan-500/30 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-amber-500 flex items-center justify-center shadow-lg shadow-cyan-500/30 shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-amber-500 flex items-center justify-center shadow-lg shrink-0">
             <Swords className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -1278,7 +1278,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                       onClick={() => setSelectedDuration(sec)}
                       className={`py-2.5 px-2 rounded-2xl font-mono font-bold text-xs transition-all border text-center cursor-pointer ${
                         selectedDuration === sec
-                          ? 'bg-amber-500 text-black border-amber-400 shadow-md shadow-amber-500/30 scale-[1.02]'
+                          ? 'bg-amber-500 text-black border-amber-400 shadow-md scale-[1.02]'
                           : 'bg-[var(--bg-color)] border-[var(--sub-alt)] text-[var(--text-color)] hover:border-amber-400/50'
                       }`}
                     >
@@ -1308,7 +1308,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                       onClick={() => setSelectedLanguage(lang.id as any)}
                       className={`py-2 px-1.5 rounded-2xl font-sans font-bold text-[11px] transition-all border text-center truncate cursor-pointer ${
                         selectedLanguage === lang.id
-                          ? 'bg-cyan-500 text-black border-cyan-400 shadow-md shadow-cyan-500/30 scale-[1.02]'
+                          ? 'bg-cyan-500 text-black border-cyan-400 shadow-md scale-[1.02]'
                           : 'bg-[var(--bg-color)] border-[var(--sub-alt)] text-[var(--text-color)] hover:border-cyan-400/50'
                       }`}
                     >
@@ -1368,7 +1368,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
               <button
                 onClick={() => handleStartBotMatch(botDifficulty)}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-600/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 <Bot className="w-4 h-4" />
                 <span>ROBOT BILAN JANGNI BOSHLASH 🤖</span>
@@ -1394,7 +1394,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
               <button
                 onClick={handleCreateRoom}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-600/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Zap className="w-4 h-4" />
                 <span>XONA YARATISH ✨</span>
@@ -1509,7 +1509,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
       {/* 2. READY SCREEN / XONA KUTISH LOBBISI */}
       {/* ======================================================== */}
       {gameState === 'ready_screen' && (
-        <div className="bg-[var(--card-bg)] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl text-center">
+        <div className="bg-[var(--card-bg)] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm text-center">
           <div className="space-y-2">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-1 shadow-md">
               <Share2 className="w-6 h-6" />
@@ -1605,7 +1605,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
             {/* VS Badge */}
             <div className="text-center">
-              <span className="px-3.5 py-1.5 rounded-2xl bg-amber-500 text-black font-black font-mono text-xs shadow-lg shadow-amber-500/30">
+              <span className="px-3.5 py-1.5 rounded-2xl bg-amber-500 text-black font-black font-mono text-xs shadow-lg">
                 VS
               </span>
             </div>
@@ -1648,7 +1648,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
             {isHost ? (
               <button
                 onClick={handleTriggerStartMatch}
-                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-cyan-500/25 active:scale-95 flex items-center gap-2 mx-auto cursor-pointer"
+                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider transition-all shadow-sm active:scale-95 flex items-center gap-2 mx-auto cursor-pointer"
               >
                 <Play className="w-5 h-5 fill-white" />
                 <span>JANGNI BOSHLASH ⚔️</span>
@@ -1685,7 +1685,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           {/* 3-2-1 Countdown Overlay */}
           {gameState === 'countdown' && (
-            <div className="bg-slate-900/95 border-2 border-cyan-500/60 rounded-3xl p-8 text-center text-white space-y-2 animate-in zoom-in-95 shadow-2xl">
+            <div className="bg-slate-900/95 border-2 border-cyan-500/60 rounded-3xl p-8 text-center text-white space-y-2 animate-in zoom-in-95 shadow-sm">
               <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
                 BATTLE BOSHLANMOQDA
               </span>
@@ -1708,7 +1708,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           {/* Racing Typing Box */}
           {gameState === 'racing' && (
-            <div className="bg-[var(--card-bg)] border-2 border-cyan-500/50 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl animate-in fade-in">
+            <div className="bg-[var(--card-bg)] border-2 border-cyan-500/50 rounded-3xl p-5 sm:p-6 space-y-4 shadow-sm animate-in fade-in">
               {/* Header Info: Timer & Text details */}
               <div className="flex items-center justify-between text-xs font-mono border-b border-[var(--sub-alt)] pb-2.5">
                 <span className="font-bold text-cyan-400 flex items-center gap-1.5">
@@ -1785,16 +1785,16 @@ export const BattleView: React.FC<BattleViewProps> = ({
             const isWin = winnerId === currentUid;
             return (
               <div
-                className={`border-2 rounded-3xl p-6 sm:p-8 text-center text-white space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 ${
+                className={`border-2 rounded-3xl p-6 sm:p-8 text-center text-white space-y-5 shadow-sm animate-in zoom-in-95 duration-200 ${
                   isWin
-                    ? 'bg-gradient-to-br from-[#0a1628] via-[#0f213d] to-[#1e1338] border-emerald-400/90 shadow-emerald-500/25'
-                    : 'bg-gradient-to-br from-[#1c0e15] via-[#29131d] to-[#161224] border-rose-500/80 shadow-rose-500/25'
+                    ? 'bg-gradient-to-br from-[#0a1628] via-[#0f213d] to-[#1e1338] border-emerald-400/90'
+                    : 'bg-gradient-to-br from-[#1c0e15] via-[#29131d] to-[#161224] border-rose-500/80'
                 }`}
               >
                 <div
                   className={`inline-flex items-center justify-center w-16 h-16 rounded-3xl border mb-1 shadow-lg ${
                     isWin
-                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 animate-bounce'
+                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
                       : 'bg-rose-500/20 border-rose-400 text-rose-400'
                   }`}
                 >
@@ -1861,7 +1861,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     onClick={handleRematch}
-                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/25 active:scale-95 flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center gap-2 cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>⚡ QAYTA DUEL BOSHLASH</span>

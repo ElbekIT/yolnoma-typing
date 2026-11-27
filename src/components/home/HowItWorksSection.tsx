@@ -41,16 +41,7 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
 
   return (
     <section className="w-full max-w-7xl mx-auto py-12 sm:py-16 px-3 sm:px-6">
-      <div className="rounded-3xl bg-gradient-to-b from-[var(--card-bg)] to-[var(--bg-color)] border border-[var(--sub-alt)] p-6 sm:p-10 lg:p-12 relative overflow-hidden shadow-xl">
-        {/* Background Subtle Gradient Blurs */}
-        <div
-          className="absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl opacity-15 pointer-events-none"
-          style={{ backgroundColor: 'var(--main-color)' }}
-        />
-        <div
-          className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-15 pointer-events-none"
-          style={{ backgroundColor: '#10b981' }}
-        />
+      <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 p-6 sm:p-10 lg:p-12">
 
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
@@ -78,9 +69,9 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
                 <div>
                   <div className="flex items-center justify-between mb-5">
                     <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.accent} border ${step.borderColor} flex items-center justify-center ${step.iconColor} group-hover:scale-110 transition-transform`}
+                      className={`w-11 h-11 rounded-xl bg-[var(--sub-alt)]/70 flex items-center justify-center ${step.iconColor}`}
                     >
-                      <Icon className="w-6 h-6" />
+                      <Icon className="w-5 h-5" />
                     </div>
                     <span className="text-3xl font-black font-mono text-[var(--main-color)]/30 group-hover:text-[var(--main-color)]/60 transition-colors">
                       {step.num}
@@ -110,9 +101,9 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onStartTyp
         <div className="mt-10 sm:mt-12 text-center">
           <button
             onClick={onStartTyping}
-            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-[var(--main-color)] hover:brightness-110 text-[var(--bg-color,#090d16)] font-bold text-base transition-all duration-200 shadow-lg shadow-[var(--main-color)]/25 hover:shadow-[var(--main-color)]/40 active:scale-95 cursor-pointer group"
+            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-[var(--main-color)] hover:brightness-110 text-[var(--bg-color,#090d16)] font-bold text-base transition-colors cursor-pointer"
           >
-            <Play className="w-5 h-5 fill-current transition-transform group-hover:scale-110" />
+            <Play className="w-5 h-5 fill-current" />
             <span>{t('tryNowBtn')}</span>
           </button>
         </div>

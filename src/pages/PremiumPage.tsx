@@ -164,13 +164,11 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
       {/* ============================================================
           TOP HERO BANNER
           ============================================================ */}
-      <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/30 p-8 sm:p-12 text-center shadow-2xl overflow-hidden backdrop-blur-xl">
+      <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/30 p-8 sm:p-12 text-center shadow-sm overflow-hidden">
         {/* Glow ambient spots */}
-        <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
 
         {/* Crown Badge */}
-        <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 shadow-xl shadow-amber-500/25 mb-6 animate-pulse">
+        <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 shadow-sm mb-6 animate-pulse">
           <Crown className="w-10 h-10 stroke-[2.5]" />
         </div>
 
@@ -239,7 +237,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
                 onClick={() => setSelectedPlan(plan.id)}
                 className={`relative rounded-3xl p-6 sm:p-8 border transition-all duration-300 flex flex-col justify-between cursor-pointer ${
                   plan.popular
-                    ? 'bg-gradient-to-b from-slate-900 via-[#101930] to-slate-950 border-amber-400/80 shadow-2xl shadow-amber-500/10 md:-translate-y-2 ring-1 ring-amber-400/50'
+                    ? 'bg-gradient-to-b from-slate-900 via-[#101930] to-slate-950 border-amber-400/80 shadow-sm md:-translate-y-2 ring-1 ring-amber-400/50'
                     : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90'
                 }`}
               >
@@ -289,7 +287,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
                     }}
                     className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 ${
                       plan.popular
-                        ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 shadow-emerald-500/25'
+                        ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950'
                         : 'bg-slate-800 hover:bg-slate-700 text-white'
                     }`}
                   >
@@ -312,7 +310,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
       {/* ============================================================
           COMPARISON TABLE: BEPUL VS PREMIUM
           ============================================================ */}
-      <div className="rounded-3xl bg-[#0e121d] border border-slate-800/90 p-6 sm:p-8 space-y-6 shadow-xl">
+      <div className="rounded-3xl bg-[#0e121d] border border-slate-800/90 p-6 sm:p-8 space-y-6 shadow-sm">
         <div className="text-center space-y-1">
           <h3 className="text-xl sm:text-2xl font-black text-white">
             Bepul va Premium Imkoniyatlar Farqi

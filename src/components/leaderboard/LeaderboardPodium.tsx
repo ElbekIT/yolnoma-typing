@@ -104,8 +104,8 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             onClick={() => onSelectUser(second)}
             className={`order-2 md:order-1 relative p-5 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden bg-[var(--card-bg)] ${
               currentUserId === second.uid
-                ? 'border-slate-300 shadow-xl ring-2 ring-slate-400/40'
-                : 'border-[var(--sub-alt)] hover:border-slate-300 hover:shadow-xl hover:-translate-y-1'
+                ? 'border-slate-300 shadow-sm ring-2 ring-slate-400/40'
+                : 'border-[var(--sub-alt)] hover:border-slate-300 hover:shadow-sm hover:-translate-y-1'
             }`}
           >
             {/* Top ambient glare */}
@@ -198,7 +198,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
         {first ? (
           <div
             onClick={(e) => triggerChampionConfetti(e, first)}
-            className={`order-1 md:order-2 relative p-6 sm:p-7 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden shadow-2xl bg-[var(--card-bg)] ${
+            className={`order-1 md:order-2 relative p-6 sm:p-7 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden shadow-sm bg-[var(--card-bg)] ${
               currentUserId === first.uid
                 ? 'border-[var(--main-color)] shadow-[0_0_30px_rgba(245,158,11,0.25)] ring-2 ring-[var(--main-color)]/60'
                 : 'border-[var(--main-color)]/80 hover:border-[var(--main-color)] hover:shadow-[0_0_40px_rgba(245,158,11,0.2)] hover:-translate-y-2'
@@ -208,14 +208,14 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--main-color)]/20 via-[var(--main-color)]/5 to-transparent pointer-events-none" />
 
             {/* Glowing Top Floating Crown Banner */}
-            <div className="relative -mt-2 mb-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xs font-black tracking-wider uppercase flex items-center gap-2 shadow-lg shadow-amber-500/20">
-              <Crown className="w-4 h-4 fill-slate-950 animate-bounce" />
+            <div className="relative -mt-2 mb-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xs font-black tracking-wider uppercase flex items-center gap-2 shadow-lg">
+              <Crown className="w-4 h-4 fill-slate-950" />
               <span>{t('podiumRank1')} • CHEMPION</span>
             </div>
 
             {/* Champion Avatar with Radiant Halo Ring */}
             <div className="relative mb-3 mt-1">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-amber-200 to-yellow-400 shadow-xl shadow-amber-500/20">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-amber-200 to-yellow-400 shadow-sm">
                 <img
                   src={first.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${first.uid}`}
                   alt={first.displayName}
@@ -283,8 +283,8 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             onClick={() => onSelectUser(third)}
             className={`order-3 relative p-5 rounded-3xl border transition-all duration-300 cursor-pointer group flex flex-col items-center text-center overflow-hidden bg-[var(--card-bg)] ${
               currentUserId === third.uid
-                ? 'border-amber-600 shadow-xl ring-2 ring-amber-600/40'
-                : 'border-[var(--sub-alt)] hover:border-amber-600 hover:shadow-xl hover:-translate-y-1'
+                ? 'border-amber-600 shadow-sm ring-2 ring-amber-600/40'
+                : 'border-[var(--sub-alt)] hover:border-amber-600 hover:shadow-sm hover:-translate-y-1'
             }`}
           >
             {/* Top ambient glare */}

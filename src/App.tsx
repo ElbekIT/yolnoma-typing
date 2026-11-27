@@ -349,31 +349,21 @@ function MainAppContent() {
     } catch {}
   }, []);
 
-  // Fast 3-second poller for Maintenance Mode propagation to all clients worldwide
+  // One-time initial maintenance status check (RTDB onValue handles real-time updates)
   useEffect(() => {
     let isMounted = true;
-    const pollMaintenance = async () => {
-      try {
-        const res = await fetch('/api/maintenance/status', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted && data && typeof data.active === 'boolean') {
-            setMaintenanceInfo((prev) => {
-              if (prev.active !== data.active || prev.updatedAt !== data.updatedAt) {
-                return data;
-              }
-              return prev;
-            });
-          }
+    fetch('/api/maintenance/status', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && typeof data.active === 'boolean') {
+          setMaintenanceInfo((prev) =>
+            prev.active !== data.active || prev.updatedAt !== data.updatedAt ? data : prev
+          );
         }
-      } catch {}
-    };
-
-    pollMaintenance();
-    const maintInterval = setInterval(pollMaintenance, 25000);
+      })
+      .catch(() => {});
     return () => {
       isMounted = false;
-      clearInterval(maintInterval);
     };
   }, []);
 
@@ -448,7 +438,7 @@ function MainAppContent() {
     } catch {}
   }, [user?.uid, user?.email, user?.displayName, profile?.isBanned, profile?.blockReason, profile?.displayName, profile?.username]);
 
-  // Fast 3-second poller for live account ban / kick from server-side database
+  // Lightweight poller for server-side ban status (skips when tab is hidden)
   useEffect(() => {
     if (!user?.uid && !user?.email) return;
 
@@ -461,6 +451,7 @@ function MainAppContent() {
 
     let isMounted = true;
     const checkUserBanStatus = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const query = new URLSearchParams();
         if (user.uid) query.set('uid', user.uid);
@@ -470,24 +461,22 @@ function MainAppContent() {
         const res = await fetch(`/api/user/ban-status?${query.toString()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          if (isMounted) {
-            if (data?.isBanned) {
-              setUserBanInfo({
-                banned: true,
-                reason: data.banInfo?.reason || 'Administrator tomonidan akkaunt bloklandi',
-                bannedAt: data.banInfo?.bannedAt || Date.now(),
-                displayName: profile?.displayName || user.displayName || '',
-                username: profile?.username || '',
-                email: user.email || ''
-              });
-            }
+          if (isMounted && data?.isBanned) {
+            setUserBanInfo({
+              banned: true,
+              reason: data.banInfo?.reason || 'Administrator tomonidan akkaunt bloklandi',
+              bannedAt: data.banInfo?.bannedAt || Date.now(),
+              displayName: profile?.displayName || user.displayName || '',
+              username: profile?.username || '',
+              email: user.email || ''
+            });
           }
         }
       } catch {}
     };
 
     checkUserBanStatus();
-    const banInterval = setInterval(checkUserBanStatus, 25000);
+    const banInterval = setInterval(checkUserBanStatus, 60000);
     return () => {
       isMounted = false;
       clearInterval(banInterval);
@@ -498,9 +487,10 @@ function MainAppContent() {
   useEffect(() => {
     let isMounted = true;
     const verifySecurity = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await fetchIpSecurityStatus();
-        if (!isMounted) return;
+        if (!isMounted || !res) return;
 
         if (res.banned) {
           setIpBanInfo({
@@ -532,7 +522,7 @@ function MainAppContent() {
     };
 
     verifySecurity();
-    const interval = setInterval(verifySecurity, 30000);
+    const interval = setInterval(verifySecurity, 60000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -1034,30 +1024,39 @@ function MainAppContent() {
     }, 100);
   }, [handleThematicAction, initTestText]);
 
-  // DevTools Security Gate (Runs before loading, login, and application screens)
+  // Redirect to typing test if already logged in and on login tab
+  useEffect(() => {
+    if (user && activeTab === 'login') {
+      setActiveTab('typing');
+    }
+  }, [user, activeTab]);
+
+  // Stable callbacks for child components
+  const handleOpenLogin = useCallback(() => setActiveTab('login'), []);
+  const handleGoHome = useCallback(() => setActiveTab('home'), []);
+  const handleGoTyping = useCallback(() => setActiveTab('typing'), []);
+  const handleGoBattle = useCallback(() => setActiveTab('battle'), []);
+  const handleGoLessons = useCallback(() => setActiveTab('lessons'), []);
+  const handleGoEnglish = useCallback(() => setActiveTab('english'), []);
+  const handleGoLeaderboard = useCallback(() => setActiveTab('leaderboard'), []);
+  const handleGoSupport = useCallback(() => setActiveTab('support'), []);
+  const handleGoVideo = useCallback(() => setActiveTab('video'), []);
+  const handleGoLanguages = useCallback(() => setActiveTab('languages'), []);
+  const handleGoCertificate = useCallback(() => setActiveTab('certificate'), []);
+  const handleOpenAbout = useCallback(() => {
+    setAboutModalTab('faq');
+    setIsAboutOpen(true);
+  }, []);
+  const handleOpenUpdates = useCallback(() => {
+    setAboutModalTab('updates');
+    setIsAboutOpen(true);
+  }, []);
+  const handleOpenOwner = useCallback(() => setActiveTab('owner'), []);
+  const handleOpenAdmin = useCallback(() => setActiveTab('admin'), []);
+
+  // DevTools Security Gate
   if (isDevToolsBlocked) {
     return <DevToolsBlockedScreen />;
-  }
-
-  // Loading state gate (AFTER ALL HOOKS)
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center space-y-3">
-        <img
-          src="/yolnoma_icon.svg"
-          alt="Yolnoma"
-          className="w-12 h-12"
-        />
-        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">
-          Yuklanmoqda...
-        </p>
-      </div>
-    );
-  }
-
-  // Redirect to typing test if already logged in and on login tab
-  if (user && activeTab === 'login') {
-    setActiveTab('typing');
   }
 
   // Blocked / Banned User Gate (Cloud & Device Local Anti-Cheat)
@@ -1083,7 +1082,7 @@ function MainAppContent() {
     deviceBan.banned
   );
 
-  if (isAccountBanned && !isOwnerWhitelisted) {
+  if (!loading && isAccountBanned && !isOwnerWhitelisted) {
     const effectiveReason =
       userBanInfo?.reason ||
       profile?.blockReason ||
@@ -1098,9 +1097,9 @@ function MainAppContent() {
       <UserBlockedScreen
         reason={effectiveReason}
         bannedAt={effectiveBannedAt}
-        displayName={userBanInfo?.displayName || profile?.displayName || user.displayName || 'Foydalanuvchi'}
+        displayName={userBanInfo?.displayName || profile?.displayName || user?.displayName || 'Foydalanuvchi'}
         username={userBanInfo?.username || profile?.username || ''}
-        email={userBanInfo?.email || profile?.email || user.email || ''}
+        email={userBanInfo?.email || profile?.email || user?.email || ''}
       />
     );
   }
@@ -1261,18 +1260,11 @@ function MainAppContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans transition-colors duration-150 overflow-x-clip w-full relative selection:bg-[var(--main-color)]/30 selection:text-[var(--text-color)]">
-      {/* Ultra-lightweight ambient atmospheric backdrop dynamically adapted to current theme */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-60 transition-all duration-300"
-        style={{
-          background: 'radial-gradient(ellipse 80% 50% at 50% 0%, var(--glow-color, rgba(6, 182, 212, 0.18)), transparent 70%)'
-        }}
-      />
+    <div className="min-h-screen flex flex-col bg-[var(--bg-color)] text-[var(--text-color)] font-sans overflow-x-clip w-full relative selection:bg-[var(--main-color)]/30 selection:text-[var(--text-color)]">
       {/* Whitelisted Owner Notice during Active Maintenance */}
       {maintenanceInfo.active && isOwnerWhitelisted && (
-        <div className="bg-rose-600 text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-lg border-b border-rose-700">
-          <Wrench className="w-4 h-4 animate-spin shrink-0" />
+        <div className="bg-rose-600 text-white text-xs font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50 border-b border-rose-700">
+          <Wrench className="w-4 h-4 shrink-0" />
           <span>
             🛠️ Sayt yangilanish rejimida (Barcha oddiy foydalanuvchilarga yopilgan). Siz Bosh Administrator (<strong>{user?.email}</strong>) sifatida ishlamoqdasiz.
           </span>
@@ -1282,22 +1274,20 @@ function MainAppContent() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenAuth={() => setActiveTab('login')}
+        onOpenAuth={handleOpenLogin}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 overflow-x-clip">
         {activeTab === 'home' && (
           <HomePage
             onStartTyping={handleStartHero}
-            onGoToBattle={() => setActiveTab('battle')}
-            onGoToLessons={() => setActiveTab('lessons')}
-            onGoToEnglish={() => setActiveTab('english')}
-            onGoToLeaderboard={() => {
-              setActiveTab('leaderboard');
-            }}
-            onOpenLogin={() => setActiveTab('login')}
-            onGoToSupport={() => setActiveTab('support')}
-            onGoToVideo={() => setActiveTab('video')}
+            onGoToBattle={handleGoBattle}
+            onGoToLessons={handleGoLessons}
+            onGoToEnglish={handleGoEnglish}
+            onGoToLeaderboard={handleGoLeaderboard}
+            onOpenLogin={handleOpenLogin}
+            onGoToSupport={handleGoSupport}
+            onGoToVideo={handleGoVideo}
           />
         )}
 
@@ -1334,27 +1324,21 @@ function MainAppContent() {
             finalResult={finalResult}
             challengeBanner={challengeBanner}
             setChallengeBanner={setChallengeBanner}
-            onOpenLanguagePage={() => setActiveTab('languages')}
-            onGoToLeaderboard={() => {
-              setIsTestFinished(false);
-              setActiveTab('leaderboard');
-            }}
-            onOpenLogin={() => {
-              setIsTestFinished(false);
-              setActiveTab('login');
-            }}
+            onOpenLanguagePage={handleGoLanguages}
+            onGoToLeaderboard={handleGoLeaderboard}
+            onOpenLogin={handleOpenLogin}
             onStartTargetedPractice={handleStartTargetedPractice}
             onPracticeMissedWords={handlePracticeMissedWords}
-            onBackToHome={() => setActiveTab('home')}
-            onGoToCertificate={() => setActiveTab('certificate')}
+            onBackToHome={handleGoHome}
+            onGoToCertificate={handleGoCertificate}
           />
         )}
 
         {activeTab === 'leaderboard' && (
           <LeaderboardPage
-            onBackToHome={() => setActiveTab('home')}
-            onOpenLogin={() => setActiveTab('login')}
-            onGoToTyping={() => setActiveTab('typing')}
+            onBackToHome={handleGoHome}
+            onOpenLogin={handleOpenLogin}
+            onGoToTyping={handleGoTyping}
           />
         )}
 
@@ -1366,30 +1350,30 @@ function MainAppContent() {
                 initTestText();
                 setActiveTab('typing');
               }}
-              onCancel={() => setActiveTab('typing')}
+              onCancel={handleGoTyping}
             />
           )}
 
           {activeTab === 'lessons' && <LessonsView />}
           {activeTab === 'english' && (
             <EnglishLearnView
-              onBackToHome={() => setActiveTab('home')}
-              onOpenAuth={() => setShowAuthModal(true)}
-              onGoToLessons={() => setActiveTab('lessons')}
-              onGoToPremium={() => setActiveTab('english')}
+              onBackToHome={handleGoHome}
+              onOpenAuth={handleOpenLogin}
+              onGoToLessons={handleGoLessons}
+              onGoToPremium={handleGoEnglish}
             />
           )}
           {activeTab === 'premium' && (
             <EnglishLearnView
-              onBackToHome={() => setActiveTab('home')}
-              onOpenAuth={() => setShowAuthModal(true)}
-              onGoToLessons={() => setActiveTab('lessons')}
-              onGoToPremium={() => setActiveTab('english')}
+              onBackToHome={handleGoHome}
+              onOpenAuth={handleOpenLogin}
+              onGoToLessons={handleGoLessons}
+              onGoToPremium={handleGoEnglish}
             />
           )}
           {activeTab === 'baraban' && (
             <RandomWheelView
-              onBackToHome={() => setActiveTab('home')}
+              onBackToHome={handleGoHome}
             />
           )}
           {activeTab === 'battle' && (
@@ -1402,54 +1386,54 @@ function MainAppContent() {
           {activeTab === 'statistics' && (
             <StatisticsView
               onStartTargetedPractice={handleStartTargetedPractice}
-              onGoToTyping={() => setActiveTab('typing')}
+              onGoToTyping={handleGoTyping}
             />
           )}
           {activeTab === 'achievements' && <AchievementsView />}
           {activeTab === 'challenges' && (
             <ChallengesView
-              onStartChallenge={() => setActiveTab('typing')}
-              onGoToBattle={() => setActiveTab('battle')}
+              onStartChallenge={handleGoTyping}
+              onGoToBattle={handleGoBattle}
             />
           )}
           {activeTab === 'partners' && <PartnersView />}
           {activeTab === 'owner' && (
             <OwnerAboutView
-              onStartTyping={() => setActiveTab('typing')}
-              onGoToBattle={() => setActiveTab('battle')}
-              onGoToLessons={() => setActiveTab('lessons')}
-              onGoToSupport={() => setActiveTab('support')}
+              onStartTyping={handleGoTyping}
+              onGoToBattle={handleGoBattle}
+              onGoToLessons={handleGoLessons}
+              onGoToSupport={handleGoSupport}
             />
           )}
           {activeTab === 'support' && (
             <SupportView
-              onBackToHome={() => setActiveTab('home')}
-              onStartTyping={() => setActiveTab('typing')}
+              onBackToHome={handleGoHome}
+              onStartTyping={handleGoTyping}
             />
           )}
           {activeTab === 'video' && (
             <VideoGuideView
-              onBackToHome={() => setActiveTab('home')}
-              onStartTyping={() => setActiveTab('typing')}
-              onGoToBattle={() => setActiveTab('battle')}
-              onGoToLessons={() => setActiveTab('lessons')}
-              onGoToSupport={() => setActiveTab('support')}
-              onOpenAuth={() => setActiveTab('login')}
+              onBackToHome={handleGoHome}
+              onStartTyping={handleGoTyping}
+              onGoToBattle={handleGoBattle}
+              onGoToLessons={handleGoLessons}
+              onGoToSupport={handleGoSupport}
+              onOpenAuth={handleOpenLogin}
             />
           )}
           {activeTab === 'reviews' && (
             <ReviewsView
-              onBackToHome={() => setActiveTab('home')}
-              onStartTyping={() => setActiveTab('typing')}
-              onGoToBattle={() => setActiveTab('battle')}
+              onBackToHome={handleGoHome}
+              onStartTyping={handleGoTyping}
+              onGoToBattle={handleGoBattle}
             />
           )}
           {activeTab === 'admin' && <AdminView />}
           {activeTab === 'profile' && (
             <ProfileView
-              onOpenAuth={() => setActiveTab('login')}
-              onSavedHome={() => setActiveTab('typing')}
-              onGoToCertificate={() => setActiveTab('certificate')}
+              onOpenAuth={handleOpenLogin}
+              onSavedHome={handleGoTyping}
+              onGoToCertificate={handleGoCertificate}
             />
           )}
           {activeTab === 'certificate' && (
@@ -1458,7 +1442,7 @@ function MainAppContent() {
                 setFinalResult(null);
                 setActiveTab('home');
               }}
-              onOpenLogin={() => setActiveTab('login')}
+              onOpenLogin={handleOpenLogin}
               initialResult={
                 finalResult
                   ? {
@@ -1472,15 +1456,15 @@ function MainAppContent() {
           )}
           {activeTab === 'login' && (
             <LoginPage
-              onSuccess={() => setActiveTab('typing')}
-              onBackToTyping={() => setActiveTab('typing')}
+              onSuccess={handleGoTyping}
+              onBackToTyping={handleGoTyping}
             />
           )}
           {activeTab === 'settings' && <SettingsView />}
           {activeTab === 'not_found' && (
             <NotFoundView
-              onGoHome={() => setActiveTab('typing')}
-              onNavigate={(tab) => setActiveTab(tab)}
+              onGoHome={handleGoTyping}
+              onNavigate={setActiveTab}
               attemptedPath={window.location.pathname}
             />
           )}
@@ -1488,17 +1472,11 @@ function MainAppContent() {
       </main>
 
       <Footer
-        onOpenAbout={() => {
-          setAboutModalTab('faq');
-          setIsAboutOpen(true);
-        }}
-        onOpenUpdates={() => {
-          setAboutModalTab('updates');
-          setIsAboutOpen(true);
-        }}
-        onOpenOwner={() => setActiveTab('owner')}
-        onOpenAdmin={() => setActiveTab('admin')}
-        onNavigate={(tab) => setActiveTab(tab)}
+        onOpenAbout={handleOpenAbout}
+        onOpenUpdates={handleOpenUpdates}
+        onOpenOwner={handleOpenOwner}
+        onOpenAdmin={handleOpenAdmin}
+        onNavigate={setActiveTab}
       />
 
       <PubgInviteModal
@@ -1513,8 +1491,8 @@ function MainAppContent() {
         onClose={() => setIsAboutOpen(false)}
       />
 
-      {/* Global Device Auto Calibration Loading Gate (1-100%) */}
-      <DeviceAutoCalibrationScreen />
+      {/* Unified Lightweight Entrance Loader */}
+      <DeviceAutoCalibrationScreen isAppLoading={loading} />
     </div>
   );
 }

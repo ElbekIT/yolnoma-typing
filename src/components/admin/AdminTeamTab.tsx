@@ -378,7 +378,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
             type="button"
             id="btn-open-promote-modal"
             onClick={() => setIsPromoteModalOpen(true)}
-            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer shrink-0"
+            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer shrink-0"
           >
             <UserPlus className="w-4 h-4" />
             <span>Yangi Admin Tayinlash</span>
@@ -396,11 +396,11 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         {/* 1. ROOT OWNER CARD (IMMUNE) */}
         <div
           id="root-owner-card"
-          className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-amber-950/30 border-2 border-amber-500/50 shadow-xl shadow-amber-950/30 relative overflow-hidden"
+          className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-amber-950/30 border-2 border-amber-500/50 shadow-sm relative overflow-hidden"
         >
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shadow-amber-500/30 shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shrink-0">
                 <div className="w-full h-full rounded-2xl bg-slate-950 flex items-center justify-center text-amber-400 font-black text-xl">
                   👑
                 </div>
@@ -602,11 +602,11 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
       {isPromoteModalOpen && (
         <div
           id="modal-select-candidate-backdrop"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 animate-in fade-in"
         >
           <div
             id="modal-select-candidate-content"
-            className="max-w-xl w-full bg-[#0d1222] border-2 border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl shadow-cyan-950/50 relative text-slate-100 space-y-5"
+            className="max-w-xl w-full bg-[#0d1222] border-2 border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-sm relative text-slate-100 space-y-5"
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2.5">
@@ -686,11 +686,11 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
       {demoteTargetUser && (
         <div
           id="modal-confirm-demote-backdrop"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 animate-in fade-in"
         >
           <div
             id="modal-confirm-demote-card"
-            className="max-w-md w-full bg-slate-900 border-2 border-rose-500/50 rounded-3xl p-6 shadow-2xl shadow-rose-950/60 relative text-slate-100 space-y-5"
+            className="max-w-md w-full bg-slate-900 border-2 border-rose-500/50 rounded-3xl p-6 shadow-sm relative text-slate-100 space-y-5"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2.5 text-rose-400 font-extrabold text-sm">
@@ -751,7 +751,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 id="btn-confirm-demote"
                 disabled={isDemoting}
                 onClick={handleExecuteDemote}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-rose-600/30 transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all cursor-pointer disabled:opacity-50"
               >
                 {isDemoting ? (
                   <>

@@ -7,13 +7,12 @@
   }
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
 @layer base {
-  /* Minimalist lightweight custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -24,7 +23,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(120, 120, 120, 0.2);
+    background: rgba(120, 120, 120, 0.25);
     border-radius: 4px;
   }
 
@@ -32,10 +31,9 @@
     background: var(--main-color, #e2b714);
   }
 
-  /* Firefox scrollbar styling */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(120, 120, 120, 0.2) transparent;
+    scrollbar-color: rgba(120, 120, 120, 0.25) transparent;
   }
 
   html {
@@ -60,7 +58,6 @@
     touch-action: manipulation;
   }
 
-  /* Safe Area Inset Support for iPhone Notch / Dynamic Island */
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
@@ -77,129 +74,108 @@
 
 :root {
   --primary: 48, 96%, 53%;
-}
-
-:root {
   --typing-anim-duration: 260ms;
 }
 
 /* =========================================================
-   UZBEKTYPE / MONKEYTYPE DYNAMIC TYPING ANIMATIONS & SMOOTH CARET
-   Scales smoothly from Ultra-fast (80ms) to Super-slow (1500ms)
+   LIGHTWEIGHT ENTRANCE LOADER BAR (GPU transform only)
+   ========================================================= */
+@keyframes yolnoma-loader-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.yolnoma-loader-bar {
+  animation: yolnoma-loader-slide 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+/* =========================================================
+   LIGHTWEIGHT TYPING ANIMATIONS & SMOOTH CARET
+   Pure transform/opacity (zero filter/blur/text-shadow repaints)
    ========================================================= */
 
-/* Harf bosilgandagi elastik pop animatsiyasi */
 @keyframes char-pop {
   0% {
-    transform: scale(1.32);
-    opacity: 0.7;
-    filter: brightness(1.25);
+    transform: scale(1.25);
+    opacity: 0.75;
   }
-  45% {
-    transform: scale(0.94);
-  }
-  75% {
-    transform: scale(1.06);
+  50% {
+    transform: scale(0.96);
   }
   100% {
     transform: scale(1);
     opacity: 1;
-    filter: brightness(1);
   }
 }
 
-/* Yuqoriga yengil sakrash */
 @keyframes bounceUp {
   0% {
     transform: translateY(0);
   }
-  38% {
-    transform: translateY(-8px);
-  }
-  70% {
-    transform: translateY(2px);
+  40% {
+    transform: translateY(-6px);
   }
   100% {
     transform: translateY(0);
   }
 }
 
-/* Pastga yengil sakrash */
 @keyframes bounceDown {
   0% {
     transform: translateY(0);
   }
-  38% {
-    transform: translateY(8px);
-  }
-  70% {
-    transform: translateY(-2px);
+  40% {
+    transform: translateY(6px);
   }
   100% {
     transform: translateY(0);
   }
 }
 
-/* Katta sakrash (Jump) */
 @keyframes char-jump {
   0% {
     transform: translateY(0) scale(1);
   }
-  38% {
-    transform: translateY(-14px) scale(1.15);
-  }
-  70% {
-    transform: translateY(2.5px) scale(0.96);
+  40% {
+    transform: translateY(-10px) scale(1.1);
   }
   100% {
     transform: translateY(0) scale(1);
   }
 }
 
-/* Neon Nur (Glow) */
 @keyframes char-glow {
   0% {
-    text-shadow: 0 0 16px var(--main-color, #06b6d4), 0 0 28px var(--main-color, #06b6d4);
-    filter: brightness(1.5);
-    transform: scale(1.12);
-  }
-  50% {
-    text-shadow: 0 0 8px var(--main-color, #06b6d4), 0 0 14px var(--main-color, #06b6d4);
-    filter: brightness(1.25);
-    transform: scale(1.04);
+    opacity: 0.7;
+    transform: scale(1.1);
   }
   100% {
-    text-shadow: none;
-    filter: brightness(1);
+    opacity: 1;
     transform: scale(1);
   }
 }
 
-/* Qiya to'lqinlanish (Wave) */
 @keyframes char-wave {
   0% {
     transform: translateY(0) rotate(0deg);
   }
-  30% {
-    transform: translateY(-7px) rotate(-10deg);
-  }
-  65% {
-    transform: translateY(2.5px) rotate(5deg);
+  35% {
+    transform: translateY(-6px) rotate(-8deg);
   }
   100% {
     transform: translateY(0) rotate(0deg);
   }
 }
 
-/* Pastdan ko'tarilish (Slide) */
 @keyframes char-slide {
   0% {
-    transform: translateY(12px);
-    opacity: 0.15;
-  }
-  60% {
-    transform: translateY(-2px);
-    opacity: 0.9;
+    transform: translateY(8px);
+    opacity: 0.25;
   }
   100% {
     transform: translateY(0);
@@ -207,14 +183,13 @@
   }
 }
 
-/* Pulsatsiya (Pulse) */
 @keyframes char-pulse {
   0% {
-    transform: scale(0.85);
-    opacity: 0.7;
+    transform: scale(0.88);
+    opacity: 0.75;
   }
   50% {
-    transform: scale(1.25);
+    transform: scale(1.15);
     opacity: 1;
   }
   100% {
@@ -223,83 +198,70 @@
   }
 }
 
-/* Xato bosilganda mikro-reaksiya */
 @keyframes char-shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  50% { transform: translateX(3px); }
-  75% { transform: translateX(-2px); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
-.animate-shake {
-  animation: shake 0.5s ease-in-out;
-}
-
-/* Silliq kursor o'tishi va miltillashi */
 @keyframes caret-blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.1; }
+  50% { opacity: 0.15; }
 }
 
-/* Animatsiya klasslari (Tanlangan --typing-anim-duration asosida to'liq dinamik) */
 .char-typed-pop, .anim-char-pop {
   animation: char-pop var(--typing-anim-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
   display: inline-block;
-  will-change: transform, opacity;
 }
 
 .char-typed-bounce, .anim-char-bounce, .anim-char-bounceUp {
-  animation: bounceUp var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation: bounceUp var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform;
 }
 
 .char-typed-bounceDown, .anim-char-bounceDown {
-  animation: bounceDown var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation: bounceDown var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform;
 }
 
 .char-typed-jump, .anim-char-jump {
-  animation: char-jump var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation: char-jump var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform;
 }
 
 .char-typed-glow, .anim-char-glow {
   animation: char-glow var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform, filter;
 }
 
 .char-typed-wave, .anim-char-wave {
-  animation: char-wave var(--typing-anim-duration, 260ms) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation: char-wave var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform;
 }
 
 .char-typed-slide, .anim-char-slide {
-  animation: char-slide var(--typing-anim-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: char-slide var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform, opacity;
 }
 
 .char-typed-pulse, .anim-char-pulse {
-  animation: char-pulse var(--typing-anim-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: char-pulse var(--typing-anim-duration, 260ms) ease-out both;
   display: inline-block;
-  will-change: transform;
 }
 
 .char-error-shake {
-  animation: char-shake 0.16s ease-in-out;
+  animation: char-shake 0.14s ease-in-out;
   display: inline-block;
-  will-change: transform;
+}
+
+.animate-shake {
+  animation: shake 0.25s ease-in-out;
 }
 
 .smooth-caret {
@@ -310,24 +272,8 @@
   pointer-events: none;
   z-index: 10;
   will-change: transform;
-  box-shadow: 0 0 12px var(--glow-color, rgba(6, 182, 212, 0.45));
 }
 
-.ambient-glow-bg {
-  background-image: radial-gradient(circle at 50% -10%, var(--glow-color, rgba(6, 182, 212, 0.12)) 0%, transparent 65%);
-}
-
-@keyframes shake-anim {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
-}
-
-.animate-shake {
-  animation: shake-anim 0.2s ease-in-out;
-}
-
-/* Zero Lag GPU acceleration & reduced-motion support (Istisno: foydalanuvchi tanlagan yozish animatsiyasi) */
 @media (prefers-reduced-motion: reduce) {
   *:not([class*="char-typed-"]):not([class*="anim-char-"]):not(.char-error-shake),
   *::before, *::after {
@@ -338,74 +284,43 @@
   }
 }
 
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  will-change: transform;
-}
-
-/* Snappy content rendering for long lists and heavy sections */
 .content-auto {
   content-visibility: auto;
   contain-intrinsic-size: 0 48px;
 }
 
 /* =========================================================
-   MODERN NEO-UI / GLASSMORPHISM & AMBIENT GLOW UTILITIES
+   CLEAN FLAT CARDS & SURFACES (No heavy blur or neon glow)
    ========================================================= */
 
 .glass-card {
-  background: color-mix(in srgb, var(--card-bg, #181d28) 75%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 80%, rgba(255, 255, 255, 0.08));
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--card-bg, #181d28);
+  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 70%, transparent);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .glass-card:hover {
-  border-color: color-mix(in srgb, var(--main-color, #e2b714) 40%, var(--sub-alt, #242c3d));
-  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.5), 0 0 20px -8px var(--main-color, #e2b714);
+  border-color: color-mix(in srgb, var(--main-color, #e2b714) 35%, var(--sub-alt, #242c3d));
 }
 
 .glass-pill {
-  background: color-mix(in srgb, var(--sub-alt, #242c3d) 65%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 90%, rgba(255, 255, 255, 0.08));
+  background: var(--sub-alt, #242c3d);
+  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 80%, transparent);
 }
 
 .glow-primary {
-  box-shadow: 0 0 25px -5px var(--main-color, #e2b714);
+  /* Clean flat accent */
 }
 
 .glow-border {
   border-color: var(--main-color, #e2b714);
-  box-shadow: 0 0 15px -3px var(--main-color, #e2b714);
 }
 
 .neon-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s infinite linear;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  /* Disabled heavy infinite shimmer */
 }
 
 .badge-free {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.14);
   color: #34d399;
-  text-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
 }
-
-
-

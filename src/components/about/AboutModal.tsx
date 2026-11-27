@@ -19,8 +19,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 shadow-2xl text-[var(--text-color)] max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 shadow-sm text-[var(--text-color)] max-h-[85vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -96,7 +96,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
         {activeTab === 'updates' && (
           <div className="space-y-4 text-xs">
             {/* Version 2.7 - LATEST */}
-            <div className="p-4.5 rounded-2xl bg-[var(--sub-alt)] border border-amber-500/40 space-y-3 shadow-lg shadow-amber-500/5">
+            <div className="p-4.5 rounded-2xl bg-[var(--sub-alt)] border border-amber-500/40 space-y-3 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-black text-sm text-[var(--text-color)]">v2.7</span>

@@ -143,7 +143,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
   if (!loading && !user) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
+        <div className="max-w-md w-full bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 text-center shadow-sm space-y-6 animate-in fade-in zoom-in-95">
           <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
             <Lock className="w-8 h-8" />
           </div>
@@ -168,7 +168,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
               onClick={() => {
                 if (onOpenLogin) onOpenLogin();
               }}
-              className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
               <span>Kirish / Ro'yxatdan O'tish</span>
@@ -185,14 +185,13 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
   if (!isLoaded) {
     return (
       <div className="min-h-[85vh] flex flex-col items-center justify-center p-4 text-center">
-        <div className="max-w-md w-full bg-slate-900/90 border border-blue-500/30 rounded-3xl p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+        <div className="max-w-md w-full bg-slate-900/90 border border-blue-500/30 rounded-3xl p-8 shadow-sm relative overflow-hidden">
           {/* Ambient Glow */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 space-y-6">
             <div className="w-20 h-20 mx-auto rounded-3xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center relative shadow-inner">
               <Award className="w-10 h-10 text-blue-400 animate-pulse" />
-              <div className="absolute inset-0 rounded-3xl border-2 border-blue-400/40 animate-ping opacity-25" />
+              <div className="absolute inset-0 rounded-3xl border-2 border-blue-400/40 opacity-25" />
             </div>
 
             <div className="space-y-1.5">
@@ -240,7 +239,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
   if (isExpired) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 text-center animate-in fade-in zoom-out-95 duration-500">
-        <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-4">
+        <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-sm space-y-4">
           <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
             <Clock className="w-8 h-8 animate-pulse" />
           </div>
@@ -269,7 +268,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
       )}
 
       {/* Top Controller Bar: Countdown timer & Quick Screenshot Button */}
-      <div className="w-full max-w-4xl flex flex-col gap-2 mb-3 bg-slate-900/95 border border-slate-800/80 p-2.5 sm:p-3 rounded-2xl shadow-lg backdrop-blur-md">
+      <div className="w-full max-w-4xl flex flex-col gap-2 mb-3 bg-slate-900/95 border border-slate-800/80 p-2.5 sm:p-3 rounded-2xl shadow-lg">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <button
             type="button"
@@ -325,7 +324,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
       <div
         ref={certCardRef}
         id="official-certificate-card"
-        className="w-full max-w-4xl relative rounded-3xl p-3 sm:p-5 md:p-6 border-2 sm:border-3 border-amber-400/50 shadow-2xl overflow-hidden select-none bg-gradient-to-br from-[#060a14] via-[#0c1426] to-[#04060c] text-white"
+        className="w-full max-w-4xl relative rounded-3xl p-3 sm:p-5 md:p-6 border-2 sm:border-3 border-amber-400/50 shadow-sm overflow-hidden select-none bg-gradient-to-br from-[#060a14] via-[#0c1426] to-[#04060c] text-white"
         style={{
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 45px rgba(59, 130, 246, 0.12)'
         }}
@@ -337,8 +336,6 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
         <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-14 sm:h-14 border-b-2 sm:border-b-3 border-r-2 sm:border-r-3 border-amber-400/70 rounded-br-2xl pointer-events-none" />
 
         {/* Ambient Radial Glows */}
-        <div className="absolute -top-16 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Subtle Watermark Matrix */}
         <div

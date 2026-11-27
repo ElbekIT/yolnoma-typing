@@ -37,7 +37,7 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-red-800/10 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Main Armor Card */}
-      <div className="max-w-xl w-full bg-slate-900/90 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-rose-950/50 backdrop-blur-xl relative z-10 space-y-6 text-center">
+      <div className="max-w-xl w-full bg-slate-900/90 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-8 shadow-sm relative z-10 space-y-6 text-center">
         {/* Top Warning Badge */}
         <div className="flex items-center justify-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-xs font-mono font-bold uppercase tracking-wider animate-pulse">
@@ -47,10 +47,10 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
         </div>
 
         {/* Pulsing Shield Icon */}
-        <div className="mx-auto w-24 h-24 rounded-3xl bg-gradient-to-b from-rose-500/25 to-rose-950/40 border-2 border-rose-500/50 p-4 text-rose-400 flex items-center justify-center shadow-xl shadow-rose-500/25 relative">
-          <ShieldAlert className="w-12 h-12 animate-bounce" />
+        <div className="mx-auto w-24 h-24 rounded-3xl bg-gradient-to-b from-rose-500/25 to-rose-950/40 border-2 border-rose-500/50 p-4 text-rose-400 flex items-center justify-center shadow-sm relative">
+          <ShieldAlert className="w-12 h-12" />
           <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className=" absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500"></span>
           </span>
         </div>
@@ -121,7 +121,7 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
         {/* Reload Check Button */}
         <button
           onClick={() => window.location.reload()}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-600/30 active:scale-95 cursor-pointer"
+          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           <span>Holatni Qayta Tekshirish (Reload)</span>

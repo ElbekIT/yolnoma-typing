@@ -29,7 +29,7 @@ interface TypingPageProps {
   setIsTestFinished: (finished: boolean) => void;
   targetText: string;
   typedInput: string;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (newInput: string) => void;
   initTestText: () => void;
   quoteMeta?: { author: string; source?: string };
   codeLang?: string;
@@ -133,7 +133,7 @@ export const TypingPage: React.FC<TypingPageProps> = ({
 
       {/* Viral Social Challenge Banner */}
       {challengeBanner && (
-        <div className={`w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-3 text-amber-400 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div className={`w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-400 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex items-center gap-3 overflow-hidden">
             <span className="text-xl shrink-0">⚡</span>
             <div className="text-xs sm:text-sm font-bold text-[var(--text-color)]">

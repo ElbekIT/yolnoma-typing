@@ -269,7 +269,7 @@ export const AdminInboxTab: React.FC<AdminInboxTabProps> = () => {
           <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl relative">
             <Sparkles className="w-6 h-6" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
             )}
           </div>
         </div>
@@ -543,8 +543,8 @@ export const AdminInboxTab: React.FC<AdminInboxTabProps> = () => {
 
       {/* Reply Modal */}
       {replyTarget && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-[var(--card-bg)] border border-amber-500/40 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[var(--card-bg)] border border-amber-500/40 rounded-3xl p-6 w-full max-w-lg shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl">
@@ -620,7 +620,7 @@ export const AdminInboxTab: React.FC<AdminInboxTabProps> = () => {
                   <button
                     type="submit"
                     disabled={isSendingReply || !replyText.trim()}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-xs shadow-lg shadow-amber-500/20 hover:opacity-90 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-xs shadow-lg hover:opacity-90 disabled:opacity-50 cursor-pointer flex items-center gap-2"
                   >
                     {isSendingReply ? (
                       <>

@@ -181,7 +181,7 @@ export const LessonsView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Title Header */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="p-4 rounded-2xl bg-[var(--main-color)]/15 text-[var(--main-color)] border border-[var(--main-color)]/30">
             <GraduationCap className="w-8 h-8" />
@@ -259,7 +259,7 @@ export const LessonsView: React.FC = () => {
         {/* Right Side: Interactive Lesson Stage (8 Cols) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Active Lesson Header & Finger Placement Banner */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 space-y-6 shadow-xl relative overflow-hidden">
+          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 space-y-6 shadow-sm relative overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--main-color)] bg-[var(--sub-alt)] px-3 py-1 rounded-full border border-[var(--main-color)]/20">
@@ -352,7 +352,7 @@ export const LessonsView: React.FC = () => {
             {/* Completion Screen */}
             {isFinished && (
               <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex flex-col items-center justify-center text-center space-y-4 animate-in zoom-in-95">
-                <Sparkles className="w-12 h-12 text-emerald-400 animate-bounce" />
+                <Sparkles className="w-12 h-12 text-emerald-400" />
                 <div>
                   <h3 className="text-xl font-black">Ajoyib! Mashq Muvaffaqiyatli Bajarildi!</h3>
                   <p className="text-xs text-emerald-300 mt-1">

@@ -65,10 +65,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, payload
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[var(--card-bg)] border-2 border-[#229ED9]/40 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative overflow-hidden space-y-5 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-200">
+      <div className="bg-[var(--card-bg)] border-2 border-[#229ED9]/40 rounded-3xl w-full max-w-lg p-6 shadow-sm relative overflow-hidden space-y-5 max-h-[90vh] overflow-y-auto">
         {/* Subtle Telegram glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#229ED9]/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-4">
@@ -230,7 +229,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, payload
               onClick={handleCopy}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer flex-shrink-0 ${
                 copied
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md'
                   : 'bg-[#229ED9] hover:bg-[#1e88e5] text-white shadow-md shadow-[#229ED9]/20'
               }`}
             >

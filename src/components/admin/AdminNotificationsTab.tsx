@@ -183,7 +183,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
       <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
-            <Bell className="w-6 h-6 animate-bounce" />
+            <Bell className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-lg font-black text-[var(--text-color)] tracking-tight">
@@ -334,7 +334,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 }}
                 className={`p-3 rounded-2xl border flex items-center gap-2.5 transition-all text-xs font-bold cursor-pointer ${
                   targetType === 'all'
-                    ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/25'
+                    ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md'
                     : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-transparent hover:border-[var(--sub-color)]/30'
                 }`}
               >
@@ -352,7 +352,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 onClick={() => setTargetType('specific')}
                 className={`p-3 rounded-2xl border flex items-center gap-2.5 transition-all text-xs font-bold cursor-pointer ${
                   targetType === 'specific'
-                    ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md shadow-[var(--main-color)]/25'
+                    ? 'bg-[var(--main-color)] text-white border-[var(--main-color)] shadow-md'
                     : 'bg-[var(--sub-alt)] text-[var(--text-color)] border-transparent hover:border-[var(--sub-color)]/30'
                 }`}
               >
@@ -606,7 +606,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
             <button
               type="submit"
               disabled={sending}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {sending ? (
                 <>

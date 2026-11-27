@@ -174,12 +174,12 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-black/80 transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-2xl p-6 z-50 text-xs flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-sm p-6 z-50 text-xs flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[var(--sub-alt)] shrink-0">
           <div className="flex items-center gap-3">
@@ -215,7 +215,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
             onClick={() => setActiveTab('texts')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition-all cursor-pointer ${
               activeTab === 'texts'
-                ? 'bg-[var(--main-color)] text-white shadow-lg shadow-[var(--main-color)]/25'
+                ? 'bg-[var(--main-color)] text-white shadow-lg'
                 : 'bg-[var(--sub-alt)]/50 text-[var(--sub-color)] hover:text-[var(--text-color)]'
             }`}
           >
@@ -230,7 +230,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
             onClick={() => setActiveTab('languages')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition-all cursor-pointer ${
               activeTab === 'languages'
-                ? 'bg-[var(--main-color)] text-white shadow-lg shadow-[var(--main-color)]/25'
+                ? 'bg-[var(--main-color)] text-white shadow-lg'
                 : 'bg-[var(--sub-alt)]/50 text-[var(--sub-color)] hover:text-[var(--text-color)]'
             }`}
           >
@@ -331,7 +331,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs shadow-lg shadow-[var(--main-color)]/30 hover:opacity-90 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs shadow-lg hover:opacity-90 transition-all cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   <span>Saqlash & Foydalanuvchilarga Chiqarish</span>
@@ -497,7 +497,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs shadow-lg shadow-[var(--main-color)]/30 hover:opacity-90 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs shadow-lg hover:opacity-90 transition-all cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Yangi Tilni Tizimga Qo'shish</span>

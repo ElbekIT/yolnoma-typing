@@ -42,14 +42,13 @@ export const LiveStats = memo<LiveStatsProps>(({
         )}
       </div>
 
-      {/* Subtle Progress Bar */}
+      {/* Subtle Progress Bar (GPU scaleX - zero layout reflow) */}
       <div className="w-full bg-[var(--sub-alt)]/30 h-1 rounded-full overflow-hidden mt-0.5">
         <div
-          className="bg-[var(--main-color)] h-full opacity-80"
+          className="bg-[var(--main-color)] h-full w-full opacity-80 origin-left transition-transform duration-75"
           style={{
-            width: `${Math.min(100, Math.max(0, progressPercent))}%`,
-            transform: 'translateZ(0)',
-            willChange: 'width'
+            transform: `scaleX(${Math.min(1, Math.max(0, progressPercent / 100))})`,
+            willChange: 'transform'
           }}
         />
       </div>

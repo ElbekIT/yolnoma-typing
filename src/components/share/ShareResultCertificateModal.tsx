@@ -450,10 +450,9 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-slate-900/95 border-2 border-blue-500/30 rounded-3xl w-full max-w-2xl p-5 sm:p-7 shadow-2xl relative overflow-hidden flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 animate-in fade-in duration-200">
+      <div className="bg-slate-900/95 border-2 border-blue-500/30 rounded-3xl w-full max-w-2xl p-5 sm:p-7 shadow-sm relative overflow-hidden flex flex-col max-h-[95vh]">
         {/* Glow accent */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
@@ -517,12 +516,12 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
             <img
               src={previewImgSrc}
               alt="Yolnoma Natija Sertifikati"
-              className="max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-2xl object-contain border border-slate-700/50 transition-transform duration-200 group-hover:scale-[1.01]"
+              className="max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-sm object-contain border border-slate-700/50 transition-transform duration-200 group-hover:scale-[1.01]"
             />
           ) : null}
           <canvas
             ref={canvasRef}
-            className={`${previewImgSrc ? 'hidden' : 'block'} max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-2xl object-contain border border-slate-700/50`}
+            className={`${previewImgSrc ? 'hidden' : 'block'} max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-sm object-contain border border-slate-700/50`}
           />
           <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-mono mt-2">
             💡 <span className="text-amber-300 font-bold">Maslahat:</span> «PNG Yuklab Olish» tugmasini bosing yoki telefonda rasm ustiga bosib turib galereyaga saqlang.
@@ -535,7 +534,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
             <button
               onClick={handleDownloadImage}
               disabled={isGenerating}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg hover: active:scale-95 cursor-pointer disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
               <span>{isGenerating ? 'Yuklanmoqda...' : 'PNG Yuklab Olish'}</span>

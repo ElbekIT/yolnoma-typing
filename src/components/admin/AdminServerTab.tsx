@@ -342,7 +342,7 @@ export const AdminServerTab: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className=" absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
             </span>
             <h2 className="text-lg font-black text-white flex items-center gap-2">
@@ -391,7 +391,7 @@ export const AdminServerTab: React.FC = () => {
 
       {/* PRECISE DDOS & DRDOS ATTACK COUNTERS WIDGET */}
       {stats && (
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-2 border-rose-500/40 shadow-2xl space-y-6">
+        <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-2 border-rose-500/40 shadow-sm space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-4">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40">
@@ -403,7 +403,7 @@ export const AdminServerTab: React.FC = () => {
                     DDoS & DRDoS Hujumlari Aniq Hisoblagichi
                   </h2>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     Jonli Telemetriya
                   </span>
                 </div>
@@ -424,7 +424,6 @@ export const AdminServerTab: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* CARD 1: DDoS Attacks Counter */}
             <div className="p-5 rounded-2xl bg-slate-950/80 border border-rose-500/30 space-y-3 relative overflow-hidden">
-              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-rose-400 uppercase tracking-wide">
                   💥 DDoS Hujumlari Soni
@@ -455,7 +454,6 @@ export const AdminServerTab: React.FC = () => {
 
             {/* CARD 2: DRDoS Attacks Counter */}
             <div className="p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 space-y-3 relative overflow-hidden">
-              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-cyan-400 uppercase tracking-wide">
                   🌊 DRDoS Hujumlari Soni
@@ -486,7 +484,6 @@ export const AdminServerTab: React.FC = () => {
 
             {/* CARD 3: Total Attacks Blocked & Status */}
             <div className="p-5 rounded-2xl bg-slate-950/80 border border-emerald-500/30 space-y-3 relative overflow-hidden">
-              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-emerald-400 uppercase tracking-wide">
                   🛡️ Jami Qaytarilgan Hujumlar
@@ -734,7 +731,7 @@ export const AdminServerTab: React.FC = () => {
                 onClick={handleToggleAntiVpn}
                 className={`px-3 py-1.5 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
                   antiVpnStrict
-                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30'
+                    ? 'bg-amber-500 text-black shadow-lg'
                     : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >

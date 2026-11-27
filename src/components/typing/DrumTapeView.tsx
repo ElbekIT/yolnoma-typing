@@ -155,7 +155,7 @@ export const DrumTapeView: React.FC<DrumTapeViewProps> = ({
       <div className="flex flex-wrap items-center justify-between w-full max-w-xl px-3 mb-2 text-xs font-mono text-[var(--sub-color)]">
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--sub-alt)]/60 border border-[var(--sub-color)]/20 text-[var(--text-color)] font-semibold">
-            <Disc className="w-3.5 h-3.5 text-[var(--main-color)] animate-spin [animation-duration:12s]" />
+            <Disc className="w-3.5 h-3.5 text-[var(--main-color)]" />
             <span>BARABAN REJIMI</span>
           </span>
           <span className="hidden sm:inline-block opacity-60 text-[11px]">
@@ -232,10 +232,10 @@ export const DrumTapeView: React.FC<DrumTapeViewProps> = ({
             width={svgSize}
             height={svgSize}
             viewBox={`0 0 ${svgSize} ${svgSize}`}
-            className="overflow-visible drop-shadow-md select-none max-w-full h-auto"
+            className="overflow-visible select-none max-w-full h-auto"
           >
             <defs>
-              {/* Radial gradient for central hub (Monochrome / Ranglarsiz titanium glass) */}
+              {/* Radial gradient for central hub */}
               <radialGradient id="hubGlassGradient" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="var(--sub-alt)" stopOpacity="0.85" />
                 <stop offset="75%" stopColor="var(--card-bg)" stopOpacity="0.95" />
@@ -248,12 +248,6 @@ export const DrumTapeView: React.FC<DrumTapeViewProps> = ({
                 <stop offset="85%" stopColor="var(--sub-alt)" stopOpacity="0.3" />
                 <stop offset="100%" stopColor="transparent" />
               </radialGradient>
-
-              {/* Monochrome reticle glow */}
-              <filter id="reticleGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
             </defs>
 
             {/* STATIC BACKGROUND: Outer Bezels & Mechanical Tick Dial */}

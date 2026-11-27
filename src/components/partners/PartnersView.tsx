@@ -215,9 +215,7 @@ export const PartnersView: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6 py-4 px-2 sm:px-4 animate-in fade-in duration-300">
       {/* Header Banner - Compact & Refined */}
-      <div className="bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/50 border border-amber-500/40 rounded-3xl p-6 sm:p-7 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full pointer-events-none blur-2xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/5 rounded-full pointer-events-none blur-2xl" />
+      <div className="bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/50 border border-amber-500/40 rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden">
 
         <div className="relative z-10 space-y-2.5 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-black text-xs uppercase tracking-wider">
@@ -236,10 +234,8 @@ export const PartnersView: React.FC = () => {
       </div>
 
       {/* Main Partner & Sponsor Showcase Card with Photo & Executive Badges */}
-      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 lg:p-8 shadow-xl relative overflow-hidden space-y-6">
+      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 lg:p-8 shadow-sm relative overflow-hidden space-y-6">
         {/* Subtle decorative glow elements */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header Section with Photo & Core Partner Information */}
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8 border-b border-amber-500/25 pb-6">
@@ -252,7 +248,7 @@ export const PartnersView: React.FC = () => {
               {/* Photo Container */}
               <div
                 onClick={() => setIsPhotoOpen(true)}
-                className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden bg-slate-900 border-2 border-amber-500/80 shadow-2xl cursor-pointer"
+                className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden bg-slate-900 border-2 border-amber-500/80 shadow-sm cursor-pointer"
                 title="Rasmni kattalashtirib ko'rish"
               >
                 <img
@@ -269,7 +265,7 @@ export const PartnersView: React.FC = () => {
                 />
 
                 {/* Hover overlay with Zoom Icon */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white font-bold text-xs backdrop-blur-[2px]">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white font-bold text-xs">
                   <ZoomIn className="w-4 h-4 text-amber-300" />
                   <span>Kattalashtirish</span>
                 </div>
@@ -297,7 +293,7 @@ export const PartnersView: React.FC = () => {
           <div className="flex-1 space-y-4 text-center lg:text-left min-w-0">
             {/* Badges */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md shadow-amber-500/20">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
                 <Crown className="w-3.5 h-3.5 fill-slate-950" />
                 <span>Bosh Hamkor va Homiy</span>
               </span>
@@ -332,7 +328,7 @@ export const PartnersView: React.FC = () => {
                 href="https://yosh-avlod-kanali.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-[1.02] cursor-pointer"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
               >
                 <span>Hamkorimiz Saytiga O'tish</span>
                 <ExternalLink className="w-4 h-4" />
@@ -421,7 +417,7 @@ export const PartnersView: React.FC = () => {
       </div>
 
       {/* Sponsors Section (Homiylar Bo'limi) */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-5 sm:p-7 shadow-xl space-y-5">
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -456,7 +452,7 @@ export const PartnersView: React.FC = () => {
                   setIsQuickAddOpen(!isQuickAddOpen);
                   setQuickFeedback(null);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>{isQuickAddOpen ? 'Yopish' : "Homiy Qo'shish"}</span>
@@ -604,11 +600,11 @@ export const PartnersView: React.FC = () => {
       {/* High-Resolution Photo Lightbox Modal */}
       {isPhotoOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-200"
           onClick={() => setIsPhotoOpen(false)}
         >
           <div
-            className="relative max-w-lg w-full bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-4 shadow-2xl space-y-4"
+            className="relative max-w-lg w-full bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-4 shadow-sm space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}

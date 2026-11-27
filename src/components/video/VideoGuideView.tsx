@@ -449,7 +449,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
         {/* Responsive YouTube Video Player Embed Container */}
         <div
           id="video-player-container"
-          className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden border border-[var(--sub-alt)] shadow-2xl group ring-1 ring-white/5"
+          className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden border border-[var(--sub-alt)] shadow-sm group ring-1 ring-white/5"
         >
           <iframe
             key={`youtube-player-${youtubeVideoId}-${playerKey}`}
@@ -491,7 +491,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
                   disabled={isSubmittingReaction}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-extrabold transition-all cursor-pointer select-none active:scale-95 shadow-xs ${
                     userReaction === 'like'
-                      ? 'bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/25 ring-2 ring-emerald-500/30'
+                      ? 'bg-emerald-500 text-white border-emerald-500 ring-2 ring-emerald-500/30'
                       : 'bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-alt)] hover:border-emerald-500/40'
                   }`}
                   title={user ? "Videoga layk bosish" : "Layk bosish uchun tizimga kiring"}
@@ -512,7 +512,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
                   disabled={isSubmittingReaction}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-extrabold transition-all cursor-pointer select-none active:scale-95 shadow-xs ${
                     userReaction === 'dislike'
-                      ? 'bg-rose-500 text-white border-rose-500 shadow-rose-500/25 ring-2 ring-rose-500/30'
+                      ? 'bg-rose-500 text-white border-rose-500 ring-2 ring-rose-500/30'
                       : 'bg-[var(--sub-alt)]/50 hover:bg-[var(--sub-alt)] text-[var(--text-color)] border-[var(--sub-alt)] hover:border-rose-500/40'
                   }`}
                   title={user ? "Videoga dislayk bosish" : "Dislayk bosish uchun tizimga kiring"}
@@ -640,7 +640,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
       <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
         <button
           onClick={onStartTyping}
-          className="px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:brightness-105 text-white font-black text-sm shadow-lg shadow-[var(--main-color)]/25 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+          className="px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:brightness-105 text-white font-black text-sm shadow-lg flex items-center gap-2 cursor-pointer transition-all active:scale-95"
         >
           <span>Tez Yozishni Boshlash</span>
           <ChevronRight className="w-4 h-4" />
@@ -668,8 +668,8 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
 
       {/* Auth Requirement Prompt Modal (Only registered users can like/dislike) */}
       {showAuthPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-7 shadow-sm space-y-5 text-center">
             <button
               onClick={() => setShowAuthPrompt(false)}
               className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -697,7 +697,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
                   setShowAuthPrompt(false);
                   if (onOpenAuth) onOpenAuth();
                 }}
-                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--main-color)] hover:brightness-105 text-white font-bold text-sm transition-all shadow-lg shadow-[var(--main-color)]/25 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--main-color)] hover:brightness-105 text-white font-bold text-sm transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Kirish / Ro'yxatdan o'tish</span>

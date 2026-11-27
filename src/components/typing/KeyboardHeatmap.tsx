@@ -113,13 +113,13 @@ export const KeyboardHeatmap: React.FC<KeyboardHeatmapProps> = ({
 
     const errorRate = stat.errors / stat.total;
     if (stat.errors === 0) {
-      return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-xs shadow-emerald-500/10 font-bold';
+      return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 font-bold';
     } else if (errorRate < 0.2) {
-      return 'bg-amber-500/25 text-amber-300 border-amber-500/50 shadow-xs shadow-amber-500/20 font-bold';
+      return 'bg-amber-500/25 text-amber-300 border-amber-500/50 font-bold';
     } else if (errorRate < 0.5) {
-      return 'bg-orange-500/35 text-orange-200 border-orange-500/60 shadow-xs shadow-orange-500/30 font-bold';
+      return 'bg-orange-500/35 text-orange-200 border-orange-500/60 font-bold';
     } else {
-      return 'bg-rose-600/40 text-rose-200 border-rose-500 shadow-xs shadow-rose-500/40 font-black animate-pulse';
+      return 'bg-rose-600/40 text-rose-200 border-rose-500 font-black';
     }
   };
 

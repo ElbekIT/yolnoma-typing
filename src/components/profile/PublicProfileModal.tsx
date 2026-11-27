@@ -85,7 +85,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-2xl text-[var(--text-color)] my-8">
+      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm text-[var(--text-color)] my-8">
         {/* Banner */}
         <div
           className="h-32 w-full relative"
@@ -295,8 +295,8 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
 
       {/* QR Code Modal Popup */}
       {showQrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl text-center max-w-sm w-full space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl text-center max-w-sm w-full space-y-4 shadow-sm">
             <h3 className="text-lg font-bold">Profile QR Code</h3>
             <p className="text-xs text-[var(--sub-color)]">Scan with mobile camera to view @{userProfile.username}</p>
 

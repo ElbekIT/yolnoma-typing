@@ -128,19 +128,19 @@ const SingleBattleDrum: React.FC<SingleDrumProps> = ({
       ring: 'border-cyan-500/40',
       badge: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
       stroke: '#06b6d4',
-      glow: 'shadow-cyan-500/20'
+      glow: ''
     },
     amber: {
       ring: 'border-amber-500/40',
       badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
       stroke: '#f59e0b',
-      glow: 'shadow-amber-500/20'
+      glow: ''
     },
     purple: {
       ring: 'border-purple-500/40',
       badge: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
       stroke: '#a855f7',
-      glow: 'shadow-purple-500/20'
+      glow: ''
     }
   }[accentColor];
 
@@ -196,7 +196,7 @@ const SingleBattleDrum: React.FC<SingleDrumProps> = ({
             style={{ borderTopColor: colorStyles.stroke }}
           />
           <div
-            className="w-1.5 h-1.5 rounded-full animate-ping"
+            className="w-1.5 h-1.5 rounded-full"
             style={{ backgroundColor: colorStyles.stroke }}
           />
         </div>
@@ -490,7 +490,7 @@ export const DualBattleDrumView: React.FC<DualBattleDrumViewProps> = ({
 
         {/* Central VS Divider Badge */}
         <div className="shrink-0 flex flex-col items-center justify-center my-2 md:my-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-slate-950 font-black font-mono text-sm flex items-center justify-center shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/50">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-slate-950 font-black font-mono text-sm flex items-center justify-center shadow-lg ring-2 ring-amber-400/50">
             VS
           </div>
           <span className="text-[10px] font-mono font-bold text-[var(--sub-color)] mt-1 uppercase tracking-widest">

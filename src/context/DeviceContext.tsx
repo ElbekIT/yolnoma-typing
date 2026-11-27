@@ -57,20 +57,27 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCalibrated(false);
   }, [applyDeviceCSS, setCalibrated]);
 
-  // Window resize listener to keep device auto-adapted
+  // Window resize listener (debounced to prevent scroll/keyboard lag on mobile)
   useEffect(() => {
     const detected = autoDetectDevice();
     setCurrentDevice(detected);
     applyDeviceCSS(detected);
 
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const handleResize = () => {
-      const updated = autoDetectDevice();
-      setCurrentDevice(updated);
-      applyDeviceCSS(updated);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const updated = autoDetectDevice();
+        setCurrentDevice(updated);
+        applyDeviceCSS(updated);
+      }, 250);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeTimer) clearTimeout(resizeTimer);
+    };
   }, [applyDeviceCSS]);
 
   return (

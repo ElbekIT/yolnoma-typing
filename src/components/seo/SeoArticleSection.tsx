@@ -457,9 +457,9 @@ export const SeoArticleSection: React.FC<{ onStartPractice?: () => void }> = ({ 
             return (
               <div
                 key={faq.id}
-                className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                className={`rounded-2xl border transition-colors overflow-hidden ${
                   isOpen
-                    ? 'bg-[var(--card-bg)] border-[var(--main-color)]/50 shadow-md ring-1 ring-[var(--main-color)]/20'
+                    ? 'bg-[var(--card-bg)] border-[var(--main-color)]/45'
                     : 'bg-[var(--card-bg)]/60 border-[var(--sub-alt)]/60 hover:border-[var(--sub-alt)]'
                 }`}
               >

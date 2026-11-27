@@ -278,7 +278,7 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
       <div className="flex items-center justify-between px-3 py-1.5 mb-1 rounded-xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)] text-xs text-[var(--sub-color)]">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
             <span className="font-bold text-[var(--text-color)] text-xs flex items-center gap-1 font-sans">
               <span>🙌 10 Barmoq Vizualizatori</span>
             </span>
@@ -313,30 +313,12 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
       </div>
 
       {/* Main SVG Keyboard & Hands Container */}
-      <div className="relative w-full overflow-hidden rounded-2xl bg-[#f8fafc]/90 dark:bg-[#0f141c]/90 border border-[var(--sub-alt)] shadow-md">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-[#f8fafc] dark:bg-[#0f141c] border border-[var(--sub-alt)]">
         <svg
           viewBox="120 70 760 365"
-          className="w-full h-auto max-h-[340px] drop-shadow-sm"
+          className="w-full h-auto max-h-[340px]"
           preserveAspectRatio="xMidYMid meet"
         >
-          <defs>
-            {/* Glowing filter for active finger path */}
-            <filter id="glow-neon" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* Target key pulse ring animation */}
-            <radialGradient id="target-ripple" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-              <stop offset="60%" stopColor="#60a5fa" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#93c5fd" stopOpacity="0" />
-            </radialGradient>
-          </defs>
 
           {/* Keyboard Chassis Outline */}
           <rect
@@ -358,29 +340,14 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
 
             return (
               <g key={k.id} className="transition-all duration-75">
-                {/* Active Key Concentric Ripple Rings (Matching Reference Image) */}
+                {/* Active Key Subtle Highlight Ring */}
                 {isTarget && (
-                  <>
-                    <circle
-                      cx={k.x + k.w / 2}
-                      cy={k.y + k.h / 2}
-                      r="40"
-                      className="fill-blue-500/10 dark:fill-blue-400/15 animate-ping"
-                      style={{ animationDuration: '1.8s' }}
-                    />
-                    <circle
-                      cx={k.x + k.w / 2}
-                      cy={k.y + k.h / 2}
-                      r="32"
-                      className="fill-blue-500/20 dark:fill-blue-400/25 animate-pulse"
-                    />
-                    <circle
-                      cx={k.x + k.w / 2}
-                      cy={k.y + k.h / 2}
-                      r="24"
-                      className="fill-blue-500/30 dark:fill-blue-400/35"
-                    />
-                  </>
+                  <circle
+                    cx={k.x + k.w / 2}
+                    cy={k.y + k.h / 2}
+                    r="28"
+                    className="fill-blue-500/20 dark:fill-blue-400/20"
+                  />
                 )}
 
                 {/* Keycap Body */}
@@ -393,7 +360,7 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
                   ry="7"
                   className={
                     isTarget
-                      ? 'fill-blue-600 stroke-blue-400 dark:stroke-blue-300 drop-shadow-md'
+                      ? 'fill-blue-600 stroke-blue-400 dark:stroke-blue-300'
                       : isPressed
                       ? 'fill-slate-400 dark:fill-slate-600 stroke-slate-500'
                       : isHomeRow
@@ -539,21 +506,20 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
           {/* Exactly matching the blue highlighted finger line in the image!  */}
           {/* ================================================================= */}
           {highlightPathD && (
-            <g className="transition-all duration-150">
-              {/* Outer soft glow line */}
+            <g>
+              {/* Soft outer highlight line */}
               <path
                 d={highlightPathD}
-                className="fill-none stroke-blue-500/40 dark:stroke-blue-400/50"
-                strokeWidth="10"
+                className="fill-none stroke-blue-500/25 dark:stroke-blue-400/25"
+                strokeWidth="9"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                filter="url(#glow-neon)"
               />
-              {/* Core solid vibrant blue energy line */}
+              {/* Core solid vibrant blue line */}
               <path
                 d={highlightPathD}
                 className="fill-none stroke-blue-600 dark:stroke-blue-400"
-                strokeWidth="4.5"
+                strokeWidth="4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -562,8 +528,8 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
                 <circle
                   cx={activeKeyCoord.x + activeKeyCoord.w / 2}
                   cy={activeKeyCoord.y + activeKeyCoord.h / 2}
-                  r="5"
-                  className="fill-white drop-shadow-sm"
+                  r="4.5"
+                  className="fill-white"
                 />
               )}
             </g>

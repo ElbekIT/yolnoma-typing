@@ -21,12 +21,12 @@ export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
       <div className="absolute bottom-10 left-10 w-80 h-80 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Main Glass Card */}
-      <div className="max-w-xl w-full bg-slate-900/90 border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl relative z-10 space-y-7 text-center">
+      <div className="max-w-xl w-full bg-slate-900/90 border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-10 shadow-sm relative z-10 space-y-7 text-center">
         {/* Top Status Pill */}
         <div className="flex items-center justify-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold uppercase tracking-wider">
             <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className=" absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
             </span>
             <span>TEXNIK ISHLAR & YANGILANISH REJIMI</span>
@@ -34,7 +34,7 @@ export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
         </div>
 
         {/* Animated Cyber Icon */}
-        <div className="mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-b from-cyan-500/20 to-blue-950/40 border-2 border-cyan-500/50 p-5 text-cyan-400 flex items-center justify-center shadow-xl shadow-cyan-500/25 relative group">
+        <div className="mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-b from-cyan-500/20 to-blue-950/40 border-2 border-cyan-500/50 p-5 text-cyan-400 flex items-center justify-center shadow-sm relative group">
           <Wrench className="w-12 h-12 sm:w-14 sm:h-14 animate-[spin_6s_linear_infinite]" />
           <Cpu className="w-6 h-6 text-cyan-300 absolute -top-1 -right-1 bg-slate-900 rounded-lg p-0.5 border border-cyan-500/40" />
         </div>
@@ -77,7 +77,7 @@ export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
         {/* Manual Refresh Button */}
         <button
           onClick={() => window.location.reload()}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 cursor-pointer"
+          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           <span>Saytni Yangilash (Tekshirish)</span>

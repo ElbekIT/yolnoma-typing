@@ -66,13 +66,13 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
       {/* Main Container Card */}
       <div
         id="user-blocked-card"
-        className="max-w-xl w-full bg-slate-900/95 border-2 border-rose-500/50 rounded-3xl p-6 sm:p-9 shadow-2xl shadow-rose-950/60 backdrop-blur-2xl relative z-10 space-y-6 text-center"
+        className="max-w-xl w-full bg-slate-900/95 border-2 border-rose-500/50 rounded-3xl p-6 sm:p-9 shadow-sm relative z-10 space-y-6 text-center"
       >
         {/* Top Danger Badge */}
         <div className="flex items-center justify-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 border border-rose-500/50 text-rose-300 text-xs font-mono font-black uppercase tracking-wider">
             <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-80"></span>
+              <span className=" absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-80"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
             </span>
             <span>HISOBINGIZ BUTUNLAY BLOKLANDI</span>
@@ -80,7 +80,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
         </div>
 
         {/* Warning Icon */}
-        <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-rose-500/20 to-red-950/50 border-2 border-rose-500/60 p-4 text-rose-400 flex items-center justify-center shadow-xl shadow-rose-600/25 relative">
+        <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-rose-500/20 to-red-950/50 border-2 border-rose-500/60 p-4 text-rose-400 flex items-center justify-center shadow-sm relative">
           <ShieldAlert className="w-10 h-10 sm:w-12 sm:h-12 text-rose-400 animate-pulse" />
           <Lock className="w-5 h-5 text-rose-300 absolute -top-1 -right-1 bg-slate-950 rounded-lg p-0.5 border border-rose-500/50" />
         </div>

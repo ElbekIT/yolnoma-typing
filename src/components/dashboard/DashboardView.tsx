@@ -39,7 +39,7 @@ export const DashboardView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Welcome Banner */}
-      <div className="bg-gradient-to-r from-[var(--main-color)] to-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-[var(--main-color)] to-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Welcome Back, {profile?.displayName || 'Typer'}! ⚡
@@ -50,7 +50,7 @@ export const DashboardView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+        <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/20">
           <Award className="w-10 h-10 text-amber-300" />
           <div>
             <span className="text-[10px] uppercase font-bold text-white/80 tracking-wider">Current Streak</span>

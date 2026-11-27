@@ -134,10 +134,9 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
     <div className="w-full max-w-4xl mx-auto py-8 sm:py-12 px-4 flex flex-col items-center text-center">
       {/* 404 Glitch & Neon Badge */}
       <div className="relative mb-6">
-        <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-[var(--main-color)]/20 to-amber-500/20 blur-2xl rounded-full opacity-60 animate-pulse pointer-events-none" />
         
         <div className="relative inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg mb-4">
-          <AlertTriangle className="w-4 h-4 text-amber-400 animate-bounce" />
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
           <span className="text-xs font-mono font-bold tracking-wider text-[var(--sub-color)] uppercase">
             Xatolik kodi: 404 • Not Found
           </span>
@@ -245,7 +244,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
       <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
         <button
           onClick={onGoHome}
-          className="px-6 py-3 rounded-xl bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-sm flex items-center gap-2 shadow-lg shadow-[var(--main-color)]/20 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+          className="px-6 py-3 rounded-xl bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-sm flex items-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
         >
           <Home className="w-4 h-4" />
           <span>Bosh Sahifaga Qaytish</span>

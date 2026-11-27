@@ -321,7 +321,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
       {/* ============================================================
           TOP HEADER & CONTROLS BAR
           ============================================================ */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg">
         
         {/* Left: Title & Mode Switcher */}
         <div className="flex items-center gap-4 flex-wrap justify-center sm:justify-start">
@@ -540,7 +540,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* LEFT / CENTER: Interactive Wheel or Character Canvas */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center justify-center p-4 sm:p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-xl relative min-h-[500px]">
+        <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center justify-center p-4 sm:p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm relative min-h-[500px]">
           {entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
               <span className="text-5xl">📋</span>
@@ -587,7 +587,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
         </div>
 
         {/* RIGHT SIDEBAR: Entries & History Management */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-xl overflow-hidden">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm overflow-hidden">
           
           {/* Sidebar Tabs */}
           <div className="flex items-center border-b border-[var(--sub-alt)] bg-slate-900/40">
@@ -767,8 +767,8 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           WINNER CELEBRATION MODAL (Clean, Static, Zero Lag, No Bouncing)
           ============================================================ */}
       {showWinnerModal && winner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-2 border-amber-500/50 shadow-2xl text-center space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-2 border-amber-500/50 shadow-sm text-center space-y-6">
             
             {/* Close Button */}
             <button
@@ -780,7 +780,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
             </button>
 
             {/* Static Clean Glowing Trophy Badge (No jump / bounce) */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-400 text-4xl shadow-lg shadow-amber-500/25">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-400 text-4xl shadow-lg">
               🏆
             </div>
 
@@ -820,8 +820,8 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           QUICK NUMBER GENERATOR MODAL
           ============================================================ */}
       {showNumberModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-sm p-6 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-[var(--text-color)]">
                 Sonlar generatsiyasi

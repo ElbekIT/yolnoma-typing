@@ -803,7 +803,7 @@ export const AdminView: React.FC = () => {
   // 1. Generic 403 Forbidden Gate (Zero email exposure, zero identity leaks)
   if (!isSuperOwner) {
     return (
-      <div className="w-full max-w-md mx-auto my-16 p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center space-y-6 shadow-xl animate-in fade-in">
+      <div className="w-full max-w-md mx-auto my-16 p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center space-y-6 shadow-sm animate-in fade-in">
         <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto shadow-inner">
           <ShieldAlert className="w-8 h-8" />
         </div>
@@ -840,7 +840,7 @@ export const AdminView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-950/80 via-[var(--card-bg)] to-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-amber-950/80 via-[var(--card-bg)] to-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="p-4 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400">
             <Crown className="w-8 h-8 animate-pulse" />
@@ -877,7 +877,7 @@ export const AdminView: React.FC = () => {
           {/* Action Button to Open Content Modal */}
           <button
             onClick={() => setShowContentModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-lg shadow-amber-500/25 hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-lg hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
           >
             <FileText className="w-4 h-4" />
             <span>Matnlar & Tillar</span>
@@ -915,7 +915,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'leaderboard'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -927,7 +927,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('users')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'users'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -939,7 +939,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('team')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'team'
-              ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-400/50'
+              ? 'bg-cyan-500 text-black shadow-lg ring-2 ring-cyan-400/50'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-cyan-300 border border-cyan-500/30'
           }`}
         >
@@ -951,7 +951,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('inbox')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer relative ${
             activeTab === 'inbox'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -968,7 +968,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('notifications')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'notifications'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -980,7 +980,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('sessions')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'sessions'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -992,7 +992,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('server')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'server'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -1004,7 +1004,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('maintenance')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'maintenance'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -1016,7 +1016,7 @@ export const AdminView: React.FC = () => {
           onClick={() => setActiveTab('sponsors')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
             activeTab === 'sponsors'
-              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+              ? 'bg-amber-500 text-black shadow-lg'
               : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-white border border-[var(--sub-alt)]'
           }`}
         >
@@ -1089,7 +1089,7 @@ export const AdminView: React.FC = () => {
 
       {/* TAB 1: REYTING BOSHQARUVI */}
       {activeTab === 'leaderboard' && (
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-xl">
+        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
           {loading ? (
             <div className="p-12 text-center text-xs text-[var(--sub-color)] font-mono animate-pulse">
               Reyting ishtirokchilari yuklanmoqda...
@@ -1117,7 +1117,7 @@ export const AdminView: React.FC = () => {
                       <td className="p-4 font-mono font-black">
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-xl font-extrabold ${
                           idx === 0
-                            ? 'bg-amber-400 text-black shadow-md shadow-amber-400/30'
+                            ? 'bg-amber-400 text-black shadow-md'
                             : idx === 1
                             ? 'bg-slate-300 text-black'
                             : idx === 2
@@ -1192,7 +1192,7 @@ export const AdminView: React.FC = () => {
 
       {/* TAB 2: BARCHA FOYDALANUVCHILAR */}
       {activeTab === 'users' && (
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-xl">
+        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
           {loading ? (
             <div className="p-12 text-center text-xs text-[var(--sub-color)] font-mono animate-pulse">
               Foydalanuvchilar roʻyxati yuklanmoqda...
@@ -1432,8 +1432,8 @@ export const AdminView: React.FC = () => {
 
       {/* EDIT LEADERBOARD / USER MODAL */}
       {editingUser && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-2xl relative">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-sm relative">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-2 text-amber-400 font-black text-sm uppercase tracking-wide">
                 <Edit3 className="w-5 h-5" />
@@ -1527,7 +1527,7 @@ export const AdminView: React.FC = () => {
               <button
                 onClick={handleSaveUserEdit}
                 disabled={isSaving}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 cursor-pointer hover:opacity-95 flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg cursor-pointer hover:opacity-95 flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 <span>{isSaving ? 'Saqlanmoqda...' : 'Saqlash & Yangilash'}</span>
@@ -1539,8 +1539,8 @@ export const AdminView: React.FC = () => {
 
       {/* Block User Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-rose-500/40 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl relative">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-rose-500/40 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-sm relative">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-2 text-rose-400 font-extrabold text-sm">
                 <ShieldAlert className="w-5 h-5" />
@@ -1615,7 +1615,7 @@ export const AdminView: React.FC = () => {
 
               <button
                 onClick={handleBlockUser}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg cursor-pointer"
               >
                 Tasdiqlash & Bloklash
               </button>
@@ -1645,8 +1645,8 @@ export const AdminView: React.FC = () => {
 
       {/* Demote Admin Confirmation Modal */}
       {demoteTargetUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-slate-900 border border-rose-500/50 rounded-3xl p-6 shadow-2xl shadow-rose-950/40 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in">
+          <div className="w-full max-w-md bg-slate-900 border border-rose-500/50 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-rose-500/20 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
@@ -1707,7 +1707,7 @@ export const AdminView: React.FC = () => {
                 type="button"
                 disabled={isDemotingUser}
                 onClick={() => handleExecuteDemoteUser(demoteTargetUser)}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-rose-600/30 transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all cursor-pointer disabled:opacity-50"
               >
                 {isDemotingUser ? (
                   <>
