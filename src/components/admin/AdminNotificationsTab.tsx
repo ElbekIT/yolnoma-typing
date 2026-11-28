@@ -180,9 +180,9 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-[var(--card-bg)] rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+          <div className="p-3.5 rounded-2xl bg-amber-500/15 text-amber-400">
             <Bell className="w-6 h-6" />
           </div>
           <div>
@@ -195,17 +195,17 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-[var(--sub-alt)] px-3.5 py-2 rounded-2xl border border-[var(--sub-alt)] text-xs font-mono">
+        <div className="flex items-center gap-2 bg-[var(--sub-alt)] px-3.5 py-2 rounded-2xl text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="font-bold text-[var(--text-color)]">Realtime Habarnoma Tizimi Faol</span>
         </div>
       </div>
 
       {/* In-Platform Instant Broadcast & Notification Templates Card */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-[var(--card-bg)] to-sky-500/10 border-2 border-[var(--main-color)]/30 rounded-3xl p-6 shadow-md relative overflow-hidden space-y-4">
+      <div className="bg-gradient-to-r from-amber-500/10 via-[var(--card-bg)] to-sky-500/10 rounded-3xl p-6 relative overflow-hidden space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-2xl bg-[var(--main-color)]/15 border border-[var(--main-color)]/30 text-[var(--main-color)] mt-0.5">
+            <div className="p-3 rounded-2xl bg-[var(--main-color)]/15 text-[var(--main-color)] mt-0.5">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
@@ -213,7 +213,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 <h3 className="text-base font-black text-[var(--text-color)]">
                   Tezkor Eʼlonlar & Xabarnoma Shablonlari
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   PLATFORMA ICHKI REALTIME PUSH
                 </span>
@@ -236,7 +236,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 'success'
               )
             }
-            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-[var(--main-color)]/40 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-left transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-[var(--main-color)] transition-colors">
               <Zap className="w-4 h-4 text-amber-400" />
@@ -256,7 +256,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 'achievement'
               )
             }
-            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-amber-500/40 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-left transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-amber-400 transition-colors">
               <Sparkles className="w-4 h-4 text-amber-400" />
@@ -276,7 +276,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 'info'
               )
             }
-            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-cyan-500/40 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-left transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-cyan-400 transition-colors">
               <Radio className="w-4 h-4 text-cyan-400" />
@@ -296,7 +296,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 'warning'
               )
             }
-            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] border border-[var(--sub-alt)] hover:border-rose-500/40 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-left transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-color)] group-hover:text-rose-400 transition-colors">
               <AlertTriangle className="w-4 h-4 text-rose-400" />
@@ -311,8 +311,8 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Send Message Form */}
-        <div className="lg:col-span-7 bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-3">
+        <div className="lg:col-span-7 bg-[var(--card-bg)] rounded-3xl p-6 space-y-5">
+          <div className="flex items-center justify-between pb-3">
             <h3 className="font-black text-sm text-[var(--text-color)] flex items-center gap-2">
               <Send className="w-4 h-4 text-[var(--main-color)]" />
               <span>Yangi Xabar Yaratish</span>
@@ -369,7 +369,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
 
           {/* Specific User Selector if chosen */}
           {targetType === 'specific' && (
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] space-y-3 animate-in fade-in">
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/40 space-y-3 animate-in fade-in">
               <label className="text-xs font-bold text-[var(--text-color)] block flex items-center justify-between">
                 <span>Qabul qiluvchi foydalanuvchini tanlang:</span>
                 {selectedTargetUser && (
@@ -387,7 +387,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                   placeholder="Foydalanuvchini ism, @username yoki email orqali qidiring..."
                   value={userSearchTerm}
                   onChange={(e) => setUserSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)]"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--card-bg)] text-xs text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none"
                 />
               </div>
 
@@ -441,7 +441,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                     'success'
                   )
                 }
-                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
                 <Zap className="w-3 h-3" />
                 <span>Turnir Eʼloni</span>
@@ -456,7 +456,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                     'info'
                   )
                 }
-                className="px-2.5 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
                 <Sparkles className="w-3 h-3" />
                 <span>Yangilanish</span>
@@ -471,7 +471,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                     'achievement'
                   )
                 }
-                className="px-2.5 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
                 <Sparkles className="w-3 h-3" />
                 <span>Tabrik</span>
@@ -486,7 +486,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                     'warning'
                   )
                 }
-                className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
                 <AlertTriangle className="w-3 h-3" />
                 <span>Ogohlantirish</span>
@@ -506,7 +506,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Masalan: ⚡ Haftalik Reyting G'oliblari E'lon Qilindi!"
-                className="w-full p-3 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] font-bold placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)] transition-all"
+                className="w-full p-3 rounded-2xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] font-bold placeholder-[var(--sub-color)] focus:outline-none transition-all"
               />
             </div>
 
@@ -583,20 +583,20 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
                 placeholder="Foydalanuvchilarga yetkazilishi kerak bo'lgan xabar yoki e'lon matnini yozing..."
-                className="w-full p-3.5 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none focus:border-[var(--main-color)] transition-all leading-relaxed"
+                className="w-full p-3.5 rounded-2xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none transition-all leading-relaxed"
               />
             </div>
 
             {/* Status alerts */}
             {errorMsg && (
-              <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {successMsg && (
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{successMsg}</span>
               </div>
@@ -606,7 +606,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
             <button
               type="submit"
               disabled={sending}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs uppercase tracking-wider hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {sending ? (
                 <>
@@ -630,8 +630,8 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
         {/* Right Column: Live Preview & Sent History */}
         <div className="lg:col-span-5 space-y-6">
           {/* Live Preview Card */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-2.5">
+          <div className="bg-[var(--card-bg)] rounded-3xl p-5 space-y-3">
+            <div className="flex items-center justify-between pb-2.5">
               <span className="text-xs font-black text-[var(--text-color)] flex items-center gap-2">
                 <Bell className="w-3.5 h-3.5 text-[var(--main-color)]" />
                 <span>Foydalanuvchi Ekrani (Jonli Ko'rinish):</span>
@@ -641,7 +641,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
               </span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)] border border-[var(--main-color)]/40 shadow-md space-y-2">
+            <div className="p-3.5 rounded-2xl bg-[var(--card-bg)] space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
@@ -657,7 +657,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                   'Foydalanuvchi profiliga bosib, "Habarnomalar" boʻlimini ochganda siz yozgan xabar xuddi shu tarzda qizil bildirishnoma bilan paydo boʻladi.'}
               </p>
 
-              <div className="flex items-center justify-between text-[10px] pt-2 border-t border-[var(--sub-alt)]/60 pl-4">
+              <div className="flex items-center justify-between text-[10px] pt-2 pl-4">
                 <span className="font-semibold text-[var(--main-color)]">Admin (Yolnoma)</span>
                 <span className="text-emerald-500 font-bold">O'qildi deb belgilash ✓</span>
               </div>
@@ -665,8 +665,8 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
           </div>
 
           {/* Active Global Announcements History */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-2.5">
+          <div className="bg-[var(--card-bg)] rounded-3xl p-5 space-y-3">
+            <div className="flex items-center justify-between pb-2.5">
               <h3 className="text-xs font-black text-[var(--text-color)] flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
                 <span>Faol Eʼlonlar Tarixi ({announcementsList.length})</span>
@@ -687,7 +687,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                 {announcementsList.map((ann) => (
                   <div
                     key={ann.id}
-                    className="p-3 rounded-2xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] space-y-1.5 relative group"
+                    className="p-3 rounded-2xl bg-[var(--sub-alt)]/40 space-y-1.5 relative group"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <h4 className="font-black text-xs text-[var(--text-color)]">{ann.title}</h4>
@@ -705,7 +705,7 @@ export const AdminNotificationsTab: React.FC<AdminNotificationsTabProps> = ({
                       {ann.message}
                     </p>
 
-                    <div className="flex items-center justify-between text-[9px] font-mono text-[var(--sub-color)] pt-1 border-t border-[var(--sub-alt)]/60">
+                    <div className="flex items-center justify-between text-[9px] font-mono text-[var(--sub-color)] pt-1">
                       <span>{new Date(ann.timestamp).toLocaleString()}</span>
                       <span className="text-amber-400 uppercase font-bold">{ann.type}</span>
                     </div>

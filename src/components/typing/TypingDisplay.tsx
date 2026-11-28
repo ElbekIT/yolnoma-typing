@@ -847,9 +847,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
               setIsFocused(true);
             }
           }}
-          className="absolute inset-x-0 top-0 h-[80%] bg-[var(--bg-color)]/90 rounded-xl z-20 flex flex-col items-center justify-center text-sm font-medium text-[var(--main-color)] gap-3 border border-[var(--sub-alt)] cursor-pointer p-4 text-center transition-opacity duration-150"
+          className="absolute inset-x-0 top-0 h-[80%] bg-[var(--bg-color)]/92 rounded-xl z-20 flex flex-col items-center justify-center text-sm font-medium text-[var(--main-color)] gap-3 cursor-pointer p-4 text-center transition-opacity duration-150"
         >
-          <div className="flex items-center gap-2.5 bg-[var(--sub-alt)] px-5 py-2.5 rounded-xl border border-[var(--sub-color)]/20 shadow-sm hover:scale-105 transition-transform">
+          <div className="flex items-center gap-2.5 bg-[var(--card-bg)] px-5 py-2.5 rounded-xl">
             <MousePointer className="w-4 h-4 text-[var(--main-color)]" />
             <Smartphone className="w-4 h-4 sm:hidden text-[var(--main-color)]" />
             <span className="font-mono text-xs sm:text-sm text-[var(--text-color)] font-medium">
@@ -883,9 +883,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         <>
           {/* Quick Helper for New Uzbek Alphabet Letters */}
           {isNewUzbekMode && !isTestFinished && (
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)] text-xs text-[var(--sub-color)] select-none">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-2 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] text-xs text-[var(--sub-color)] select-none">
               <div className="flex items-center gap-1.5 font-sans font-medium text-[11px]">
-                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-bold">
                   Yangi Alifbo
                 </span>
                 <span className="hidden sm:inline">Tezkor harflar:</span>
@@ -904,7 +904,7 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                       e.stopPropagation();
                       handleQuickCharInsert(lower);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[var(--card-bg)] hover:bg-[var(--main-color)] hover:text-[var(--bg-color)] border border-[var(--sub-alt)] hover:border-[var(--main-color)] text-[var(--text-color)] font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded-lg bg-[var(--sub-alt)]/70 hover:bg-[var(--main-color)] hover:text-[var(--bg-color)] text-[var(--text-color)] font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                     title={`${upper} / ${lower} (klaviaturada "${tip}" bossangiz ham oʻgiriladi)`}
                   >
                     <span>{upper} {lower}</span>
@@ -1061,9 +1061,9 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
         </button>
 
         <div className="hidden sm:flex items-center gap-1.5 text-[var(--sub-color)] text-[11px] font-mono select-none opacity-70">
-          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px] border border-[var(--sub-color)]/20">tab</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--card-bg)] text-[var(--sub-color)] text-[10px]">tab</kbd>
           <span className="opacity-60">+</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] text-[10px] border border-[var(--sub-color)]/20">enter</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--card-bg)] text-[var(--sub-color)] text-[10px]">enter</kbd>
           <span className="ml-1">- qayta boshlash</span>
         </div>
       </div>

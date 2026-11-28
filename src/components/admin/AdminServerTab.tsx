@@ -338,7 +338,7 @@ export const AdminServerTab: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Top Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--card-bg)] border border-cyan-500/30 p-5 rounded-3xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--card-bg)] p-5 rounded-3xl">
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-3 w-3 relative">
@@ -358,7 +358,7 @@ export const AdminServerTab: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleTestDrDosShield}
-            className="px-3.5 py-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/40 text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-black text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Radar className="w-4 h-4" />
             <span>DRDoS Tekshiruvi</span>
@@ -367,7 +367,7 @@ export const AdminServerTab: React.FC = () => {
           <button
             onClick={fetchServerStats}
             disabled={loading}
-            className="px-4 py-2 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-400 hover:text-black border border-cyan-500/40 text-xs font-black transition-all cursor-pointer flex items-center gap-2"
+            className="px-4 py-2 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-400 hover:text-black text-xs font-black transition-all cursor-pointer flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Yangilash</span>
@@ -376,14 +376,14 @@ export const AdminServerTab: React.FC = () => {
       </div>
 
       {shieldTestResult && (
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+        <div className="p-4 rounded-2xl bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <span>{shieldTestResult}</span>
         </div>
       )}
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center gap-2">
+        <div className="p-4 rounded-2xl bg-rose-500/15 text-rose-400 text-xs font-bold flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -391,10 +391,10 @@ export const AdminServerTab: React.FC = () => {
 
       {/* PRECISE DDOS & DRDOS ATTACK COUNTERS WIDGET */}
       {stats && (
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-2 border-rose-500/40 shadow-sm space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-4">
+        <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-4 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40">
+              <div className="p-3 rounded-2xl bg-rose-500/20 text-rose-400">
                 <Radar className="w-6 h-6 animate-spin" />
               </div>
               <div>
@@ -402,7 +402,7 @@ export const AdminServerTab: React.FC = () => {
                   <h2 className="text-lg font-black text-white uppercase tracking-wider">
                     DDoS & DRDoS Hujumlari Aniq Hisoblagichi
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     Jonli Telemetriya
                   </span>
@@ -423,7 +423,7 @@ export const AdminServerTab: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* CARD 1: DDoS Attacks Counter */}
-            <div className="p-5 rounded-2xl bg-slate-950/80 border border-rose-500/30 space-y-3 relative overflow-hidden">
+            <div className="p-5 rounded-2xl bg-slate-950/80 space-y-3 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-rose-400 uppercase tracking-wide">
                   💥 DDoS Hujumlari Soni
@@ -436,7 +436,7 @@ export const AdminServerTab: React.FC = () => {
                 </div>
                 <span className="text-xs text-rose-300 font-bold font-mono">marta hujum</span>
               </div>
-              <div className="space-y-1 pt-2 border-t border-slate-800/80 text-[11px] font-mono">
+              <div className="space-y-1 pt-2 text-[11px] font-mono">
                 <div className="flex justify-between text-slate-300">
                   <span>• HTTP Flood toʻsiqlari:</span>
                   <span className="text-rose-400 font-bold">{(stats.metrics.ddosFloodsBlocked || 48).toLocaleString()} ta</span>
@@ -453,7 +453,7 @@ export const AdminServerTab: React.FC = () => {
             </div>
 
             {/* CARD 2: DRDoS Attacks Counter */}
-            <div className="p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 space-y-3 relative overflow-hidden">
+            <div className="p-5 rounded-2xl bg-slate-950/80 space-y-3 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-cyan-400 uppercase tracking-wide">
                   🌊 DRDoS Hujumlari Soni
@@ -466,7 +466,7 @@ export const AdminServerTab: React.FC = () => {
                 </div>
                 <span className="text-xs text-cyan-300 font-bold font-mono">marta hujum</span>
               </div>
-              <div className="space-y-1 pt-2 border-t border-slate-800/80 text-[11px] font-mono">
+              <div className="space-y-1 pt-2 text-[11px] font-mono">
                 <div className="flex justify-between text-slate-300">
                   <span>• Qaytgan Refleksiya (Loop):</span>
                   <span className="text-cyan-400 font-bold">{(stats.metrics.drdosReflectionsBlocked || 26).toLocaleString()} ta</span>
@@ -483,7 +483,7 @@ export const AdminServerTab: React.FC = () => {
             </div>
 
             {/* CARD 3: Total Attacks Blocked & Status */}
-            <div className="p-5 rounded-2xl bg-slate-950/80 border border-emerald-500/30 space-y-3 relative overflow-hidden">
+            <div className="p-5 rounded-2xl bg-slate-950/80 space-y-3 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-emerald-400 uppercase tracking-wide">
                   🛡️ Jami Qaytarilgan Hujumlar
@@ -496,7 +496,7 @@ export const AdminServerTab: React.FC = () => {
                 </div>
                 <span className="text-xs text-emerald-300 font-bold font-mono">muvaffaqiyatli toʻsildi</span>
               </div>
-              <div className="space-y-1 pt-2 border-t border-slate-800/80 text-[11px] font-mono">
+              <div className="space-y-1 pt-2 text-[11px] font-mono">
                 <div className="flex justify-between text-slate-300">
                   <span>• Karantindagi IP manzillar:</span>
                   <span className="text-rose-400 font-bold">{(stats.metrics.bannedIpCount || bannedIpsList.length || 0)} ta</span>
@@ -519,7 +519,7 @@ export const AdminServerTab: React.FC = () => {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* DRDoS Reflections Blocked */}
-          <div className="p-5 rounded-3xl bg-[var(--card-bg)] border border-cyan-500/30 space-y-2">
+          <div className="p-5 rounded-3xl bg-[var(--card-bg)] space-y-2">
             <div className="flex items-center justify-between text-xs text-[var(--sub-color)] font-bold">
               <span>DRDoS & Qaytgan Refleksiya Bloki</span>
               <Waves className="w-4 h-4 text-cyan-400" />
@@ -534,7 +534,7 @@ export const AdminServerTab: React.FC = () => {
           </div>
 
           {/* Amplification Attacks Blocked */}
-          <div className="p-5 rounded-3xl bg-[var(--card-bg)] border border-rose-500/30 space-y-2">
+          <div className="p-5 rounded-3xl bg-[var(--card-bg)] space-y-2">
             <div className="flex items-center justify-between text-xs text-[var(--sub-color)] font-bold">
               <span>Kengaytiruvchi (Amplification) Blok</span>
               <Flame className="w-4 h-4 text-rose-400" />
@@ -549,7 +549,7 @@ export const AdminServerTab: React.FC = () => {
           </div>
 
           {/* Rate Limit / Throttled */}
-          <div className="p-5 rounded-3xl bg-[var(--card-bg)] border border-amber-500/30 space-y-2">
+          <div className="p-5 rounded-3xl bg-[var(--card-bg)] space-y-2">
             <div className="flex items-center justify-between text-xs text-[var(--sub-color)] font-bold">
               <span>Rate Limit & Subnet To'siq (429)</span>
               <Activity className="w-4 h-4 text-amber-400" />
@@ -563,7 +563,7 @@ export const AdminServerTab: React.FC = () => {
           </div>
 
           {/* RAM & Uptime */}
-          <div className="p-5 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-2">
+          <div className="p-5 rounded-3xl bg-[var(--card-bg)] space-y-2">
             <div className="flex items-center justify-between text-xs text-[var(--sub-color)] font-bold">
               <span>RAM Xotirasi & Uptime</span>
               <Cpu className="w-4 h-4 text-indigo-400" />
@@ -579,7 +579,7 @@ export const AdminServerTab: React.FC = () => {
       )}
 
       {/* DRDoS ARCHITECTURE EXPLANATION & LIVE DEFENSE MATRIX */}
-      <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-cyan-500/30 space-y-5">
+      <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-5">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400">
@@ -595,14 +595,14 @@ export const AdminServerTab: React.FC = () => {
             </div>
           </div>
 
-          <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5">
+          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             DRDoS SHIELD: JANGOBAR SHAY
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/80 space-y-2">
             <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs">
               <Network className="w-4 h-4" />
               <span>1. Anti-Reflection Loop Blocker</span>
@@ -612,7 +612,7 @@ export const AdminServerTab: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/80 space-y-2">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-xs">
               <Flame className="w-4 h-4" />
               <span>2. Range-Bomb & Amplification Killer</span>
@@ -622,7 +622,7 @@ export const AdminServerTab: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/80 space-y-2">
             <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
               <Activity className="w-4 h-4" />
               <span>3. Subnet /24 va /64 Klaster Himoyasi</span>
@@ -632,7 +632,7 @@ export const AdminServerTab: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/80 space-y-2">
             <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
               <Lock className="w-4 h-4" />
               <span>4. Anti-Slowloris & Socket Shield</span>
@@ -642,7 +642,7 @@ export const AdminServerTab: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/80 space-y-2">
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
               <Zap className="w-4 h-4" />
               <span>5. Stealth Zero-Byte Drop</span>
@@ -652,7 +652,7 @@ export const AdminServerTab: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/80 space-y-2">
             <div className="flex items-center gap-2 text-purple-400 font-bold text-xs">
               <ShieldAlert className="w-4 h-4" />
               <span>6. 35+ Botnet & Attack Tool Signatures</span>
@@ -667,49 +667,49 @@ export const AdminServerTab: React.FC = () => {
       {/* Security Architecture & Anti-Cheat Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Anti-DDoS & Security Features */}
-        <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-4">
+        <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-4">
           <div className="flex items-center gap-2 text-white font-black text-sm">
             <ShieldAlert className="w-5 h-5 text-cyan-400" />
             <span>Xavfsizlik & Cheklov Konfiguratsiyalari</span>
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-slate-950/60 flex items-center justify-between">
               <span className="text-slate-300 font-medium">Sliding-Window Burst Limiter:</span>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold">
                 FAOL (Max 50 req/sek)
               </span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-slate-950/60 flex items-center justify-between">
               <span className="text-slate-300 font-medium">Slowloris & Socket Flood Defense:</span>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold">
                 FAOL (Max 35 soket/IP)
               </span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-slate-950/60 flex items-center justify-between">
               <span className="text-slate-300 font-medium">Subnet /24 & /64 Flood Limiter:</span>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold">
                 FAOL (Max 120 req/sek)
               </span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-slate-950/60 flex items-center justify-between">
               <span className="text-slate-300 font-medium">DRDoS Reflection & Range-Bomb Filter:</span>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold">
                 FAOL (100% Bloklangan)
               </span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-slate-950/60 flex items-center justify-between">
               <span className="text-slate-300 font-medium">Stealth TCP Socket Termination:</span>
               <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-400 font-mono font-bold">
                 0% CPU / 0 Bayt Sarf
               </span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-slate-950/60 flex items-center justify-between">
               <span className="text-slate-300 font-medium">Anti-Brute Force Lockout:</span>
               <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 font-mono font-bold">
                 Max 4 Urinish / 15 daqiqa
@@ -717,7 +717,7 @@ export const AdminServerTab: React.FC = () => {
             </div>
 
             {/* Anti-VPN Strict Shield Controller */}
-            <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/40 flex items-center justify-between mt-2">
+            <div className="p-3.5 rounded-2xl bg-slate-950 flex items-center justify-between mt-2">
               <div>
                 <div className="text-white font-bold flex items-center gap-1.5">
                   <Globe2 className="w-4 h-4 text-amber-400" />
@@ -742,7 +742,7 @@ export const AdminServerTab: React.FC = () => {
         </div>
 
         {/* IP Ban & Firewall Management */}
-        <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-4">
+        <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-black text-sm">
               <Ban className="w-5 h-5 text-rose-400" />
@@ -772,7 +772,7 @@ export const AdminServerTab: React.FC = () => {
                   value={manualIpToBan}
                   onChange={(e) => setManualIpToBan(e.target.value)}
                   placeholder="Masalan: 198.51.100.45"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 text-xs text-white focus:outline-none font-mono"
                   required
                 />
                 <button
@@ -792,7 +792,7 @@ export const AdminServerTab: React.FC = () => {
                 <select
                   value={banAttackType}
                   onChange={(e) => setBanAttackType(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-300 focus:outline-none focus:border-rose-500 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 text-[11px] text-slate-300 focus:outline-none cursor-pointer"
                 >
                   <option value="DRDoS Reflector Loop">DRDoS Reflector Loop</option>
                   <option value="DDoS Flood">DDoS Flood</option>
@@ -808,7 +808,7 @@ export const AdminServerTab: React.FC = () => {
                 <select
                   value={banDurationHours}
                   onChange={(e) => setBanDurationHours(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-300 focus:outline-none focus:border-rose-500 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 text-[11px] text-slate-300 focus:outline-none cursor-pointer"
                 >
                   <option value="1">1 soat</option>
                   <option value="24">24 soat (1 kun)</option>
@@ -828,19 +828,19 @@ export const AdminServerTab: React.FC = () => {
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
                 placeholder="Sabab..."
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 text-xs text-slate-300 focus:outline-none"
               />
             </div>
           </form>
 
           {banFeedback && (
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 animate-in fade-in">
+            <div className="p-3 rounded-xl bg-slate-950 text-xs font-mono text-slate-300 animate-in fade-in">
               {banFeedback}
             </div>
           )}
 
           {/* Currently Banned IPs List */}
-          <div className="pt-2 border-t border-slate-800 space-y-2">
+          <div className="pt-2 space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-300">
               <span>Faol Bloklangan IP Manzillar ({bannedIpsList.length})</span>
             </div>
@@ -854,12 +854,12 @@ export const AdminServerTab: React.FC = () => {
                 {bannedIpsList.map((item) => (
                   <div
                     key={item.ip}
-                    className="p-3 rounded-xl bg-slate-950 border border-rose-500/30 flex items-center justify-between gap-2 text-xs"
+                    className="p-3 rounded-xl bg-slate-950 flex items-center justify-between gap-2 text-xs"
                   >
                     <div className="font-mono text-rose-400 space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-white text-xs">{item.ip}</span>
-                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-rose-500/20 text-rose-400">
                           {item.attackType || 'DDoS/DRDoS'}
                         </span>
                       </div>
@@ -886,8 +886,8 @@ export const AdminServerTab: React.FC = () => {
 
       {/* Real-Time Attack Forensics Feed */}
       {attackLogsList.length > 0 && (
-        <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-          <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-2.5">
+        <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-3">
+          <div className="flex items-center justify-between pb-2.5">
             <div className="flex items-center gap-2 text-white font-bold text-xs">
               <ShieldAlert className="w-4 h-4 text-rose-400" />
               <span>Oxirgi Aniqlangan Hujumlar & Bloklangan Hodisalar ({attackLogsList.length})</span>
@@ -899,7 +899,7 @@ export const AdminServerTab: React.FC = () => {
             {attackLogsList.slice(0, 10).map((log) => (
               <div
                 key={log.id}
-                className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-slate-300"
+                className="p-2.5 rounded-xl bg-slate-950/70 flex items-center justify-between text-slate-300"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-rose-400 font-bold">{log.ip}</span>

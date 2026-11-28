@@ -83,7 +83,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300 pb-12">
       {/* 1. Header Card */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 sm:p-8 rounded-3xl shadow-sm">
+      <div className="bg-[var(--card-bg)] p-6 sm:p-8 rounded-3xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] text-xs font-bold uppercase tracking-wider mb-2">
@@ -101,7 +101,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
           {onGoToTyping && (
             <button
               onClick={onGoToTyping}
-              className="px-5 py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-all cursor-pointer shrink-0 active:scale-95"
+              className="px-5 py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all cursor-pointer shrink-0 active:scale-95"
             >
               <Play className="w-4 h-4 fill-white" />
               <span>Yangi Test Topshirish</span>
@@ -110,29 +110,29 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         </div>
 
         {/* Overview Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-[var(--sub-alt)]">
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 text-center">
             <span className="text-[10px] font-mono uppercase text-[var(--sub-color)] font-bold">Eng Yuqori Tezlik</span>
             <div className="text-2xl sm:text-3xl font-black font-mono text-[var(--main-color)] mt-0.5">
               {highestWpm} <span className="text-xs font-normal text-[var(--sub-color)]">WPM</span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-center">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 text-center">
             <span className="text-[10px] font-mono uppercase text-[var(--sub-color)] font-bold">Oʻrtacha Tezlik</span>
             <div className="text-2xl sm:text-3xl font-black font-mono text-[var(--text-color)] mt-0.5">
               {avgWpm} <span className="text-xs font-normal text-[var(--sub-color)]">WPM</span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-center">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 text-center">
             <span className="text-[10px] font-mono uppercase text-[var(--sub-color)] font-bold">Oʻrtacha Aniqlik</span>
             <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-500 mt-0.5">
               {avgAccuracy}%
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-center">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 text-center">
             <span className="text-[10px] font-mono uppercase text-[var(--sub-color)] font-bold">Jami Testlar</span>
             <div className="text-2xl sm:text-3xl font-black font-mono text-indigo-400 mt-0.5">
               {profile?.totalTests || userResultsHistory.length}
@@ -144,7 +144,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
       {/* 2. Weak Keys & Practice Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card A: Weak Keys (Needs practice) */}
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+        <div className="bg-[var(--card-bg)] p-6 rounded-3xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2">
@@ -163,10 +163,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 weakestKeys.map((item) => (
                   <div
                     key={item.char}
-                    className="flex items-center justify-between bg-[var(--sub-alt)]/70 hover:bg-[var(--sub-alt)] p-3 rounded-2xl border border-[var(--sub-alt)] transition-colors"
+                    className="flex items-center justify-between bg-[var(--sub-alt)]/70 hover:bg-[var(--sub-alt)] p-3 rounded-2xl transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-xl bg-[var(--card-bg)] text-[var(--main-color)] font-mono font-bold flex items-center justify-center uppercase border border-[var(--sub-color)]/20 shadow-xs">
+                      <span className="w-9 h-9 rounded-xl bg-[var(--card-bg)] text-[var(--main-color)] font-mono font-bold flex items-center justify-center uppercase">
                         {item.char}
                       </span>
                       <div>
@@ -203,7 +203,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
           {weakestKeys.length > 0 && onStartTargetedPractice && (
             <button
               onClick={() => onStartTargetedPractice(weakestKeys.map((k) => k.char))}
-              className="mt-6 w-full py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              className="mt-6 w-full py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               <Target className="w-4 h-4" />
               <span>Ushbu Zaif Harflarni Mashq Qilish ({weakestKeys.map(k => k.char).join(', ')})</span>
@@ -214,7 +214,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         {/* Card B: Mastered Keys & AI Training Tips */}
         <div className="space-y-6">
           {/* Mastered Keys Card */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+          <div className="bg-[var(--card-bg)] p-6 rounded-3xl">
             <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-500" />
               <span>Mukammal Oʻzlashtirilgan Harflar (98%+)</span>
@@ -225,9 +225,9 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 {masteredKeys.map((item) => (
                   <div
                     key={item.char}
-                    className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center flex flex-col items-center"
+                    className="p-3 rounded-2xl bg-emerald-500/10 text-center flex flex-col items-center"
                   >
-                    <span className="w-8 h-8 rounded-lg bg-[var(--card-bg)] font-mono font-bold text-emerald-400 flex items-center justify-center uppercase border border-emerald-500/30 mb-1">
+                    <span className="w-8 h-8 rounded-lg bg-[var(--card-bg)] font-mono font-bold text-emerald-400 flex items-center justify-center uppercase mb-1">
                       {item.char}
                     </span>
                     <span className="text-[11px] font-mono font-bold text-emerald-400">{item.accuracy}%</span>
@@ -243,14 +243,14 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
           </div>
 
           {/* AI Training Tips Card */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+          <div className="bg-[var(--card-bg)] p-6 rounded-3xl">
             <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span>Yozish Samaradorligini Oshirish Maslahatlari</span>
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[var(--text-color)] flex items-start gap-3">
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 text-[var(--text-color)] flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold text-amber-500 mb-0.5">Avval Aniqlik, Keyin Tezlik</strong>
@@ -258,7 +258,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-[var(--text-color)] flex items-start gap-3">
+              <div className="p-3.5 rounded-2xl bg-indigo-500/10 text-[var(--text-color)] flex items-start gap-3">
                 <Zap className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold text-indigo-400 mb-0.5">Yozishning Bir Maromdagi Ritmi</strong>

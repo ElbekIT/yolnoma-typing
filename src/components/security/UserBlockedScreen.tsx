@@ -66,11 +66,11 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
       {/* Main Container Card */}
       <div
         id="user-blocked-card"
-        className="max-w-xl w-full bg-slate-900/95 border-2 border-rose-500/50 rounded-3xl p-6 sm:p-9 shadow-sm relative z-10 space-y-6 text-center"
+        className="max-w-xl w-full bg-slate-900/95 rounded-3xl p-6 sm:p-9 relative z-10 space-y-6 text-center"
       >
         {/* Top Danger Badge */}
         <div className="flex items-center justify-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 border border-rose-500/50 text-rose-300 text-xs font-mono font-black uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 text-rose-300 text-xs font-mono font-black uppercase tracking-wider">
             <span className="flex h-2.5 w-2.5 relative">
               <span className=" absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-80"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
@@ -80,9 +80,9 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
         </div>
 
         {/* Warning Icon */}
-        <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-rose-500/20 to-red-950/50 border-2 border-rose-500/60 p-4 text-rose-400 flex items-center justify-center shadow-sm relative">
+        <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-rose-500/20 to-red-950/50 p-4 text-rose-400 flex items-center justify-center relative">
           <ShieldAlert className="w-10 h-10 sm:w-12 sm:h-12 text-rose-400 animate-pulse" />
-          <Lock className="w-5 h-5 text-rose-300 absolute -top-1 -right-1 bg-slate-950 rounded-lg p-0.5 border border-rose-500/50" />
+          <Lock className="w-5 h-5 text-rose-300 absolute -top-1 -right-1 bg-slate-950 rounded-lg p-0.5" />
         </div>
 
         {/* Headline */}
@@ -96,8 +96,8 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
         </div>
 
         {/* User & Incident Forensics */}
-        <div className="bg-black/60 border border-rose-500/25 rounded-2xl p-4 text-left font-mono text-xs space-y-2.5">
-          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+        <div className="bg-black/60 rounded-2xl p-4 text-left font-mono text-xs space-y-2.5">
+          <div className="flex items-center justify-between pb-2">
             <span className="text-slate-400 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-rose-400" />
               Foydalanuvchi:
@@ -108,7 +108,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
           </div>
 
           {email && (
-            <div className="flex items-center justify-between pb-2 border-b border-white/5">
+            <div className="flex items-center justify-between pb-2">
               <span className="text-slate-400 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-rose-400" />
                 Email:
@@ -117,7 +117,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+          <div className="flex items-center justify-between pb-2">
             <span className="text-slate-400 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-rose-400" />
               Qayd etilgan vaqt:
@@ -127,7 +127,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
 
           <div className="pt-1">
             <span className="text-rose-400 font-bold block mb-1">Bloklanish sababi:</span>
-            <div className="p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs font-sans leading-relaxed">
+            <div className="p-2.5 rounded-xl bg-rose-950/40 text-rose-200 text-xs font-sans leading-relaxed">
               {reason}
             </div>
           </div>
@@ -135,7 +135,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
 
         {/* Appeal Form / Support Box */}
         {appealSent ? (
-          <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2.5 text-left font-sans">
+          <div className="p-4 rounded-2xl bg-emerald-950/40 text-emerald-300 text-xs flex items-center gap-2.5 text-left font-sans">
             <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
             <span>
               Apellyatsiya arizangiz maʼmuriyatga muvaffaqiyatli yetkazildi. 24 soat ichida koʻrib chiqiladi.
@@ -152,7 +152,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
               value={appealText}
               onChange={(e) => setAppealText(e.target.value)}
               placeholder="Qarordan norozi boʻlsangiz, vaziyatni batafsil tushuntirib bering..."
-              className="w-full bg-slate-950 border border-slate-700 focus:border-rose-500 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none resize-none"
+              className="w-full bg-slate-950 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none resize-none"
               required
             />
             <div className="flex items-center gap-2">
@@ -181,7 +181,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
               type="button"
               id="btn-open-appeal"
               onClick={() => setShowAppealBox(true)}
-              className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Mail className="w-3.5 h-3.5 text-rose-400" />
               <span>Apellyatsiya berish</span>
@@ -201,7 +201,7 @@ export const UserBlockedScreen: React.FC<UserBlockedScreenProps> = ({
             type="button"
             id="btn-logout-blocked"
             onClick={logout}
-            className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Boshqa Hisobga Oʻtish (Chiqish)</span>

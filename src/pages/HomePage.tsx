@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, ArrowRight, Video, Languages, Sparkles, Flame, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Flame, CheckCircle2, Languages } from 'lucide-react';
 import { HeroSection } from '../components/home/HeroSection';
 import { InteractiveModesHub } from '../components/home/InteractiveModesHub';
 import { FeaturesSection } from '../components/home/FeaturesSection';
@@ -11,214 +11,122 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { getDailyChallengeState, DailyChallengeLocalState } from '../utils/dailyChallenge';
 
 interface HomePageProps {
-  onStartTyping: (mode?: string) => void;
-  onStartDailyChallenge?: () => void;
-  onGoToBattle: () => void;
-  onGoToLessons: () => void;
-  onGoToEnglish?: () => void;
-  onGoToLeaderboard: () => void;
-  onOpenLogin: () => void;
-  onGoToSupport?: () => void;
-  onGoToVideo?: () => void;
+ onStartTyping: (mode?: string) => void;
+ onStartDailyChallenge?: () => void;
+ onGoToBattle: () => void;
+ onGoToLessons: () => void;
+ onGoToEnglish?: () => void;
+ onGoToLeaderboard: () => void;
+ onOpenLogin: () => void;
+ onGoToSupport?: () => void;
+ onGoToVideo?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
-  onStartTyping,
-  onStartDailyChallenge,
-  onGoToBattle,
-  onGoToLessons,
-  onGoToEnglish,
-  onGoToLeaderboard,
-  onOpenLogin,
-  onGoToSupport,
-  onGoToVideo
+ onStartTyping,
+ onStartDailyChallenge,
+ onGoToBattle,
+ onGoToLessons,
+ onGoToEnglish,
+ onGoToLeaderboard,
+ onOpenLogin
 }) => {
-  const [dailyState, setDailyState] = useState<DailyChallengeLocalState>(() => getDailyChallengeState());
+ const [dailyState, setDailyState] = useState<DailyChallengeLocalState>(() => getDailyChallengeState());
 
-  useEffect(() => {
-    const syncDaily = () => setDailyState(getDailyChallengeState());
-    window.addEventListener('yolnoma_daily_updated', syncDaily);
-    return () => window.removeEventListener('yolnoma_daily_updated', syncDaily);
-  }, []);
-  const handleThematicAction = (action: ThematicActionType) => {
-    if (action === 'battle') {
-      onGoToBattle();
-    } else if (action === 'english') {
-      if (onGoToEnglish) onGoToEnglish();
-    } else {
-      onStartTyping(action);
-    }
-  };
+ useEffect(() => {
+ const syncDaily = () => setDailyState(getDailyChallengeState());
+ window.addEventListener('yolnoma_daily_updated', syncDaily);
+ return () => window.removeEventListener('yolnoma_daily_updated', syncDaily);
+ }, []);
 
-  return (
-    <div className="w-full flex flex-col space-y-4 sm:space-y-6">
-      {/* Top Support Banner & Language Bar */}
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-1 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-mono text-[var(--sub-color)]">
-            <span className="w-2 h-2 rounded-full bg-[var(--main-color)]" />
-            <span className="font-bold">Interfeys tili (Language):</span>
-          </div>
-          <div>
-            <LanguageSwitcher />
-          </div>
-        </div>
+ const handleThematicAction = (action: ThematicActionType) => {
+ if (action === 'battle') {
+ onGoToBattle();
+ } else if (action === 'english') {
+ if (onGoToEnglish) onGoToEnglish();
+ } else {
+ onStartTyping(action);
+ }
+ };
 
-        {/* Grand English Learning Banner (0 dan IELTS 9 gacha - 100% BEPUL) */}
-        {onGoToEnglish && (
-          <button
-            onClick={onGoToEnglish}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/70 transition-colors text-xs font-semibold group cursor-pointer"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-500/15 text-emerald-400 font-black shrink-0">
-                <Languages className="w-5 h-5" />
-              </span>
-              <div className="text-left">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-emerald-400 font-black text-xs sm:text-sm tracking-tight flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Ingliz Tili Kursi: 0 dan IELTS 9 gacha Yozib O'rganish!</span>
-                  </span>
-                  <span className="badge-free px-2 py-0.5 rounded-full text-[9px] font-mono font-black">
-                    100% MUTLAQO BEPUL
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-amber-400/15 text-amber-300 hidden sm:inline">
-                    7 Bosqich &bull; 35 Dars
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300 hidden sm:block">
-                  Alifbodan boshlab hayotiy dialoglar, kundalik iboralar va IELTS Band 9 akademik insho jumlalarigacha klaviaturada terib bepul o'rganing.
-                </p>
-              </div>
-            </div>
+ return (
+ <div className="w-full flex flex-col space-y-10 sm:space-y-14 pb-8">
+ {/* Top Minimal Utility Strip: Daily Challenge Pill + Language Switcher */}
+ <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 flex flex-wrap items-center justify-between gap-3 pt-1">
+ {onStartDailyChallenge ? (
+ <button
+ onClick={onStartDailyChallenge}
+ className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/70 transition-colors text-xs cursor-pointer"
+ >
+ <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0"/>
+ <span className="font-bold text-[var(--text-color)]">Bugungi sinov</span>
+ <span className="font-mono text-[11px] text-amber-400 font-bold">
+ {dailyState.streak} kun
+ </span>
+ {dailyState.todayCompleted ? (
+ <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-400">
+ <CheckCircle2 className="w-3 h-3"/>
+ {dailyState.todayBestWpm} WPM
+ </span>
+ ) : (
+ <ArrowRight className="w-3 h-3 text-[var(--sub-color)]"/>
+ )}
+ </button>
+ ) : (
+ <div />
+ )}
 
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs shrink-0 transition-colors group-hover:bg-emerald-400">
-              <span>Boshlash</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </button>
-        )}
+ <div className="flex items-center gap-2">
+ {onGoToEnglish && (
+ <button
+ onClick={onGoToEnglish}
+ className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/70 text-emerald-400 text-xs font-bold transition-colors cursor-pointer"
+ >
+ <Languages className="w-3.5 h-3.5"/>
+ <span>Ingliz tili · 0 dan IELTS 9 gacha</span>
+ </button>
+ )}
+ <LanguageSwitcher />
+ </div>
+ </div>
 
-        {/* Daily Challenge Strip (Bugungi Sinov + Streak) */}
-        {onStartDailyChallenge && (
-          <button
-            onClick={onStartDailyChallenge}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/70 transition-colors text-xs font-semibold group cursor-pointer"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
-                <Flame className="w-4 h-4" />
-              </span>
-              <div className="text-left min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[var(--text-color)] font-extrabold text-xs sm:text-sm">
-                    Bugungi Kunlik Sinov ({dailyState.todayDate})
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400">
-                    🔥 {dailyState.streak} kun streak
-                  </span>
-                  {dailyState.todayCompleted && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {dailyState.todayBestWpm} WPM
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-[var(--sub-color)] hidden sm:block truncate">
-                  Bugun barcha foydalanuvchilar uchun bitta umumiy matn. Rekord o'rnating va kunlik olovni saqlang!
-                </p>
-              </div>
-            </div>
+ {/* 1. Open Editorial Hero (Borderless) */}
+ <HeroSection
+ onStartTyping={() => onStartTyping()}
+ onGoToBattle={onGoToBattle}
+ onGoToLessons={onGoToLessons}
+ onGoToLeaderboard={onGoToLeaderboard}
+ onOpenLogin={onOpenLogin}
+ onGoToEnglish={onGoToEnglish}
+ />
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 text-slate-950 font-extrabold text-xs shrink-0">
-              <span>{dailyState.todayCompleted ? 'Yana urinish' : 'Boshlash'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </button>
-        )}
+ {/* 2. Modes Hub & Mastery Progression (Borderless) */}
+ <InteractiveModesHub
+ onStartMode={(mode) => onStartTyping(mode)}
+ onGoToBattle={onGoToBattle}
+ onGoToLessons={onGoToLessons}
+ onGoToLeaderboard={onGoToLeaderboard}
+ />
 
-        {/* Dual Highlight Banners: Support & Video Guide */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          {/* Eye-catching Support Banner */}
-          <button
-            onClick={onGoToSupport}
-            className="w-full flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/70 transition-colors text-xs font-semibold group cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-rose-500/15 text-rose-500 shrink-0">
-                <Heart className="w-3.5 h-3.5 fill-rose-500" />
-              </span>
-              <p className="truncate text-left text-[var(--text-color)] font-bold">
-                <span className="text-rose-400 font-black">Yolnoma-ni qo'llab-quvvatlash:</span>
-                <span className="ml-1.5 text-[var(--sub-color)] hidden sm:inline">Sayt 100% bepul rivojlanishiga hissa qo'shing.</span>
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500 text-white font-extrabold text-[11px] shrink-0">
-              <span>Hissa qo'shish</span>
-              <ArrowRight className="w-3 h-3" />
-            </span>
-          </button>
+ {/* 3. Balanced Two-Column Showcase: Live Leaderboard + Thematic Practice */}
+ <section className="w-full max-w-7xl mx-auto px-2 sm:px-4 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+ <div className="lg:col-span-5">
+ <MiniLeaderboard
+ onViewFullLeaderboard={onGoToLeaderboard}
+ onOpenLogin={onOpenLogin}
+ />
+ </div>
+ <div className="lg:col-span-7">
+ <ThematicTests onSelectAction={handleThematicAction} />
+ </div>
+ </section>
 
-          {/* Sayt Haqida Video Qo'llanma Banner */}
-          <button
-            onClick={onGoToVideo}
-            className="w-full flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/70 transition-colors text-xs font-semibold group cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
-                <Video className="w-3.5 h-3.5" />
-              </span>
-              <p className="truncate text-left text-[var(--text-color)] font-bold">
-                <span className="text-amber-400 font-black">Sayt haqida video:</span>
-                <span className="ml-1.5 text-[var(--sub-color)] hidden sm:inline">Ro'yxatdan o'tish va foydalanish qo'llanmasi.</span>
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-extrabold text-[11px] shrink-0">
-              <span>Videoni ko'rish</span>
-              <ArrowRight className="w-3 h-3" />
-            </span>
-          </button>
-        </div>
-      </div>
+ {/* 4. Features & How It Works (Compact Borderless Blocks) */}
+ <FeaturesSection />
+ <HowItWorksSection onStartTyping={() => onStartTyping()} />
 
-      {/* 1. Grand Hero Section (Panoramic Banner + Characters + Badge Buttons) */}
-      <HeroSection
-        onStartTyping={() => onStartTyping()}
-        onGoToBattle={onGoToBattle}
-        onGoToLessons={onGoToLessons}
-        onGoToLeaderboard={onGoToLeaderboard}
-        onOpenLogin={onOpenLogin}
-        onGoToEnglish={onGoToEnglish}
-      />
-
-      {/* 2. Interactive Modes & Mastery Tiers Hub (Instant Play, PvP & WPM Ranks) */}
-      <InteractiveModesHub
-        onStartMode={(mode) => onStartTyping(mode)}
-        onGoToBattle={onGoToBattle}
-        onGoToLessons={onGoToLessons}
-        onGoToLeaderboard={onGoToLeaderboard}
-      />
-
-      {/* 3. Top 5 Milliy Reyting / Mini Leaderboard Showcase */}
-      <div className="max-w-4xl mx-auto w-full px-2 sm:px-4">
-        <MiniLeaderboard
-          onViewFullLeaderboard={onGoToLeaderboard}
-          onOpenLogin={onOpenLogin}
-        />
-      </div>
-
-      {/* 4. Features / Imkoniyatlar Block */}
-      <FeaturesSection />
-
-      {/* 5. How It Works / Qanday Ishlaydi Block */}
-      <HowItWorksSection onStartTyping={() => onStartTyping()} />
-
-      {/* 6. Thematic Tests / Mavzuli Testlar Cards */}
-      <ThematicTests onSelectAction={handleThematicAction} />
-
-      {/* 7. SEO Article & FAQ Block */}
-      <SeoArticleSection />
-    </div>
-  );
+ {/* 5. Guide & FAQ (Borderless) */}
+ <SeoArticleSection />
+ </div>
+ );
 };

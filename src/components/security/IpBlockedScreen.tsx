@@ -37,17 +37,17 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-red-800/10 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Main Armor Card */}
-      <div className="max-w-xl w-full bg-slate-900/90 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-8 shadow-sm relative z-10 space-y-6 text-center">
+      <div className="max-w-xl w-full bg-slate-900/90 rounded-3xl p-6 sm:p-8 relative z-10 space-y-6 text-center">
         {/* Top Warning Badge */}
         <div className="flex items-center justify-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-xs font-mono font-bold uppercase tracking-wider animate-pulse">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/20 text-rose-400 text-xs font-mono font-bold uppercase tracking-wider animate-pulse">
             <AlertOctagon className="w-4 h-4" />
             <span>KIBER XAVFSIZLIK FILTRI • IP CHEKLANDI</span>
           </div>
         </div>
 
         {/* Pulsing Shield Icon */}
-        <div className="mx-auto w-24 h-24 rounded-3xl bg-gradient-to-b from-rose-500/25 to-rose-950/40 border-2 border-rose-500/50 p-4 text-rose-400 flex items-center justify-center shadow-sm relative">
+        <div className="mx-auto w-24 h-24 rounded-3xl bg-gradient-to-b from-rose-500/25 to-rose-950/40 p-4 text-rose-400 flex items-center justify-center relative">
           <ShieldAlert className="w-12 h-12" />
           <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
             <span className=" absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -66,18 +66,18 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
         </div>
 
         {/* Security Details Box */}
-        <div className="bg-black/60 border border-rose-500/30 rounded-2xl p-4 sm:p-5 text-left space-y-3 font-mono text-xs">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+        <div className="bg-black/60 rounded-2xl p-4 sm:p-5 text-left space-y-3 font-mono text-xs">
+          <div className="flex items-center justify-between pb-2.5">
             <span className="text-slate-400 flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5 text-rose-400" />
               Bloklangan IP:
             </span>
-            <span className="text-rose-400 font-black text-sm bg-rose-500/15 px-2.5 py-0.5 rounded border border-rose-500/30">
+            <span className="text-rose-400 font-black text-sm bg-rose-500/15 px-2.5 py-0.5 rounded">
               {ip}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <div className="flex items-center justify-between pb-2.5">
             <span className="text-slate-400">Qoidabuzarlik turi:</span>
             <span className="text-amber-400 font-bold flex items-center gap-1">
               <Flame className="w-3 h-3 text-amber-400" />
@@ -85,14 +85,14 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <div className="flex items-center justify-between pb-2.5">
             <span className="text-slate-400">Qayd etilgan vaqt:</span>
             <span className="text-slate-300">{formattedDate}</span>
           </div>
 
           <div>
             <span className="text-slate-400 block mb-1">Bloklanish sababi:</span>
-            <p className="text-rose-300 font-sans font-medium text-xs leading-relaxed bg-rose-950/40 p-2.5 rounded-xl border border-rose-500/20">
+            <p className="text-rose-300 font-sans font-medium text-xs leading-relaxed bg-rose-950/40 p-2.5 rounded-xl">
               {reason}
             </p>
           </div>
@@ -106,7 +106,7 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
         </div>
 
         {/* Security Notice */}
-        <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300 flex items-start gap-3 text-left">
+        <div className="p-3.5 rounded-2xl bg-slate-950/60 text-xs text-slate-300 flex items-start gap-3 text-left">
           <Mail className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           <div className="space-y-1 text-[11px] leading-relaxed">
             <p className="text-slate-200 font-medium">
@@ -121,7 +121,7 @@ export const IpBlockedScreen: React.FC<IpBlockedScreenProps> = ({
         {/* Reload Check Button */}
         <button
           onClick={() => window.location.reload()}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer"
+          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           <span>Holatni Qayta Tekshirish (Reload)</span>

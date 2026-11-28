@@ -252,7 +252,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 pb-12">
       {/* Top Section Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 p-2 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 p-2 rounded-3xl bg-[var(--card-bg)]">
         <button
           type="button"
           onClick={() => setActiveSubTab('overview')}
@@ -315,7 +315,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
       {activeSubTab === 'overview' && (
         <div className="space-y-8 animate-in fade-in duration-200">
           {/* 1. HERO SECTION */}
-          <section className="relative rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 sm:p-8 lg:p-10 shadow-sm">
+          <section className="relative rounded-3xl bg-[var(--card-bg)] p-6 sm:p-8 lg:p-10">
             <div className="max-w-4xl space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--main-color)]/10 text-[var(--main-color)] text-xs font-black uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -332,19 +332,19 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
 
               {/* Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50">
                   <div className="text-2xl font-black text-[var(--main-color)] font-mono">100%</div>
                   <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Bepul & Ochiq</div>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50">
                   <div className="text-2xl font-black text-emerald-500 font-mono">50+</div>
                   <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Qo'llab-quvvatlangan Tillar</div>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50">
                   <div className="text-2xl font-black text-cyan-400 font-mono">10+</div>
                   <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Barmoq Saboqlari</div>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]">
+                <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/50">
                   <div className="text-2xl font-black text-amber-400 font-mono">24/7</div>
                   <div className="text-xs font-bold text-[var(--sub-color)] mt-0.5">Jonli Battle Arena</div>
                 </div>
@@ -353,10 +353,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           </section>
 
           {/* 2. CREATOR CARD */}
-          <section className="rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 sm:p-8 lg:p-10 shadow-sm relative overflow-hidden">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-[var(--sub-alt)]">
+          <section className="rounded-3xl bg-[var(--card-bg)] p-6 sm:p-8 lg:p-10 relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6">
               <div className="flex items-start sm:items-center gap-4">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[var(--main-color)] to-indigo-600 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-lg shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[var(--main-color)] to-indigo-600 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shrink-0">
                   EQ
                 </div>
                 <div className="space-y-1">
@@ -375,7 +375,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
 
               {/* Creator Phone Badge */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-                <div className="px-4 py-3 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] flex items-center justify-between gap-3">
+                <div className="px-4 py-3 rounded-2xl bg-[var(--sub-alt)] flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--text-color)]">
                     <Phone className="w-4 h-4 text-[var(--main-color)]" />
                     <span>{formattedPhone}</span>
@@ -391,7 +391,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
 
                 <a
                   href={`tel:${phoneNumber}`}
-                  className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                  className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <PhoneCall className="w-4 h-4" />
                   <span>Qo'ng'iroq Qilish</span>
@@ -428,7 +428,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 return (
                   <div
                     key={idx}
-                    className="p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-[var(--main-color)]/40 transition-colors flex flex-col justify-between space-y-3"
+                    className="p-5 rounded-2xl bg-[var(--card-bg)] transition-colors flex flex-col justify-between space-y-3"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -456,8 +456,8 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           </section>
 
           {/* 4. TECH STACK */}
-          <section className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-4">
+          <section className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[var(--main-color)] tracking-wider">
                   <Cpu className="w-4 h-4" />
@@ -476,7 +476,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               {techStack.map((tech, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] space-y-1"
+                  className="p-3.5 rounded-xl bg-[var(--sub-alt)]/50 space-y-1"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-[var(--text-color)]">{tech.name}</span>
@@ -500,7 +500,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-1.5">
+                <div key={i} className="p-4 rounded-2xl bg-[var(--card-bg)] space-y-1.5">
                   <h4 className="font-bold text-xs text-[var(--text-color)] flex items-start gap-1.5">
                     <span className="text-[var(--main-color)] font-mono">Q.</span>
                     <span>{faq.q}</span>
@@ -514,7 +514,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           </section>
 
           {/* 6. CTAS */}
-          <section className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--main-color)]/30 flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
+          <section className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
             <div className="space-y-1">
               <h3 className="text-lg sm:text-xl font-black text-[var(--text-color)]">
                 O'z Tezligingizni Sinashga Tayyormisiz?
@@ -528,7 +528,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               {onStartTyping && (
                 <button
                   onClick={onStartTyping}
-                  className="px-5 py-2.5 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--main-color)] text-white font-black text-xs uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer"
                 >
                   <Keyboard className="w-4 h-4" />
                   <span>Yozish Testini Boshlash</span>
@@ -538,7 +538,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               {onGoToBattle && (
                 <button
                   onClick={onGoToBattle}
-                  className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <Swords className="w-4 h-4 text-rose-500" />
                   <span>Battle Arena</span>
@@ -548,7 +548,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               {onGoToLessons && (
                 <button
                   onClick={onGoToLessons}
-                  className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <GraduationCap className="w-4 h-4 text-emerald-400" />
                   <span>Saboqlar</span>
@@ -558,7 +558,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               {onGoToSupport && (
                 <button
                   onClick={onGoToSupport}
-                  className="px-4 py-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
                   <span>Qo'llab-quvvatlash</span>
@@ -575,8 +575,8 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
       {activeSubTab === 'changelog' && (
         <div className="space-y-8 animate-in fade-in duration-200">
           {/* Header Banner */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-black uppercase tracking-wider">
+          <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-black uppercase tracking-wider">
               <Zap className="w-4 h-4" />
               <span>Platforma Relizlari & Tarixi</span>
             </div>
@@ -598,13 +598,13 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                 } space-y-6 relative overflow-hidden`}
               >
                 {/* Release Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
                       <span className="text-xl sm:text-2xl font-black font-mono text-[var(--text-color)]">
                         {rel.version}
                       </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${rel.badgeColor}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${rel.badgeColor}`}>
                         {rel.badge}
                       </span>
                     </div>
@@ -626,10 +626,10 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                     return (
                       <div
                         key={i}
-                        className="p-4 rounded-2xl bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] space-y-2 hover:border-[var(--main-color)]/30 transition-colors"
+                        className="p-4 rounded-2xl bg-[var(--sub-alt)]/50 space-y-2 transition-colors"
                       >
                         <div className="flex items-center gap-2.5 text-[var(--text-color)] font-bold text-xs sm:text-sm">
-                          <div className="p-2 rounded-xl bg-[var(--card-bg)] text-[var(--main-color)] border border-[var(--sub-alt)]">
+                          <div className="p-2 rounded-xl bg-[var(--card-bg)] text-[var(--main-color)]">
                             <Icon className="w-4 h-4" />
                           </div>
                           <span>{item.title}</span>
@@ -652,8 +652,8 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
       {/* ============================================================ */}
       {activeSubTab === 'security' && (
         <div className="space-y-8 animate-in fade-in duration-200">
-          <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30 text-xs font-black uppercase tracking-wider">
+          <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-xs font-black uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
               <span>Halol Bellashuv & Anti-Cheat Siyosati</span>
             </div>
@@ -666,8 +666,8 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+            <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-[var(--text-color)]">
@@ -682,8 +682,8 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               </ul>
             </div>
 
-            <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+            <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center">
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-[var(--text-color)]">
@@ -700,8 +700,8 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               </ul>
             </div>
 
-            <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+            <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-[var(--text-color)]">
@@ -727,9 +727,9 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
         <div className="space-y-8 animate-in fade-in duration-200">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Contact Card */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] space-y-6">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 text-xs font-black uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-400 text-xs font-black uppercase tracking-wider">
                   <Phone className="w-3.5 h-3.5" />
                   <span>Tezkor Aloqa</span>
                 </div>
@@ -742,7 +742,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               </div>
 
               <div className="space-y-3">
-                <div className="p-4 rounded-2xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] flex items-center justify-between gap-3">
+                <div className="p-4 rounded-2xl bg-[var(--sub-alt)] flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
                       <Phone className="w-5 h-5" />
@@ -765,7 +765,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                   href="https://t.me/elbekdesign_va_webdasturchi_uz"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-4 rounded-2xl bg-[#229ED9]/15 border border-[#229ED9]/30 hover:border-[#229ED9] flex items-center justify-between gap-3 transition-colors text-[var(--text-color)] cursor-pointer"
+                  className="p-4 rounded-2xl bg-[#229ED9]/15 flex items-center justify-between gap-3 transition-colors text-[var(--text-color)] cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#229ED9]/20 text-[#229ED9] flex items-center justify-center">
@@ -782,7 +782,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
             </div>
 
             {/* Right Message Box */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-4">
+            <div className="p-6 sm:p-8 rounded-3xl bg-[var(--card-bg)] space-y-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-[var(--text-color)] flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-[var(--main-color)]" />
@@ -794,7 +794,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
               </div>
 
               {feedbackSent ? (
-                <div className="p-5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs space-y-2">
+                <div className="p-5 rounded-2xl bg-emerald-500/15 text-emerald-300 text-xs space-y-2">
                   <div className="font-bold flex items-center gap-2 text-sm">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     <span>Xabaringiz Qabul Qilindi!</span>
@@ -820,7 +820,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                       value={feedbackName}
                       onChange={(e) => setFeedbackName(e.target.value)}
                       placeholder="Misol: Sardor Aliyev"
-                      className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none"
                     />
                   </div>
 
@@ -833,7 +833,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                       value={feedbackEmail}
                       onChange={(e) => setFeedbackEmail(e.target.value)}
                       placeholder="Misol: user@yolnoma.uz yoki +998 90..."
-                      className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none"
                     />
                   </div>
 
@@ -847,7 +847,7 @@ export const OwnerAboutView: React.FC<OwnerAboutViewProps> = ({
                       rows={3}
                       required
                       placeholder="Sayt haqida fikringiz, yangilanishlar boʻyicha taklifingiz..."
-                      className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full p-2.5 rounded-xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none"
                     />
                   </div>
 

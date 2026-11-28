@@ -312,19 +312,19 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
     >
       <div
         id="modal-admin-permissions-content"
-        className="max-w-2xl w-full bg-[#0d1222] border-2 border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-sm relative text-slate-100 max-h-[92vh] flex flex-col"
+        className="max-w-2xl w-full bg-[#0d1222] rounded-3xl p-5 sm:p-7 relative text-slate-100 max-h-[92vh] flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between pb-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+            <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400">
               <Shield className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-lg font-black text-white flex items-center gap-2">
                 <span>Admin Ruxsatlarini Sozlash</span>
                 {isTargetRootOwner && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
                     👑 ROOT OWNER
                   </span>
                 )}
@@ -347,7 +347,7 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
         {/* Scrollable Body */}
         <form onSubmit={handleSave} className="overflow-y-auto pr-1 space-y-5 my-4 flex-1">
           {/* Target User Info Card */}
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between flex-wrap gap-3">
+          <div className="p-4 rounded-2xl bg-slate-900/80 flex items-center justify-between flex-wrap gap-3">
             <div>
               <div className="text-sm font-bold text-white flex items-center gap-2">
                 <span>{user.displayName || user.username}</span>
@@ -371,7 +371,7 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
 
           {/* Root Owner Protection Banner */}
           {isTargetRootOwner && (
-            <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-3">
+            <div className="p-4 rounded-2xl bg-amber-950/40 text-amber-200 text-xs flex items-start gap-3">
               <Crown className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="block font-bold text-amber-300 mb-0.5">Daxlsiz Bosh Administrator!</strong>
@@ -393,7 +393,7 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
               placeholder="Masalan: Reyting Nazoratchisi, Katta Admin, Texnik Ekspert..."
-              className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none disabled:opacity-60"
+              className="w-full bg-slate-900 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none disabled:opacity-60"
             />
             <p className="text-[11px] text-slate-400">
               Ushbu unvon admin panel va xabarlarda foydalanuvchi ismining yonida koʻrinadi.
@@ -428,7 +428,7 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl bg-slate-950 border border-slate-800 ${item.accentColor}`}>
+                      <div className={`p-2 rounded-xl bg-slate-950 ${item.accentColor}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div>
@@ -473,14 +473,14 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
           )}
 
           {/* Footer Actions */}
-          <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
+          <div className="pt-3 flex items-center justify-between gap-3 shrink-0">
             {isAlreadyAdmin && !isTargetRootOwner && (
               <button
                 type="button"
                 id="btn-demote-admin"
                 disabled={isSubmitting}
                 onClick={handleDemote}
-                className="py-2.5 px-4 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="py-2.5 px-4 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <UserX className="w-4 h-4" />
                 <span>Adminlikdan Olish</span>
@@ -501,7 +501,7 @@ export const AdminPermissionsModal: React.FC<AdminPermissionsModalProps> = ({
                   type="submit"
                   id="btn-save-admin-permissions"
                   disabled={isSubmitting}
-                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
+                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
                   <span>{isSubmitting ? 'Saqlanmoqda...' : user.role === 'admin' ? 'Ruxsatlarni Saqlash' : 'Admin Qilish'}</span>

@@ -304,22 +304,20 @@
 }
 
 /* =========================================================
-   CLEAN FLAT CARDS & SURFACES (No heavy blur or neon glow)
+   CLEAN BORDERLESS SURFACES (Tonal contrast, zero box borders)
    ========================================================= */
 
 .glass-card {
   background: var(--card-bg, #181d28);
-  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 70%, transparent);
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .glass-card:hover {
-  border-color: color-mix(in srgb, var(--main-color, #e2b714) 35%, var(--sub-alt, #242c3d));
+  background: color-mix(in srgb, var(--sub-alt, #242c3d) 65%, var(--card-bg, #181d28));
 }
 
 .glass-pill {
-  background: var(--sub-alt, #242c3d);
-  border: 1px solid color-mix(in srgb, var(--sub-alt, #242c3d) 80%, transparent);
+  background: color-mix(in srgb, var(--sub-alt, #242c3d) 60%, transparent);
 }
 
 .glow-primary {
@@ -327,7 +325,7 @@
 }
 
 .glow-border {
-  border-color: var(--main-color, #e2b714);
+  background: color-mix(in srgb, var(--main-color, #e2b714) 12%, var(--card-bg, #181d28));
 }
 
 .neon-shimmer {

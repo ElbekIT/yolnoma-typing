@@ -321,7 +321,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
       {/* ============================================================
           TOP HEADER & CONTROLS BAR
           ============================================================ */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--card-bg)]">
         
         {/* Left: Title & Mode Switcher */}
         <div className="flex items-center gap-4 flex-wrap justify-center sm:justify-start">
@@ -338,7 +338,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex items-center p-1 bg-slate-900/60 dark:bg-slate-950/80 rounded-xl border border-[var(--sub-alt)]">
+          <div className="flex items-center p-1 bg-slate-900/60 dark:bg-slate-950/80 rounded-xl">
             <button
               type="button"
               onClick={() => setMode('wheel')}
@@ -371,7 +371,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           
           {/* Speed Selector */}
           {mode === 'wheel' ? (
-            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl text-xs">
               <span className="text-[11px] text-[var(--sub-color)] px-1.5 font-medium flex items-center gap-1">
                 <Gauge className="w-3.5 h-3.5 text-amber-400" />
                 <span className="hidden sm:inline">Tezlik:</span>
@@ -414,7 +414,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl text-xs">
               <span className="text-[11px] text-[var(--sub-color)] px-1.5 font-medium flex items-center gap-1">
                 <Gauge className="w-3.5 h-3.5 text-purple-400" />
                 <span className="hidden sm:inline">Tezlik:</span>
@@ -460,7 +460,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
 
           {/* Theme Dropdown (for wheel mode) */}
           {mode === 'wheel' && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/60 rounded-xl text-xs">
               <Palette className="w-4 h-4 text-amber-400" />
               <select
                 value={themeId}
@@ -478,7 +478,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
 
           {/* Center Logo Controls (for wheel mode) */}
           {mode === 'wheel' && (
-            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl border border-[var(--sub-alt)] text-xs">
+            <div className="flex items-center gap-1 p-1 bg-slate-900/60 rounded-xl text-xs">
               <input
                 ref={logoInputRef}
                 type="file"
@@ -526,7 +526,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           <button
             type="button"
             onClick={handleToggleFullscreen}
-            className="p-2 rounded-xl bg-slate-900/60 border border-[var(--sub-alt)] text-[var(--text-color)] hover:bg-slate-800 transition-all"
+            className="p-2 rounded-xl bg-slate-900/60 text-[var(--text-color)] hover:bg-slate-800 transition-all"
             title="To'liq ekranga o'tish"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -540,7 +540,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* LEFT / CENTER: Interactive Wheel or Character Canvas */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center justify-center p-4 sm:p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm relative min-h-[500px]">
+        <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center justify-center p-4 sm:p-6 rounded-3xl bg-[var(--card-bg)] relative min-h-[500px]">
           {entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
               <span className="text-5xl">📋</span>
@@ -587,10 +587,10 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
         </div>
 
         {/* RIGHT SIDEBAR: Entries & History Management */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm overflow-hidden">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col rounded-3xl bg-[var(--card-bg)] overflow-hidden">
           
           {/* Sidebar Tabs */}
-          <div className="flex items-center border-b border-[var(--sub-alt)] bg-slate-900/40">
+          <div className="flex items-center bg-slate-900/40">
             <button
               type="button"
               onClick={() => setActiveSideTab('entries')}
@@ -668,7 +668,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
                   onChange={handleTextChange}
                   rows={12}
                   placeholder="Har bir qatorga bittadan ism yoki son yozing..."
-                  className="w-full p-3.5 rounded-2xl bg-slate-950/80 border border-[var(--sub-alt)] text-sm font-mono text-[var(--text-color)] placeholder:text-slate-600 focus:outline-hidden focus:border-amber-500/70 transition-all resize-y leading-relaxed"
+                  className="w-full p-3.5 rounded-2xl bg-slate-950/80 text-sm font-mono text-[var(--text-color)] placeholder:text-slate-600 focus:outline-hidden transition-all resize-y leading-relaxed"
                 />
                 <div className="absolute right-3 bottom-3 text-[10px] text-slate-500 font-mono">
                   {entries.length} qator
@@ -687,7 +687,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600/20 via-cyan-600/20 to-blue-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/30 text-blue-400 text-xs font-bold transition-all shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600/20 via-cyan-600/20 to-blue-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 text-blue-400 text-xs font-bold transition-all"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Fayldan yuklash (.txt, .csv)</span>
@@ -698,7 +698,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
               </div>
 
               {/* Sample Data Link */}
-              <div className="text-center pt-2 border-t border-[var(--sub-alt)]">
+              <div className="text-center pt-2">
                 <button
                   type="button"
                   onClick={handleLoadSample}
@@ -738,7 +738,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
                   {results.map((res, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-[var(--sub-alt)]"
+                      className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60"
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-xs font-black flex items-center justify-center">
@@ -768,7 +768,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           ============================================================ */}
       {showWinnerModal && winner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-2 border-amber-500/50 shadow-sm text-center space-y-6">
+          <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-center space-y-6">
             
             {/* Close Button */}
             <button
@@ -780,7 +780,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
             </button>
 
             {/* Static Clean Glowing Trophy Badge (No jump / bounce) */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-400 text-4xl shadow-lg">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 text-4xl">
               🏆
             </div>
 
@@ -798,7 +798,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
               <button
                 type="button"
                 onClick={handleRemoveWinner}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-sm transition-all shadow-lg active:scale-98"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-sm transition-all active:scale-98"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Gʻolibni roʻyxatdan oʻchirish</span>
@@ -821,7 +821,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
           ============================================================ */}
       {showNumberModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-sm p-6 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm space-y-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-[var(--card-bg)] space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-[var(--text-color)]">
                 Sonlar generatsiyasi
@@ -865,7 +865,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
                   type="number"
                   value={numFrom}
                   onChange={(e) => setNumFrom(parseInt(e.target.value) || 1)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-[var(--sub-alt)] text-sm text-center font-bold"
+                  className="w-full p-2.5 rounded-xl bg-slate-900 text-sm text-center font-bold"
                 />
               </div>
               <div>
@@ -876,7 +876,7 @@ export const RandomWheelView: React.FC<RandomWheelViewProps> = ({ onBackToHome: 
                   type="number"
                   value={numTo}
                   onChange={(e) => setNumTo(parseInt(e.target.value) || 1)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-[var(--sub-alt)] text-sm text-center font-bold"
+                  className="w-full p-2.5 rounded-xl bg-slate-900 text-sm text-center font-bold"
                 />
               </div>
             </div>

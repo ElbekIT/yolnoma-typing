@@ -20,7 +20,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-8 shadow-sm text-[var(--text-color)] max-h-[85vh] overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] rounded-3xl p-6 sm:p-8 text-[var(--text-color)] max-h-[85vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -29,7 +29,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[var(--main-color)] text-white flex items-center justify-center font-bold text-lg shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-[var(--main-color)] text-white flex items-center justify-center font-bold text-lg">
             Y
           </div>
           <div>
@@ -39,7 +39,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-[var(--sub-alt)] mb-6 text-xs font-semibold">
+        <div className="flex flex-wrap gap-2 mb-6 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('updates')}
             className={`pb-2.5 px-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
@@ -96,11 +96,11 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
         {activeTab === 'updates' && (
           <div className="space-y-4 text-xs">
             {/* Version 2.7 - LATEST */}
-            <div className="p-4.5 rounded-2xl bg-[var(--sub-alt)] border border-amber-500/40 space-y-3 shadow-lg">
+            <div className="p-4.5 rounded-2xl bg-[var(--sub-alt)] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-black text-sm text-[var(--text-color)]">v2.7</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> Eng Soʻnggi Reliz
                   </span>
                 </div>
@@ -153,7 +153,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
             </div>
 
             {/* Version 2.6 */}
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] space-y-2">
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-xs text-[var(--text-color)]">v2.6</span>
                 <span className="text-[10px] font-mono text-[var(--sub-color)]">2026-yil Fevral</span>
@@ -164,7 +164,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
             </div>
 
             {/* Version 2.5 */}
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] space-y-2">
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-xs text-[var(--text-color)]">v2.5</span>
                 <span className="text-[10px] font-mono text-[var(--sub-color)]">2026-yil Fevral</span>
@@ -175,7 +175,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, initial
             </div>
 
             {/* Version 2.0 */}
-            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] space-y-2">
+            <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/60 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-xs text-[var(--text-color)]">v2.0</span>
                 <span className="text-[10px] font-mono text-[var(--sub-color)]">2026-yil Yanvar</span>

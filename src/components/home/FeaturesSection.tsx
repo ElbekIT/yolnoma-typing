@@ -1,97 +1,42 @@
 import React from 'react';
-import { Globe, ShieldCheck, Sparkles, Activity, Layers } from 'lucide-react';
+import { Globe, ShieldCheck, Sparkles, Activity } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
 export const FeaturesSection: React.FC = () => {
-  const { t } = useI18n();
+ const { t } = useI18n();
 
-  const features = [
-    {
-      icon: Globe,
-      title: t('featLanguagesTitle'),
-      desc: t('featLanguagesDesc'),
-      accent: 'from-cyan-500/20 via-blue-500/20 to-transparent',
-      borderColor: 'border-cyan-500/30 hover:border-cyan-400/60',
-      iconColor: 'text-cyan-400',
-      badge: '3 Tillarda'
-    },
-    {
-      icon: ShieldCheck,
-      title: t('featFreeTitle'),
-      desc: t('featFreeDesc'),
-      accent: 'from-emerald-500/20 via-teal-500/20 to-transparent',
-      borderColor: 'border-emerald-500/30 hover:border-emerald-400/60',
-      iconColor: 'text-emerald-400',
-      badge: '0 So\'m'
-    },
-    {
-      icon: Sparkles,
-      title: t('featAnimationsTitle'),
-      desc: t('featAnimationsDesc'),
-      accent: 'from-amber-500/20 via-orange-500/20 to-transparent',
-      borderColor: 'border-amber-500/30 hover:border-amber-400/60',
-      iconColor: 'text-amber-400',
-      badge: 'Neon Dark'
-    },
-    {
-      icon: Activity,
-      title: t('featStatsTitle'),
-      desc: t('featStatsDesc'),
-      accent: 'from-purple-500/20 via-indigo-500/20 to-transparent',
-      borderColor: 'border-purple-500/30 hover:border-purple-400/60',
-      iconColor: 'text-purple-400',
-      badge: 'Anti-Cheat'
-    }
-  ];
+ const features = [
+ { icon: Globe, title: t('featLanguagesTitle'), desc: t('featLanguagesDesc'), color: 'text-cyan-400' },
+ { icon: ShieldCheck, title: t('featFreeTitle'), desc: t('featFreeDesc'), color: 'text-emerald-400' },
+ { icon: Sparkles, title: t('featAnimationsTitle'), desc: t('featAnimationsDesc'), color: 'text-amber-400' },
+ { icon: Activity, title: t('featStatsTitle'), desc: t('featStatsDesc'), color: 'text-purple-400' }
+ ];
 
-  return (
-    <section className="w-full max-w-7xl mx-auto py-12 sm:py-16 px-3 sm:px-6">
-      {/* Section Header */}
-      <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold uppercase tracking-wider mb-3">
-          <Layers className="w-3.5 h-3.5" />
-          <span>{t('featuresBadge')}</span>
-        </div>
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--text-color)] tracking-tight">
-          {t('featuresTitle')}
-        </h2>
-        <p className="text-xs sm:text-sm md:text-base text-[var(--sub-color)] mt-2.5">
-          {t('featuresSubtitle')}
-        </p>
-      </div>
+ return (
+ <section className="w-full max-w-7xl mx-auto px-2 sm:px-4 space-y-5">
+ <div className="max-w-xl">
+ <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-color)] tracking-tight">
+ {t('featuresTitle')}
+ </h2>
+ <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-1">
+ {t('featuresSubtitle')}
+ </p>
+ </div>
 
-      {/* Grid of 4 Feature Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {features.map((feat, idx) => {
-          const Icon = feat.icon;
-          return (
-            <div
-              key={idx}
-              className="group rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 hover:border-[var(--main-color)]/45 p-6 transition-colors flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div
-                    className={`w-11 h-11 rounded-xl bg-[var(--sub-alt)]/70 flex items-center justify-center ${feat.iconColor}`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/60 text-[10px] font-mono text-[var(--sub-color)] font-semibold tracking-wide">
-                    {feat.badge}
-                  </span>
-                </div>
-
-                <h3 className="text-base sm:text-lg font-bold text-[var(--text-color)] tracking-tight mb-2 group-hover:text-[var(--main-color)] transition-colors">
-                  {feat.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-[var(--sub-color)] leading-relaxed font-normal">
-                  {feat.desc}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+ {features.map((feat, idx) => {
+ const Icon = feat.icon;
+ return (
+ <div key={idx} className="rounded-2xl bg-[var(--card-bg)] p-5 space-y-3">
+ <div className={`w-10 h-10 rounded-xl bg-[var(--sub-alt)]/70 flex items-center justify-center ${feat.color}`}>
+ <Icon className="w-5 h-5"/>
+ </div>
+ <h3 className="text-sm sm:text-base font-bold text-[var(--text-color)]">{feat.title}</h3>
+ <p className="text-xs text-[var(--sub-color)] leading-relaxed">{feat.desc}</p>
+ </div>
+ );
+ })}
+ </div>
+ </section>
+ );
 };

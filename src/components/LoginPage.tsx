@@ -203,7 +203,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs font-bold transition-all border border-[var(--sub-alt)] hover:border-[var(--sub-color)]/30 cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
               title="Google orqali kirish"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -232,7 +232,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
               type="button"
               onClick={handleGithubSignIn}
               disabled={loading}
-              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs font-bold transition-all border border-[var(--sub-alt)] hover:border-[var(--sub-color)]/30 cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
               title="GitHub orqali kirish"
             >
               <svg className="w-4 h-4 fill-current text-[var(--text-color)] shrink-0" viewBox="0 0 24 24">
@@ -251,7 +251,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
         {mode !== 'forgot' && (
           <div className="relative flex items-center justify-center my-3">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[var(--sub-alt)]" />
+              <div className="w-full" />
             </div>
             <span className="relative px-2.5 bg-[var(--bg-color)] text-[var(--sub-color)] font-mono text-[11px]">
               yoki
@@ -261,7 +261,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
 
         {/* Feedback Messages */}
         {formattedError && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono space-y-2">
+          <div className="p-3.5 rounded-xl bg-rose-500/10 text-rose-400 text-xs font-mono space-y-2">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="space-y-1 flex-1">
@@ -273,7 +273,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
             </div>
 
             {/* Smart Recovery Actions */}
-            <div className="pt-1 flex flex-wrap gap-2 border-t border-rose-500/20">
+            <div className="pt-1 flex flex-wrap gap-2">
               {formattedError.suggestRegister && mode === 'login' && (
                 <button
                   type="button"
@@ -335,7 +335,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
         )}
 
         {successMessage && (
-          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center gap-2">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-mono flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{successMessage}</span>
           </div>
@@ -352,7 +352,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                 disabled={loading}
                 autoComplete="username"
-                className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 border border-[var(--sub-alt)] focus:border-[var(--main-color)] rounded-xl py-2 px-3.5 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
+                className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 rounded-xl py-2 px-3.5 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
               />
             </div>
           )}
@@ -365,7 +365,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               autoComplete="email"
-              className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 border border-[var(--sub-alt)] focus:border-[var(--main-color)] rounded-xl py-2 px-3.5 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
+              className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 rounded-xl py-2 px-3.5 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
             />
           </div>
 
@@ -378,7 +378,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 border border-[var(--sub-alt)] focus:border-[var(--main-color)] rounded-xl py-2 pl-3.5 pr-9 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
+                className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 rounded-xl py-2 pl-3.5 pr-9 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
               />
               <button
                 type="button"
@@ -400,7 +400,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
                 onChange={(e) => setVerifyPassword(e.target.value)}
                 disabled={loading}
                 autoComplete="new-password"
-                className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 border border-[var(--sub-alt)] focus:border-[var(--main-color)] rounded-xl py-2 px-3.5 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
+                className="w-full bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/60 focus:bg-[var(--sub-alt)]/80 rounded-xl py-2 px-3.5 text-xs text-[var(--text-color)] placeholder:text-[var(--sub-color)]/50 focus:outline-none transition-all"
               />
             </div>
           )}
@@ -431,7 +431,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-1.5 py-2.5 px-4 rounded-xl bg-[var(--sub-alt)]/80 hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all border border-[var(--sub-alt)] hover:border-[var(--main-color)]/50 cursor-pointer disabled:opacity-50"
+            className="w-full mt-1.5 py-2.5 px-4 rounded-xl bg-[var(--sub-alt)]/80 hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
           >
             {loading ? (
               <span className="animate-pulse">yuklanmoqda...</span>
@@ -518,7 +518,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBackToTyping 
             >
               <ArrowLeft className="w-3 h-3" />
               <span>tez yozishga qaytish</span>
-              <kbd className="px-1 py-0.2 rounded bg-[var(--sub-alt)] text-[9px] text-[var(--sub-color)] border border-[var(--sub-alt)]">
+              <kbd className="px-1 py-0.2 rounded bg-[var(--sub-alt)] text-[9px] text-[var(--sub-color)]">
                 esc
               </kbd>
             </button>

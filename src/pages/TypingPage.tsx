@@ -12,223 +12,223 @@ import { useI18n } from '../context/I18nContext';
 import { useSettings } from '../context/SettingsContext';
 
 interface TypingPageProps {
-  mode: TextMode;
-  setMode: (mode: TextMode) => void;
-  timeMode: TimeMode;
-  setTimeMode: (time: TimeMode) => void;
-  wordCountMode: WordCountMode;
-  setWordCountMode: (count: WordCountMode) => void;
-  difficulty: DifficultyMode;
-  setDifficulty: (diff: DifficultyMode) => void;
-  customText: string;
-  setCustomText: (text: string) => void;
-  codeLanguage: CodeLanguage;
-  setCodeLanguage: (lang: CodeLanguage) => void;
-  isTestActive: boolean;
-  isTestFinished: boolean;
-  setIsTestFinished: (finished: boolean) => void;
-  targetText: string;
-  typedInput: string;
-  handleInputChange: (newInput: string) => void;
-  initTestText: () => void;
-  quoteMeta?: { author: string; source?: string };
-  codeLang?: string;
-  currentTargetChar: string;
-  liveWpm: number;
-  liveCpm: number;
-  liveAcc: number;
-  timeLeft: number;
-  elapsedSeconds: number;
-  progressPercent: number;
-  finalResult: TypingResult | null;
-  challengeBanner: { wpm: number; acc?: number } | null;
-  setChallengeBanner: (banner: { wpm: number; acc?: number } | null) => void;
-  onOpenLanguagePage: () => void;
-  onGoToLeaderboard: () => void;
-  onOpenLogin: () => void;
-  onStartTargetedPractice: (keys: string[]) => void;
-  onPracticeMissedWords?: (words: string[]) => void;
-  onBackToHome?: () => void;
-  onGoToCertificate?: () => void;
+ mode: TextMode;
+ setMode: (mode: TextMode) => void;
+ timeMode: TimeMode;
+ setTimeMode: (time: TimeMode) => void;
+ wordCountMode: WordCountMode;
+ setWordCountMode: (count: WordCountMode) => void;
+ difficulty: DifficultyMode;
+ setDifficulty: (diff: DifficultyMode) => void;
+ customText: string;
+ setCustomText: (text: string) => void;
+ codeLanguage: CodeLanguage;
+ setCodeLanguage: (lang: CodeLanguage) => void;
+ isTestActive: boolean;
+ isTestFinished: boolean;
+ setIsTestFinished: (finished: boolean) => void;
+ targetText: string;
+ typedInput: string;
+ handleInputChange: (newInput: string) => void;
+ initTestText: () => void;
+ quoteMeta?: { author: string; source?: string };
+ codeLang?: string;
+ currentTargetChar: string;
+ liveWpm: number;
+ liveCpm: number;
+ liveAcc: number;
+ timeLeft: number;
+ elapsedSeconds: number;
+ progressPercent: number;
+ finalResult: TypingResult | null;
+ challengeBanner: { wpm: number; acc?: number } | null;
+ setChallengeBanner: (banner: { wpm: number; acc?: number } | null) => void;
+ onOpenLanguagePage: () => void;
+ onGoToLeaderboard: () => void;
+ onOpenLogin: () => void;
+ onStartTargetedPractice: (keys: string[]) => void;
+ onPracticeMissedWords?: (words: string[]) => void;
+ onBackToHome?: () => void;
+ onGoToCertificate?: () => void;
 }
 
 export const TypingPage: React.FC<TypingPageProps> = ({
-  mode,
-  setMode,
-  timeMode,
-  setTimeMode,
-  wordCountMode,
-  setWordCountMode,
-  difficulty,
-  setDifficulty,
-  customText,
-  setCustomText,
-  codeLanguage,
-  setCodeLanguage,
-  isTestActive,
-  isTestFinished,
-  setIsTestFinished,
-  targetText,
-  typedInput,
-  handleInputChange,
-  initTestText,
-  quoteMeta,
-  codeLang,
-  currentTargetChar,
-  liveWpm,
-  liveCpm,
-  liveAcc,
-  timeLeft,
-  elapsedSeconds,
-  progressPercent,
-  finalResult,
-  challengeBanner,
-  setChallengeBanner,
-  onOpenLanguagePage,
-  onGoToLeaderboard,
-  onOpenLogin,
-  onStartTargetedPractice,
-  onPracticeMissedWords,
-  onBackToHome,
-  onGoToCertificate
+ mode,
+ setMode,
+ timeMode,
+ setTimeMode,
+ wordCountMode,
+ setWordCountMode,
+ difficulty,
+ setDifficulty,
+ customText,
+ setCustomText,
+ codeLanguage,
+ setCodeLanguage,
+ isTestActive,
+ isTestFinished,
+ setIsTestFinished,
+ targetText,
+ typedInput,
+ handleInputChange,
+ initTestText,
+ quoteMeta,
+ codeLang,
+ currentTargetChar,
+ liveWpm,
+ liveCpm,
+ liveAcc,
+ timeLeft,
+ elapsedSeconds,
+ progressPercent,
+ finalResult,
+ challengeBanner,
+ setChallengeBanner,
+ onOpenLanguagePage,
+ onGoToLeaderboard,
+ onOpenLogin,
+ onStartTargetedPractice,
+ onPracticeMissedWords,
+ onBackToHome,
+ onGoToCertificate
 }) => {
-  const { t } = useI18n();
-  const { zenMode, handsGuide, setHandsGuide } = useSettings();
+ const { t } = useI18n();
+ const { zenMode, handsGuide, setHandsGuide } = useSettings();
 
-  return (
-    <div id="typing-arena" className="w-full flex flex-col items-center justify-center py-2 sm:py-4 animate-fade-in">
-      {/* Top Bar with Back button & Hands Guide quick toggle */}
-      {onBackToHome && (
-        <div className={`w-full max-w-4xl flex items-center justify-between pb-3 px-2 transition-opacity duration-300 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <button
-            onClick={onBackToHome}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono font-semibold transition-all duration-200 cursor-pointer active:scale-95"
-            title="Bosh sahifaga qaytish"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>{t('backToHome')}</span>
-          </button>
+ return (
+ <div id="typing-arena"className="w-full flex flex-col items-center justify-center py-2 sm:py-4 animate-fade-in">
+ {/* Top Bar with Back button & Hands Guide quick toggle */}
+ {onBackToHome && (
+ <div className={`w-full max-w-4xl flex items-center justify-between pb-3 px-2 transition-opacity duration-300 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+ <button
+ onClick={onBackToHome}
+ className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono font-semibold transition-all duration-200 cursor-pointer active:scale-95"
+ title="Bosh sahifaga qaytish"
+ >
+ <ArrowLeft className="w-3.5 h-3.5"/>
+ <span>{t('backToHome')}</span>
+ </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setHandsGuide(!handsGuide)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                handsGuide
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-xs'
-                  : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)] border-[var(--sub-alt)]'
-              }`}
-              title={handsGuide ? "Qoʻllar vizualizatorini yashirish" : "Virtual qoʻllar vizualizatorini yoqish"}
-            >
-              <span>🙌</span>
-              <span className="hidden sm:inline">Qoʻllar: {handsGuide ? 'Yoniq' : 'Oʻchiq'}</span>
-            </button>
+ <div className="flex items-center gap-2 sm:gap-3">
+ <button
+ type="button"
+ onClick={() => setHandsGuide(!handsGuide)}
+ className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+ handsGuide
+ ? 'bg-blue-500/20 text-blue-400'
+ : 'bg-[var(--card-bg)] text-[var(--sub-color)] hover:text-[var(--text-color)]'
+ }`}
+ title={handsGuide ? "Qoʻllar vizualizatorini yashirish": "Virtual qoʻllar vizualizatorini yoqish"}
+ >
+ <span>🙌</span>
+ <span className="hidden sm:inline">Qoʻllar: {handsGuide ? 'Yoniq' : 'Oʻchiq'}</span>
+ </button>
 
-            <div className="text-[11px] font-mono text-[var(--sub-color)]/70 uppercase tracking-wider">
-              {t('arenaTitle')}
-            </div>
-          </div>
-        </div>
-      )}
+ <div className="text-[11px] font-mono text-[var(--sub-color)]/70 uppercase tracking-wider">
+ {t('arenaTitle')}
+ </div>
+ </div>
+ </div>
+ )}
 
-      {/* Viral Social Challenge Banner */}
-      {challengeBanner && (
-        <div className={`w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-400 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <span className="text-xl shrink-0">⚡</span>
-            <div className="text-xs sm:text-sm font-bold text-[var(--text-color)]">
-              Do'stingiz sizni{' '}
-              <span className="text-amber-400 font-mono font-black text-sm sm:text-base">
-                {challengeBanner.wpm} WPM
-              </span>
-              {challengeBanner.acc ? ` (${challengeBanner.acc}% aniqlik)` : ''} tezlik bilan bellashuvga chaqirdi!
-              <span className="hidden sm:inline text-xs font-normal text-[var(--sub-color)] ml-1.5">
-                Qani, uni yengib ko'ring-chi!
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={() => setChallengeBanner(null)}
-            className="px-2 py-1 rounded-lg text-xs font-bold text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer shrink-0"
-            title="Yopish"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+ {/* Viral Social Challenge Banner */}
+ {challengeBanner && (
+ <div className={`w-full max-w-2xl mb-4 p-3.5 rounded-2xl bg-[var(--card-bg)] flex items-center justify-between gap-3 text-amber-400 ${zenMode && isTestActive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+ <div className="flex items-center gap-3 overflow-hidden">
+ <span className="text-xl shrink-0">⚡</span>
+ <div className="text-xs sm:text-sm font-bold text-[var(--text-color)]">
+ Do'stingiz sizni{' '}
+ <span className="text-amber-400 font-mono font-black text-sm sm:text-base">
+ {challengeBanner.wpm} WPM
+ </span>
+ {challengeBanner.acc ? `(${challengeBanner.acc}% aniqlik)`: ''} tezlik bilan bellashuvga chaqirdi!
+ <span className="hidden sm:inline text-xs font-normal text-[var(--sub-color)] ml-1.5">
+ Qani, uni yengib ko'!
+ </span>
+ </div>
+ </div>
+ <button
+ onClick={() => setChallengeBanner(null)}
+ className="px-2 py-1 rounded-lg text-xs font-bold text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer shrink-0"
+ title="Yopish"
+ >
+ ✕
+ </button>
+ </div>
+ )}
 
-      {/* Typing Header Controls */}
-      <div className={`w-full transition-all duration-300 ${zenMode && isTestActive ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'}`}>
-        <TypingHeader
-          mode={mode}
-          setMode={setMode}
-          timeMode={timeMode}
-          setTimeMode={setTimeMode}
-          wordCountMode={wordCountMode}
-          setWordCountMode={setWordCountMode}
-          difficulty={difficulty}
-          setDifficulty={setDifficulty}
-          customText={customText}
-          setCustomText={setCustomText}
-          onReset={initTestText}
-          isTestActive={isTestActive}
-          onOpenLanguagePage={onOpenLanguagePage}
-          codeLanguage={codeLanguage}
-          setCodeLanguage={setCodeLanguage}
-        />
-      </div>
+ {/* Typing Header Controls */}
+ <div className={`w-full transition-all duration-300 ${zenMode && isTestActive ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'}`}>
+ <TypingHeader
+ mode={mode}
+ setMode={setMode}
+ timeMode={timeMode}
+ setTimeMode={setTimeMode}
+ wordCountMode={wordCountMode}
+ setWordCountMode={setWordCountMode}
+ difficulty={difficulty}
+ setDifficulty={setDifficulty}
+ customText={customText}
+ setCustomText={setCustomText}
+ onReset={initTestText}
+ isTestActive={isTestActive}
+ onOpenLanguagePage={onOpenLanguagePage}
+ codeLanguage={codeLanguage}
+ setCodeLanguage={setCodeLanguage}
+ />
+ </div>
 
-      {/* Live Stats */}
-      <div className={`w-full transition-all duration-300 ${zenMode && isTestActive ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'}`}>
-        <LiveStats
-          wpm={liveWpm}
-          cpm={liveCpm}
-          accuracy={liveAcc}
-          timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
-          progressPercent={progressPercent}
-          isTestActive={isTestActive}
-        />
-      </div>
+ {/* Live Stats */}
+ <div className={`w-full transition-all duration-300 ${zenMode && isTestActive ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'}`}>
+ <LiveStats
+ wpm={liveWpm}
+ cpm={liveCpm}
+ accuracy={liveAcc}
+ timeLeft={timeMode > 0 ? timeLeft : elapsedSeconds}
+ progressPercent={progressPercent}
+ isTestActive={isTestActive}
+ />
+ </div>
 
-      {/* Interactive Typing Display */}
-      <TypingDisplay
-        targetText={targetText}
-        typedInput={typedInput}
-        onInputChange={handleInputChange}
-        onRestart={initTestText}
-        isTestFinished={isTestFinished}
-        quoteMeta={quoteMeta}
-        codeLang={codeLang}
-        liveWpm={liveWpm}
-        isTestActive={isTestActive}
-      />
+ {/* Interactive Typing Display */}
+ <TypingDisplay
+ targetText={targetText}
+ typedInput={typedInput}
+ onInputChange={handleInputChange}
+ onRestart={initTestText}
+ isTestFinished={isTestFinished}
+ quoteMeta={quoteMeta}
+ codeLang={codeLang}
+ liveWpm={liveWpm}
+ isTestActive={isTestActive}
+ />
 
-      {/* Interactive Hands & Keyboard Visualizer (matching reference image) */}
-      <InteractiveHandsGuide activeChar={currentTargetChar} />
+ {/* Interactive Hands & Keyboard Visualizer (matching reference image) */}
+ <InteractiveHandsGuide activeChar={currentTargetChar} />
 
-      {/* Standard Simple Virtual Keyboard (when hands guide is off and showKeyboard is on) */}
-      {!handsGuide && <VirtualKeyboard activeChar={currentTargetChar} />}
+ {/* Standard Simple Virtual Keyboard (when hands guide is off and showKeyboard is on) */}
+ {!handsGuide && <VirtualKeyboard activeChar={currentTargetChar} />}
 
-      {/* Result Modal */}
-      <ResultModal
-        result={finalResult}
-        onRestart={initTestText}
-        onNextTest={initTestText}
-        onGoToLeaderboard={() => {
-          setIsTestFinished(false);
-          onGoToLeaderboard();
-        }}
-        onOpenLogin={() => {
-          setIsTestFinished(false);
-          onOpenLogin();
-        }}
-        onStartTargetedPractice={onStartTargetedPractice}
-        onPracticeMissedWords={onPracticeMissedWords}
-        onGoToCertificate={() => {
-          setIsTestFinished(false);
-          if (onGoToCertificate) onGoToCertificate();
-        }}
-      />
-    </div>
-  );
+ {/* Result Modal */}
+ <ResultModal
+ result={finalResult}
+ onRestart={initTestText}
+ onNextTest={initTestText}
+ onGoToLeaderboard={() => {
+ setIsTestFinished(false);
+ onGoToLeaderboard();
+ }}
+ onOpenLogin={() => {
+ setIsTestFinished(false);
+ onOpenLogin();
+ }}
+ onStartTargetedPractice={onStartTargetedPractice}
+ onPracticeMissedWords={onPracticeMissedWords}
+ onGoToCertificate={() => {
+ setIsTestFinished(false);
+ if (onGoToCertificate) onGoToCertificate();
+ }}
+ />
+ </div>
+ );
 };

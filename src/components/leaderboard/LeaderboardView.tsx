@@ -682,7 +682,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       {/* ========================================================================= */}
       {/* 1. TOP HEADER TITLE & LIVE TELEMETRY                                      */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-6 border-b border-[var(--sub-alt)] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-6 pb-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-mono text-[var(--text-color)] tracking-tight font-bold">
             {getLeaderboardTitle()}
@@ -717,7 +717,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         {/* ----------------------------------------------------------------------- */}
         <div className="flex flex-row lg:flex-col flex-wrap gap-3.5 w-full lg:w-48 xl:w-52 shrink-0">
           {/* Card 1: Scopes (all-time english / all-time uzbek / weekly xp / daily) */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-xs">
+          <div className="bg-[var(--card-bg)] rounded-2xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -785,7 +785,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
           {/* Card 2: Time Modes (time 15, time 60, time 30, time 120) */}
           {scope !== 'weekly-xp' && (
-            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0 shadow-xs">
+            <div className="bg-[var(--card-bg)] rounded-2xl p-2 flex flex-col gap-1 w-full sm:w-auto lg:w-full shrink-0">
               {(['15', '60', '30', '120'] as TimeCategory[]).map((tVal) => {
                 const isActive = timeFilter === tVal;
                 return (
@@ -817,7 +817,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               onClick={() => fetchTypingUsers(true)}
               title="Reytingni yangilash"
               disabled={loading}
-              className="w-full px-3 py-2 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border border-[var(--sub-alt)]"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--main-color)]' : ''}`} />
               <span>refresh</span>
@@ -827,7 +827,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               <button
                 type="button"
                 onClick={onGoToTyping}
-                className="w-full px-3 py-2 rounded-xl bg-[var(--main-color)]/15 hover:bg-[var(--main-color)]/25 text-[var(--main-color)] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-[var(--main-color)]/30"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--main-color)]/15 hover:bg-[var(--main-color)]/25 text-[var(--main-color)] text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
                 <span>start test</span>
@@ -860,7 +860,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/20 focus:bg-[var(--card-bg)] text-[var(--text-color)] placeholder-[var(--sub-color)] text-xs font-mono pl-7 pr-6 py-1 rounded-md border border-[var(--sub-alt)] focus:border-[var(--main-color)] focus:outline-none transition-all w-28 sm:w-36 focus:w-48 shadow-2xs"
+                  className="bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/20 focus:bg-[var(--card-bg)] text-[var(--text-color)] placeholder-[var(--sub-color)] text-xs font-mono pl-7 pr-6 py-1 rounded-md focus:outline-none transition-all w-28 sm:w-36 focus:w-48 shadow-2xs"
                 />
                 {searchQuery && (
                   <button
@@ -898,7 +898,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
               </button>
 
               {/* Page Indicator Pill: # 1 */}
-              <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] font-mono font-bold text-xs px-3 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
+              <div className="bg-[var(--card-bg)] text-[var(--text-color)] font-mono font-bold text-xs px-3 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
                 <span className="text-[var(--sub-color)]">#</span>
                 <span>{currentPage}</span>
               </div>
@@ -919,10 +919,10 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {/* ----------------------------------------------------------------------- */}
           {/* Main Leaderboard Table                                                  */}
           {/* ----------------------------------------------------------------------- */}
-          <div className="w-full overflow-x-auto rounded-xl border border-[var(--sub-alt)] bg-[var(--card-bg)] shadow-xs">
+          <div className="w-full overflow-x-auto rounded-xl bg-[var(--card-bg)]">
             <table className="w-full text-left border-collapse font-mono text-xs">
               <thead>
-                <tr className="text-[var(--sub-color)] text-xs font-normal border-b border-[var(--sub-alt)] bg-[var(--sub-alt)]/20">
+                <tr className="text-[var(--sub-color)] text-xs font-normal bg-[var(--sub-alt)]/20">
                   <th className="py-2.5 px-3 w-12 text-center">#</th>
                   <th className="py-2.5 px-3">name</th>
                   <th className="py-2.5 px-3 text-right">wpm</th>
@@ -1053,7 +1053,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           {/* ----------------------------------------------------------------------- */}
           {/* Bottom Table Controls: Page size & Navigation                           */}
           {/* ----------------------------------------------------------------------- */}
-          <div className="mt-4 pt-4 border-t border-[var(--sub-alt)]/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-[var(--sub-color)]">
+          <div className="mt-4 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-[var(--sub-color)]">
             {/* Page Size Selector */}
             <div className="flex items-center gap-2">
               <span>display:</span>
@@ -1138,7 +1138,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
           {/* User Rank Card (if logged in) */}
           {myRankingInfo && (
-            <div className="mt-6 p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--main-color)]/30 flex items-center justify-between gap-4 text-xs font-mono shadow-xs">
+            <div className="mt-6 p-3.5 rounded-xl bg-[var(--card-bg)] flex items-center justify-between gap-4 text-xs font-mono">
               <div className="flex items-center gap-3">
                 <span className="text-[var(--main-color)] font-bold">#{myRankingInfo.rank}</span>
                 <span className="text-[var(--text-color)] font-medium">
@@ -1150,7 +1150,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 <button
                   type="button"
                   onClick={handleShareMyRank}
-                  className="px-2.5 py-1 rounded bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40 text-[var(--text-color)] text-xs font-mono flex items-center gap-1.5 cursor-pointer border border-[var(--sub-alt)] transition-colors"
+                  className="px-2.5 py-1 rounded bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/40 text-[var(--text-color)] text-xs font-mono flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   {copiedShare ? (
                     <>
@@ -1167,7 +1167,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 <button
                   type="button"
                   onClick={handleJumpToMyRank}
-                  className="px-2.5 py-1 rounded bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs font-mono cursor-pointer hover:brightness-105 transition-all shadow-xs"
+                  className="px-2.5 py-1 rounded bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs font-mono cursor-pointer hover:brightness-105 transition-all"
                 >
                   jump to me
                 </button>
@@ -1177,14 +1177,14 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
           {/* Guest login reminder if not authenticated */}
           {!currentUser && onOpenLogin && (
-            <div className="mt-6 p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between gap-4 text-xs font-mono shadow-xs">
+            <div className="mt-6 p-3.5 rounded-xl bg-[var(--card-bg)] flex items-center justify-between gap-4 text-xs font-mono">
               <span className="text-[var(--sub-color)]">
                 Sign in to save your score and claim your place on the leaderboard.
               </span>
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="px-3 py-1 rounded-lg bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs font-mono hover:brightness-105 cursor-pointer whitespace-nowrap transition-all shadow-xs"
+                className="px-3 py-1 rounded-lg bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-xs font-mono hover:brightness-105 cursor-pointer whitespace-nowrap transition-all"
               >
                 sign in
               </button>
@@ -1198,7 +1198,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         <button
           type="button"
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] hover:text-[var(--main-color)] shadow-xl hover:bg-[var(--sub-alt)]/40 active:scale-95 transition-all flex items-center gap-1.5 font-mono text-xs cursor-pointer"
+          className="fixed bottom-6 right-6 z-40 p-2.5 rounded-xl bg-[var(--card-bg)] text-[var(--text-color)] hover:text-[var(--main-color)] hover:bg-[var(--sub-alt)]/40 active:scale-95 transition-all flex items-center gap-1.5 font-mono text-xs cursor-pointer"
           title="Tepaga qaytish"
         >
           <ChevronUp className="w-4 h-4" />

@@ -544,9 +544,9 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       
       {/* Payment Success Toast */}
       {/* Top Banner: Status & 100% Free Open Platform Indicator */}
-      <div className="glass-card rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs border border-emerald-500/30 bg-emerald-950/20">
+      <div className="glass-card rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs bg-emerald-950/20">
         <div className="flex items-center gap-2.5 text-emerald-300 font-bold">
-          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
             <Sparkles className="w-4 h-4" />
           </span>
           <div>
@@ -588,7 +588,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         {/* TOP TOAST NOTIFICATION (MATCHING JULEBU.AI 不在答案页) */}
         {errorMessage && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/95 border border-rose-500/50 text-rose-300 text-xs font-medium shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/95 text-rose-300 text-xs font-medium">
               <Info className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -612,7 +612,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
                   +{floatingXp} XP
                 </span>
               )}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-amber-400 font-mono font-black text-xs sm:text-sm shadow-inner">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 text-amber-400 font-mono font-black text-xs sm:text-sm">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>{totalXp.toLocaleString()}</span>
               </div>
@@ -639,7 +639,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
                     e.stopPropagation();
                     speakEnglish(currentItem.english);
                   }}
-                  className="group px-6 sm:px-8 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/70 hover:border-sky-500/50 shadow-sm cursor-pointer transition-all hover:scale-[1.02] flex flex-col items-center justify-center max-w-lg"
+                  className="group px-6 sm:px-8 py-3 rounded-2xl bg-slate-900/90 cursor-pointer transition-all hover:scale-[1.02] flex flex-col items-center justify-center max-w-lg"
                   title="Talaffuzni eshitish uchun bosing"
                 >
                   <div className="flex items-center gap-2">
@@ -660,7 +660,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
                     e.stopPropagation();
                     setShowAnswer(true);
                   }}
-                  className="px-6 py-2.5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-xs font-mono text-slate-400 hover:text-slate-200 cursor-pointer transition-all flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-2xl bg-slate-900/60 text-xs font-mono text-slate-400 hover:text-slate-200 cursor-pointer transition-all flex items-center gap-2"
                 >
                   <Eye className="w-3.5 h-3.5 text-amber-400" />
                   <span>Javob yashirilgan (Ko'rish uchun bosing)</span>
@@ -743,7 +743,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
         </div>
 
         {/* BOTTOM ACTION BUTTONS (EXACT JULEBU 3 BUTTONS) */}
-        <div className="relative pt-4 sm:pt-6 border-t border-slate-800/80 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-mono z-10">
+        <div className="relative pt-4 sm:pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-mono z-10">
           
           <button
             type="button"
@@ -764,7 +764,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
               verifyCurrentSentence();
             }}
             disabled={isSuccess}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <CornerDownLeft className="w-4 h-4 text-emerald-400" />
             <span>Tekshirish (Enter)</span>
@@ -810,8 +810,8 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       </div>
 
       {/* COURSE NAVIGATOR: 7 UNITS & 35 LESSONS PICKER */}
-      <div className="rounded-2xl bg-[#0e121d] border border-slate-800/80 p-4 sm:p-6 space-y-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+      <div className="rounded-2xl bg-[#0e121d] p-4 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-amber-400" />
             <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
@@ -892,9 +892,9 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
       {/* LESSON COMPLETE CONGRATS MODAL */}
       {showCompleteModal && lastFinishedStats && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl bg-gradient-to-b from-slate-900 to-[#0e1628] border border-amber-500/40 p-6 sm:p-8 shadow-sm text-center space-y-6 relative">
+          <div className="w-full max-w-md rounded-3xl bg-gradient-to-b from-slate-900 to-[#0e1628] p-6 sm:p-8 text-center space-y-6 relative">
             
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center mx-auto shadow-lg">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center mx-auto">
               <Check className="w-9 h-9 stroke-[3]" />
             </div>
 
@@ -922,7 +922,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
             </div>
 
             {/* Performance Stats */}
-            <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-center font-mono">
+            <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-950/60 text-center font-mono">
               <div className="p-2 rounded-xl bg-slate-900">
                 <div className="text-[10px] text-slate-400 uppercase">Tezlik</div>
                 <div className="text-sm font-black text-amber-400">{lastFinishedStats.wpm} WPM</div>
@@ -949,7 +949,7 @@ export const EnglishLearnView: React.FC<EnglishLearnViewProps> = ({
 
               <button
                 onClick={handleNextLesson}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span>Keyingi Dars</span>
                 <ArrowRight className="w-4 h-4" />

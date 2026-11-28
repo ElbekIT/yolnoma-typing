@@ -87,16 +87,16 @@ export const AdminSessionsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header card */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-[var(--card-bg)] p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1.5">
-            <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-500">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-lg font-black text-[var(--text-color)] flex items-center gap-2">
                 Faol Admin Seanslari Nazorati
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-500">
                   {sessions.length} ta faol seans
                 </span>
               </h2>
@@ -110,7 +110,7 @@ export const AdminSessionsTab: React.FC = () => {
         <button
           onClick={loadSessions}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-[var(--text-color)] hover:border-amber-500/40 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--bg-color)] text-[var(--text-color)] text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 text-amber-500 ${loading ? 'animate-spin' : ''}`} />
           <span>Yangilash</span>
@@ -144,7 +144,7 @@ export const AdminSessionsTab: React.FC = () => {
       )}
 
       {/* Security notice */}
-      <div className="bg-amber-500/5 border border-amber-500/20 p-4 rounded-2xl flex items-start gap-3">
+      <div className="bg-amber-500/5 p-4 rounded-2xl flex items-start gap-3">
         <Crown className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
         <div className="text-xs text-[var(--text-color)] leading-relaxed">
           <span className="font-bold text-amber-400">Bosh Administrator Himoyasi:</span> Bosh Administrator (Root Owner) akkaunti daxlsizdir. Begona shaxs yoki zaxira admin bosh egasini tizimdan chiqarib yubora olmaydi. Agar begona seans aniqlansa, darhol <span className="font-mono text-rose-400">"Chiqarib yuborish"</span> tugmasini bosing.
@@ -158,7 +158,7 @@ export const AdminSessionsTab: React.FC = () => {
           <span>Faol admin seanslari tekshirilmoqda...</span>
         </div>
       ) : sessions.length === 0 ? (
-        <div className="py-16 text-center text-xs text-[var(--sub-color)] bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl">
+        <div className="py-16 text-center text-xs text-[var(--sub-color)] bg-[var(--card-bg)] rounded-3xl">
           Hozirda faol seanslar roʻyxati boʻsh
         </div>
       ) : (
@@ -191,19 +191,19 @@ export const AdminSessionsTab: React.FC = () => {
                     </span>
 
                     {sess.isRootOwner ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-400">
                         <Crown className="w-3 h-3" />
                         Asosiy Egasi (Root Owner)
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-400">
                         <Shield className="w-3 h-3" />
                         Qoʻshimcha Admin
                       </span>
                     )}
 
                     {sess.isCurrent && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         Hozirgi qurilma
                       </span>
@@ -236,7 +236,7 @@ export const AdminSessionsTab: React.FC = () => {
               {/* Right Column: Actions */}
               <div className="flex items-center gap-3 w-full lg:w-auto justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-[var(--sub-alt)]">
                 {sess.isRootOwner ? (
-                  <div className="px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-extrabold text-xs flex items-center gap-2 select-none shadow-sm">
+                  <div className="px-4 py-2 rounded-2xl bg-amber-500/10 text-amber-400 font-extrabold text-xs flex items-center gap-2 select-none">
                     <Lock className="w-3.5 h-3.5" />
                     <span>👑 Daxlsiz Egasi</span>
                   </div>
@@ -244,7 +244,7 @@ export const AdminSessionsTab: React.FC = () => {
                   <button
                     onClick={() => handleKickSession(sess)}
                     disabled={terminatingId === sess.sessionId}
-                    className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 font-extrabold text-xs transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white font-extrabold text-xs transition-all cursor-pointer disabled:opacity-50"
                   >
                     {terminatingId === sess.sessionId ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />

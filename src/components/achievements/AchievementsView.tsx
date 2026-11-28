@@ -12,7 +12,7 @@ export const AchievementsView: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl">
+      <div className="bg-[var(--card-bg)] p-6 rounded-3xl">
         <h2 className="text-2xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
           <Award className="w-6 h-6 text-amber-500" />
           <span>Achievements & Badges</span>
@@ -76,7 +76,7 @@ export const AchievementsView: React.FC = () => {
                 <p className="text-xs text-[var(--sub-color)] mt-1 leading-relaxed">{ach.description}</p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-[var(--sub-alt)]">
+              <div className="mt-4 pt-3">
                 <div className="flex justify-between text-[10px] font-mono text-[var(--sub-color)] mb-1">
                   <span>Progress</span>
                   <span>

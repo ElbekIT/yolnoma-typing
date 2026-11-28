@@ -179,11 +179,11 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl shadow-sm p-6 z-50 text-xs flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-3xl bg-[var(--card-bg)] rounded-3xl p-6 z-50 text-xs flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[var(--sub-alt)] shrink-0">
+        <div className="flex items-center justify-between pb-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-yellow-400/20 text-amber-400 border border-amber-500/30">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-yellow-400/20 text-amber-400">
               <Crown className="w-6 h-6 animate-pulse" />
             </div>
             <div>
@@ -191,7 +191,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                 <h2 className="text-base font-black tracking-tight text-[var(--text-color)]">
                   Owner Boshqaruv Paneli
                 </h2>
-                <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 font-extrabold text-[10px] px-2 py-0.5 rounded-full uppercase font-mono">
+                <span className="bg-amber-500/20 text-amber-400 font-extrabold text-[10px] px-2 py-0.5 rounded-full uppercase font-mono">
                   Owner Mode
                 </span>
               </div>
@@ -210,7 +210,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 pt-4 pb-2 shrink-0 border-b border-[var(--sub-alt)]/60">
+        <div className="flex items-center gap-2 pt-4 pb-2 shrink-0">
           <button
             onClick={() => setActiveTab('texts')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition-all cursor-pointer ${
@@ -250,7 +250,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
               {/* Form to Add New Text */}
               <form
                 onSubmit={handleAddText}
-                className="bg-[var(--sub-alt)]/40 p-5 rounded-2xl border border-[var(--sub-alt)] space-y-4"
+                className="bg-[var(--sub-alt)]/40 p-5 rounded-2xl space-y-4"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold text-sm text-[var(--text-color)]">
@@ -271,7 +271,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                     <select
                       value={selectedLangCode}
                       onChange={(e) => setSelectedLangCode(e.target.value)}
-                      className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)] cursor-pointer"
+                      className="w-full bg-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] focus:outline-none cursor-pointer"
                     >
                       {languages.map((l) => (
                         <option key={l.code} value={l.code}>
@@ -291,7 +291,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       placeholder="Masalan: Maxsus Mashq #1"
                       value={textTitle}
                       onChange={(e) => setTextTitle(e.target.value)}
-                      className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full bg-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -312,18 +312,18 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                     placeholder="Bu yerga istalgan uzunlikdagi matn, hikoya yoki so'zlarni kiriting..."
                     value={textRawContent}
                     onChange={(e) => setTextRawContent(e.target.value)}
-                    className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl p-3 text-xs font-mono text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)] resize-y"
+                    className="w-full bg-[var(--sub-alt)] rounded-xl p-3 text-xs font-mono text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none resize-y"
                   />
                 </div>
 
                 {textError && (
-                  <p className="text-red-400 font-bold text-xs bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
+                  <p className="text-red-400 font-bold text-xs bg-red-500/10 p-2.5 rounded-xl">
                     {textError}
                   </p>
                 )}
 
                 {textSuccess && (
-                  <p className="text-emerald-400 font-bold text-xs bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 flex items-center gap-2">
+                  <p className="text-emerald-400 font-bold text-xs bg-emerald-500/10 p-2.5 rounded-xl flex items-center gap-2">
                     <Check className="w-4 h-4" />
                     <span>{textSuccess}</span>
                   </p>
@@ -331,7 +331,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs shadow-lg hover:opacity-90 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs hover:opacity-90 transition-all cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   <span>Saqlash & Foydalanuvchilarga Chiqarish</span>
@@ -351,7 +351,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       placeholder="Izlash..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-2 py-1 rounded-lg bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[11px] text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none"
+                      className="w-full pl-8 pr-2 py-1 rounded-lg bg-[var(--sub-alt)]/60 text-[11px] text-[var(--text-color)] placeholder-[var(--sub-color)] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       return (
                         <div
                           key={ct.id}
-                          className="bg-[var(--sub-alt)]/40 p-3.5 rounded-2xl border border-[var(--sub-alt)] flex items-start justify-between gap-3 hover:border-[var(--main-color)]/40 transition-all"
+                          className="bg-[var(--sub-alt)]/40 p-3.5 rounded-2xl flex items-start justify-between gap-3 transition-all"
                         >
                           <div className="space-y-1.5 flex-1 min-w-0">
                             <div className="flex items-center gap-2">
@@ -412,7 +412,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
               {/* Form to Add New Language */}
               <form
                 onSubmit={handleAddLanguage}
-                className="bg-[var(--sub-alt)]/40 p-5 rounded-2xl border border-[var(--sub-alt)] space-y-4"
+                className="bg-[var(--sub-alt)]/40 p-5 rounded-2xl space-y-4"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold text-sm text-[var(--text-color)]">
@@ -435,7 +435,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       placeholder="Masalan: uz-kr"
                       value={newLangCode}
                       onChange={(e) => setNewLangCode(e.target.value)}
-                      className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full bg-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none"
                     />
                   </div>
 
@@ -449,7 +449,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       placeholder="Masalan: Ўзбекcha (Кирилл)"
                       value={newLangNative}
                       onChange={(e) => setNewLangNative(e.target.value)}
-                      className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full bg-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none"
                     />
                   </div>
 
@@ -463,7 +463,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       placeholder="Masalan: Uzbek (Cyrillic)"
                       value={newLangName}
                       onChange={(e) => setNewLangName(e.target.value)}
-                      className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full bg-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none"
                     />
                   </div>
 
@@ -477,19 +477,19 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       placeholder="🇺🇿"
                       value={newLangFlag}
                       onChange={(e) => setNewLangFlag(e.target.value)}
-                      className="w-full bg-[var(--sub-alt)] border border-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none focus:border-[var(--main-color)]"
+                      className="w-full bg-[var(--sub-alt)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--text-color)] placeholder-[var(--sub-color)]/60 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {langError && (
-                  <p className="text-red-400 font-bold text-xs bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
+                  <p className="text-red-400 font-bold text-xs bg-red-500/10 p-2.5 rounded-xl">
                     {langError}
                   </p>
                 )}
 
                 {langSuccess && (
-                  <p className="text-emerald-400 font-bold text-xs bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 flex items-center gap-2">
+                  <p className="text-emerald-400 font-bold text-xs bg-emerald-500/10 p-2.5 rounded-xl flex items-center gap-2">
                     <Check className="w-4 h-4" />
                     <span>{langSuccess}</span>
                   </p>
@@ -497,7 +497,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs shadow-lg hover:opacity-90 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--main-color)] text-white font-extrabold text-xs hover:opacity-90 transition-all cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Yangi Tilni Tizimga Qo'shish</span>
@@ -514,7 +514,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                   {languages.map((l) => (
                     <div
                       key={l.code}
-                      className="bg-[var(--sub-alt)]/40 p-3 rounded-2xl border border-[var(--sub-alt)] flex items-center justify-between gap-2"
+                      className="bg-[var(--sub-alt)]/40 p-3 rounded-2xl flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="text-xl">{l.flag}</span>

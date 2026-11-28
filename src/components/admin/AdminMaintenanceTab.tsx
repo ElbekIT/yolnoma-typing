@@ -172,7 +172,7 @@ export const AdminMaintenanceTab: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
+            <span className="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl">
               Istisno: <strong className="text-amber-400">yuldashivagavharoy@gmail.com</strong>
             </span>
           </div>
@@ -193,8 +193,8 @@ export const AdminMaintenanceTab: React.FC = () => {
       {/* Configuration Form */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Input Form */}
-        <div className="lg:col-span-2 p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-5">
-          <div className="flex items-center gap-2 text-white font-black text-sm border-b border-[var(--sub-alt)] pb-3">
+        <div className="lg:col-span-2 p-6 rounded-3xl bg-[var(--card-bg)] space-y-5">
+          <div className="flex items-center gap-2 text-white font-black text-sm pb-3">
             <Radio className="w-5 h-5 text-cyan-400" />
             <span>Foydalanuvchilarga Yuboriladigan Ogohlantirish Sozlamalari</span>
           </div>
@@ -213,7 +213,7 @@ export const AdminMaintenanceTab: React.FC = () => {
                   setMessageInput('Hurmatli foydalanuvchilar, platformada eng yangi qulayliklar va tezlik yangilanishi oʻrnatilmoqda. Tez orada barcha xizmatlar toʻliq qayta ishga tushadi.');
                   setTimeInput('20-30 daqiqa');
                 }}
-                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition-all text-xs group cursor-pointer"
+                className="p-2.5 rounded-xl bg-slate-950 text-left transition-all text-xs group cursor-pointer"
               >
                 <div className="font-bold text-slate-200 group-hover:text-cyan-400 flex items-center gap-1.5">
                   <span>🚀 Katta Versiya Yangilanishi</span>
@@ -228,7 +228,7 @@ export const AdminMaintenanceTab: React.FC = () => {
                   setMessageInput('Serverlarimiz samaradorligini oshirish va bazani optimallashtirish boʻyicha qisqa muddatli profilaktika ishlari olib borilmoqda.');
                   setTimeInput('10-15 daqiqa');
                 }}
-                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-left transition-all text-xs group cursor-pointer"
+                className="p-2.5 rounded-xl bg-slate-950 text-left transition-all text-xs group cursor-pointer"
               >
                 <div className="font-bold text-slate-200 group-hover:text-amber-400 flex items-center gap-1.5">
                   <span>🛠️ Tezkor Profilaktika</span>
@@ -243,7 +243,7 @@ export const AdminMaintenanceTab: React.FC = () => {
                   setMessageInput('Adolatli raqobatni taʼminlash va platforma xavfsizligini kuchaytirish boʻyicha rejaviy xavfsizlik yangilanishi amalga oshirilmoqda.');
                   setTimeInput('5-10 daqiqa');
                 }}
-                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition-all text-xs group cursor-pointer"
+                className="p-2.5 rounded-xl bg-slate-950 text-left transition-all text-xs group cursor-pointer"
               >
                 <div className="font-bold text-slate-200 group-hover:text-emerald-400 flex items-center gap-1.5">
                   <span>🛡️ Xavfsizlik & Anti-Cheat Patchi</span>
@@ -258,7 +258,7 @@ export const AdminMaintenanceTab: React.FC = () => {
                   setMessageInput('Musobaqalar va yozish tezligi hisoblagichlarini yanada barqaror qilish uchun yangi server konfiguratsiyasi oʻrnatilmoqda.');
                   setTimeInput('15 daqiqa');
                 }}
-                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition-all text-xs group cursor-pointer"
+                className="p-2.5 rounded-xl bg-slate-950 text-left transition-all text-xs group cursor-pointer"
               >
                 <div className="font-bold text-slate-200 group-hover:text-purple-400 flex items-center gap-1.5">
                   <span>⚡ Server Tezlashtirish</span>
@@ -278,7 +278,7 @@ export const AdminMaintenanceTab: React.FC = () => {
               value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="Masalan: Saytda Katta Yangilanish Ketmoqda! 🛠️"
-              className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500 font-medium"
+              className="w-full px-4 py-3 rounded-2xl bg-slate-950 text-sm text-white focus:outline-none font-medium"
             />
           </div>
 
@@ -292,7 +292,7 @@ export const AdminMaintenanceTab: React.FC = () => {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               placeholder="Foydalanuvchilarga nima boʻlayotgani haqida xabar yozing..."
-              className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-cyan-500 font-medium leading-relaxed resize-none"
+              className="w-full px-4 py-3 rounded-2xl bg-slate-950 text-xs text-white focus:outline-none font-medium leading-relaxed resize-none"
             />
           </div>
 
@@ -307,12 +307,12 @@ export const AdminMaintenanceTab: React.FC = () => {
               value={timeInput}
               onChange={(e) => setTimeInput(e.target.value)}
               placeholder="Masalan: 10-15 daqiqa"
-              className="w-full px-4 py-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+              className="w-full px-4 py-2.5 rounded-2xl bg-slate-950 text-xs text-white focus:outline-none font-mono"
             />
           </div>
 
           {/* Whitelist Option */}
-          <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-950/70 space-y-2">
             <label className="flex items-center gap-3 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -334,7 +334,7 @@ export const AdminMaintenanceTab: React.FC = () => {
             <button
               onClick={() => handleUpdateMaintenance(true)}
               disabled={loading}
-              className="flex-1 py-4 px-5 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-rose-600/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="flex-1 py-4 px-5 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-rose-600/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <Lock className="w-4 h-4" />
               <span>Saytni Barchaga Yopish va Ogohlantirishni Joʻnatish</span>
@@ -344,7 +344,7 @@ export const AdminMaintenanceTab: React.FC = () => {
               <button
                 onClick={() => handleUpdateMaintenance(false)}
                 disabled={loading}
-                className="py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                className="py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-emerald-500/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 <Unlock className="w-4 h-4" />
                 <span>Yangilanish Tugadi (Saytni Ochish)</span>
@@ -354,8 +354,8 @@ export const AdminMaintenanceTab: React.FC = () => {
         </div>
 
         {/* Right: Live Preview of what users see */}
-        <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-4 flex flex-col">
-          <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-3">
+        <div className="p-6 rounded-3xl bg-[var(--card-bg)] space-y-4 flex flex-col">
+          <div className="flex items-center justify-between pb-3">
             <div className="flex items-center gap-2 text-white font-black text-xs">
               <Eye className="w-4 h-4 text-cyan-400" />
               <span>Foydalanuvchilar Ekrani (Koʻrinishi)</span>
@@ -365,8 +365,8 @@ export const AdminMaintenanceTab: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-5 text-center flex flex-col justify-center space-y-3 relative overflow-hidden">
-            <div className="mx-auto w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center">
+          <div className="flex-1 bg-slate-950 rounded-2xl p-5 text-center flex flex-col justify-center space-y-3 relative overflow-hidden">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
               <Wrench className="w-6 h-6 animate-spin" />
             </div>
 
@@ -379,7 +379,7 @@ export const AdminMaintenanceTab: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-2 text-[10px] font-mono text-cyan-300 flex items-center justify-center gap-1.5">
+            <div className="bg-slate-900 rounded-xl p-2 text-[10px] font-mono text-cyan-300 flex items-center justify-center gap-1.5">
               <Clock className="w-3 h-3 text-cyan-400" />
               <span>Kutilayotgan vaqt: {timeInput}</span>
             </div>

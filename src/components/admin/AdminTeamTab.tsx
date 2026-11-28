@@ -342,10 +342,10 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
       )}
 
       {/* Top Banner Card */}
-      <div className="p-6 rounded-3xl bg-[var(--card-bg)] border border-cyan-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-[var(--card-bg)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+            <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
@@ -367,7 +367,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
               onRefresh();
             }}
             disabled={isLoadingAdmins}
-            className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
+            className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer"
             title="Adminlar roʻyxatini yangilash"
           >
             <RefreshCw className={`w-4 h-4 ${isLoadingAdmins ? 'animate-spin text-amber-400' : ''}`} />
@@ -378,7 +378,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
             type="button"
             id="btn-open-promote-modal"
             onClick={() => setIsPromoteModalOpen(true)}
-            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer shrink-0"
+            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
           >
             <UserPlus className="w-4 h-4" />
             <span>Yangi Admin Tayinlash</span>
@@ -396,11 +396,11 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         {/* 1. ROOT OWNER CARD (IMMUNE) */}
         <div
           id="root-owner-card"
-          className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-amber-950/30 border-2 border-amber-500/50 shadow-sm relative overflow-hidden"
+          className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-amber-950/30 relative overflow-hidden"
         >
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shrink-0">
                 <div className="w-full h-full rounded-2xl bg-slate-950 flex items-center justify-center text-amber-400 font-black text-xl">
                   👑
                 </div>
@@ -411,7 +411,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                   <h4 className="text-base font-black text-white">
                     {rootOwnerUser.displayName}
                   </h4>
-                  <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/50 text-amber-300 text-xs font-mono font-black flex items-center gap-1.5">
+                  <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-mono font-black flex items-center gap-1.5">
                     <Crown className="w-3.5 h-3.5 text-amber-400" />
                     ASOSIY BOSH OWNER (DAXLSIZ)
                   </span>
@@ -426,14 +426,14 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
             </div>
 
             {/* Immunity Status Pill */}
-            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/50 border border-amber-500/40 text-xs font-mono text-amber-200 shrink-0">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/50 text-xs font-mono text-amber-200 shrink-0">
               <Lock className="w-4 h-4 text-amber-400" />
               <span>Daxlsiz: Hech kim chiqara olmaydi</span>
             </div>
           </div>
 
           {/* Root Owner Permissions - All Enabled */}
-          <div className="mt-5 pt-4 border-t border-amber-500/20">
+          <div className="mt-5 pt-4">
             <span className="text-[11px] font-mono text-amber-400/80 block uppercase tracking-wider mb-2">
               Toʻliq Mutlaq Vakolatlar (Barcha 7 ta ruxsat 100% ochiq):
             </span>
@@ -443,7 +443,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 return (
                   <span
                     key={key}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs font-medium flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-200 text-xs font-medium flex items-center gap-1.5"
                   >
                     <Icon className="w-3.5 h-3.5 text-amber-400" />
                     <span>{item.label}</span>
@@ -471,14 +471,14 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                   placeholder="Adminlarni qidirish..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+                  className="w-full bg-slate-900 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none"
                 />
               </div>
             )}
           </div>
 
           {subAdmins.length === 0 ? (
-            <div className="p-8 rounded-3xl bg-[var(--card-bg)] border border-slate-800 text-center space-y-3">
+            <div className="p-8 rounded-3xl bg-[var(--card-bg)] text-center space-y-3">
               <Users className="w-10 h-10 text-slate-500 mx-auto" />
               <p className="text-sm text-slate-300 font-bold">Hozircha qoʻshimcha sub-admin tayinlanmagan.</p>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
@@ -488,7 +488,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 type="button"
                 id="btn-add-first-admin"
                 onClick={() => setIsPromoteModalOpen(true)}
-                className="py-2.5 px-4 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                className="py-2.5 px-4 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Birinchi Adminni Tayinlash</span>
@@ -518,11 +518,11 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                     <div
                       key={admin.uid}
                       id={`sub-admin-card-${admin.uid}`}
-                      className="p-5 rounded-3xl bg-[var(--card-bg)] border border-cyan-500/30 hover:border-cyan-500/60 transition-all space-y-4 shadow-lg shadow-black/20"
+                      className="p-5 rounded-3xl bg-[var(--card-bg)] transition-all space-y-4 shadow-black/20"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-bold text-lg shrink-0">
+                          <div className="w-12 h-12 rounded-2xl bg-cyan-950 flex items-center justify-center text-cyan-400 font-bold text-lg shrink-0">
                             {admin.displayName.charAt(0).toUpperCase() || 'A'}
                           </div>
                           <div>
@@ -532,7 +532,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                             </div>
                             <div className="text-xs text-slate-400 font-mono mt-0.5">{admin.email}</div>
                             {admin.customAdminTitle && (
-                              <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[11px] font-mono font-bold">
+                              <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 text-[11px] font-mono font-bold">
                                 {admin.customAdminTitle}
                               </div>
                             )}
@@ -544,7 +544,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                             type="button"
                             id={`btn-edit-perms-${admin.uid}`}
                             onClick={() => setSelectedUserForPerms(admin)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                             title="Ruxsatlarni Tahrirlash"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -555,7 +555,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                             type="button"
                             id={`btn-demote-admin-${admin.uid}`}
                             onClick={() => setDemoteTargetUser(admin)}
-                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                             title="Admindan Chiqarish"
                           >
                             <UserX className="w-3.5 h-3.5 text-rose-400" />
@@ -565,7 +565,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                       </div>
 
                       {/* Enabled Permissions Badges */}
-                      <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                      <div className="pt-2 space-y-2">
                         <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between">
                           <span>Berilgan Ruxsatlar:</span>
                           <span className="text-cyan-400">
@@ -581,7 +581,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                             return (
                               <span
                                 key={key}
-                                className="px-2.5 py-1 rounded-lg bg-slate-900 border border-cyan-500/30 text-slate-300 text-[11px] font-medium flex items-center gap-1"
+                                className="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-300 text-[11px] font-medium flex items-center gap-1"
                               >
                                 <Icon className="w-3 h-3 text-cyan-400" />
                                 <span>{item.label}</span>
@@ -606,9 +606,9 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         >
           <div
             id="modal-select-candidate-content"
-            className="max-w-xl w-full bg-[#0d1222] border-2 border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-sm relative text-slate-100 space-y-5"
+            className="max-w-xl w-full bg-[#0d1222] rounded-3xl p-5 sm:p-7 relative text-slate-100 space-y-5"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400">
                   <UserPlus className="w-5 h-5" />
@@ -637,7 +637,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 placeholder="Ismi, username yoki email boʻyicha qidiring..."
                 value={userToPromoteSearch}
                 onChange={(e) => setUserToPromoteSearch(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+                className="w-full bg-slate-900 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
                 autoFocus
               />
             </div>
@@ -653,7 +653,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                   <div
                     key={cand.uid}
                     id={`cand-user-${cand.uid}`}
-                    className="p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800 hover:border-cyan-500/40 transition-colors flex items-center justify-between gap-3"
+                    className="p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800/80 transition-colors flex items-center justify-between gap-3"
                   >
                     <div>
                       <div className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -690,9 +690,9 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
         >
           <div
             id="modal-confirm-demote-card"
-            className="max-w-md w-full bg-slate-900 border-2 border-rose-500/50 rounded-3xl p-6 shadow-sm relative text-slate-100 space-y-5"
+            className="max-w-md w-full bg-slate-900 rounded-3xl p-6 relative text-slate-100 space-y-5"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2.5 text-rose-400 font-extrabold text-sm">
                 <ShieldAlert className="w-5 h-5" />
                 <span>Adminlikdan Chiqarish</span>
@@ -708,7 +708,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
               </button>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+            <div className="p-3.5 rounded-2xl bg-slate-950 space-y-1.5 text-xs">
               <div className="text-white font-bold text-sm">
                 {demoteTargetUser.displayName || demoteTargetUser.username}
               </div>
@@ -719,13 +719,13 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 {demoteTargetUser.email}
               </div>
               {demoteTargetUser.customAdminTitle && (
-                <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[11px] font-mono font-bold">
+                <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 text-[11px] font-mono font-bold">
                   {demoteTargetUser.customAdminTitle}
                 </div>
               )}
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs space-y-1.5">
+            <div className="p-3.5 rounded-2xl bg-rose-950/40 text-rose-200 text-xs space-y-1.5">
               <div className="font-bold flex items-center gap-1.5 text-rose-300">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>Muhim Ogohlantirish:</span>
@@ -751,7 +751,7 @@ export const AdminTeamTab: React.FC<AdminTeamTabProps> = ({
                 id="btn-confirm-demote"
                 disabled={isDemoting}
                 onClick={handleExecuteDemote}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
               >
                 {isDemoting ? (
                   <>

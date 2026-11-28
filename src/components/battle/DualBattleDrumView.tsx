@@ -147,13 +147,13 @@ const SingleBattleDrum: React.FC<SingleDrumProps> = ({
   return (
     <div className="flex flex-col items-center flex-1 min-w-[280px] max-w-[420px] w-full">
       {/* Player Header Card */}
-      <div className="w-full mb-2.5 p-3 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between gap-3 shadow-sm">
+      <div className="w-full mb-2.5 p-3 rounded-2xl bg-[var(--card-bg)] flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative shrink-0">
             <img
               src={racer.avatarUrl}
               alt={racer.name}
-              className={`w-10 h-10 rounded-full object-cover border-2 ${colorStyles.ring} bg-[var(--sub-alt)]`}
+              className={`w-10 h-10 rounded-full object-cover ${colorStyles.ring} bg-[var(--sub-alt)]`}
             />
             {racer.isBot && (
               <span className="absolute -bottom-1 -right-1 p-0.5 bg-purple-600 rounded-full text-white">
@@ -163,7 +163,7 @@ const SingleBattleDrum: React.FC<SingleDrumProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-black border ${colorStyles.badge}`}>
+              <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-black ${colorStyles.badge}`}>
                 {label}
               </span>
               <h4 className="font-bold text-xs sm:text-sm text-[var(--text-color)] truncate">
@@ -426,9 +426,9 @@ export const DualBattleDrumView: React.FC<DualBattleDrumViewProps> = ({
   return (
     <div className="w-full flex flex-col items-center space-y-4">
       {/* Central Duel Status Bar */}
-      <div className="w-full max-w-xl mx-auto px-4 py-2.5 rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-md">
+      <div className="w-full max-w-xl mx-auto px-4 py-2.5 rounded-2xl bg-[var(--card-bg)] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cyan-500/15 text-cyan-400 font-bold border border-cyan-500/30">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cyan-500/15 text-cyan-400 font-bold">
             <Disc className="w-3.5 h-3.5 animate-spin [animation-duration:8s]" />
             <span>2X BARABAN DUELI</span>
           </span>
@@ -490,7 +490,7 @@ export const DualBattleDrumView: React.FC<DualBattleDrumViewProps> = ({
 
         {/* Central VS Divider Badge */}
         <div className="shrink-0 flex flex-col items-center justify-center my-2 md:my-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-slate-950 font-black font-mono text-sm flex items-center justify-center shadow-lg ring-2 ring-amber-400/50">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-slate-950 font-black font-mono text-sm flex items-center justify-center">
             VS
           </div>
           <span className="text-[10px] font-mono font-bold text-[var(--sub-color)] mt-1 uppercase tracking-widest">

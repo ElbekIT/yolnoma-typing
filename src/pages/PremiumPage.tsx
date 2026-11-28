@@ -164,17 +164,17 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
       {/* ============================================================
           TOP HERO BANNER
           ============================================================ */}
-      <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/30 p-8 sm:p-12 text-center shadow-sm overflow-hidden">
+      <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 p-8 sm:p-12 text-center overflow-hidden">
         {/* Glow ambient spots */}
 
         {/* Crown Badge */}
-        <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 shadow-sm mb-6 animate-pulse">
+        <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 mb-6 animate-pulse">
           <Crown className="w-10 h-10 stroke-[2.5]" />
         </div>
 
         {/* Main Title & Subtitle */}
         <div className="space-y-4 max-w-2xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 text-amber-400 text-xs font-mono font-bold uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
             <span>Yolnoma English VIP & Premium</span>
           </div>
@@ -189,7 +189,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
 
           {/* User Subscription Status Notice if Active */}
           {subscription?.active && (
-            <div className="mt-4 p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 inline-flex items-center gap-3 text-xs sm:text-sm font-bold">
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-500/15 text-emerald-300 inline-flex items-center gap-3 text-xs sm:text-sm font-bold">
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
               <span>
                 {subscription.isOwner 
@@ -205,7 +205,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
           <div className="mt-8 flex items-center justify-center gap-3">
             <button
               onClick={onGoToEnglish}
-              className="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-md"
+              className="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer"
             >
               <Languages className="w-4 h-4 text-amber-400" />
               <span>English Mashqlar Maydoniga O'tish</span>
@@ -261,7 +261,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
                     <p className="text-xs text-slate-400 mt-1">{plan.durationLabel}</p>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/80">
+                  <div className="pt-2">
                     <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono tracking-tight">
                       {plan.priceLabel}
                     </div>
@@ -279,7 +279,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
                 </div>
 
                 {/* Plan Action CTA */}
-                <div className="mt-8 pt-6 border-t border-slate-800/80 space-y-2">
+                <div className="mt-8 pt-6 space-y-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -310,7 +310,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
       {/* ============================================================
           COMPARISON TABLE: BEPUL VS PREMIUM
           ============================================================ */}
-      <div className="rounded-3xl bg-[#0e121d] border border-slate-800/90 p-6 sm:p-8 space-y-6 shadow-sm">
+      <div className="rounded-3xl bg-[#0e121d] p-6 sm:p-8 space-y-6">
         <div className="text-center space-y-1">
           <h3 className="text-xl sm:text-2xl font-black text-white">
             Bepul va Premium Imkoniyatlar Farqi
@@ -323,7 +323,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 font-mono text-[11px] uppercase">
+              <tr className="text-slate-400 font-mono text-[11px] uppercase">
                 <th className="pb-3 font-bold">Xususiyat</th>
                 <th className="pb-3 font-bold text-center">Bepul Sinov</th>
                 <th className="pb-3 font-bold text-center text-amber-400">Yolnoma Premium VIP</th>
@@ -379,7 +379,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
             return (
               <div
                 key={idx}
-                className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition-all"
+                className="rounded-2xl bg-slate-900/80 overflow-hidden transition-all"
               >
                 <button
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
@@ -389,7 +389,7 @@ export const PremiumPage: React.FC<PremiumPageProps> = ({
                   <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-amber-400' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/60 pt-3">
+                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed pt-3">
                     {faq.a}
                   </div>
                 )}

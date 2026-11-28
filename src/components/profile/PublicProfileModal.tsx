@@ -85,7 +85,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm text-[var(--text-color)] my-8">
+      <div className="relative w-full max-w-2xl bg-[var(--card-bg)] rounded-3xl overflow-hidden text-[var(--text-color)] my-8">
         {/* Banner */}
         <div
           className="h-32 w-full relative"
@@ -106,7 +106,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
               <img
                 src={userProfile.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${userProfile.uid}`}
                 alt={userProfile.username}
-                className="w-24 h-24 rounded-2xl object-cover border-4 border-[var(--card-bg)] shadow-lg bg-[var(--sub-alt)]"
+                className="w-24 h-24 rounded-2xl object-cover bg-[var(--sub-alt)]"
               />
               <span
                 className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-[var(--card-bg)] ${
@@ -194,14 +194,14 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
             const progressPercent = Math.min(100, Math.max(10, Math.round((xpInLevel / 500) * 100)));
 
             return (
-              <div className="bg-[var(--sub-alt)] p-3 rounded-2xl border border-[var(--sub-color)]/10 mb-4">
+              <div className="bg-[var(--sub-alt)] p-3 rounded-2xl mb-4">
                 <div className="flex justify-between items-center text-xs mb-1 font-semibold">
                   <span className="text-[var(--main-color)] font-extrabold">Level {currentLevel}</span>
                   <span className="text-[var(--sub-color)] font-mono">{calculatedXp} XP</span>
                 </div>
                 <div className="w-full bg-[var(--card-bg)] h-2.5 rounded-full overflow-hidden p-0.5">
                   <div
-                    className="bg-[var(--main-color)] h-full rounded-full transition-all duration-500 shadow-sm"
+                    className="bg-[var(--main-color)] h-full rounded-full transition-all duration-500"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -278,7 +278,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
                 unlockedBadges.map((b) => (
                   <div
                     key={b.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] border border-amber-500/20 text-xs font-bold text-[var(--text-color)]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)] text-xs font-bold text-[var(--text-color)]"
                     title={b.description}
                   >
                     <span>{b.icon}</span>
@@ -296,18 +296,18 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
       {/* QR Code Modal Popup */}
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl text-center max-w-sm w-full space-y-4 shadow-sm">
+          <div className="bg-[var(--card-bg)] p-6 rounded-3xl text-center max-w-sm w-full space-y-4">
             <h3 className="text-lg font-bold">Profile QR Code</h3>
             <p className="text-xs text-[var(--sub-color)]">Scan with mobile camera to view @{userProfile.username}</p>
 
-            <div className="p-4 bg-white rounded-2xl inline-block shadow-inner mx-auto">
+            <div className="p-4 bg-white rounded-2xl inline-block mx-auto">
               {/* Generated QR visual code simulation */}
-              <div className="w-48 h-48 bg-slate-900 rounded-xl p-2 flex flex-col justify-between text-white font-mono text-[9px] break-all border-4 border-slate-900">
+              <div className="w-48 h-48 bg-slate-900 rounded-xl p-2 flex flex-col justify-between text-white font-mono text-[9px] break-all">
                 <div className="flex justify-between">
-                  <div className="w-10 h-10 border-4 border-white bg-black p-1">
+                  <div className="w-10 h-10 bg-black p-1">
                     <div className="w-full h-full bg-white" />
                   </div>
-                  <div className="w-10 h-10 border-4 border-white bg-black p-1">
+                  <div className="w-10 h-10 bg-black p-1">
                     <div className="w-full h-full bg-white" />
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
                   YOLNOMA / @{userProfile.username.toUpperCase()}
                 </div>
                 <div className="flex justify-between items-end">
-                  <div className="w-10 h-10 border-4 border-white bg-black p-1">
+                  <div className="w-10 h-10 bg-black p-1">
                     <div className="w-full h-full bg-white" />
                   </div>
                   <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center font-bold text-black text-sm">

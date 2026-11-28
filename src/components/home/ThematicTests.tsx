@@ -1,165 +1,124 @@
 import React from 'react';
 import {
-  Code2,
-  FileEdit,
-  Hash,
-  BookOpen,
-  Swords,
-  ArrowRight,
-  Sparkles,
-  Languages
+ Code2,
+ FileEdit,
+ Hash,
+ BookOpen,
+ Swords,
+ ArrowRight,
+ Sparkles,
+ Languages
 } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
 export type ThematicActionType = 'code' | 'uzbek-drills' | 'uzbek-new-drills' | 'symbols' | 'quotes' | 'battle' | 'english';
 
 interface ThematicTestsProps {
-  onSelectAction: (action: ThematicActionType) => void;
+ onSelectAction: (action: ThematicActionType) => void;
 }
 
 export const ThematicTests: React.FC<ThematicTestsProps> = ({ onSelectAction }) => {
-  const { t } = useI18n();
+ const { t } = useI18n();
 
-  const cards = [
-    {
-      id: 'uzbek-new-drills' as ThematicActionType,
-      title: t('cardUzbekNewTitle'),
-      desc: t('cardUzbekNewDesc'),
-      icon: Sparkles,
-      accentColor: 'from-amber-500/25 to-emerald-500/25',
-      borderColor: 'border-amber-500/50 hover:border-amber-400/80 shadow-md shadow-amber-500/10',
-      iconColor: 'text-amber-400',
-      badgeText: 'YANGI: Ç Ş Ğ Õ',
-      actionText: t('startPractice')
-    },
-    {
-      id: 'code' as ThematicActionType,
-      title: t('cardCodeTitle'),
-      desc: t('cardCodeDesc'),
-      icon: Code2,
-      accentColor: 'from-cyan-500/20 to-blue-500/20',
-      borderColor: 'border-cyan-500/30 hover:border-cyan-400/60',
-      iconColor: 'text-cyan-400',
-      badgeText: 'Dev Mode',
-      actionText: t('startPractice')
-    },
-    {
-      id: 'uzbek-drills' as ThematicActionType,
-      title: t('cardUzbekTitle'),
-      desc: t('cardUzbekDesc'),
-      icon: FileEdit,
-      accentColor: 'from-emerald-500/20 to-teal-500/20',
-      borderColor: 'border-emerald-500/30 hover:border-emerald-400/60',
-      iconColor: 'text-emerald-400',
-      badgeText: "Oʻ Gʻ Sh Ch",
-      actionText: t('startPractice')
-    },
-    {
-      id: 'symbols' as ThematicActionType,
-      title: t('cardSymbolsTitle'),
-      desc: t('cardSymbolsDesc'),
-      icon: Hash,
-      accentColor: 'from-purple-500/20 to-pink-500/20',
-      borderColor: 'border-purple-500/30 hover:border-purple-400/60',
-      iconColor: 'text-purple-400',
-      badgeText: 'Shift & Numbers',
-      actionText: t('startPractice')
-    },
-    {
-      id: 'quotes' as ThematicActionType,
-      title: t('cardQuotesTitle'),
-      desc: t('cardQuotesDesc'),
-      icon: BookOpen,
-      accentColor: 'from-amber-500/20 to-orange-500/20',
-      borderColor: 'border-amber-500/30 hover:border-amber-400/60',
-      iconColor: 'text-amber-400',
-      badgeText: 'Navoiy & Qodiriy',
-      actionText: t('startPractice')
-    },
-    {
-      id: 'battle' as ThematicActionType,
-      title: t('cardBattleTitle'),
-      desc: t('cardBattleDesc'),
-      icon: Swords,
-      accentColor: 'from-rose-500/20 to-red-500/20',
-      borderColor: 'border-rose-500/30 hover:border-rose-400/60',
-      iconColor: 'text-rose-400',
-      badgeText: 'Multiplayer 1v1',
-      actionText: t('enterBattle')
-    },
-    {
-      id: 'english' as ThematicActionType,
-      title: "Ingliz Tili (0 dan IELTS 9 gacha)",
-      desc: "Alifbodan boshlab hayotiy dialoglar va IELTS 9 akademik darajagacha yozib o'rganing.",
-      icon: Languages,
-      accentColor: 'from-amber-500/20 to-yellow-500/20',
-      borderColor: 'border-amber-500/30 hover:border-amber-400/60',
-      iconColor: 'text-amber-400',
-      badgeText: '0 dan IELTS 9',
-      actionText: "Darslarni boshlash"
-    }
-  ];
+ const cards = [
+ {
+ id: 'uzbek-new-drills' as ThematicActionType,
+ title: t('cardUzbekNewTitle'),
+ desc: 'Ç, Ş, Ğ va Õ harflarida maxsus mashq',
+ icon: Sparkles,
+ iconColor: 'text-amber-400',
+ badgeText: 'Ç Ş Ğ Õ'
+ },
+ {
+ id: 'uzbek-drills' as ThematicActionType,
+ title: t('cardUzbekTitle'),
+ desc: "Oʻ, Gʻ, Sh, Ch harflari tezligi",
+ icon: FileEdit,
+ iconColor: 'text-emerald-400',
+ badgeText: "Oʻ Gʻ"
+ },
+ {
+ id: 'code' as ThematicActionType,
+ title: t('cardCodeTitle'),
+ desc: 'JS, Python, C++ va HTML sintaksisi',
+ icon: Code2,
+ iconColor: 'text-cyan-400',
+ badgeText: 'DEV'
+ },
+ {
+ id: 'symbols' as ThematicActionType,
+ title: t('cardSymbolsTitle'),
+ desc: 'Raqamlar va Shift belgilari mashqi',
+ icon: Hash,
+ iconColor: 'text-purple-400',
+ badgeText: '123 & #$'
+ },
+ {
+ id: 'quotes' as ThematicActionType,
+ title: t('cardQuotesTitle'),
+ desc: 'Navoiy, Qodiriy va allomalar hikmati',
+ icon: BookOpen,
+ iconColor: 'text-amber-300',
+ badgeText: 'IQTIBOS'
+ },
+ {
+ id: 'english' as ThematicActionType,
+ title: 'Ingliz Tili (0 → IELTS 9)',
+ desc: '35 ta darsni klaviaturada yozib oʻrganing',
+ icon: Languages,
+ iconColor: 'text-emerald-400',
+ badgeText: 'BEPUL'
+ },
+ {
+ id: 'battle' as ThematicActionType,
+ title: t('cardBattleTitle'),
+ desc: "Do'stlar bilan real-vaqt 1v1 poyga",
+ icon: Swords,
+ iconColor: 'text-rose-400',
+ badgeText: '1v1'
+ }
+ ];
 
-  return (
-    <section className="w-full max-w-7xl mx-auto my-12 sm:my-16 px-3 sm:px-6">
-      {/* Section Header */}
-      <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--main-color)] text-xs font-mono font-semibold uppercase tracking-wider mb-2.5">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Yo'naltirilgan Mashqlar</span>
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-color)] tracking-tight">
-          {t('thematicTitle')}
-        </h2>
-        <p className="text-xs sm:text-sm text-[var(--sub-color)] mt-2">
-          {t('thematicSubtitle')}
-        </p>
-      </div>
+ return (
+ <div className="rounded-2xl bg-[var(--card-bg)] p-5 space-y-4">
+ <div className="flex items-center justify-between">
+ <div>
+ <h3 className="text-sm sm:text-base font-bold text-[var(--text-color)]">{t('thematicTitle')}</h3>
+ <p className="text-[11px] text-[var(--sub-color)]">{t('thematicSubtitle')}</p>
+ </div>
+ </div>
 
-      {/* Grid of 5 Thematic Interactive Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {cards.map((card, index) => {
-          const IconComponent = card.icon;
-          const isFullWidthOnLarge = index === 4; // 5th card spans 2 columns or nicely centers on large screens
-          return (
-            <div
-              key={card.id}
-              onClick={() => onSelectAction(card.id)}
-              className={`group rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 hover:border-[var(--main-color)]/45 p-6 transition-colors cursor-pointer flex flex-col justify-between ${
-                isFullWidthOnLarge ? 'md:col-span-2 lg:col-span-1' : ''
-              }`}
-            >
-              <div>
-                {/* Top Row: Icon + Badge */}
-                <div className="flex items-center justify-between mb-4">
-                  <div
-                    className={`w-11 h-11 rounded-xl bg-[var(--sub-alt)]/70 flex items-center justify-center ${card.iconColor}`}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/60 text-[10px] font-mono text-[var(--sub-color)] font-semibold tracking-wide">
-                    {card.badgeText}
-                  </span>
-                </div>
-
-                {/* Title & Description */}
-                <h3 className="text-base sm:text-lg font-bold text-[var(--text-color)] tracking-tight mb-2 group-hover:text-[var(--main-color)] transition-colors">
-                  {card.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-[var(--sub-color)] leading-relaxed line-clamp-3 mb-6 font-normal">
-                  {card.desc}
-                </p>
-              </div>
-
-              {/* Bottom Call To Action Link */}
-              <div className="pt-3 border-t border-[var(--sub-alt)]/60 flex items-center justify-between text-xs font-mono font-bold text-[var(--main-color)]">
-                <span>{card.actionText}</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+ {cards.map((card) => {
+ const IconComponent = card.icon;
+ return (
+ <button
+ key={card.id}
+ type="button"
+ onClick={() => onSelectAction(card.id)}
+ className="text-left p-3.5 rounded-xl bg-[var(--sub-alt)]/35 hover:bg-[var(--sub-alt)]/70 transition-colors cursor-pointer flex items-center justify-between gap-3 group"
+ >
+ <div className="flex items-center gap-3 min-w-0">
+ <div className={`w-9 h-9 rounded-lg bg-[var(--card-bg)] flex items-center justify-center ${card.iconColor} shrink-0`}>
+ <IconComponent className="w-4 h-4"/>
+ </div>
+ <div className="min-w-0">
+ <div className="flex items-center gap-1.5">
+ <span className="text-xs font-bold text-[var(--text-color)] truncate group-hover:text-[var(--main-color)] transition-colors">
+ {card.title}
+ </span>
+ <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[var(--card-bg)] text-[var(--sub-color)] shrink-0">
+ {card.badgeText}
+ </span>
+ </div>
+ <p className="text-[11px] text-[var(--sub-color)] truncate mt-0.5">{card.desc}</p>
+ </div>
+ </div>
+ <ArrowRight className="w-3.5 h-3.5 text-[var(--sub-color)] group-hover:text-[var(--main-color)] shrink-0"/>
+ </button>
+ );
+ })}
+ </div>
+ </div>
+ );
 };

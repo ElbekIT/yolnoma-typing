@@ -215,10 +215,10 @@ export const PartnersView: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6 py-4 px-2 sm:px-4 animate-in fade-in duration-300">
       {/* Header Banner - Compact & Refined */}
-      <div className="bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/50 border border-amber-500/40 rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/50 rounded-3xl p-6 sm:p-7 relative overflow-hidden">
 
         <div className="relative z-10 space-y-2.5 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-black text-xs uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-300 font-black text-xs uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Rasmiy Hamkor va Homiylarimiz</span>
           </div>
@@ -234,11 +234,11 @@ export const PartnersView: React.FC = () => {
       </div>
 
       {/* Main Partner & Sponsor Showcase Card with Photo & Executive Badges */}
-      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 lg:p-8 shadow-sm relative overflow-hidden space-y-6">
+      <div className="bg-[var(--card-bg)] rounded-3xl p-5 sm:p-7 lg:p-8 relative overflow-hidden space-y-6">
         {/* Subtle decorative glow elements */}
 
         {/* Top Header Section with Photo & Core Partner Information */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8 border-b border-amber-500/25 pb-6">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8 pb-6">
           {/* Partner Photo Card */}
           <div className="flex flex-col items-center flex-shrink-0 space-y-3">
             <div className="relative group">
@@ -248,7 +248,7 @@ export const PartnersView: React.FC = () => {
               {/* Photo Container */}
               <div
                 onClick={() => setIsPhotoOpen(true)}
-                className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden bg-slate-900 border-2 border-amber-500/80 shadow-sm cursor-pointer"
+                className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden bg-slate-900 cursor-pointer"
                 title="Rasmni kattalashtirib ko'rish"
               >
                 <img
@@ -272,12 +272,12 @@ export const PartnersView: React.FC = () => {
               </div>
 
               {/* VIP Crown Badge on Top Right */}
-              <div className="absolute -top-2.5 -right-2.5 bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 p-2 rounded-2xl shadow-lg border-2 border-slate-950 flex items-center justify-center">
+              <div className="absolute -top-2.5 -right-2.5 bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 p-2 rounded-2xl flex items-center justify-center">
                 <Crown className="w-4 h-4 fill-slate-950 text-slate-950" />
               </div>
 
               {/* Status Pill on Bottom */}
-              <div className="absolute -bottom-2.5 inset-x-0 mx-auto w-max px-3 py-0.5 rounded-full bg-slate-950/95 border border-amber-500/70 text-amber-300 text-[10px] font-black uppercase tracking-wider shadow-md">
+              <div className="absolute -bottom-2.5 inset-x-0 mx-auto w-max px-3 py-0.5 rounded-full bg-slate-950/95 text-amber-300 text-[10px] font-black uppercase tracking-wider">
                 HAMKOR VA HOMIY
               </div>
             </div>
@@ -293,12 +293,12 @@ export const PartnersView: React.FC = () => {
           <div className="flex-1 space-y-4 text-center lg:text-left min-w-0">
             {/* Badges */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black uppercase tracking-wider">
                 <Crown className="w-3.5 h-3.5 fill-slate-950" />
                 <span>Bosh Hamkor va Homiy</span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-black">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 text-amber-300 text-xs font-black">
                 <Award className="w-3.5 h-3.5 text-amber-400" />
                 <span>Yosh Avlod Kanali Asoschisi</span>
               </span>
@@ -313,7 +313,7 @@ export const PartnersView: React.FC = () => {
                 <span className="text-xs font-black uppercase tracking-wider text-amber-400/90">
                   Mutaxassisligi:
                 </span>
-                <span className="text-xs sm:text-sm font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-0.5 rounded-lg">
+                <span className="text-xs sm:text-sm font-black text-emerald-400 bg-emerald-950/60 px-3 py-0.5 rounded-lg">
                   AI / ML muhandisi
                 </span>
                 <span className="text-xs text-[var(--sub-color)] font-medium">
@@ -328,7 +328,7 @@ export const PartnersView: React.FC = () => {
                 href="https://yosh-avlod-kanali.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
               >
                 <span>Hamkorimiz Saytiga O'tish</span>
                 <ExternalLink className="w-4 h-4" />
@@ -349,7 +349,7 @@ export const PartnersView: React.FC = () => {
 
         {/* Education & Academic Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/35 border border-[var(--sub-color)]/15 flex items-start gap-3.5">
+          <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/35 flex items-start gap-3.5">
             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 flex-shrink-0 mt-0.5">
               <GraduationCap className="w-5 h-5 text-amber-400" />
             </div>
@@ -364,7 +364,7 @@ export const PartnersView: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/35 border border-[var(--sub-color)]/15 flex items-start gap-3.5">
+          <div className="p-4 rounded-2xl bg-[var(--sub-alt)]/35 flex items-start gap-3.5">
             <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 flex-shrink-0 mt-0.5">
               <Cpu className="w-5 h-5 text-emerald-400" />
             </div>
@@ -381,7 +381,7 @@ export const PartnersView: React.FC = () => {
         </div>
 
         {/* Detailed Bio & About Text */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[var(--sub-alt)]/40 to-[var(--sub-alt)]/20 border border-amber-500/20 space-y-3">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[var(--sub-alt)]/40 to-[var(--sub-alt)]/20 space-y-3">
           <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider">
             <UserCheck className="w-4 h-4 text-amber-400" />
             <span>Hamkor va Homiy Haqida Ma'lumot</span>
@@ -398,27 +398,27 @@ export const PartnersView: React.FC = () => {
 
         {/* Competencies & Badges List */}
         <div className="flex flex-wrap gap-2 pt-1">
-          <span className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-black flex items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-300 text-xs font-black flex items-center gap-2">
             <Briefcase className="w-4 h-4 text-amber-400" /> 7 yillik tajriba
           </span>
-          <span className="px-3.5 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-black flex items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-xl bg-cyan-500/10 text-cyan-300 text-xs font-black flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-cyan-400" /> Kiberxavfsizlik
           </span>
-          <span className="px-3.5 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-black flex items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-xl bg-purple-500/10 text-purple-300 text-xs font-black flex items-center gap-2">
             <Cpu className="w-4 h-4 text-purple-400" /> AI Menejmenti
           </span>
-          <span className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-black flex items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-300 text-xs font-black flex items-center gap-2">
             <Code2 className="w-4 h-4 text-emerald-400" /> Computer Science
           </span>
-          <span className="px-3.5 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-black flex items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-xl bg-blue-500/10 text-blue-300 text-xs font-black flex items-center gap-2">
             <Globe className="w-4 h-4 text-blue-400" /> IT Blog (YouTube & Telegram)
           </span>
         </div>
       </div>
 
       {/* Sponsors Section (Homiylar Bo'limi) */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--sub-alt)] pb-4">
+      <div className="bg-[var(--card-bg)] rounded-3xl p-5 sm:p-7 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
@@ -427,7 +427,7 @@ export const PartnersView: React.FC = () => {
               <h2 className="text-xl sm:text-2xl font-black text-[var(--text-color)]">
                 Loyiha Homiylari
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-black text-xs">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-black text-xs">
                 {sponsors.length} ta
               </span>
             </div>
@@ -452,7 +452,7 @@ export const PartnersView: React.FC = () => {
                   setIsQuickAddOpen(!isQuickAddOpen);
                   setQuickFeedback(null);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>{isQuickAddOpen ? 'Yopish' : "Homiy Qo'shish"}</span>
@@ -463,7 +463,7 @@ export const PartnersView: React.FC = () => {
 
         {/* Quick Add Form for Admin */}
         {isAdmin && isQuickAddOpen && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/5 border-2 border-amber-500/30 space-y-3 animate-in fade-in duration-200">
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/5 space-y-3 animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-black text-amber-400 uppercase tracking-wider">
                 <Sparkles className="w-4 h-4" />
@@ -497,7 +497,7 @@ export const PartnersView: React.FC = () => {
                 value={quickSponsorName}
                 onChange={(e) => setQuickSponsorName(e.target.value)}
                 placeholder="Homiy nomi (masalan: Najot Ta'lim, Alisher Usmonov, TechCorp...)"
-                className="flex-1 bg-[var(--bg-color)] border border-[var(--sub-alt)] focus:border-amber-500 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none transition-colors"
+                className="flex-1 bg-[var(--bg-color)] rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none transition-colors"
                 disabled={isQuickSubmitting}
                 autoFocus
               />
@@ -538,7 +538,7 @@ export const PartnersView: React.FC = () => {
             {isAdmin && (
               <button
                 onClick={() => setIsQuickAddOpen(true)}
-                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs transition-colors cursor-pointer"
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold text-xs transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Birinchi homiyni qo'shish
@@ -550,10 +550,10 @@ export const PartnersView: React.FC = () => {
             {sponsors.map((sponsor, index) => (
               <div
                 key={sponsor.id}
-                className="p-4 rounded-2xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/70 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center justify-between gap-3 group"
+                className="p-4 rounded-2xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/70 transition-all flex items-center justify-between gap-3 group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center text-amber-400 font-black text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
                     <Heart className="w-4 h-4 text-amber-400 fill-amber-400/20" />
                   </div>
 
@@ -577,14 +577,14 @@ export const PartnersView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[10px] font-mono font-bold text-amber-400/60 bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">
+                  <span className="text-[10px] font-mono font-bold text-amber-400/60 bg-amber-500/5 px-2 py-0.5 rounded-md">
                     #{index + 1}
                   </span>
 
                   {isAdmin && (
                     <button
                       onClick={() => handleQuickDelete(sponsor.id, sponsor.name)}
-                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
                       title="Homiyni o'chirish"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -604,7 +604,7 @@ export const PartnersView: React.FC = () => {
           onClick={() => setIsPhotoOpen(false)}
         >
           <div
-            className="relative max-w-lg w-full bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-4 shadow-sm space-y-4"
+            className="relative max-w-lg w-full bg-slate-900 rounded-3xl p-4 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -617,7 +617,7 @@ export const PartnersView: React.FC = () => {
             </button>
 
             {/* Photo Preview */}
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black border border-amber-500/30">
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black">
               <img
                 src="/photo_2024-10-04_23-21-18.jpg"
                 alt="Shamsiddin Kamoliddinov - Bosh Hamkor va Homiy"

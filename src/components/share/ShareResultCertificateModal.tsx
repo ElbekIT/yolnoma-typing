@@ -451,19 +451,19 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 animate-in fade-in duration-200">
-      <div className="bg-slate-900/95 border-2 border-blue-500/30 rounded-3xl w-full max-w-2xl p-5 sm:p-7 shadow-sm relative overflow-hidden flex flex-col max-h-[95vh]">
+      <div className="bg-slate-900/95 rounded-3xl w-full max-w-2xl p-5 sm:p-7 relative overflow-hidden flex flex-col max-h-[95vh]">
         {/* Glow accent */}
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+        <div className="flex items-center justify-between pb-4 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm">
+            <div className="p-2.5 rounded-2xl bg-amber-500/15 text-amber-400">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
                 <span>Natija Sertifikat-Kartochkasi</span>
-                <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+                <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">
                   {rankTitle}
                 </span>
               </h3>
@@ -482,7 +482,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
         </div>
 
         {/* Format Selector Pills */}
-        <div className="flex items-center justify-between gap-3 mb-4 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-800">
+        <div className="flex items-center justify-between gap-3 mb-4 bg-slate-950/60 p-1.5 rounded-2xl">
           <span className="text-xs font-mono font-medium text-slate-400 pl-2">Format:</span>
           <div className="flex items-center gap-1.5">
             <button
@@ -511,17 +511,17 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
         </div>
 
         {/* Live Canvas Preview */}
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center overflow-hidden bg-slate-950/80 rounded-2xl border border-slate-800/80 p-3 relative group">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center overflow-hidden bg-slate-950/80 rounded-2xl p-3 relative group">
           {previewImgSrc ? (
             <img
               src={previewImgSrc}
               alt="Yolnoma Natija Sertifikati"
-              className="max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-sm object-contain border border-slate-700/50 transition-transform duration-200 group-hover:scale-[1.01]"
+              className="max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl object-contain transition-transform duration-200 group-hover:scale-[1.01]"
             />
           ) : null}
           <canvas
             ref={canvasRef}
-            className={`${previewImgSrc ? 'hidden' : 'block'} max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl shadow-sm object-contain border border-slate-700/50`}
+            className={`${previewImgSrc ?'hidden':'block'} max-h-[360px] sm:max-h-[400px] w-auto h-auto rounded-xl object-contain`}
           />
           <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-mono mt-2">
             💡 <span className="text-amber-300 font-bold">Maslahat:</span> «PNG Yuklab Olish» tugmasini bosing yoki telefonda rasm ustiga bosib turib galereyaga saqlang.
@@ -529,12 +529,12 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
         </div>
 
         {/* Actions Bar */}
-        <div className="pt-4 mt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="pt-4 mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleDownloadImage}
               disabled={isGenerating}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg hover: active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all hover: active:scale-95 cursor-pointer disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
               <span>{isGenerating ? 'Yuklanmoqda...' : 'PNG Yuklab Olish'}</span>
@@ -542,7 +542,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
 
             <button
               onClick={handleShareTelegram}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1e8bc0] text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1e8bc0] text-white text-xs font-bold transition-all active:scale-95 cursor-pointer"
             >
               <Send className="w-4 h-4" />
               <span>Telegramda Ulashish</span>
@@ -551,7 +551,7 @@ export const ShareResultCertificateModal: React.FC<ShareResultCertificateModalPr
 
           <button
             onClick={handleCopyLink}
-            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-mono font-medium transition-colors cursor-pointer border border-slate-700"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-mono font-medium transition-colors cursor-pointer"
           >
             {copied ? (
               <>

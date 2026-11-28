@@ -69,7 +69,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
       {/* Section Subtitle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[var(--main-color)]/15 border border-[var(--main-color)]/30 flex items-center justify-center text-[var(--main-color)] shadow-md">
+          <div className="w-10 h-10 rounded-2xl bg-[var(--main-color)]/15 flex items-center justify-center text-[var(--main-color)]">
             <Trophy className="w-5 h-5" />
           </div>
           <div>
@@ -77,7 +77,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
               <h3 className="text-base sm:text-lg font-black text-[var(--text-color)] tracking-tight">
                 {t('podiumTitle')}
               </h3>
-              <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] border border-[var(--main-color)]/30 font-mono font-bold flex items-center gap-1">
+              <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--main-color)]/15 text-[var(--main-color)] font-mono font-bold flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-[var(--main-color)]" />
                 TOP 3 SHOHSUPA
               </span>
@@ -112,14 +112,14 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-slate-400/10 to-transparent pointer-events-none" />
 
             {/* Medal Pill Badge */}
-            <div className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono font-bold mb-3 shadow-xs">
+            <div className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--sub-alt)]/60 text-[var(--text-color)] text-xs font-mono font-bold mb-3">
               <Medal className="w-3.5 h-3.5 text-slate-400 fill-slate-400/30" />
               <span>2-O'RIN • KUMUSH</span>
             </div>
 
             {/* Avatar with Silver Pedestal Ring */}
             <div className="relative mb-3">
-              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl p-1 bg-gradient-to-tr from-slate-400 via-slate-200 to-slate-400 shadow-md">
+              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl p-1 bg-gradient-to-tr from-slate-400 via-slate-200 to-slate-400">
                 <img
                   src={second.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${second.uid}`}
                   alt={second.displayName}
@@ -127,7 +127,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
                   loading="lazy"
                 />
               </div>
-              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-slate-300 text-slate-900 font-black text-xs flex items-center justify-center shadow-md border-2 border-[var(--card-bg)]">
+              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-slate-300 text-slate-900 font-black text-xs flex items-center justify-center">
                 2
               </div>
             </div>
@@ -144,12 +144,12 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </span>
 
             {/* Tier Badge */}
-            <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border mb-3.5 ${getTierBadge(second.displayWpm).color}`}>
+            <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold mb-3.5 ${getTierBadge(second.displayWpm).color}`}>
               {getTierBadge(second.displayWpm).label}
             </div>
 
             {/* Metrics Pedestal Strip */}
-            <div className="w-full pt-3 border-t border-[var(--sub-alt)] flex items-center justify-around bg-[var(--sub-alt)]/25 rounded-2xl px-2 py-2">
+            <div className="w-full pt-3 flex items-center justify-around bg-[var(--sub-alt)]/25 rounded-2xl px-2 py-2">
               <div className="text-center">
                 <div className="text-2xl font-black font-mono text-[var(--text-color)] tracking-tight flex items-center justify-center gap-1">
                   <span>{second.scoreValue !== undefined ? second.scoreValue : second.displayWpm}</span>
@@ -178,7 +178,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
           </div>
         ) : (
           <div className="order-2 md:order-1 flex flex-col p-6 rounded-3xl border border-dashed border-slate-500/30 bg-slate-500/5 items-center justify-center text-center space-y-2.5 min-h-[220px]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-400/10 border border-slate-400/20 text-slate-400 text-xs font-mono font-bold">
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-400/10 text-slate-400 text-xs font-mono font-bold">
               <span>🥈 2-o'rin</span>
               <span className="text-[10px] text-slate-500">(Ochiq)</span>
             </div>
@@ -208,14 +208,14 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--main-color)]/20 via-[var(--main-color)]/5 to-transparent pointer-events-none" />
 
             {/* Glowing Top Floating Crown Banner */}
-            <div className="relative -mt-2 mb-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xs font-black tracking-wider uppercase flex items-center gap-2 shadow-lg">
+            <div className="relative -mt-2 mb-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xs font-black tracking-wider uppercase flex items-center gap-2">
               <Crown className="w-4 h-4 fill-slate-950" />
               <span>{t('podiumRank1')} • CHEMPION</span>
             </div>
 
             {/* Champion Avatar with Radiant Halo Ring */}
             <div className="relative mb-3 mt-1">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-amber-200 to-yellow-400 shadow-sm">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-amber-200 to-yellow-400">
                 <img
                   src={first.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${first.uid}`}
                   alt={first.displayName}
@@ -223,7 +223,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
                   loading="lazy"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black text-sm flex items-center justify-center shadow-lg border-2 border-[var(--card-bg)]">
+              <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black text-sm flex items-center justify-center">
                 1
               </div>
             </div>
@@ -240,13 +240,13 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </span>
 
             {/* Tier Badge */}
-            <div className="px-3 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--main-color)]/20 text-[var(--main-color)] border border-[var(--main-color)]/40 mb-4 flex items-center gap-1 shadow-xs">
+            <div className="px-3 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--main-color)]/20 text-[var(--main-color)] mb-4 flex items-center gap-1">
               <Flame className="w-3 h-3 text-[var(--main-color)] fill-current" />
               <span>{getTierBadge(first.displayWpm).label} • {first.displayWpm >= 120 ? 'Rekordchi' : 'Lider'}</span>
             </div>
 
             {/* Metrics Pedestal Strip */}
-            <div className="w-full pt-3 border-t border-[var(--sub-alt)] flex items-center justify-around bg-[var(--sub-alt)]/30 rounded-2xl px-3 py-2.5">
+            <div className="w-full pt-3 flex items-center justify-around bg-[var(--sub-alt)]/30 rounded-2xl px-3 py-2.5">
               <div className="text-center">
                 <div className="text-3xl sm:text-4xl font-black font-mono text-[var(--main-color)] tracking-tight flex items-center justify-center gap-1">
                   <span>{first.scoreValue !== undefined ? first.scoreValue : first.displayWpm}</span>
@@ -291,14 +291,14 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-amber-700/10 to-transparent pointer-events-none" />
 
             {/* Medal Pill Badge */}
-            <div className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono font-bold mb-3 shadow-xs">
+            <div className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--sub-alt)]/60 text-[var(--text-color)] text-xs font-mono font-bold mb-3">
               <Award className="w-3.5 h-3.5 text-amber-600 fill-amber-600/30" />
               <span>3-O'RIN • BRONZA</span>
             </div>
 
             {/* Avatar with Bronze Pedestal Ring */}
             <div className="relative mb-3">
-              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl p-1 bg-gradient-to-tr from-amber-800 via-amber-600 to-amber-700 shadow-md">
+              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl p-1 bg-gradient-to-tr from-amber-800 via-amber-600 to-amber-700">
                 <img
                   src={third.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${third.uid}`}
                   alt={third.displayName}
@@ -306,7 +306,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
                   loading="lazy"
                 />
               </div>
-              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-700 text-amber-100 font-black text-xs flex items-center justify-center shadow-md border-2 border-[var(--card-bg)]">
+              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-700 text-amber-100 font-black text-xs flex items-center justify-center">
                 3
               </div>
             </div>
@@ -323,12 +323,12 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
             </span>
 
             {/* Tier Badge */}
-            <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border mb-3.5 ${getTierBadge(third.displayWpm).color}`}>
+            <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold mb-3.5 ${getTierBadge(third.displayWpm).color}`}>
               {getTierBadge(third.displayWpm).label}
             </div>
 
             {/* Metrics Pedestal Strip */}
-            <div className="w-full pt-3 border-t border-[var(--sub-alt)] flex items-center justify-around bg-[var(--sub-alt)]/25 rounded-2xl px-2 py-2">
+            <div className="w-full pt-3 flex items-center justify-around bg-[var(--sub-alt)]/25 rounded-2xl px-2 py-2">
               <div className="text-center">
                 <div className="text-2xl font-black font-mono text-[var(--text-color)] tracking-tight flex items-center justify-center gap-1">
                   <span>{third.scoreValue !== undefined ? third.scoreValue : third.displayWpm}</span>
@@ -357,7 +357,7 @@ export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({
           </div>
         ) : (
           <div className="order-3 flex flex-col p-6 rounded-3xl border border-dashed border-[var(--sub-alt)] bg-[var(--card-bg)]/40 items-center justify-center text-center space-y-2.5 min-h-[220px]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)] text-[var(--sub-color)] text-xs font-mono font-bold">
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--sub-alt)]/50 text-[var(--sub-color)] text-xs font-mono font-bold">
               <span>🥉 3-o'rin</span>
               <span className="text-[10px]">(Ochiq)</span>
             </div>

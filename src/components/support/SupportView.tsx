@@ -50,20 +50,20 @@ export const SupportView: React.FC<SupportViewProps> = ({
       <div className="flex items-center justify-between gap-3">
         <button
           onClick={onBackToHome}
-          className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-bold transition-colors cursor-pointer border border-[var(--sub-alt)]"
+          className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-bold transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>{uiLanguage === 'ru' ? 'Назад' : uiLanguage === 'en' ? 'Back' : 'Orqaga'}</span>
         </button>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-extrabold font-mono">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-xs font-extrabold font-mono">
           <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
           <span>YOLNOMA LOYIHASINI QO'LLAB-QUVVATLASH</span>
         </div>
       </div>
 
       {/* Main Pitch Card: Inspiring & Powerful Call-to-Action */}
-      <div className="relative overflow-hidden rounded-2xl bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 p-5 sm:p-8 lg:p-10 space-y-6">
+      <div className="relative overflow-hidden rounded-2xl bg-[var(--card-bg)] p-5 sm:p-8 lg:p-10 space-y-6">
         
         {/* Header Title & Pitch */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -79,7 +79,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
             <strong className="text-[var(--text-color)] font-extrabold">Yolnoma</strong> — O'zbekistondagi har bir o'quvchi, talaba va yosh dasturchi uchun <span className="text-emerald-400 font-bold">mutlaqo bepul, reklamasiz va mustaqil</span> ta'lim platformasidir.
           </p>
 
-          <p className="text-xs sm:text-sm text-[var(--text-color)]/90 bg-[var(--sub-alt)]/40 p-3.5 rounded-2xl border border-[var(--sub-alt)] leading-relaxed">
+          <p className="text-xs sm:text-sm text-[var(--text-color)]/90 bg-[var(--sub-alt)]/40 p-3.5 rounded-2xl leading-relaxed">
             Loyihaning uzluksiz ishlashi, yuqori tezlikdagi xavfsiz serverlar va yangi imkoniyatlar yaratilishi siz kabi saxovatli yurtdoshlarimizning e'tibori bilan amalga oshadi.
             <span className="block mt-1 font-bold text-rose-400">
               O'z xohishingiz va imkoniyatingizga ko'ra istalgan miqdordagi qo'llab-quvvatlovingiz — platformaning abadiy bepul va reklamasiz qolishiga qo'shilgan bebaho hissadir!
@@ -89,13 +89,13 @@ export const SupportView: React.FC<SupportViewProps> = ({
 
         {/* Banking Card UI (Responsive, Never Overflowing) */}
         <div className="max-w-md w-full mx-auto">
-          <div className="relative w-full rounded-2xl bg-slate-900 text-white p-5 sm:p-7 border border-slate-700/70 overflow-hidden select-none">
+          <div className="relative w-full rounded-2xl bg-slate-900 text-white p-5 sm:p-7 overflow-hidden select-none">
 
             {/* Top row: Chip & Network */}
             <div className="relative z-10 flex items-center justify-between mb-5 sm:mb-6">
               <div className="flex items-center gap-2">
                 {/* Metallic Gold Chip */}
-                <div className="w-10 h-7 sm:w-11 sm:h-8 rounded-md bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 p-1 flex flex-col justify-between shadow-inner border border-amber-200/50">
+                <div className="w-10 h-7 sm:w-11 sm:h-8 rounded-md bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 p-1 flex flex-col justify-between">
                   <div className="w-full h-0.5 bg-amber-800/40 rounded-full" />
                   <div className="w-full h-0.5 bg-amber-800/40 rounded-full" />
                   <div className="w-full h-0.5 bg-amber-800/40 rounded-full" />
@@ -126,7 +126,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
               {/* 4 distinct digit blocks - perfectly formatted and responsive */}
               <div
                 onClick={handleCopyCard}
-                className="group relative bg-black/60 hover:bg-black/75 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border border-slate-700/80 hover:border-amber-400/60 transition-all cursor-pointer select-all shadow-inner"
+                className="group relative bg-black/60 hover:bg-black/75 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-all cursor-pointer select-all"
                 title="Karta raqamini nusxalash uchun bosing"
               >
                 <div className="flex items-center justify-between gap-1 xs:gap-2 font-mono font-black text-[15px] xs:text-base sm:text-2xl tracking-normal xs:tracking-wider sm:tracking-widest text-white whitespace-nowrap">
@@ -137,7 +137,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
                 </div>
 
                 {/* Interactive copy helper bar inside card */}
-                <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80">
+                <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1.5">
                   <span className="text-[9px] text-slate-400 group-hover:text-amber-300 transition-colors">
                     Nusxalash uchun bosing
                   </span>
@@ -159,7 +159,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
             </div>
 
             {/* Bottom Row: Cardholder & Expiry */}
-            <div className="relative z-10 flex items-end justify-between pt-2 border-t border-slate-800/80 text-xs">
+            <div className="relative z-10 flex items-end justify-between pt-2 text-xs">
               <div>
                 <span className="text-[9px] text-slate-400 uppercase font-mono block">
                   Karta Egasi
@@ -169,7 +169,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
                 <ShieldCheck className="w-3 h-3" />
                 <span>Tekshirilgan</span>
               </div>
@@ -202,7 +202,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
         </div>
 
         {/* How to Send via Payment Apps Guide */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)] max-w-2xl mx-auto space-y-3">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--sub-alt)]/30 max-w-2xl mx-auto space-y-3">
           <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-color)] flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
             <span>Qanday o'tkazish mumkin? (1 daqiqada)</span>
@@ -223,7 +223,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
 
         {/* 3 Pillars of Trust */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)] text-center space-y-1">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/25 text-center space-y-1">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto mb-1.5">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -231,7 +231,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
             <p className="text-[11px] text-[var(--sub-color)]">Foydalanuvchilarni chalg'ituvchi bannerlar va reklamalarsiz toza ta'lim.</p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)] text-center space-y-1">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/25 text-center space-y-1">
             <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center mx-auto mb-1.5">
               <Zap className="w-4 h-4" />
             </div>
@@ -239,7 +239,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
             <p className="text-[11px] text-[var(--sub-color)]">Kiber-hujumlardan himoyalangan va kechayu-kunduz barqaror ishlaydigan tizim.</p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/25 border border-[var(--sub-alt)] text-center space-y-1">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/25 text-center space-y-1">
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mx-auto mb-1.5">
               <Sparkles className="w-4 h-4" />
             </div>
@@ -249,7 +249,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
         </div>
 
         {/* Sincere Gratitude Note */}
-        <div className="text-center pt-2 border-t border-[var(--sub-alt)]">
+        <div className="text-center pt-2">
           <p className="text-xs text-[var(--sub-color)] italic">
             "Har bir qo'llab-quvvatlovchi saxovatli yurtdoshimizga chin yurakdan minnatdorchilik bildiramiz! Siz sababli Yolnoma yanada kuchliroq bo'lmoqda."
           </p>
@@ -264,7 +264,7 @@ export const SupportView: React.FC<SupportViewProps> = ({
       <div className="text-center">
         <button
           onClick={onStartTyping || onBackToHome}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:opacity-95 text-white font-black text-sm shadow-lg shadow-[var(--main-color)]/25 transition-all cursor-pointer"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:opacity-95 text-white font-black text-sm shadow-[var(--main-color)]/25 transition-all cursor-pointer"
         >
           <span>Trenajyorda mashq qilish</span>
           <Zap className="w-4 h-4" />

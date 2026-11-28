@@ -184,7 +184,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-6 shadow-sm text-[var(--text-color)] max-h-[92vh] overflow-y-auto">
+      <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl p-6 text-[var(--text-color)] max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -212,7 +212,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Mode Switcher Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-[var(--sub-alt)]/60 rounded-xl mb-4 border border-[var(--sub-alt)]">
+        <div className="flex items-center gap-1 p-1 bg-[var(--sub-alt)]/60 rounded-xl mb-4">
           <button
             type="button"
             onClick={() => handleTabChange('login')}
@@ -253,7 +253,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         {/* Feedback Messages */}
         {formattedError && (
-          <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-500 text-xs space-y-2">
+          <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 text-rose-500 text-xs space-y-2">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="space-y-1 flex-1">
@@ -265,7 +265,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Smart Recovery Actions */}
-            <div className="pt-1 flex flex-wrap gap-2 border-t border-rose-500/15">
+            <div className="pt-1 flex flex-wrap gap-2">
               {formattedError.suggestRegister && mode === 'login' && (
                 <button
                   type="button"
@@ -314,7 +314,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         )}
 
         {success && (
-          <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2.5">
+          <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <div className="flex-1">
               <span>{success}</span>
@@ -339,7 +339,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-[var(--sub-alt)] hover:border-[var(--main-color)] bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -367,7 +367,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               type="button"
               onClick={handleGithubSignIn}
               disabled={loading}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-[var(--sub-alt)] hover:border-[var(--main-color)] bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
             >
               <svg className="w-4 h-4 shrink-0 fill-current text-[var(--text-color)]" viewBox="0 0 24 24">
                 <path
@@ -383,7 +383,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         {mode !== 'forgot' && (
           <div className="relative flex items-center justify-center my-3.5">
-            <div className="border-t border-[var(--sub-alt)] w-full" />
+            <div className="w-full" />
             <span className="bg-[var(--card-bg)] px-3 text-[10px] text-[var(--sub-color)] font-semibold uppercase tracking-wider">
               yoki email orqali
             </span>
@@ -405,7 +405,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="masalan: gavharoy"
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 focus:border-[var(--main-color)] text-xs text-[var(--text-color)] outline-none transition-all placeholder:text-[var(--sub-color)]/50"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] outline-none transition-all placeholder:text-[var(--sub-color)]/50"
                 />
               </div>
             </div>
@@ -423,7 +423,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 focus:border-[var(--main-color)] text-xs text-[var(--text-color)] outline-none transition-all placeholder:text-[var(--sub-color)]/50"
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] outline-none transition-all placeholder:text-[var(--sub-color)]/50"
               />
             </div>
           </div>
@@ -450,7 +450,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === 'register' ? 'Kamida 6 ta belgi' : '••••••••'}
-                  className="w-full pl-9 pr-10 py-2 rounded-xl bg-[var(--sub-alt)] border border-[var(--sub-color)]/20 focus:border-[var(--main-color)] text-xs text-[var(--text-color)] outline-none transition-all placeholder:text-[var(--sub-color)]/50"
+                  className="w-full pl-9 pr-10 py-2 rounded-xl bg-[var(--sub-alt)] text-xs text-[var(--text-color)] outline-none transition-all placeholder:text-[var(--sub-color)]/50"
                 />
                 <button
                   type="button"
@@ -472,7 +472,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold shadow-md hover:opacity-90 active:scale-[0.99] transition-all mt-4 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-xl bg-[var(--main-color)] text-white text-xs font-bold hover:opacity-90 active:scale-[0.99] transition-all mt-4 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
             {loading ? (
               <span className="inline-flex items-center gap-2">

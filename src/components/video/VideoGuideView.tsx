@@ -318,7 +318,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8 animate-in fade-in duration-200">
       {/* Top Breadcrumb & Navigation */}
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--sub-alt)]/60 pb-3">
+      <div className="flex items-center justify-between gap-3 pb-3">
         <button
           onClick={onBackToHome}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)]/80 text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-semibold transition-colors cursor-pointer"
@@ -333,7 +333,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
             href={`https://youtu.be/${youtubeVideoId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-500 hover:text-red-400 border border-red-500/25 text-xs font-bold transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-500 hover:text-red-400 text-xs font-bold transition-all"
             title="YouTube ilovasida yoki saytida ochish"
           >
             <Youtube className="w-3.5 h-3.5 text-red-500" />
@@ -363,7 +363,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
           {/* Share Button */}
           <button
             onClick={handleCopyShareLink}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold transition-all cursor-pointer"
             title="Ushbu video havolasini nusxalash"
           >
             {copiedShare ? (
@@ -383,7 +383,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
 
       {/* Admin / Owner Video Configuration Panel (Collapsible) */}
       {showUrlSettings && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--sub-alt)]/40 border border-amber-500/30 text-xs space-y-3 animate-in fade-in duration-150">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--sub-alt)]/40 text-xs space-y-3 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
@@ -409,7 +409,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
               placeholder="https://youtu.be/EW7Mnfu7OFo?si=rkVNcZuGUccOOgSm"
               value={customUrlInput}
               onChange={(e) => setCustomUrlInput(e.target.value)}
-              className="flex-1 px-3.5 py-2 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-[var(--text-color)] font-mono text-xs focus:outline-hidden focus:border-red-500"
+              className="flex-1 px-3.5 py-2 rounded-xl bg-[var(--card-bg)] text-[var(--text-color)] font-mono text-xs focus:outline-hidden"
             />
             <button
               onClick={handleSaveCustomSource}
@@ -434,7 +434,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
       <div className="space-y-4">
         {/* Title & Badge */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 text-xs font-mono font-bold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-mono font-bold">
             <Youtube className="w-3.5 h-3.5 text-red-500" />
             <span>Rasmiy YouTube Video Qo'llanma</span>
           </div>
@@ -449,13 +449,13 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
         {/* Responsive YouTube Video Player Embed Container */}
         <div
           id="video-player-container"
-          className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden border border-[var(--sub-alt)] shadow-sm group ring-1 ring-white/5"
+          className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden group ring-white/5"
         >
           <iframe
             key={`youtube-player-${youtubeVideoId}-${playerKey}`}
             src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?rel=0&modestbranding=1&enablejsapi=1`}
             title="Yolnoma - Sayt Haqida Rasmiy Video Qo'llanma"
-            className="w-full h-full border-0 rounded-3xl"
+            className="w-full h-full rounded-3xl"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
@@ -466,7 +466,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
         {/* Single reaction rule, count of likes & dislikes shown, Firebase */}
         {/* Only registered users can like or dislike                       */}
         {/* ============================================================== */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-sm space-y-4">
+        <div className="p-4 sm:p-5 rounded-3xl bg-[var(--card-bg)] space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {/* Left Info: Video metadata */}
             <div className="space-y-1">
@@ -530,7 +530,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyShareLink}
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)] text-xs font-bold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-bold transition-all cursor-pointer"
                   title="Videoni ulashish"
                 >
                   <Share2 className="w-4 h-4 text-amber-400" />
@@ -548,7 +548,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
           </div>
 
           {/* Reaction Ratio Bar & Trust Metric */}
-          <div className="pt-2 border-t border-[var(--sub-alt)]/50 space-y-1.5">
+          <div className="pt-2 space-y-1.5">
             <div className="flex items-center justify-between text-[11px] font-mono text-[var(--sub-color)]">
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -585,7 +585,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
       </div>
 
       {/* Step-by-Step Practical Instructions Cards */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-[var(--card-bg)] space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
           <h3 className="font-black text-[var(--text-color)] text-base sm:text-lg">
@@ -594,7 +594,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-1">
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)]/60 space-y-1.5">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 space-y-1.5">
             <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 font-mono font-bold flex items-center justify-center text-xs">
               01
             </div>
@@ -604,7 +604,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)]/60 space-y-1.5">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 space-y-1.5">
             <div className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 font-mono font-bold flex items-center justify-center text-xs">
               02
             </div>
@@ -614,7 +614,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)]/60 space-y-1.5">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 space-y-1.5">
             <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 font-mono font-bold flex items-center justify-center text-xs">
               03
             </div>
@@ -624,7 +624,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)]/60 space-y-1.5">
+          <div className="p-3.5 rounded-2xl bg-[var(--sub-alt)]/30 space-y-1.5">
             <div className="w-7 h-7 rounded-xl bg-rose-500/20 text-rose-400 font-mono font-bold flex items-center justify-center text-xs">
               04
             </div>
@@ -640,7 +640,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
       <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
         <button
           onClick={onStartTyping}
-          className="px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:brightness-105 text-white font-black text-sm shadow-lg flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+          className="px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:brightness-105 text-white font-black text-sm flex items-center gap-2 cursor-pointer transition-all active:scale-95"
         >
           <span>Tez Yozishni Boshlash</span>
           <ChevronRight className="w-4 h-4" />
@@ -649,7 +649,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
         {onGoToBattle && (
           <button
             onClick={onGoToBattle}
-            className="px-5 py-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-sm transition-all cursor-pointer active:scale-95"
+            className="px-5 py-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold text-sm transition-all cursor-pointer active:scale-95"
           >
             Speedway Battle Arenasi
           </button>
@@ -658,7 +658,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
         {onGoToSupport && (
           <button
             onClick={onGoToSupport}
-            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-500/15 to-amber-500/15 hover:from-rose-500/25 hover:to-amber-500/25 border border-rose-500/30 text-rose-400 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-500/15 to-amber-500/15 hover:from-rose-500/25 hover:to-amber-500/25 text-rose-400 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95"
           >
             <Heart className="w-4 h-4 fill-rose-500/30 text-rose-500" />
             <span>Qo'llab-quvvatlash</span>
@@ -669,7 +669,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
       {/* Auth Requirement Prompt Modal (Only registered users can like/dislike) */}
       {showAuthPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 sm:p-7 shadow-sm space-y-5 text-center">
+          <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-3xl p-6 sm:p-7 space-y-5 text-center">
             <button
               onClick={() => setShowAuthPrompt(false)}
               className="absolute top-4 right-4 p-2 rounded-xl text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)] transition-colors cursor-pointer"
@@ -678,7 +678,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
               ✕
             </button>
 
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/15 flex items-center justify-center text-amber-400">
               <LogIn className="w-7 h-7" />
             </div>
 
@@ -697,7 +697,7 @@ export const VideoGuideView: React.FC<VideoGuideViewProps> = ({
                   setShowAuthPrompt(false);
                   if (onOpenAuth) onOpenAuth();
                 }}
-                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--main-color)] hover:brightness-105 text-white font-bold text-sm transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[var(--main-color)] hover:brightness-105 text-white font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Kirish / Ro'yxatdan o'tish</span>

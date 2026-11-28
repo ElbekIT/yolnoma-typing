@@ -87,7 +87,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
   return (
     <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8 animate-in fade-in duration-200">
       {/* Top Navigation & Breadcrumb */}
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--sub-alt)]/60 pb-3">
+      <div className="flex items-center justify-between gap-3 pb-3">
         <button
           onClick={onBackToHome}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/40 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] text-xs font-semibold transition-colors cursor-pointer"
@@ -96,7 +96,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
           <span>{uiLanguage === 'ru' ? 'Главная' : uiLanguage === 'en' ? 'Back to Home' : 'Bosh Sahifa'}</span>
         </button>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-mono font-bold">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-mono font-bold">
           <MessageSquare className="w-3.5 h-3.5" />
           <span>Haqiqiy Foydalanuvchilar Fikrlari</span>
         </div>
@@ -104,7 +104,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
 
       {/* Main Header Presentation */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white shadow-lg shadow-amber-500/20 mb-1">
+        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white shadow-amber-500/20 mb-1">
           <Quote className="w-6 h-6 sm:w-7 sm:h-7 fill-white" />
         </div>
 
@@ -118,19 +118,19 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
 
         {/* Quick Highlights Counters */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 pt-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-xs font-mono">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] text-xs font-mono">
             <Users className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-[var(--sub-color)]">Jami fikrlar:</span>
             <strong className="text-[var(--text-color)]">{COMMUNITY_REVIEWS.length} ta</strong>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-xs font-mono">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] text-xs font-mono">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
             <span className="text-[var(--sub-color)]">O'rtacha baho:</span>
             <strong className="text-amber-400 font-bold">5.0 / 5.0</strong>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-xs font-mono">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] text-xs font-mono">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-emerald-400 font-bold">100% Haqiqiy Shaxslar</span>
           </div>
@@ -142,7 +142,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
         {COMMUNITY_REVIEWS.map((review) => (
           <div
             key={review.id}
-            className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-amber-500/40 shadow-xl hover:shadow-2xl transition-all duration-200"
+            className="group relative flex flex-col justify-between p-5 sm:p-6 rounded-3xl bg-[var(--card-bg)] transition-all duration-200"
           >
             {/* Top Row: User Avatar, Name, Verified Badge & Telegram */}
             <div className="space-y-4">
@@ -150,10 +150,10 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
                 <div className="flex items-center gap-3">
                   {/* Avatar with role icon badge */}
                   <div className="relative shrink-0">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-[var(--sub-alt)] to-rose-500/20 border border-[var(--sub-alt)] flex items-center justify-center font-mono font-black text-base text-[var(--text-color)] shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-[var(--sub-alt)] to-rose-500/20 flex items-center justify-center font-mono font-black text-base text-[var(--text-color)]">
                       {review.avatarInitials}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-center text-[var(--main-color)]">
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-[var(--card-bg)] flex items-center justify-center text-[var(--main-color)]">
                       {review.roleIcon === 'code' ? (
                         <Code2 className="w-3 h-3 text-cyan-400" />
                       ) : (
@@ -185,7 +185,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
               </div>
 
               {/* Quote Body */}
-              <div className="relative bg-[var(--sub-alt)]/25 rounded-2xl p-4 border border-[var(--sub-alt)]/60">
+              <div className="relative bg-[var(--sub-alt)]/25 rounded-2xl p-4">
                 <Quote className="w-5 h-5 text-amber-400/40 mb-1.5" />
                 <p className="text-xs sm:text-sm text-[var(--text-color)] leading-relaxed font-medium">
                   {review.text}
@@ -197,7 +197,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
                 {review.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2.5 py-0.5 rounded-lg bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)] text-[10px] font-mono text-[var(--sub-color)]"
+                    className="px-2.5 py-0.5 rounded-lg bg-[var(--sub-alt)]/40 text-[10px] font-mono text-[var(--sub-color)]"
                   >
                     #{tag}
                   </span>
@@ -206,12 +206,12 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
             </div>
 
             {/* Bottom Footer of Card: Telegram Profile Link & Copy Action */}
-            <div className="pt-4 mt-4 border-t border-[var(--sub-alt)]/60 flex items-center justify-between gap-2">
+            <div className="pt-4 mt-4 flex items-center justify-between gap-2">
               <a
                 href={review.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#229ED9] border border-[#229ED9]/30 text-xs font-bold font-mono transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#229ED9] text-xs font-bold font-mono transition-all"
                 title={`${review.name} ning Telegram profilini ochish`}
               >
                 <Send className="w-3.5 h-3.5" />
@@ -243,7 +243,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
       </div>
 
       {/* Leave Feedback Banner: Community invite */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--card-bg)] to-amber-500/10 border border-[var(--sub-alt)] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[var(--card-bg)] via-[var(--card-bg)] to-amber-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
         <div className="space-y-1 max-w-xl">
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
@@ -260,7 +260,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
           href="https://t.me/yolnoma_uz1"
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#229ED9] hover:bg-[#1E8BC0] text-white font-bold text-xs shadow-md shadow-[#229ED9]/25 transition-all active:scale-95 cursor-pointer"
+          className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#229ED9] hover:bg-[#1E8BC0] text-white font-bold text-xs shadow-[#229ED9]/25 transition-all active:scale-95 cursor-pointer"
         >
           <Send className="w-4 h-4" />
           <span>Telegram'da Fikr Qoldirish</span>
@@ -272,7 +272,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
         {onStartTyping && (
           <button
             onClick={onStartTyping}
-            className="px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:brightness-105 text-white font-black text-sm shadow-lg shadow-[var(--main-color)]/25 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+            className="px-6 py-3 rounded-2xl bg-[var(--main-color)] hover:brightness-105 text-white font-black text-sm shadow-[var(--main-color)]/25 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
           >
             <span>Tez Yozish Trenajyori</span>
             <ChevronRight className="w-4 h-4" />
@@ -282,7 +282,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
         {onGoToBattle && (
           <button
             onClick={onGoToBattle}
-            className="px-5 py-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+            className="px-5 py-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95"
           >
             <Swords className="w-4 h-4 text-rose-400" />
             <span>Speedway Battle Arenasi</span>

@@ -39,7 +39,7 @@ export const DashboardView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Welcome Banner */}
-      <div className="bg-gradient-to-r from-[var(--main-color)] to-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-[var(--main-color)] to-indigo-600 rounded-3xl p-6 sm:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Welcome Back, {profile?.displayName || 'Typer'}! ⚡
@@ -50,7 +50,7 @@ export const DashboardView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/20">
+        <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl">
           <Award className="w-10 h-10 text-amber-300" />
           <div>
             <span className="text-[10px] uppercase font-bold text-white/80 tracking-wider">Current Streak</span>
@@ -61,7 +61,7 @@ export const DashboardView: React.FC = () => {
 
       {/* Metrics Summary Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-2xl shadow-sm">
+        <div className="bg-[var(--card-bg)] p-5 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--sub-color)] mb-2">
             <span className="text-xs font-semibold uppercase">Highest WPM</span>
             <Zap className="w-4 h-4 text-amber-500" />
@@ -70,7 +70,7 @@ export const DashboardView: React.FC = () => {
           <p className="text-[10px] text-[var(--sub-color)] mt-1">Personal Best Speed</p>
         </div>
 
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-2xl shadow-sm">
+        <div className="bg-[var(--card-bg)] p-5 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--sub-color)] mb-2">
             <span className="text-xs font-semibold uppercase">Best Accuracy</span>
             <Target className="w-4 h-4 text-emerald-500" />
@@ -79,7 +79,7 @@ export const DashboardView: React.FC = () => {
           <p className="text-[10px] text-[var(--sub-color)] mt-1">Peak Precision</p>
         </div>
 
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-2xl shadow-sm">
+        <div className="bg-[var(--card-bg)] p-5 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--sub-color)] mb-2">
             <span className="text-xs font-semibold uppercase">Total Tests</span>
             <Activity className="w-4 h-4 text-sky-500" />
@@ -88,7 +88,7 @@ export const DashboardView: React.FC = () => {
           <p className="text-[10px] text-[var(--sub-color)] mt-1">Completed Sessions</p>
         </div>
 
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 rounded-2xl shadow-sm">
+        <div className="bg-[var(--card-bg)] p-5 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--sub-color)] mb-2">
             <span className="text-xs font-semibold uppercase">Time Typed</span>
             <Clock className="w-4 h-4 text-purple-500" />
@@ -99,7 +99,7 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* Speed Trend Chart */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+      <div className="bg-[var(--card-bg)] p-6 rounded-3xl">
         <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-[var(--main-color)]" />
           <span>Speed Trend Progression</span>
@@ -146,7 +146,7 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* Recent Tests Table */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-3xl shadow-sm">
+      <div className="bg-[var(--card-bg)] p-6 rounded-3xl">
         <h3 className="text-sm font-bold text-[var(--text-color)] mb-4 flex items-center gap-2">
           <Calendar className="w-4 h-4 text-[var(--main-color)]" />
           <span>Recent Test History</span>
@@ -156,7 +156,7 @@ export const DashboardView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-medium">
               <thead>
-                <tr className="border-b border-[var(--sub-alt)] text-[var(--sub-color)] font-semibold uppercase text-[10px]">
+                <tr className="text-[var(--sub-color)] font-semibold uppercase text-[10px]">
                   <th className="py-2.5 px-3">WPM</th>
                   <th className="py-2.5 px-3">Accuracy</th>
                   <th className="py-2.5 px-3">Mode</th>

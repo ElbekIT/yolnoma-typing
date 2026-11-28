@@ -273,9 +273,9 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
   }, [activeKeyCoord, activeFinger]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto my-3 select-none transition-all duration-300">
+    <div className="w-full max-w-4xl mx-auto my-3 select-none">
       {/* Top Header Controls: Finger Indicator & Quick Close */}
-      <div className="flex items-center justify-between px-3 py-1.5 mb-1 rounded-xl bg-[var(--sub-alt)]/30 border border-[var(--sub-alt)] text-xs text-[var(--sub-color)]">
+      <div className="flex items-center justify-between px-3 py-1.5 mb-1.5 rounded-xl bg-[var(--card-bg)] text-xs text-[var(--sub-color)]">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -285,7 +285,7 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
           </div>
 
           {activeFingerDetails && activeKeyCoord && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 font-medium text-[11px]">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-blue-500/15 text-blue-400 font-medium text-[11px]">
               <span>Tugma:</span>
               <strong className="font-mono text-white bg-blue-600 px-1.5 py-0.2 rounded font-bold uppercase">
                 {targetKeyInfo?.char}
@@ -304,7 +304,7 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
             if (onToggleGuide) onToggleGuide();
             else setHandsGuide(false);
           }}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--card-bg)] hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] border border-[var(--sub-alt)] transition-colors text-[11px] font-semibold cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--sub-alt)]/60 hover:bg-[var(--sub-alt)] text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors text-[11px] font-semibold cursor-pointer"
           title="Qoʻllar vizualizatorini yashirish"
         >
           <EyeOff className="w-3.5 h-3.5" />
@@ -313,7 +313,7 @@ export const InteractiveHandsGuide: React.FC<InteractiveHandsGuideProps> = memo(
       </div>
 
       {/* Main SVG Keyboard & Hands Container */}
-      <div className="relative w-full overflow-hidden rounded-2xl bg-[#f8fafc] dark:bg-[#0f141c] border border-[var(--sub-alt)]">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-[#f8fafc] dark:bg-[#0f141c]">
         <svg
           viewBox="120 70 760 365"
           className="w-full h-auto max-h-[340px]"

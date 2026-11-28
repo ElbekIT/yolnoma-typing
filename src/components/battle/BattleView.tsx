@@ -1190,15 +1190,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
   return (
     <div className="w-full max-w-5xl mx-auto space-y-4 animate-in fade-in duration-200">
       {/* Sleek Battle Header */}
-      <div className="bg-gradient-to-r from-[#0b1324] via-[#111c38] to-[#0b1324] border border-cyan-500/30 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
+      <div className="bg-gradient-to-r from-[#0b1324] via-[#111c38] to-[#0b1324] rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-amber-500 flex items-center justify-center shadow-lg shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-amber-500 flex items-center justify-center shrink-0">
             <Swords className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
               BATTLE ARENA{' '}
-              <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+              <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
                 2X BARABAN DUELI
               </span>
             </h1>
@@ -1220,7 +1220,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
               setInviteSentStatus(null);
               setJoinError(null);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700 cursor-pointer shadow-md"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
             <span>Lobbiyga Qaytish</span>
@@ -1230,7 +1230,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
       {/* Invite Notification Banner */}
       {inviteSentStatus && (
-        <div className="p-3 bg-cyan-950/80 border border-cyan-500/50 rounded-2xl text-cyan-200 text-xs flex items-center justify-between animate-in slide-in-from-top-2">
+        <div className="p-3 bg-cyan-950/80 rounded-2xl text-cyan-200 text-xs flex items-center justify-between animate-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 animate-spin" />
             <span>{inviteSentStatus}</span>
@@ -1250,15 +1250,15 @@ export const BattleView: React.FC<BattleViewProps> = ({
       {gameState === 'lobby' && (
         <div className="space-y-6">
           {/* Room Customization Banner (Host tanlaydigan Vaqt va Til parametrlari) */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 sm:p-6 rounded-3xl space-y-4 shadow-md">
-            <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-3">
+          <div className="bg-[var(--card-bg)] p-5 sm:p-6 rounded-3xl space-y-4">
+            <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-cyan-400" />
                 <h3 className="text-sm sm:text-base font-black text-[var(--text-color)] uppercase tracking-wider">
                   Jang Parametrlari (Xona Vaqti va Matn Tili)
                 </h3>
               </div>
-              <span className="text-[11px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2.5 py-1 rounded-xl border border-cyan-500/20">
+              <span className="text-[11px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2.5 py-1 rounded-xl">
                 {selectedDuration} sekund • {selectedLanguage.toUpperCase()}
               </span>
             </div>
@@ -1323,9 +1323,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
           {/* Main 3 Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card 1: 🤖 Robot Bilan O'ynash (Multi-tier Cyber Bot) */}
-            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-purple-500/60 p-5 sm:p-6 rounded-3xl space-y-4 transition-all shadow-lg flex flex-col justify-between group">
+            <div className="bg-[var(--card-bg)] p-5 sm:p-6 rounded-3xl space-y-4 transition-all flex flex-col justify-between group">
               <div className="space-y-2.5">
-                <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/15 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
                   <Bot className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm sm:text-base font-black text-[var(--text-color)] flex items-center gap-1.5">
@@ -1368,7 +1368,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
               <button
                 onClick={() => handleStartBotMatch(botDifficulty)}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 <Bot className="w-4 h-4" />
                 <span>ROBOT BILAN JANGNI BOSHLASH 🤖</span>
@@ -1376,9 +1376,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
             </div>
 
             {/* Card 2: ⚔️ Alohida Do'st Bilan O'ynash (Xona Yaratish) */}
-            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-cyan-500/60 p-5 sm:p-6 rounded-3xl space-y-4 transition-all shadow-lg flex flex-col justify-between group">
+            <div className="bg-[var(--card-bg)] p-5 sm:p-6 rounded-3xl space-y-4 transition-all flex flex-col justify-between group">
               <div className="space-y-2.5">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
                   <PlusCircle className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm sm:text-base font-black text-[var(--text-color)] flex items-center gap-1.5">
@@ -1394,7 +1394,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
               <button
                 onClick={handleCreateRoom}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Zap className="w-4 h-4" />
                 <span>XONA YARATISH ✨</span>
@@ -1402,9 +1402,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
             </div>
 
             {/* Card 3: 🔑 Xona Kodi Bilan Kirish */}
-            <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-amber-500/60 p-5 sm:p-6 rounded-3xl space-y-4 transition-all shadow-lg flex flex-col justify-between group">
+            <div className="bg-[var(--card-bg)] p-5 sm:p-6 rounded-3xl space-y-4 transition-all flex flex-col justify-between group">
               <div className="space-y-2.5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
                   <LinkIcon className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm sm:text-base font-black text-[var(--text-color)] flex items-center gap-1.5">
@@ -1426,11 +1426,11 @@ export const BattleView: React.FC<BattleViewProps> = ({
                     }}
                     placeholder="Masalan: UZB842"
                     maxLength={10}
-                    className="w-full px-3 py-2.5 bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-xl font-mono text-center font-bold text-xs text-[var(--text-color)] uppercase focus:border-amber-500 outline-none shadow-inner"
+                    className="w-full px-3 py-2.5 bg-[var(--bg-color)] rounded-xl font-mono text-center font-bold text-xs text-[var(--text-color)] uppercase outline-none"
                   />
                   <button
                     onClick={() => handleJoinRoom()}
-                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase transition-all active:scale-95 shrink-0 cursor-pointer"
                   >
                     KIRISH
                   </button>
@@ -1446,8 +1446,8 @@ export const BattleView: React.FC<BattleViewProps> = ({
           </div>
 
           {/* Section 4: 👥 Do'stini Chaqirish (Faol Foydalanuvchilar Ro'yxati) */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-5 sm:p-6 rounded-3xl space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-3">
+          <div className="bg-[var(--card-bg)] p-5 sm:p-6 rounded-3xl space-y-4">
+            <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-xs sm:text-sm font-black text-[var(--text-color)] uppercase tracking-wider">
@@ -1472,13 +1472,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 onlinePlayers.map((p) => (
                   <div
                     key={p.uid}
-                    className="p-3 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] flex items-center justify-between gap-2.5 hover:border-cyan-500/40 transition-all shadow-sm"
+                    className="p-3 rounded-2xl bg-[var(--bg-color)] flex items-center justify-between gap-2.5 transition-all"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <img
                         src={p.avatarUrl}
                         alt="avatar"
-                        className="w-8 h-8 rounded-full object-cover shrink-0 bg-[var(--sub-alt)] border border-cyan-500/30"
+                        className="w-8 h-8 rounded-full object-cover shrink-0 bg-[var(--sub-alt)]"
                       />
                       <div className="min-w-0">
                         <h4 className="text-xs font-bold text-[var(--text-color)] truncate">
@@ -1493,7 +1493,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
                     <button
                       onClick={() => handleInvitePlayer(p)}
-                      className="px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-black font-mono font-bold text-[10px] transition-all border border-cyan-500/30 shrink-0 cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-black font-mono font-bold text-[10px] transition-all shrink-0 cursor-pointer"
                     >
                       Chaqirish ⚔️
                     </button>
@@ -1509,9 +1509,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
       {/* 2. READY SCREEN / XONA KUTISH LOBBISI */}
       {/* ======================================================== */}
       {gameState === 'ready_screen' && (
-        <div className="bg-[var(--card-bg)] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm text-center">
+        <div className="bg-[var(--card-bg)] rounded-3xl p-6 sm:p-8 space-y-6 text-center">
           <div className="space-y-2">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-1 shadow-md">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 mb-1">
               <Share2 className="w-6 h-6" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-[var(--text-color)] tracking-tight font-mono">
@@ -1528,7 +1528,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           {/* Clean Room Code Box & Sharing Buttons */}
           {!isBotMatch && (
-            <div className="max-w-md mx-auto p-5 rounded-3xl bg-[var(--bg-color)] border border-[var(--sub-alt)] space-y-4 shadow-inner">
+            <div className="max-w-md mx-auto p-5 rounded-3xl bg-[var(--bg-color)] space-y-4">
               <div>
                 <span className="text-[10px] uppercase font-bold text-[var(--sub-color)] tracking-widest block mb-1">
                   XONA KODI (6 BELGILI)
@@ -1537,10 +1537,10 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   {activeRoomCode}
                 </span>
                 <div className="text-[11px] font-mono text-[var(--sub-color)] mt-1.5 flex items-center justify-center gap-2">
-                  <span className="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-lg border border-amber-500/20 font-bold">
+                  <span className="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-lg font-bold">
                     ⏱️ {selectedDuration} soniya
                   </span>
-                  <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-lg border border-cyan-500/20 font-bold">
+                  <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-lg font-bold">
                     🌐 {selectedLanguage.toUpperCase()}
                   </span>
                 </div>
@@ -1554,7 +1554,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                     setCopiedCode(true);
                     setTimeout(() => setCopiedCode(false), 2000);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 font-mono text-xs font-bold border border-cyan-500/30 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  className="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                 >
                   {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedCode ? 'Nusxalandi!' : 'Kodni Nusxalash'}</span>
@@ -1567,7 +1567,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                     setCopiedLink(true);
                     setTimeout(() => setCopiedLink(false), 2000);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 font-mono text-xs font-bold border border-indigo-500/30 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  className="px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Havola Nusxalandi!' : 'Havolani Nusxalash'}</span>
@@ -1577,7 +1577,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}${window.location.pathname}?room=${activeRoomCode}`)}&text=${encodeURIComponent(`Menga tez yozish dueliga qo'shil! Xona kodi: ${activeRoomCode}`)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 font-mono text-xs font-bold border border-sky-500/30 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  className="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Telegram</span>
@@ -1587,13 +1587,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
           )}
 
           {/* VS Matchup Card */}
-          <div className="max-w-lg mx-auto grid grid-cols-3 items-center gap-2 p-5 rounded-3xl bg-[var(--bg-color)] border border-[var(--sub-alt)] shadow-md">
+          <div className="max-w-lg mx-auto grid grid-cols-3 items-center gap-2 p-5 rounded-3xl bg-[var(--bg-color)]">
             {/* Player 1 (Siz) */}
             <div className="text-center space-y-2">
               <img
                 src={myProgress.avatarUrl}
                 alt="my avatar"
-                className="w-14 h-14 rounded-full mx-auto object-cover border-2 border-cyan-400 shadow-md bg-[var(--sub-alt)]"
+                className="w-14 h-14 rounded-full mx-auto object-cover bg-[var(--sub-alt)]"
               />
               <p className="text-xs sm:text-sm font-bold text-[var(--text-color)] truncate max-w-[110px] mx-auto">
                 {myProgress.name}
@@ -1605,7 +1605,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
             {/* VS Badge */}
             <div className="text-center">
-              <span className="px-3.5 py-1.5 rounded-2xl bg-amber-500 text-black font-black font-mono text-xs shadow-lg">
+              <span className="px-3.5 py-1.5 rounded-2xl bg-amber-500 text-black font-black font-mono text-xs">
                 VS
               </span>
             </div>
@@ -1648,13 +1648,13 @@ export const BattleView: React.FC<BattleViewProps> = ({
             {isHost ? (
               <button
                 onClick={handleTriggerStartMatch}
-                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider transition-all shadow-sm active:scale-95 flex items-center gap-2 mx-auto cursor-pointer"
+                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2 mx-auto cursor-pointer"
               >
                 <Play className="w-5 h-5 fill-white" />
                 <span>JANGNI BOSHLASH ⚔️</span>
               </button>
             ) : (
-              <div className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-800 border border-cyan-500/30 text-cyan-300 font-mono font-bold text-xs shadow-inner animate-pulse">
+              <div className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-800 text-cyan-300 font-mono font-bold text-xs animate-pulse">
                 <Hourglass className="w-4 h-4 text-cyan-400 animate-spin" />
                 <span>Xona egasi (host) jangni boshlashi kutilmoqda...</span>
               </div>
@@ -1685,7 +1685,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           {/* 3-2-1 Countdown Overlay */}
           {gameState === 'countdown' && (
-            <div className="bg-slate-900/95 border-2 border-cyan-500/60 rounded-3xl p-8 text-center text-white space-y-2 animate-in zoom-in-95 shadow-sm">
+            <div className="bg-slate-900/95 rounded-3xl p-8 text-center text-white space-y-2 animate-in zoom-in-95">
               <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
                 BATTLE BOSHLANMOQDA
               </span>
@@ -1708,9 +1708,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
 
           {/* Racing Typing Box */}
           {gameState === 'racing' && (
-            <div className="bg-[var(--card-bg)] border-2 border-cyan-500/50 rounded-3xl p-5 sm:p-6 space-y-4 shadow-sm animate-in fade-in">
+            <div className="bg-[var(--card-bg)] rounded-3xl p-5 sm:p-6 space-y-4 animate-in fade-in">
               {/* Header Info: Timer & Text details */}
-              <div className="flex items-center justify-between text-xs font-mono border-b border-[var(--sub-alt)] pb-2.5">
+              <div className="flex items-center justify-between text-xs font-mono pb-2.5">
                 <span className="font-bold text-cyan-400 flex items-center gap-1.5">
                   <Flame className="w-4 h-4 text-amber-400" />
                   <span>Matnni xatosiz va tez tering!</span>
@@ -1732,7 +1732,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
               </div>
 
               {/* Full Text Display with highlight */}
-              <div className="p-4 rounded-2xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-sm sm:text-base font-mono leading-relaxed tracking-wide select-none">
+              <div className="p-4 rounded-2xl bg-[var(--bg-color)] text-sm sm:text-base font-mono leading-relaxed tracking-wide select-none">
                 {battleText.split('').map((char, idx) => {
                   let cls = 'text-slate-400';
                   if (idx < userInput.length) {
@@ -1765,9 +1765,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   autoCapitalize="off"
                   spellCheck="false"
                   placeholder="Shu yerga tering... (to'xtovsiz yozing!)"
-                  className="w-full px-4 py-3.5 rounded-2xl bg-[var(--bg-color)] border-2 border-cyan-500 text-[var(--text-color)] font-mono text-sm sm:text-base outline-none focus:ring-4 focus:ring-cyan-500/20 shadow-inner"
+                  className="w-full px-4 py-3.5 rounded-2xl bg-[var(--bg-color)] text-[var(--text-color)] font-mono text-sm sm:text-base outline-none"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-1 rounded-md border border-cyan-500/30">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-1 rounded-md">
                   {userInput.length} / {battleText.length}
                 </span>
               </div>
@@ -1823,9 +1823,9 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 </div>
 
                 {/* Match Stats Comparison: Sizniki va Dushmaniki (WPM, Acc, Xatolar, Progress) */}
-                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto bg-slate-950/90 p-4 rounded-2xl">
                   {/* SIZNIKI */}
-                  <div className={`space-y-2 text-left border-r border-slate-800 pr-3 ${isWin ? 'bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-500/30' : ''}`}>
+                  <div className={`space-y-2 text-left pr-3 ${isWin ?'bg-emerald-950/30 p-2.5 rounded-xl':''}`}>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-cyan-400 font-mono uppercase font-bold flex items-center gap-1">
                         <span>Sizning Natijangiz</span>
@@ -1841,7 +1841,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                   </div>
 
                   {/* DUSHMANIKI */}
-                  <div className={`space-y-2 text-left pl-3 ${!isWin ? 'bg-rose-950/30 p-2.5 rounded-xl border border-rose-500/30' : ''}`}>
+                  <div className={`space-y-2 text-left pl-3 ${!isWin ?'bg-rose-950/30 p-2.5 rounded-xl':''}`}>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-amber-400 font-mono uppercase font-bold flex items-center gap-1">
                         <span>Dushman Natijasi</span>
@@ -1861,7 +1861,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     onClick={handleRematch}
-                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>⚡ QAYTA DUEL BOSHLASH</span>
@@ -1872,7 +1872,7 @@ export const BattleView: React.FC<BattleViewProps> = ({
                       updateGameState('lobby');
                       setActiveRoomCode('');
                     }}
-                    className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all border border-slate-700 active:scale-95 cursor-pointer"
+                    className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
                   >
                     <span>LOBBIYGA QAYTISH</span>
                   </button>

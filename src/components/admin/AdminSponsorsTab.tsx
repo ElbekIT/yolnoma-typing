@@ -195,14 +195,14 @@ export const AdminSponsorsTab: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header Info */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-[var(--card-bg)] rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
               <Heart className="w-5 h-5 fill-amber-400/20" />
             </div>
             <h2 className="text-xl font-black text-[var(--text-color)]">Homiylar Boshqaruvi</h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">
               {sponsors.length} ta homiy
             </span>
           </div>
@@ -221,7 +221,7 @@ export const AdminSponsorsTab: React.FC = () => {
       </div>
 
       {/* Add New Sponsor Form */}
-      <div className="bg-[var(--card-bg)] border-2 border-amber-500/40 rounded-2xl p-6 shadow-lg space-y-4">
+      <div className="bg-[var(--card-bg)] rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2 text-amber-400 font-bold text-sm sm:text-base">
           <Plus className="w-5 h-5" />
           <span>Yangi Homiy Qo'shish</span>
@@ -250,14 +250,14 @@ export const AdminSponsorsTab: React.FC = () => {
             value={newSponsorName}
             onChange={(e) => setNewSponsorName(e.target.value)}
             placeholder="Homiy nomi (masalan: Yosh Avlod Kanali, IT Academy, Smart Solutions...)"
-            className="flex-1 bg-[var(--bg-color)] border border-[var(--sub-alt)] focus:border-amber-500 rounded-xl px-4 py-3 text-sm text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none transition-colors"
+            className="flex-1 bg-[var(--bg-color)] rounded-xl px-4 py-3 text-sm text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none transition-colors"
             disabled={submitting}
           />
 
           <button
             type="submit"
             disabled={submitting || !newSponsorName.trim()}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all cursor-pointer"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-amber-500/20 disabled:opacity-50 transition-all cursor-pointer"
           >
             {submitting ? (
               <>
@@ -275,8 +275,8 @@ export const AdminSponsorsTab: React.FC = () => {
       </div>
 
       {/* Sponsors List Table */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl overflow-hidden shadow-md">
-        <div className="p-4 sm:p-5 border-b border-[var(--sub-alt)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-[var(--card-bg)] rounded-2xl overflow-hidden">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-400" />
             <h3 className="font-black text-sm sm:text-base text-[var(--text-color)]">
@@ -296,7 +296,7 @@ export const AdminSponsorsTab: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Homiylardan qidirish..."
-                className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none focus:border-amber-500"
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[var(--bg-color)] text-[var(--text-color)] placeholder:text-[var(--sub-color)]/60 outline-none"
               />
             </div>
           )}
@@ -329,14 +329,14 @@ export const AdminSponsorsTab: React.FC = () => {
                 className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-[var(--sub-alt)]/30 transition-colors"
               >
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0 text-amber-400 font-black text-sm">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 flex items-center justify-center flex-shrink-0 text-amber-400 font-black text-sm">
                     #{index + 1}
                   </div>
 
                   <div className="min-w-0">
                     <h4 className="text-sm sm:text-base font-black text-[var(--text-color)] truncate flex items-center gap-2">
                       {sponsor.name}
-                      <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
                         Homiy
                       </span>
                     </h4>
@@ -357,7 +357,7 @@ export const AdminSponsorsTab: React.FC = () => {
 
                 <button
                   onClick={() => handleDeleteSponsor(sponsor.id, sponsor.name)}
-                  className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-colors cursor-pointer flex-shrink-0"
+                  className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer flex-shrink-0"
                   title="O'chirish"
                 >
                   <Trash2 className="w-4 h-4" />

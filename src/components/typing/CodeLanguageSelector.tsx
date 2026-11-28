@@ -40,7 +40,7 @@ export const CodeLanguageSelector: React.FC<CodeLanguageSelectorProps> = ({
 
   return (
     <div className="w-full max-w-xl mx-auto mb-3 px-2">
-      <div className="flex items-center justify-center gap-1.5 p-1 bg-[var(--card-bg)]/90 border border-[var(--sub-alt)] rounded-xl font-mono text-xs shadow-xs overflow-x-auto no-scrollbar">
+      <div className="flex items-center justify-center gap-1.5 p-1 bg-[var(--card-bg)]/90 rounded-xl font-mono text-xs overflow-x-auto no-scrollbar">
         <span className="text-[11px] text-[var(--sub-color)] px-2 font-bold flex items-center gap-1">
           <Code className="w-3.5 h-3.5 text-[var(--main-color)]" />
           <span>Stack:</span>

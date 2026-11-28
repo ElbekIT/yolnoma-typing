@@ -502,9 +502,9 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto py-4 px-3 sm:px-4 select-none font-sans space-y-3.5">
       {/* 1. Header: Elbek Design Studio */}
-      <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-xl bg-[var(--card-bg)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm shrink-0">
             ED
           </div>
           <div>
@@ -547,7 +547,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
       {/* Optional Logged-in Account indicator if user is already authenticated on the site */}
       {user && (
-        <div className="p-2 rounded-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between text-xs">
+        <div className="p-2 rounded-lg bg-[var(--card-bg)] flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 min-w-0">
             {user.photoURL ? (
               <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
@@ -645,13 +645,13 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       {/* SUCCESS SCREEN (BUYURTMA BERILGANDA KO'RINADIGAN OYNA)                      */}
       {/* ========================================================================= */}
       {orderSuccessId && (
-        <div className="p-5 sm:p-7 rounded-2xl bg-[var(--card-bg)] border-2 border-emerald-500 text-center space-y-5 shadow-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center mx-auto">
+        <div className="p-5 sm:p-7 rounded-2xl bg-[var(--card-bg)] text-center space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-9 h-9" />
           </div>
 
           <div className="space-y-1.5 max-w-lg mx-auto">
-            <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-mono font-bold text-emerald-400 inline-block">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-xs font-mono font-bold text-emerald-400 inline-block">
               Buyurtma ID: #{orderSuccessId} ✓
             </span>
             <h2 className="text-xl sm:text-2xl font-bold text-white">
@@ -663,7 +663,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* TELEGRAM NOTICE CARD */}
-          <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-sky-950/80 via-slate-900 to-sky-900/60 border-2 border-sky-400/80 text-left space-y-3 max-w-xl mx-auto shadow-lg">
+          <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-sky-950/80 via-slate-900 to-sky-900/60 text-left space-y-3 max-w-xl mx-auto">
             <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
               <Send className="w-5 h-5 shrink-0" />
               <span>To'lov chekini quyidagi Telegram manzilimizga yuboring:</span>
@@ -679,7 +679,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                 href={TELEGRAM_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all transform hover:-translate-y-0.5"
+                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all transform hover:-translate-y-0.5"
               >
                 <Send className="w-4 h-4" />
                 <span>Chekni Telegramga Tashlash (@{TELEGRAM_USERNAME})</span>
@@ -689,7 +689,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               <button
                 type="button"
                 onClick={handleCopyTelegram}
-                className="px-3.5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-mono flex items-center justify-center gap-1.5 cursor-pointer border border-sky-500/30"
+                className="px-3.5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-mono flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isCopiedTelegram ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 <span>{isCopiedTelegram ? 'Nusxalandi ✓' : 'Linkni nusxalash'}</span>
@@ -698,21 +698,21 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* ORDER SUMMARY */}
-          <div className="p-3.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] max-w-xl mx-auto text-left font-mono text-xs space-y-1.5 text-slate-300">
-            <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+          <div className="p-3.5 rounded-xl bg-[var(--bg-color)] max-w-xl mx-auto text-left font-mono text-xs space-y-1.5 text-slate-300">
+            <div className="flex justify-between pb-1.5">
               <span className="text-slate-400">Xizmat:</span>
               <span className="text-white font-bold text-right">{currentCategory.name} — {currentService.name}</span>
             </div>
-            <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+            <div className="flex justify-between pb-1.5">
               <span className="text-slate-400">Summa:</span>
               <span className="text-amber-400 font-bold">{currentService.price.toLocaleString('uz-UZ')} so'm</span>
             </div>
-            <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+            <div className="flex justify-between pb-1.5">
               <span className="text-slate-400">Buyurtmachi:</span>
               <span className="text-white">{clientName} ({clientPhone})</span>
             </div>
             {clientTelegram && clientTelegram !== '@' && (
-              <div className="flex justify-between border-b border-[var(--sub-alt)]/60 pb-1.5">
+              <div className="flex justify-between pb-1.5">
                 <span className="text-slate-400">Telegram:</span>
                 <span className="text-sky-400">{clientTelegram}</span>
               </div>
@@ -737,7 +737,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
             {onGoToTyping && (
               <button
                 onClick={onGoToTyping}
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center gap-1.5 cursor-pointer shadow-md"
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center gap-1.5 cursor-pointer"
               >
                 <Keyboard className="w-4 h-4" />
                 <span>Klaviaturada Mashq Qilish</span>
@@ -752,7 +752,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       {/* ========================================================================= */}
       {!orderSuccessId && currentStep === 1 && (
         <div className="space-y-3">
-          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between">
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-[var(--text-color)]">
               1-Bosqich: Yo'nalishni Tanlang
             </span>
@@ -785,7 +785,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                           {cat.name}
                         </h3>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-400/20 text-amber-400 border border-amber-400/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-400/20 text-amber-400">
                         {cat.badge}
                       </span>
                     </div>
@@ -794,7 +794,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-[var(--sub-alt)]/60 flex items-center justify-between text-xs font-mono">
+                  <div className="pt-2 flex items-center justify-between text-xs font-mono">
                     <span className="text-[var(--sub-color)] text-[11px]">
                       {cat.services.length} ta xizmat turi
                     </span>
@@ -813,7 +813,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* Bottom navigation */}
-          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between">
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] flex items-center justify-between">
             <div className="text-xs">
               <span className="text-[var(--sub-color)]">Tanlangan: </span>
               <strong className="text-[var(--text-color)]">{currentCategory.name}</strong>
@@ -835,7 +835,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       {/* ========================================================================= */}
       {!orderSuccessId && currentStep === 2 && (
         <div className="space-y-3">
-          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between text-xs">
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               {renderCategoryIcon(currentCategory.id)}
               <span className="font-bold text-[var(--text-color)]">
@@ -892,7 +892,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-2.5 mt-2.5 border-t border-[var(--sub-alt)]/60 flex items-center justify-between text-xs font-mono">
+                  <div className="pt-2.5 mt-2.5 flex items-center justify-between text-xs font-mono">
                     <span className="text-[var(--sub-color)] flex items-center gap-1 text-[11px]">
                       <Clock className="w-3 h-3 text-amber-400" />
                       <span>{service.deliverTime}</span>
@@ -911,7 +911,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
             })}
           </div>
 
-          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] flex flex-col sm:flex-row items-center justify-between gap-3">
             <button
               onClick={() => setCurrentStep(1)}
               className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--sub-alt)] text-[var(--text-color)] text-xs font-mono flex items-center justify-center gap-1 cursor-pointer"
@@ -945,7 +945,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       {!orderSuccessId && currentStep === 3 && (
         <div className="space-y-3 max-w-xl mx-auto">
           {/* Selected Service Bar */}
-          <div className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] flex items-center justify-between text-xs">
+          <div className="p-3 rounded-xl bg-[var(--card-bg)] flex items-center justify-between text-xs">
             <div>
               <span className="text-[10px] font-mono text-[var(--sub-color)] block uppercase">Xizmat:</span>
               <strong className="text-[var(--text-color)]">{currentCategory.name} — {currentService.name}</strong>
@@ -964,8 +964,8 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* Client Details Form */}
-          <div className="p-4 sm:p-5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-3">
-            <h3 className="text-sm font-bold text-[var(--text-color)] pb-2 border-b border-[var(--sub-alt)]">
+          <div className="p-4 sm:p-5 rounded-xl bg-[var(--card-bg)] space-y-3">
+            <h3 className="text-sm font-bold text-[var(--text-color)] pb-2">
               3-Bosqich: Buyurtmachi Ma'lumotlari & Joylashuv
             </h3>
 
@@ -981,7 +981,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                 placeholder="Jasur Alimov"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-400 font-sans"
+                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-color)] text-xs text-[var(--text-color)] focus:outline-none font-sans"
               />
             </div>
 
@@ -998,7 +998,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                   placeholder="+998 90 123 45 67"
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-color)] text-xs font-mono text-[var(--text-color)] focus:outline-none"
                 />
               </div>
 
@@ -1012,7 +1012,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                   placeholder="@foydalanuvchi"
                   value={clientTelegram}
                   onChange={(e) => setClientTelegram(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs font-mono text-[var(--text-color)] focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-color)] text-xs font-mono text-[var(--text-color)] focus:outline-none"
                 />
               </div>
             </div>
@@ -1028,12 +1028,12 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                 placeholder="Ranglar, matnlar va logotip talablari..."
                 value={clientNotes}
                 onChange={(e) => setClientNotes(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-400 resize-none font-sans"
+                className="w-full p-2.5 rounded-lg bg-[var(--bg-color)] text-xs text-[var(--text-color)] focus:outline-none resize-none font-sans"
               />
             </div>
 
             {/* Geolocation Section (MANDATORY & ENHANCED WITH REGION/MANUAL FALLBACK) */}
-            <div ref={locationSectionRef} className="pt-2 space-y-2.5 border-t border-[var(--sub-alt)]">
+            <div ref={locationSectionRef} className="pt-2 space-y-2.5">
               <div
                 className={`p-3.5 rounded-xl border ${
                   clientLocation.trim()
@@ -1089,7 +1089,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
                 {/* Detected Location Display */}
                 {clientLocation.trim() && (
-                  <div className="p-2.5 rounded-lg bg-[var(--card-bg)] border border-emerald-500/40 flex items-center justify-between gap-2 text-xs font-mono mb-2">
+                  <div className="p-2.5 rounded-lg bg-[var(--card-bg)] flex items-center justify-between gap-2 text-xs font-mono mb-2">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span className="text-slate-200 text-xs truncate">
@@ -1132,7 +1132,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
                 {/* Success Message Banner */}
                 {locationSuccessMsg && (
-                  <div className="p-2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5 mb-2">
+                  <div className="p-2 rounded bg-emerald-500/15 text-emerald-300 text-xs flex items-center gap-1.5 mb-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     <span>{locationSuccessMsg}</span>
                   </div>
@@ -1140,7 +1140,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
 
                 {/* Error Banner */}
                 {locationError && (
-                  <div className="p-2 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-1.5 mb-2">
+                  <div className="p-2 rounded bg-rose-500/15 text-rose-300 text-xs flex items-start gap-1.5 mb-2">
                     <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">{locationError}</p>
@@ -1152,7 +1152,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                 )}
 
                 {/* Quick Region Selector (Viloyatlar orqali 1 bosishda tanlash) */}
-                <div className="pt-2 border-t border-[var(--sub-alt)]/40 space-y-1.5">
+                <div className="pt-2 space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-mono text-[var(--sub-color)]">
                     <span>Viloyat / Shaharni tezkor tanlash:</span>
                     <button
@@ -1199,7 +1199,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
                               setLocationSuccessMsg(null);
                             }
                           }}
-                          className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-color)] border border-[var(--sub-alt)] text-xs text-[var(--text-color)] focus:outline-none focus:border-amber-400 font-sans"
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-color)] text-xs text-[var(--text-color)] focus:outline-none font-sans"
                         />
                         {clientLocation.trim() && !clientLocation.startsWith('http') && (
                           <button
@@ -1258,8 +1258,8 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
       {!orderSuccessId && currentStep === 4 && (
         <div className="space-y-3.5 max-w-xl mx-auto">
           {/* Summary Box */}
-          <div className="p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] space-y-2 text-xs">
-            <div className="flex items-center justify-between border-b border-[var(--sub-alt)] pb-2">
+          <div className="p-3.5 rounded-xl bg-[var(--card-bg)] space-y-2 text-xs">
+            <div className="flex items-center justify-between pb-2">
               <div>
                 <span className="text-[10px] font-mono uppercase text-[var(--sub-color)]">Buyurtma Xulosasi:</span>
                 <div className="font-bold text-[var(--text-color)]">{currentCategory.name} — {currentService.name}</div>
@@ -1275,7 +1275,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               </div>
             </div>
 
-            <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between font-mono text-[11px]">
+            <div className="p-2 rounded bg-emerald-500/10 flex items-center justify-between font-mono text-[11px]">
               <div className="flex items-center gap-1.5 overflow-hidden">
                 <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="text-emerald-400 font-bold shrink-0">Lokatsiya:</span>
@@ -1292,7 +1292,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* Payment Card Box */}
-          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-amber-500/40 space-y-3 shadow-md">
+          <div className="p-4 rounded-xl bg-[var(--card-bg)] space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <CreditCard className="w-4 h-4 text-amber-400" />
@@ -1303,7 +1303,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               </span>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-[var(--bg-color)] border border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="p-3.5 rounded-lg bg-[var(--bg-color)] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div>
                 <div className="text-base sm:text-lg font-bold font-mono tracking-wider text-amber-300 select-all whitespace-nowrap">
                   {CARD_NUMBER}
@@ -1316,7 +1316,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               <button
                 type="button"
                 onClick={handleCopyCard}
-                className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-1 cursor-pointer transition-all shadow"
+                className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-1 cursor-pointer transition-all"
               >
                 {isCopiedCard ? <Check className="w-3.5 h-3.5 text-emerald-950" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{isCopiedCard ? 'Nusxa Olindi ✓' : 'Karta Raqamini Olish'}</span>
@@ -1325,7 +1325,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {/* CHEK YUKLASH SHART EMAS TUSHUNTIRISH BLOKI */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-sky-950/60 via-[var(--card-bg)] to-sky-900/40 border border-sky-500/40 space-y-2">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-sky-950/60 via-[var(--card-bg)] to-sky-900/40 space-y-2">
             <div className="flex items-center gap-2 text-sky-400 text-xs font-bold font-mono">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Chek yuklash shart emas!</span>
@@ -1335,7 +1335,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
               Saytga chek rasmini yuklash talab etilmaydi. Pastdagi <strong>«Buyurtmani Berish»</strong> tugmasini bosishingiz bilan buyurtma tafsilotlari Telegram botimizga yuboriladi.
             </p>
 
-            <div className="p-2.5 rounded-lg bg-black/40 border border-sky-500/20 text-xs text-slate-300 space-y-1">
+            <div className="p-2.5 rounded-lg bg-black/40 text-xs text-slate-300 space-y-1">
               <p>
                 To'lov chekini esa to'g'ridan-to'g'ri Telegram orqali lichkamizga tashlaysiz:
               </p>
@@ -1355,7 +1355,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
           </div>
 
           {submitError && (
-            <div className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-rose-500/15 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{submitError}</span>
             </div>
@@ -1375,7 +1375,7 @@ export const ElbekDesignView: React.FC<ElbekDesignViewProps> = ({
             <button
               onClick={handleSubmitOrder}
               disabled={isSubmitting || cooldownRemaining > 0}
-              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm font-mono uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm font-mono uppercase flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Send className="w-4 h-4" />
               <span>

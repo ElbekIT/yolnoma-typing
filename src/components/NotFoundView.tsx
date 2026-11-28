@@ -135,7 +135,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
       {/* 404 Glitch & Neon Badge */}
       <div className="relative mb-6">
         
-        <div className="relative inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[var(--card-bg)] border border-[var(--sub-alt)] shadow-lg mb-4">
+        <div className="relative inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[var(--card-bg)] mb-4">
           <AlertTriangle className="w-4 h-4 text-amber-400" />
           <span className="text-xs font-mono font-bold tracking-wider text-[var(--sub-color)] uppercase">
             Xatolik kodi: 404 • Not Found
@@ -157,8 +157,8 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
       </p>
 
       {/* Terminal Details Card */}
-      <div className="w-full max-w-lg bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-4 sm:p-5 shadow-md mb-8 text-left font-mono text-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--sub-alt)] mb-3">
+      <div className="w-full max-w-lg bg-[var(--card-bg)] rounded-2xl p-4 sm:p-5 mb-8 text-left font-mono text-xs">
+        <div className="flex items-center justify-between pb-3 mb-3">
           <div className="flex items-center gap-2 text-[var(--sub-color)]">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block" />
             <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80 inline-block" />
@@ -186,7 +186,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
       </div>
 
       {/* Interactive 404 Typing Mini-Challenge ("404 dan qochish") */}
-      <div className="w-full max-w-xl bg-gradient-to-b from-[var(--card-bg)] to-[var(--sub-alt)]/20 border border-[var(--sub-alt)] hover:border-[var(--main-color)]/50 rounded-2xl p-5 shadow-lg mb-8 transition-colors">
+      <div className="w-full max-w-xl bg-gradient-to-b from-[var(--card-bg)] to-[var(--sub-alt)]/20 rounded-2xl p-5 mb-8 transition-colors">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 text-left">
             <Sparkles className="w-4 h-4 text-[var(--main-color)]" />
@@ -204,7 +204,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
         </p>
 
         {/* Phrase Display with Character Matching */}
-        <div className="p-3.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] font-mono text-sm sm:text-base tracking-wide text-left mb-3 select-none overflow-x-auto whitespace-nowrap">
+        <div className="p-3.5 rounded-xl bg-[var(--bg-color)] font-mono text-sm sm:text-base tracking-wide text-left mb-3 select-none overflow-x-auto whitespace-nowrap">
           {challengePhrase.split('').map((char, idx) => {
             let color = 'text-[var(--sub-color)]/50';
             if (idx < typedInput.length) {
@@ -229,7 +229,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
             onChange={handleInputChange}
             disabled={isCompleted}
             placeholder="Shu yerga yozishni boshlang..."
-            className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-color)] border border-[var(--sub-alt)] focus:border-[var(--main-color)] text-sm font-mono text-[var(--text-color)] placeholder-[var(--sub-color)]/50 focus:outline-none transition-colors"
+            className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-color)] text-sm font-mono text-[var(--text-color)] placeholder-[var(--sub-color)]/50 focus:outline-none transition-colors"
           />
           {isCompleted && (
             <div className="absolute right-3 flex items-center gap-1.5 text-xs font-bold text-emerald-400 animate-fade-in">
@@ -244,7 +244,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
       <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
         <button
           onClick={onGoHome}
-          className="px-6 py-3 rounded-xl bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-sm flex items-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+          className="px-6 py-3 rounded-xl bg-[var(--main-color)] text-[var(--bg-color)] font-bold text-sm flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
         >
           <Home className="w-4 h-4" />
           <span>Bosh Sahifaga Qaytish</span>
@@ -258,7 +258,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
               onGoHome();
             }
           }}
-          className="px-5 py-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-semibold text-sm flex items-center gap-2 transition-colors cursor-pointer"
+          className="px-5 py-3 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)] text-[var(--text-color)] font-semibold text-sm flex items-center gap-2 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Orqaga Qaytish</span>
@@ -266,7 +266,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
 
         <button
           onClick={() => onNavigate('languages')}
-          className="px-5 py-3 rounded-xl bg-[var(--card-bg)] border border-[var(--sub-alt)] hover:border-emerald-500/50 hover:bg-emerald-500/10 text-[var(--text-color)] font-semibold text-sm flex items-center gap-2 transition-colors cursor-pointer"
+          className="px-5 py-3 rounded-xl bg-[var(--card-bg)] hover:bg-emerald-500/10 text-[var(--text-color)] font-semibold text-sm flex items-center gap-2 transition-colors cursor-pointer"
         >
           <Globe className="w-4 h-4 text-emerald-400" />
           <span>125+ Tillar Bo'limi</span>
@@ -285,7 +285,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
           </span>
         </div>
 
-        <div className="relative flex items-center bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-xl px-3.5 py-2 mb-4 focus-within:border-[var(--main-color)] transition-colors">
+        <div className="relative flex items-center bg-[var(--card-bg)] rounded-xl px-3.5 py-2 mb-4 focus-within:border-[var(--main-color)] transition-colors">
           <Search className="w-4 h-4 text-[var(--sub-color)] mr-2 shrink-0" />
           <input
             type="text"
@@ -302,7 +302,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
             <div
               key={link.id}
               onClick={() => onNavigate(link.id)}
-              className={`p-3.5 rounded-xl bg-[var(--card-bg)] border ${link.color} transition-all cursor-pointer flex items-start gap-3 group`}
+              className={`p-3.5 rounded-xl bg-[var(--card-bg)] ${link.color} transition-all cursor-pointer flex items-start gap-3 group`}
             >
               <div className="p-2 rounded-lg bg-[var(--sub-alt)]/50 shrink-0 group-hover:scale-110 transition-transform">
                 {link.icon}

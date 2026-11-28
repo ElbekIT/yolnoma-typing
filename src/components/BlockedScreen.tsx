@@ -13,18 +13,18 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
 
   return (
     <div className="min-h-screen bg-[#070a12] text-white flex flex-col items-center justify-center p-4 selection:bg-rose-500 selection:text-white">
-      <div className="max-w-md w-full bg-slate-900/90 border border-rose-500/30 rounded-3xl p-8 shadow-2xl space-y-6 text-center relative overflow-hidden">
+      <div className="max-w-md w-full bg-slate-900/90 rounded-3xl p-8 space-y-6 text-center relative overflow-hidden">
         {/* Background Accents */}
         <div className="absolute -top-20 -left-20 w-48 h-48 bg-rose-500/5 rounded-full pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-rose-500/5 rounded-full pointer-events-none" />
 
         {/* Lock Shield Icon */}
-        <div className="mx-auto w-20 h-20 rounded-3xl bg-rose-500/15 border border-rose-500/40 p-4 text-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/20">
+        <div className="mx-auto w-20 h-20 rounded-3xl bg-rose-500/15 p-4 text-rose-500 flex items-center justify-center shadow-rose-500/20">
           <ShieldAlert className="w-10 h-10 animate-pulse" />
         </div>
 
         <div className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30 inline-flex items-center gap-1.5">
+          <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/20 px-3 py-1 rounded-full inline-flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" /> Kirish Butunlay Cheklangan
           </span>
           <h1 className="text-2xl font-black text-white tracking-tight">
@@ -36,7 +36,7 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
         </div>
 
         {/* Block Reason Box */}
-        <div className="bg-slate-950/80 border border-rose-500/20 rounded-2xl p-4 text-left space-y-2 text-xs">
+        <div className="bg-slate-950/80 rounded-2xl p-4 text-left space-y-2 text-xs">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
             Bloklanish Sababi:
           </span>
@@ -50,7 +50,7 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
         </div>
 
         {/* Support Mail Note */}
-        <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs text-slate-300 flex items-center gap-2">
+        <div className="p-3 rounded-xl bg-slate-800/50 text-xs text-slate-300 flex items-center gap-2">
           <Mail className="w-4 h-4 text-rose-400 shrink-0" />
           <span className="text-left text-[11px]">
             Murojaat va qayta tiklash boʻyicha rasmiy aloqa: <strong className="text-rose-400">support@yolnoma.uz</strong>
@@ -60,7 +60,7 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
         {/* Logout Button */}
         <button
           onClick={logout}
-          className="w-full py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-600/30 active:scale-95 cursor-pointer"
+          className="w-full py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-rose-600/30 active:scale-95 cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           <span>Tizimdan Chiqish</span>

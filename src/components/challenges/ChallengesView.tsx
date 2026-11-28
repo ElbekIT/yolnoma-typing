@@ -211,10 +211,10 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300 pb-12">
       {/* 1. Header Banner & Daily Streak Tracker */}
-      <div className="bg-gradient-to-r from-[var(--card-bg)] via-[var(--sub-alt)]/50 to-[var(--card-bg)] border border-[var(--sub-alt)] p-6 sm:p-8 rounded-3xl relative overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-[var(--card-bg)] via-[var(--sub-alt)]/50 to-[var(--card-bg)] p-6 sm:p-8 rounded-3xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/25 text-xs font-bold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-xs font-bold uppercase tracking-wider mb-2">
               <Flame className="w-4 h-4 fill-rose-500 text-rose-500 animate-pulse" />
               <span>Kunlik Faollik & Olov</span>
             </div>
@@ -227,8 +227,8 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
           </div>
 
           {/* Daily Streak Highlight Card */}
-          <div className="flex items-center gap-4 bg-[var(--card-bg)]/80 p-4 sm:p-5 rounded-2xl border border-[var(--sub-alt)] shadow-md shrink-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white shadow-lg shrink-0">
+          <div className="flex items-center gap-4 bg-[var(--card-bg)]/80 p-4 sm:p-5 rounded-2xl shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white shrink-0">
               <Flame className="w-8 h-8 fill-white" />
             </div>
             <div>
@@ -246,11 +246,11 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
         </div>
 
         {/* Countdown Bar */}
-        <div className="mt-6 pt-4 border-t border-[var(--sub-alt)]/60 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--sub-color)]">
+        <div className="mt-6 pt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--sub-color)]">
           <div className="flex items-center gap-2 font-mono">
             <Clock className="w-4 h-4 text-amber-400" />
             <span>Keyingi vazifalar yangilanishiga:</span>
-            <span className="font-bold text-[var(--text-color)] bg-[var(--sub-alt)] px-2 py-0.5 rounded-lg border border-[var(--sub-color)]/20">
+            <span className="font-bold text-[var(--text-color)] bg-[var(--sub-alt)] px-2 py-0.5 rounded-lg">
               {timeLeft || '00:00:00'}
             </span>
           </div>
@@ -265,7 +265,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
       </div>
 
       {/* 1.5 Bugungi Umumiy Sinov (Daily Challenge + Top 10) */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-5 sm:p-6 space-y-4">
+      <div className="bg-[var(--card-bg)] rounded-2xl p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400">
@@ -298,7 +298,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
         </div>
 
         {/* Daily Top 10 */}
-        <div className="pt-3 border-t border-[var(--sub-alt)]/60">
+        <div className="pt-3">
           <div className="flex items-center justify-between text-xs font-mono text-[var(--sub-color)] mb-2.5">
             <span className="flex items-center gap-1.5 font-bold text-[var(--text-color)]">
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
@@ -318,7 +318,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
               {dailyLeaders.slice(0, 6).map((entry, idx) => (
                 <div
                   key={entry.uid}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--sub-alt)]/35 border border-[var(--sub-alt)]/60 text-xs"
+                  className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--sub-alt)]/35 text-xs"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-5 text-center font-mono font-bold text-amber-400">#{idx + 1}</span>
@@ -351,7 +351,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
             <div>
               {/* Header: Difficulty & Icon */}
               <div className="flex items-center justify-between mb-4">
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${q.difficultyColor}`}>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${q.difficultyColor}`}>
                   {q.difficulty}
                 </span>
 
@@ -367,7 +367,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
               </p>
 
               {/* Reward Badge */}
-              <div className="mt-4 p-3 rounded-2xl bg-[var(--sub-alt)]/60 border border-[var(--sub-alt)] flex items-center justify-between text-xs">
+              <div className="mt-4 p-3 rounded-2xl bg-[var(--sub-alt)]/60 flex items-center justify-between text-xs">
                 <span className="text-[var(--sub-color)] flex items-center gap-1.5">
                   <Gift className="w-3.5 h-3.5 text-amber-500" />
                   <span>Mukofot:</span>
@@ -399,14 +399,14 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
             {/* Action Buttons */}
             <div className="mt-6 pt-2">
               {q.isClaimed ? (
-                <div className="w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 select-none">
+                <div className="w-full py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 select-none">
                   <Check className="w-4 h-4" />
                   <span>Mukofot Olingan ✅</span>
                 </div>
               ) : q.isCompleted ? (
                 <button
                   onClick={() => handleClaimReward(q.id, q.rewardXP)}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-600 hover:to-emerald-600 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 animate-pulse"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-600 hover:to-emerald-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 animate-pulse"
                 >
                   <Sparkles className="w-4 h-4 fill-white" />
                   <span>+{q.rewardXP} XP Mukofotni Olish!</span>
@@ -414,7 +414,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
               ) : (
                 <button
                   onClick={onStartChallenge}
-                  className="w-full py-2.5 rounded-xl bg-[var(--main-color)] hover:opacity-90 text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  className="w-full py-2.5 rounded-xl bg-[var(--main-color)] hover:opacity-90 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
                   <Play className="w-3.5 h-3.5 fill-white" />
                   <span>{q.actionText}</span>
@@ -426,7 +426,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
       </div>
 
       {/* 3. Extra Motivation Card: Speedway Battle Arena CTA */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 text-left">
           <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 shrink-0">
             <Swords className="w-6 h-6" />
@@ -444,7 +444,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
         {onGoToBattle && (
           <button
             onClick={onGoToBattle}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
           >
             <span>Speedway Battle-ga oʻtish</span>
             <Swords className="w-3.5 h-3.5" />

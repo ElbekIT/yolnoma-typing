@@ -111,7 +111,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 border border-amber-500/40 p-6 sm:p-8 shadow-sm text-center">
+      <div className="relative w-full max-w-xl rounded-3xl bg-gradient-to-b from-slate-900 via-[#0e1628] to-slate-950 p-6 sm:p-8 text-center">
         
         {onClose && (
           <button
@@ -124,13 +124,13 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
         )}
 
         {/* Crown Icon with glowing shadow */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 flex items-center justify-center mx-auto shadow-lg mb-4 animate-pulse">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 flex items-center justify-center mx-auto mb-4 animate-pulse">
           <Crown className="w-9 h-9 stroke-[2.5]" />
         </div>
 
         {/* Title */}
         <div className="space-y-2 mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold uppercase">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 text-xs font-mono font-bold uppercase">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{isLimitReached ? "3 ta Bepul Mashq Yakunlandi" : "Yolnoma English VIP"}</span>
           </div>
@@ -175,7 +175,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-4 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                <div className="mt-4 pt-2 flex items-center justify-between text-[11px]">
                   <span className={isSelected ? 'text-amber-300 font-bold' : 'text-slate-500'}>
                     {isSelected ? 'Tanlandi' : 'Tanlash'}
                   </span>
@@ -191,7 +191,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
         </div>
 
         {/* Features Checklist */}
-        <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-left text-xs mb-6 space-y-1.5 font-sans">
+        <div className="p-3.5 rounded-2xl bg-slate-950/60 text-left text-xs mb-6 space-y-1.5 font-sans">
           <div className="flex items-center gap-2 text-slate-200">
             <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>Barcha 7 ta Unit va 35 ta dars (0 dan IELTS 9 gacha)</span>
@@ -211,7 +211,7 @@ export const EnglishPremiumModal: React.FC<PremiumModalProps> = ({
           <button
             onClick={handlePayWithClick}
             disabled={isRedirecting}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:brightness-110 active:scale-95 text-white font-black text-sm sm:text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:brightness-110 active:scale-95 text-white font-black text-sm sm:text-base transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
           >
             <ShieldCheck className="w-5 h-5 text-white" />
             <span>Click orqali to'lash ({currentPlan.priceLabel})</span>

@@ -803,8 +803,8 @@ export const AdminView: React.FC = () => {
   // 1. Generic 403 Forbidden Gate (Zero email exposure, zero identity leaks)
   if (!isSuperOwner) {
     return (
-      <div className="w-full max-w-md mx-auto my-16 p-8 rounded-3xl bg-[var(--card-bg)] border border-[var(--sub-alt)] text-center space-y-6 shadow-sm animate-in fade-in">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto shadow-inner">
+      <div className="w-full max-w-md mx-auto my-16 p-8 rounded-3xl bg-[var(--card-bg)] text-center space-y-6 animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
           <ShieldAlert className="w-8 h-8" />
         </div>
 
@@ -840,9 +840,9 @@ export const AdminView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-950/80 via-[var(--card-bg)] to-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-amber-950/80 via-[var(--card-bg)] to-slate-900 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-4 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400">
+          <div className="p-4 rounded-2xl bg-amber-500/20 text-amber-400">
             <Crown className="w-8 h-8 animate-pulse" />
           </div>
           <div>
@@ -867,7 +867,7 @@ export const AdminView: React.FC = () => {
           {/* Privacy Email Toggle */}
           <button
             onClick={() => setShowFullEmails(!showFullEmails)}
-            className="px-3.5 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 py-2.5 rounded-2xl bg-slate-900 text-slate-300 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
             title="Foydalanuvchilar email manzillarini to'liq ko'rsatish yoki yashirish"
           >
             {showFullEmails ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
@@ -877,7 +877,7 @@ export const AdminView: React.FC = () => {
           {/* Action Button to Open Content Modal */}
           <button
             onClick={() => setShowContentModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-lg hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-xs hover:opacity-95 transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wide"
           >
             <FileText className="w-4 h-4" />
             <span>Matnlar & Tillar</span>
@@ -910,7 +910,7 @@ export const AdminView: React.FC = () => {
       )}
 
       {/* Admin Tab Switcher */}
-      <div className="flex items-center gap-3 border-b border-[var(--sub-alt)] pb-2 flex-wrap">
+      <div className="flex items-center gap-3 pb-2 flex-wrap">
         <button
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs transition-all cursor-pointer ${
@@ -1027,7 +1027,7 @@ export const AdminView: React.FC = () => {
 
       {/* Search & Filter Bar (Only for Leaderboard and Users tabs) */}
       {activeTab !== 'notifications' && activeTab !== 'inbox' && activeTab !== 'server' && activeTab !== 'sessions' && activeTab !== 'maintenance' && activeTab !== 'sponsors' && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] border border-[var(--sub-alt)] p-4 rounded-2xl">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] p-4 rounded-2xl">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-[var(--sub-color)] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -1035,7 +1035,7 @@ export const AdminView: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Qidiruv (ism, username, email)..."
-              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-color)] border border-[var(--sub-alt)] rounded-xl text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--main-color)]"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-color)] rounded-xl text-xs text-[var(--text-color)] focus:outline-none"
             />
           </div>
 
@@ -1089,7 +1089,7 @@ export const AdminView: React.FC = () => {
 
       {/* TAB 1: REYTING BOSHQARUVI */}
       {activeTab === 'leaderboard' && (
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
+        <div className="bg-[var(--card-bg)] rounded-3xl overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-xs text-[var(--sub-color)] font-mono animate-pulse">
               Reyting ishtirokchilari yuklanmoqda...
@@ -1101,7 +1101,7 @@ export const AdminView: React.FC = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[var(--sub-alt)]/60 text-[var(--sub-color)] font-bold uppercase tracking-wider border-b border-[var(--sub-alt)]">
+                <thead className="bg-[var(--sub-alt)]/60 text-[var(--sub-color)] font-bold uppercase tracking-wider">
                   <tr>
                     <th className="p-4">O'rin</th>
                     <th className="p-4">Foydalanuvchi</th>
@@ -1130,7 +1130,7 @@ export const AdminView: React.FC = () => {
 
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 font-black flex items-center justify-center text-amber-400">
+                          <div className="w-9 h-9 rounded-full bg-slate-800 font-black flex items-center justify-center text-amber-400">
                             {u.displayName.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -1155,7 +1155,7 @@ export const AdminView: React.FC = () => {
                       </td>
 
                       <td className="p-4 font-mono text-xs">
-                        <span className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
+                        <span className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-300 font-bold">
                           Lvl {u.level} • {u.rankTitle}
                         </span>
                       </td>
@@ -1164,7 +1164,7 @@ export const AdminView: React.FC = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(u)}
-                            className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] border border-amber-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] transition-all flex items-center gap-1.5 cursor-pointer"
                             title="Natija va ma'lumotlarni tahrirlash"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -1173,7 +1173,7 @@ export const AdminView: React.FC = () => {
 
                           <button
                             onClick={() => handleRemoveFromLeaderboard(u)}
-                            className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] border border-rose-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] transition-all flex items-center gap-1.5 cursor-pointer"
                             title="Reytingdan olib tashlash"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1192,7 +1192,7 @@ export const AdminView: React.FC = () => {
 
       {/* TAB 2: BARCHA FOYDALANUVCHILAR */}
       {activeTab === 'users' && (
-        <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl overflow-hidden shadow-sm">
+        <div className="bg-[var(--card-bg)] rounded-3xl overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-xs text-[var(--sub-color)] font-mono animate-pulse">
               Foydalanuvchilar roʻyxati yuklanmoqda...
@@ -1204,7 +1204,7 @@ export const AdminView: React.FC = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[var(--sub-alt)]/60 text-[var(--sub-color)] font-bold uppercase tracking-wider border-b border-[var(--sub-alt)]">
+                <thead className="bg-[var(--sub-alt)]/60 text-[var(--sub-color)] font-bold uppercase tracking-wider">
                   <tr>
                     <th className="p-4">Foydalanuvchi</th>
                     <th className="p-4">Reyting & WPM</th>
@@ -1218,18 +1218,18 @@ export const AdminView: React.FC = () => {
                     <tr key={u.uid} className="hover:bg-[var(--sub-alt)]/30 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 font-black flex items-center justify-center text-amber-400">
+                          <div className="w-10 h-10 rounded-full bg-slate-800 font-black flex items-center justify-center text-amber-400">
                             {u.displayName.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
                             <div className="font-extrabold text-[var(--text-color)] flex items-center gap-1.5 flex-wrap">
                               <span>{u.displayName}</span>
                               {Boolean(u.email && (u.email.toLowerCase() === 'yuldashivagavharoy@gmail.com' || u.email.toLowerCase().startsWith('yuldashivagavharoy'))) ? (
-                                <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-300 border border-amber-500/50 rounded-md text-[9px] font-mono uppercase font-black flex items-center gap-1 shadow-sm">
+                                <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-300 rounded-md text-[9px] font-mono uppercase font-black flex items-center gap-1">
                                   <Crown className="w-3 h-3 text-amber-400" /> Bosh Owner
                                 </span>
                               ) : u.role === 'admin' ? (
-                                <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-md text-[9px] font-mono uppercase font-black flex items-center gap-1">
+                                <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded-md text-[9px] font-mono uppercase font-black flex items-center gap-1">
                                   <ShieldCheck className="w-3 h-3 text-cyan-400" /> {u.customAdminTitle || 'Admin'}
                                 </span>
                               ) : null}
@@ -1257,7 +1257,7 @@ export const AdminView: React.FC = () => {
                       <td className="p-4">
                         {u.isBanned ? (
                           <div className="space-y-0.5">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 text-[10px] font-black">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-black">
                               <ShieldAlert className="w-3 h-3" /> Bloklangan
                             </span>
                             {u.blockReason && (
@@ -1267,7 +1267,7 @@ export const AdminView: React.FC = () => {
                             )}
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">
                             <CheckCircle className="w-3 h-3" /> Aktiv
                           </span>
                         )}
@@ -1285,7 +1285,7 @@ export const AdminView: React.FC = () => {
 
                             if (isTargetRootOwner) {
                               return (
-                                <span className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center gap-1.5 shadow-sm">
+                                <span className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-[11px] font-bold flex items-center gap-1.5">
                                   <Crown className="w-3.5 h-3.5 text-amber-400" />
                                   DAXLSIZ BOSH OWNER
                                 </span>
@@ -1299,7 +1299,7 @@ export const AdminView: React.FC = () => {
                                     setTargetUserForMessage(u);
                                     setActiveTab('notifications');
                                   }}
-                                  className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-white font-bold text-[11px] border border-sky-500/40 transition-all flex items-center gap-1 cursor-pointer"
+                                  className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-white font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer"
                                   title="Foydalanuvchiga shaxsiy habar yuborish"
                                 >
                                   <Mail className="w-3.5 h-3.5" />
@@ -1308,7 +1308,7 @@ export const AdminView: React.FC = () => {
 
                                 <button
                                   onClick={() => openEditModal(u)}
-                                  className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
+                                  className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer"
                                   title="Tahrirlash"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
@@ -1319,7 +1319,7 @@ export const AdminView: React.FC = () => {
                                   <>
                                     <button
                                       onClick={() => setSelectedUserForAdminPerms(u)}
-                                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border-cyan-500/40"
+                                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black"
                                       title="Admin huquqlari va vakolatlarini boshqarish"
                                     >
                                       <ShieldCheck className="w-3.5 h-3.5" />
@@ -1328,7 +1328,7 @@ export const AdminView: React.FC = () => {
 
                                     <button
                                       onClick={() => setDemoteTargetUser(u)}
-                                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40 shadow-sm"
+                                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white"
                                       title="Adminlikdan chiqarish va oddiy foydalanuvchiga aylantirish"
                                     >
                                       <UserX className="w-3.5 h-3.5" />
@@ -1338,7 +1338,7 @@ export const AdminView: React.FC = () => {
                                 ) : (
                                   <button
                                     onClick={() => setSelectedUserForAdminPerms(u)}
-                                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white border-indigo-500/40"
+                                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white"
                                     title="Foydalanuvchini admin qilish va ruxsatlarni belgilash"
                                   >
                                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -1349,7 +1349,7 @@ export const AdminView: React.FC = () => {
                                 {u.highestWpm > 0 && (
                                   <button
                                     onClick={() => handleRemoveFromLeaderboard(u)}
-                                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500 text-slate-300 hover:text-white font-bold text-[11px] border border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500 text-slate-300 hover:text-white font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer"
                                     title="Reytingdan olib tashlash"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1359,7 +1359,7 @@ export const AdminView: React.FC = () => {
                                 {u.isBanned ? (
                                   <button
                                     onClick={() => handleUnblockUser(u)}
-                                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] transition-all flex items-center gap-1.5 cursor-pointer"
                                   >
                                     <UserCheck className="w-3.5 h-3.5" />
                                     <span>Unban</span>
@@ -1367,7 +1367,7 @@ export const AdminView: React.FC = () => {
                                 ) : (
                                   <button
                                     onClick={() => setSelectedUser(u)}
-                                    className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] border border-rose-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                                    className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold text-[11px] transition-all flex items-center gap-1.5 cursor-pointer"
                                   >
                                     <UserX className="w-3.5 h-3.5" />
                                     <span>Bloklash</span>
@@ -1433,8 +1433,8 @@ export const AdminView: React.FC = () => {
       {/* EDIT LEADERBOARD / USER MODAL */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-sm relative">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="bg-slate-900 rounded-3xl p-6 max-w-lg w-full space-y-5 relative">
+            <div className="flex items-center justify-between pb-4">
               <div className="flex items-center gap-2 text-amber-400 font-black text-sm uppercase tracking-wide">
                 <Edit3 className="w-5 h-5" />
                 <span>Reyting & Profilni Tahrirlash</span>
@@ -1454,7 +1454,7 @@ export const AdminView: React.FC = () => {
                   type="text"
                   value={editDisplayName}
                   onChange={(e) => setEditDisplayName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                  className="w-full p-2.5 rounded-xl bg-slate-950 text-xs text-white focus:outline-none font-bold"
                 />
               </div>
 
@@ -1464,7 +1464,7 @@ export const AdminView: React.FC = () => {
                   type="text"
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-amber-400 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full p-2.5 rounded-xl bg-slate-950 text-xs text-amber-400 focus:outline-none font-mono"
                 />
               </div>
 
@@ -1474,7 +1474,7 @@ export const AdminView: React.FC = () => {
                   type="number"
                   value={editWpm}
                   onChange={(e) => setEditWpm(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-sm text-emerald-400 focus:outline-none focus:border-emerald-400 font-mono font-black"
+                  className="w-full p-2.5 rounded-xl bg-slate-950 text-sm text-emerald-400 focus:outline-none font-mono font-black"
                 />
               </div>
 
@@ -1484,7 +1484,7 @@ export const AdminView: React.FC = () => {
                   type="number"
                   value={editAccuracy}
                   onChange={(e) => setEditAccuracy(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-amber-500/40 text-sm text-amber-400 focus:outline-none focus:border-amber-400 font-mono font-black"
+                  className="w-full p-2.5 rounded-xl bg-slate-950 text-sm text-amber-400 focus:outline-none font-mono font-black"
                 />
               </div>
 
@@ -1494,7 +1494,7 @@ export const AdminView: React.FC = () => {
                   type="number"
                   value={editLevel}
                   onChange={(e) => setEditLevel(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full p-2.5 rounded-xl bg-slate-950 text-xs text-white focus:outline-none font-mono"
                 />
               </div>
 
@@ -1504,12 +1504,12 @@ export const AdminView: React.FC = () => {
                   type="text"
                   value={editRankTitle}
                   onChange={(e) => setEditRankTitle(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full p-2.5 rounded-xl bg-slate-950 text-xs text-white focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 flex items-start gap-2">
+            <div className="p-3 rounded-xl bg-amber-500/10 text-[11px] text-amber-300 flex items-start gap-2">
               <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
               <span>
                 "Saqlash" tugmasini bosganingizda foydalanuvchining reyting natijasi va profili birdaniga Realtime bazada yangilanadi.
@@ -1527,7 +1527,7 @@ export const AdminView: React.FC = () => {
               <button
                 onClick={handleSaveUserEdit}
                 disabled={isSaving}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg cursor-pointer hover:opacity-95 flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs uppercase tracking-wider cursor-pointer hover:opacity-95 flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 <span>{isSaving ? 'Saqlanmoqda...' : 'Saqlash & Yangilash'}</span>
@@ -1540,8 +1540,8 @@ export const AdminView: React.FC = () => {
       {/* Block User Modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-rose-500/40 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-sm relative">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="bg-slate-900 rounded-3xl p-6 max-w-md w-full space-y-5 relative">
+            <div className="flex items-center justify-between pb-4">
               <div className="flex items-center gap-2 text-rose-400 font-extrabold text-sm">
                 <ShieldAlert className="w-5 h-5" />
                 <span>Foydalanuvchini Bloklash</span>
@@ -1554,7 +1554,7 @@ export const AdminView: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+            <div className="p-3 rounded-2xl bg-slate-950 space-y-1 text-xs">
               <p className="font-bold text-white">{selectedUser.displayName}</p>
               <p className="text-slate-400 font-mono">
                 {showFullEmails ? selectedUser.email : maskEmail(selectedUser.email)}
@@ -1582,7 +1582,7 @@ export const AdminView: React.FC = () => {
                     key={preset}
                     type="button"
                     onClick={() => setBanReason(preset)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-rose-500/40 text-[11px] text-slate-300 hover:text-rose-300 transition-colors text-left cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-[11px] text-slate-300 hover:text-rose-300 transition-colors text-left cursor-pointer"
                   >
                     {preset}
                   </button>
@@ -1593,12 +1593,12 @@ export const AdminView: React.FC = () => {
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
                 rows={3}
-                className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-rose-500 font-sans"
+                className="w-full p-3 rounded-xl bg-slate-950 text-xs text-white focus:outline-none font-sans"
                 placeholder="Misol: Anti-cheat xabardorligi / Avto-kliker bot ishlatilgani sababli..."
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 flex items-start gap-2">
+            <div className="p-3 rounded-xl bg-rose-500/10 text-[11px] text-rose-300 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
               <span>
                 Bloklangan zahoti ushbu foydalanuvchining saytdagi seansi uziladi va bloklash sahifasi koʻrinadi.
@@ -1615,7 +1615,7 @@ export const AdminView: React.FC = () => {
 
               <button
                 onClick={handleBlockUser}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider cursor-pointer"
               >
                 Tasdiqlash & Bloklash
               </button>
@@ -1646,10 +1646,10 @@ export const AdminView: React.FC = () => {
       {/* Demote Admin Confirmation Modal */}
       {demoteTargetUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in">
-          <div className="w-full max-w-md bg-slate-900 border border-rose-500/50 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3">
+          <div className="w-full max-w-md bg-slate-900 rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400">
                   <UserX className="w-5 h-5" />
                 </div>
                 <div>
@@ -1666,7 +1666,7 @@ export const AdminView: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-1">
+            <div className="p-4 rounded-2xl bg-slate-950/80 text-center space-y-1">
               <div className="text-base font-black text-white">
                 {demoteTargetUser.displayName || demoteTargetUser.username}
               </div>
@@ -1677,13 +1677,13 @@ export const AdminView: React.FC = () => {
                 {demoteTargetUser.email}
               </div>
               {demoteTargetUser.customAdminTitle && (
-                <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[11px] font-mono font-bold">
+                <div className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 text-[11px] font-mono font-bold">
                   {demoteTargetUser.customAdminTitle}
                 </div>
               )}
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs space-y-1.5">
+            <div className="p-3.5 rounded-2xl bg-rose-950/40 text-rose-200 text-xs space-y-1.5">
               <div className="font-bold flex items-center gap-1.5 text-rose-300">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>Muhim Ogohlantirish:</span>
@@ -1707,7 +1707,7 @@ export const AdminView: React.FC = () => {
                 type="button"
                 disabled={isDemotingUser}
                 onClick={() => handleExecuteDemoteUser(demoteTargetUser)}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
               >
                 {isDemotingUser ? (
                   <>

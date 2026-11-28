@@ -181,9 +181,9 @@ export const LessonsView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Title Header */}
-      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="bg-[var(--card-bg)] rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-4 rounded-2xl bg-[var(--main-color)]/15 text-[var(--main-color)] border border-[var(--main-color)]/30">
+          <div className="p-4 rounded-2xl bg-[var(--main-color)]/15 text-[var(--main-color)]">
             <GraduationCap className="w-8 h-8" />
           </div>
           <div>
@@ -196,7 +196,7 @@ export const LessonsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-[var(--sub-alt)]/60 p-3 rounded-2xl border border-[var(--sub-alt)]">
+        <div className="flex items-center gap-3 bg-[var(--sub-alt)]/60 p-3 rounded-2xl">
           <Award className="w-5 h-5 text-amber-400" />
           <div className="text-xs font-bold">
             <span className="text-[var(--sub-color)]">Jami Oʻtilgan: </span>
@@ -259,10 +259,10 @@ export const LessonsView: React.FC = () => {
         {/* Right Side: Interactive Lesson Stage (8 Cols) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Active Lesson Header & Finger Placement Banner */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 space-y-6 shadow-sm relative overflow-hidden">
+          <div className="bg-[var(--card-bg)] rounded-3xl p-6 space-y-6 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--main-color)] bg-[var(--sub-alt)] px-3 py-1 rounded-full border border-[var(--main-color)]/20">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--main-color)] bg-[var(--sub-alt)] px-3 py-1 rounded-full">
                   {currentLesson.title}
                 </span>
                 <p className="text-sm font-semibold text-[var(--text-color)] mt-2">
@@ -285,7 +285,7 @@ export const LessonsView: React.FC = () => {
 
             {/* LIVE FINGER Placement Guidance Badge */}
             {!isFinished && nextChar && (
-              <div className={`p-4 rounded-2xl border ${fingerInfo.color} flex items-center justify-between gap-4 animate-in fade-in duration-200 shadow-sm`}>
+              <div className={`p-4 rounded-2xl ${fingerInfo.color} flex items-center justify-between gap-4 animate-in fade-in duration-200`}>
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-black/20 shrink-0 font-mono text-xl font-black uppercase">
                     {nextChar === ' ' ? 'PROBEL' : nextChar}
@@ -308,7 +308,7 @@ export const LessonsView: React.FC = () => {
             {/* Typing Display Box */}
             <div
               onClick={() => inputRef.current?.focus()}
-              className="relative p-6 bg-[var(--bg-color)]/80 border-2 border-[var(--sub-alt)] rounded-2xl min-h-[140px] cursor-text font-mono text-xl tracking-wider leading-relaxed select-none overflow-hidden"
+              className="relative p-6 bg-[var(--bg-color)]/80 rounded-2xl min-h-[140px] cursor-text font-mono text-xl tracking-wider leading-relaxed select-none overflow-hidden"
             >
               <input
                 ref={inputRef}
@@ -351,7 +351,7 @@ export const LessonsView: React.FC = () => {
 
             {/* Completion Screen */}
             {isFinished && (
-              <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex flex-col items-center justify-center text-center space-y-4 animate-in zoom-in-95">
+              <div className="p-6 rounded-2xl bg-emerald-500/10 text-emerald-400 flex flex-col items-center justify-center text-center space-y-4 animate-in zoom-in-95">
                 <Sparkles className="w-12 h-12 text-emerald-400" />
                 <div>
                   <h3 className="text-xl font-black">Ajoyib! Mashq Muvaffaqiyatli Bajarildi!</h3>
@@ -363,7 +363,7 @@ export const LessonsView: React.FC = () => {
                 {activeLessonId < LESSONS_DATA.length ? (
                   <button
                     onClick={() => setActiveLessonId((prev) => prev + 1)}
-                    className="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-transform active:scale-95"
+                    className="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-transform active:scale-95"
                   >
                     <span>Keyingi Darsga Oʻtish</span>
                     <ChevronRight className="w-4 h-4" />
@@ -378,49 +378,49 @@ export const LessonsView: React.FC = () => {
           </div>
 
           {/* Visual Hands & Finger Chart Guide */}
-          <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-3xl p-6 space-y-4 shadow-lg">
+          <div className="bg-[var(--card-bg)] rounded-3xl p-6 space-y-4">
             <h3 className="text-xs font-black uppercase tracking-wider text-[var(--sub-color)] flex items-center gap-2">
               <Info className="w-4 h-4 text-[var(--main-color)]" />
               Barmoqlar Joylashuvi Xaritasi
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 space-y-1">
+              <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Chap Jimjiloq</span>
                 <p className="font-mono text-sm font-black">Q, A, Z, 1, Shift</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 space-y-1">
+              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Chap Nomunsiz</span>
                 <p className="font-mono text-sm font-black">W, S, X, 2</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 space-y-1">
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Chap Oʻrta</span>
                 <p className="font-mono text-sm font-black">E, D, C, 3</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 space-y-1">
+              <div className="p-3 rounded-xl bg-sky-500/10 text-sky-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Chap Koʻrsatkich</span>
                 <p className="font-mono text-sm font-black">R, T, F, G, V, B</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 space-y-1">
+              <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Oʻng Koʻrsatkich</span>
                 <p className="font-mono text-sm font-black">Y, U, H, J, N, M</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 space-y-1">
+              <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Oʻng Oʻrta</span>
                 <p className="font-mono text-sm font-black">I, K, 8</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 space-y-1">
+              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Oʻng Nomunsiz</span>
                 <p className="font-mono text-sm font-black">O, L, 9</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 space-y-1">
+              <div className="p-3 rounded-xl bg-pink-500/10 text-pink-400 space-y-1">
                 <span className="font-bold text-[10px] uppercase block">Oʻng Jimjiloq</span>
                 <p className="font-mono text-sm font-black">P, ;, Enter, 0</p>
               </div>

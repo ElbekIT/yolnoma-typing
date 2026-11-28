@@ -9,320 +9,320 @@ import { CodeLanguage } from '../../data/codeSnippets';
 import { CodeLanguageSelector } from './CodeLanguageSelector';
 
 interface TypingHeaderProps {
-  mode: TextMode;
-  setMode: (m: TextMode) => void;
-  timeMode: TimeMode;
-  setTimeMode: (t: TimeMode) => void;
-  wordCountMode: WordCountMode;
-  setWordCountMode: (w: WordCountMode) => void;
-  difficulty: DifficultyMode;
-  setDifficulty: (d: DifficultyMode) => void;
-  customText: string;
-  setCustomText: (txt: string) => void;
-  onReset: () => void;
-  isTestActive?: boolean;
-  onOpenLanguagePage?: () => void;
-  codeLanguage?: CodeLanguage;
-  setCodeLanguage?: (l: CodeLanguage) => void;
+ mode: TextMode;
+ setMode: (m: TextMode) => void;
+ timeMode: TimeMode;
+ setTimeMode: (t: TimeMode) => void;
+ wordCountMode: WordCountMode;
+ setWordCountMode: (w: WordCountMode) => void;
+ difficulty: DifficultyMode;
+ setDifficulty: (d: DifficultyMode) => void;
+ customText: string;
+ setCustomText: (txt: string) => void;
+ onReset: () => void;
+ isTestActive?: boolean;
+ onOpenLanguagePage?: () => void;
+ codeLanguage?: CodeLanguage;
+ setCodeLanguage?: (l: CodeLanguage) => void;
 }
 
 export const TypingHeader: React.FC<TypingHeaderProps> = React.memo(({
-  mode,
-  setMode,
-  timeMode,
-  setTimeMode,
-  wordCountMode,
-  setWordCountMode,
-  onReset,
-  isTestActive = false,
-  onOpenLanguagePage,
-  codeLanguage = 'javascript',
-  setCodeLanguage
+ mode,
+ setMode,
+ timeMode,
+ setTimeMode,
+ wordCountMode,
+ setWordCountMode,
+ onReset,
+ isTestActive = false,
+ onOpenLanguagePage,
+ codeLanguage = 'javascript',
+ setCodeLanguage
 }) => {
-  const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode, zenMode, setZenMode, ghostMode, setGhostMode } = useSettings();
-  const { profile } = useAuth();
+ const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode, zenMode, setZenMode, ghostMode, setGhostMode } = useSettings();
+ const { profile } = useAuth();
 
-  const dailyState = useMemo(() => getDailyChallengeState(), [mode, isTestActive]);
-  const pbWpm = profile?.highestWpm || Number(typeof window !== 'undefined' ? localStorage.getItem('yolnoma_guest_best_wpm') || 0 : 0);
+ const dailyState = useMemo(() => getDailyChallengeState(), [mode, isTestActive]);
+ const pbWpm = profile?.highestWpm || Number(typeof window !== 'undefined' ? localStorage.getItem('yolnoma_guest_best_wpm') || 0 : 0);
 
-  const timeOptions: TimeMode[] = [15, 30, 60, 120];
-  const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
-  const modesList: { id: TextMode; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'words', label: "So'zlar", icon: Type },
-    { id: 'sentences', label: 'Jumlalar', icon: Layers },
-    { id: 'quotes', label: 'Maqol & Adabiyot', icon: BookOpen },
-    { id: 'code', label: 'Kod (Dev)', icon: Code },
-    { id: 'story', label: 'Hikoyalar', icon: Sparkles },
-    { id: 'daily', label: 'Kunlik', icon: Flame },
-  ];
+ const timeOptions: TimeMode[] = [15, 30, 60, 120];
+ const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
+ const modesList: { id: TextMode; label: string; icon: React.FC<{ className?: string }> }[] = [
+ { id: 'words', label: "So'zlar", icon: Type },
+ { id: 'sentences', label: 'Jumlalar', icon: Layers },
+ { id: 'quotes', label: 'Maqol & Adabiyot', icon: BookOpen },
+ { id: 'code', label: 'Kod (Dev)', icon: Code },
+ { id: 'story', label: 'Hikoyalar', icon: Sparkles },
+ { id: 'daily', label: 'Kunlik', icon: Flame },
+ ];
 
-  const ghostOrder: GhostMode[] = ['off', 'pb', '40', '60', '80', '100', '120'];
-  const cycleGhostMode = () => {
-    const idx = ghostOrder.indexOf(ghostMode);
-    const next = ghostOrder[(idx + 1) % ghostOrder.length];
-    setGhostMode(next);
-  };
-  const ghostLabel =
-    ghostMode === 'off'
-      ? "o'chiq"
-      : ghostMode === 'pb'
-      ? `PB (${pbWpm > 0 ? pbWpm : 45})`
-      : `${ghostMode} wpm`;
+ const ghostOrder: GhostMode[] = ['off', 'pb', '40', '60', '80', '100', '120'];
+ const cycleGhostMode = () => {
+ const idx = ghostOrder.indexOf(ghostMode);
+ const next = ghostOrder[(idx + 1) % ghostOrder.length];
+ setGhostMode(next);
+ };
+ const ghostLabel =
+ ghostMode === 'off'
+ ? "o'chiq"
+ : ghostMode === 'pb'
+ ? `PB (${pbWpm > 0 ? pbWpm : 45})`
+ : `${ghostMode} wpm`;
 
-  // Fast memoized languages list
-  const languagesList = useMemo(() => {
-    return getAllLanguages();
-  }, []);
+ // Fast memoized languages list
+ const languagesList = useMemo(() => {
+ return getAllLanguages();
+ }, []);
 
-  const currentLang = useMemo(
-    () => languagesList.find((l) => l.code.toLowerCase() === language.toLowerCase()) || languagesList[0],
-    [languagesList, language]
-  );
+ const currentLang = useMemo(
+ () => languagesList.find((l) => l.code.toLowerCase() === language.toLowerCase()) || languagesList[0],
+ [languagesList, language]
+ );
 
-  const widthClass = {
-    compact: 'max-w-xl',
-    standard: 'max-w-3xl',
-    wide: 'max-w-5xl',
-    full: 'max-w-7xl',
-  }[modeBarWidth || 'standard'];
+ const widthClass = {
+ compact: 'max-w-xl',
+ standard: 'max-w-3xl',
+ wide: 'max-w-5xl',
+ full: 'max-w-7xl',
+ }[modeBarWidth || 'standard'];
 
-  const scaleConfig = {
-    small: {
-      container: 'py-0.5 px-2 text-[11px] gap-1.5 sm:gap-2.5',
-      button: 'px-1.5 py-0.5 text-[11px] gap-1',
-      icon: 'w-3 h-3',
-      divider: 'h-3',
-    },
-    medium: {
-      container: 'py-1 px-2.5 sm:px-3 text-xs gap-2 sm:gap-4',
-      button: 'px-2 py-1 text-xs gap-1.5',
-      icon: 'w-3.5 h-3.5',
-      divider: 'h-3.5',
-    },
-    large: {
-      container: 'py-1.5 px-3.5 sm:px-4 text-sm gap-2.5 sm:gap-5',
-      button: 'px-2.5 py-1.5 text-sm gap-2',
-      icon: 'w-4 h-4',
-      divider: 'h-4',
-    },
-  }[modeBarScale || 'medium'];
+ const scaleConfig = {
+ small: {
+ container: 'py-0.5 px-2 text-[11px] gap-1.5 sm:gap-2.5',
+ button: 'px-1.5 py-0.5 text-[11px] gap-1',
+ icon: 'w-3 h-3',
+ divider: 'h-3',
+ },
+ medium: {
+ container: 'py-1 px-2.5 sm:px-3 text-xs gap-2 sm:gap-4',
+ button: 'px-2 py-1 text-xs gap-1.5',
+ icon: 'w-3.5 h-3.5',
+ divider: 'h-3.5',
+ },
+ large: {
+ container: 'py-1.5 px-3.5 sm:px-4 text-sm gap-2.5 sm:gap-5',
+ button: 'px-2.5 py-1.5 text-sm gap-2',
+ icon: 'w-4 h-4',
+ divider: 'h-4',
+ },
+ }[modeBarScale || 'medium'];
 
-  return (
-    <div
-      className={`w-full ${widthClass} mx-auto mb-4 sm:mb-6 px-2 transition-all duration-150 ${
-          isTestActive
-            ? 'opacity-0 pointer-events-none h-0 overflow-hidden mb-0'
-            : 'opacity-100'
-        }`}
-      >
-        {/* Monkeytype Style Minimal Floating Command Bar */}
-        <div className={`w-full bg-[var(--card-bg)] border border-[var(--sub-alt)]/70 rounded-xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar transition-colors`}>
-          {/* Modes List */}
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            {modesList.map((m) => {
-              const Icon = m.icon;
-              const isActive = mode === m.id;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => {
-                    setMode(m.id);
-                    if (m.id === 'daily') {
-                      setTimeMode(0);
-                      setWordCountMode(0);
-                    } else if (m.id === 'words' && timeMode === 0 && wordCountMode === 0) {
-                      setTimeMode(30);
-                    }
-                    onReset();
-                  }}
-                  className={`flex items-center ${scaleConfig.button} rounded-xl transition-all whitespace-nowrap cursor-pointer ${
-                    isActive
-                      ? 'text-[var(--main-color)] font-bold bg-[var(--main-color)]/15 border border-[var(--main-color)]/25'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 border border-transparent'
-                  }`}
-                >
-                  <Icon className={scaleConfig.icon} />
-                  <span>{m.label}</span>
-                </button>
-              );
-            })}
-          </div>
+ return (
+ <div
+ className={`w-full ${widthClass} mx-auto mb-4 sm:mb-6 px-2 transition-all duration-150 ${
+ isTestActive
+ ? 'opacity-0 pointer-events-none h-0 overflow-hidden mb-0'
+ : 'opacity-100'
+ }`}
+ >
+ {/* Monkeytype Style Minimal Floating Command Bar (Borderless) */}
+ <div className={`w-full bg-[var(--card-bg)] rounded-2xl ${scaleConfig.container} flex items-center justify-start sm:justify-center font-mono select-none overflow-x-auto no-scrollbar transition-colors`}>
+ {/* Modes List */}
+ <div className="flex items-center gap-1 sm:gap-1.5">
+ {modesList.map((m) => {
+ const Icon = m.icon;
+ const isActive = mode === m.id;
+ return (
+ <button
+ key={m.id}
+ onClick={() => {
+ setMode(m.id);
+ if (m.id === 'daily') {
+ setTimeMode(0);
+ setWordCountMode(0);
+ } else if (m.id === 'words' && timeMode === 0 && wordCountMode === 0) {
+ setTimeMode(30);
+ }
+ onReset();
+ }}
+ className={`flex items-center ${scaleConfig.button} rounded-xl transition-colors whitespace-nowrap cursor-pointer ${
+ isActive
+ ? 'text-[var(--main-color)] font-bold bg-[var(--sub-alt)]/80'
+ : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
+ }`}
+ >
+ <Icon className={scaleConfig.icon} />
+ <span>{m.label}</span>
+ </button>
+ );
+ })}
+ </div>
 
-          <div className={`${scaleConfig.divider} w-[1px] bg-[var(--sub-alt)] shrink-0`} />
+ <div className={`${scaleConfig.divider} w-[1px] bg-[var(--sub-alt)]/60 shrink-0`} />
 
-          {/* Time Options */}
-          {mode === 'words' && timeMode > 0 && (
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <Clock className={`${scaleConfig.icon} text-[var(--sub-color)]`} />
-              {timeOptions.map((tVal) => (
-                <button
-                  key={tVal}
-                  onClick={() => {
-                    setTimeMode(tVal);
-                    setWordCountMode(0);
-                    onReset();
-                  }}
-                  className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
-                    timeMode === tVal && wordCountMode === 0
-                      ? 'text-[var(--main-color)] font-bold bg-[var(--main-color)]/15 border border-[var(--main-color)]/25'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 border border-transparent'
-                  }`}
-                >
-                  {tVal}
-                </button>
-              ))}
-            </div>
-          )}
+ {/* Time Options */}
+ {mode === 'words' && timeMode > 0 && (
+ <div className="flex items-center gap-1 sm:gap-1.5">
+ <Clock className={`${scaleConfig.icon} text-[var(--sub-color)]`} />
+ {timeOptions.map((tVal) => (
+ <button
+ key={tVal}
+ onClick={() => {
+ setTimeMode(tVal);
+ setWordCountMode(0);
+ onReset();
+ }}
+ className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+ timeMode === tVal && wordCountMode === 0
+ ? 'text-[var(--main-color)] font-bold bg-[var(--sub-alt)]/80'
+ : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
+ }`}
+ >
+ {tVal}
+ </button>
+ ))}
+ </div>
+ )}
 
-          {/* Word Count Options */}
-          {mode === 'words' && wordCountMode > 0 && (
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <Type className={`${scaleConfig.icon} text-[var(--sub-color)]`} />
-              {wordOptions.slice(0, 4).map((wVal) => (
-                <button
-                  key={wVal}
-                  onClick={() => {
-                    setWordCountMode(wVal);
-                    setTimeMode(0);
-                    onReset();
-                  }}
-                  className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
-                    wordCountMode === wVal && timeMode === 0
-                      ? 'text-[var(--main-color)] font-bold bg-[var(--main-color)]/15 border border-[var(--main-color)]/25'
-                      : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/50 border border-transparent'
-                  }`}
-                >
-                  {wVal}
-                </button>
-              ))}
-            </div>
-          )}
+ {/* Word Count Options */}
+ {mode === 'words' && wordCountMode > 0 && (
+ <div className="flex items-center gap-1 sm:gap-1.5">
+ <Type className={`${scaleConfig.icon} text-[var(--sub-color)]`} />
+ {wordOptions.slice(0, 4).map((wVal) => (
+ <button
+ key={wVal}
+ onClick={() => {
+ setWordCountMode(wVal);
+ setTimeMode(0);
+ onReset();
+ }}
+ className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+ wordCountMode === wVal && timeMode === 0
+ ? 'text-[var(--main-color)] font-bold bg-[var(--sub-alt)]/80'
+ : 'text-[var(--sub-color)] hover:text-[var(--text-color)] hover:bg-[var(--sub-alt)]/40'
+ }`}
+ >
+ {wVal}
+ </button>
+ ))}
+ </div>
+ )}
 
-          {/* Quick toggle between Time vs Word mode when on 'words' tab */}
-          {mode === 'words' && (
-            <>
-              <div className={`${scaleConfig.divider} w-[1px] bg-[var(--sub-alt)] shrink-0`} />
-              <button
-                onClick={() => {
-                  if (timeMode > 0) {
-                    setTimeMode(0);
-                    setWordCountMode(100);
-                  } else {
-                    setTimeMode(30);
-                    setWordCountMode(0);
-                  }
-                  onReset();
-                }}
-                className="text-[10px] text-[var(--sub-color)] hover:text-[var(--main-color)] px-1.5 py-0.5 rounded-md hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
-                title="Vaqt / So'z soni rejimini almashtirish"
-              >
-                {timeMode > 0 ? 'vaqt' : "so'z"}
-              </button>
-            </>
-          )}
-        </div>
+ {/* Quick toggle between Time vs Word mode when on 'words' tab */}
+ {mode === 'words' && (
+ <>
+ <div className={`${scaleConfig.divider} w-[1px] bg-[var(--sub-alt)] shrink-0`} />
+ <button
+ onClick={() => {
+ if (timeMode > 0) {
+ setTimeMode(0);
+ setWordCountMode(100);
+ } else {
+ setTimeMode(30);
+ setWordCountMode(0);
+ }
+ onReset();
+ }}
+ className="text-[10px] text-[var(--sub-color)] hover:text-[var(--main-color)] px-1.5 py-0.5 rounded-md hover:bg-[var(--sub-alt)]/50 transition-colors cursor-pointer"
+ title="Vaqt / So'z soni rejimini almashtirish"
+ >
+ {timeMode > 0 ? 'vaqt' : "so'z"}
+ </button>
+ </>
+ )}
+ </div>
 
-        {/* Minimalist Centered Language & Tape Mode Indicators (Monkeytype style) */}
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3">
-          <button
-            onClick={() => {
-              if (onOpenLanguagePage) {
-                onOpenLanguagePage();
-              }
-            }}
-            className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-85 hover:opacity-100 py-0.5 px-2.5 rounded-lg hover:bg-[var(--sub-alt)]/40 border border-transparent hover:border-[var(--sub-alt)]"
-            title="125+ Jahon Tillari katalogiga o'tish"
-          >
-            <Globe className="w-3.5 h-3.5 text-[var(--main-color)]" />
-            <span className="font-semibold">{currentLang.flag} {currentLang.nativeName}</span>
-          </button>
+ {/* Minimalist Centered Language & Tape Mode Indicators (Monkeytype style) */}
+ <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3">
+ <button
+ onClick={() => {
+ if (onOpenLanguagePage) {
+ onOpenLanguagePage();
+ }
+ }}
+ className="flex items-center gap-1.5 text-xs text-[var(--sub-color)] hover:text-[var(--text-color)] transition-colors cursor-pointer font-mono opacity-85 hover:opacity-100 py-0.5 px-2.5 rounded-lg hover:bg-[var(--sub-alt)]/40"
+ title="125+ Jahon Tillari katalogiga o'tish"
+ >
+ <Globe className="w-3.5 h-3.5 text-[var(--main-color)]"/>
+ <span className="font-semibold">{currentLang.flag} {currentLang.nativeName}</span>
+ </button>
 
-          <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
+ <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
 
-          <button
-            onClick={() => {
-              const nextMode = tapeMode === 'off' ? 'letter' : tapeMode === 'letter' ? 'word' : tapeMode === 'word' ? 'drum' : 'off';
-              setTapeMode(nextMode);
-              onReset();
-            }}
-            className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
-              tapeMode !== 'off'
-                ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10 ring-1 ring-[var(--main-color)]/20'
-                : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
-            }`}
-            title={`Lenta rejimi: ${tapeMode === 'off' ? 'Oʻchiq (klassik 3 qator)' : tapeMode === 'letter' ? 'Harfma-harf gorizontal oqim' : tapeMode === 'word' ? 'Soʻzma-soʻz gorizontal lenta' : 'Aylanuvchi futuristik baraban'}`}
-          >
-            {tapeMode === 'drum' ? (
-              <Disc className="w-3.5 h-3.5" />
-            ) : (
-              <Film className="w-3.5 h-3.5" />
-            )}
-            <span>tape: {tapeMode === 'drum' ? 'baraban' : tapeMode}</span>
-          </button>
+ <button
+ onClick={() => {
+ const nextMode = tapeMode === 'off' ? 'letter' : tapeMode === 'letter' ? 'word' : tapeMode === 'word' ? 'drum' : 'off';
+ setTapeMode(nextMode);
+ onReset();
+ }}
+ className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+ tapeMode !== 'off'
+ ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
+ : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
+ }`}
+ title={`Lenta rejimi: ${tapeMode === 'off' ? 'Oʻchiq (klassik 3 qator)' : tapeMode === 'letter' ? 'Harfma-harf gorizontal oqim' : tapeMode === 'word' ? 'Soʻzma-soʻz gorizontal lenta' : 'Aylanuvchi futuristik baraban'}`}
+ >
+ {tapeMode === 'drum' ? (
+ <Disc className="w-3.5 h-3.5"/>
+ ) : (
+ <Film className="w-3.5 h-3.5"/>
+ )}
+ <span>tape: {tapeMode === 'drum' ? 'baraban' : tapeMode}</span>
+ </button>
 
-          <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
+ <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
 
-          <button
-            onClick={() => setZenMode(!zenMode)}
-            className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
-              zenMode
-                ? 'text-emerald-400 font-semibold bg-emerald-500/10'
-                : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
-            }`}
-            title="Zen Mode: Chalg'ituvchi ko'rsatkichlarsiz sokin yozish rejimi"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>zen: {zenMode ? 'yoqilgan' : 'oʻchiq'}</span>
-          </button>
+ <button
+ onClick={() => setZenMode(!zenMode)}
+ className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+ zenMode
+ ? 'text-emerald-400 font-semibold bg-emerald-500/10'
+ : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
+ }`}
+ title="Zen Mode: Chalg'ituvchi ko'rsatkichlarsiz sokin yozish rejimi"
+ >
+ <Sparkles className="w-3.5 h-3.5 text-emerald-400"/>
+ <span>zen: {zenMode ? 'yoqilgan' : 'oʻchiq'}</span>
+ </button>
 
-          <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
+ <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
 
-          <button
-            onClick={cycleGhostMode}
-            className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
-              ghostMode !== 'off'
-                ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
-                : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
-            }`}
-            title="Arvoh Kursor (Ghost Pace): O'z rekordingiz yoki tanlangan tezlik bilan jonli poyga qiling"
-          >
-            <Ghost className="w-3.5 h-3.5" />
-            <span>ghost: {ghostLabel}</span>
-          </button>
-        </div>
+ <button
+ onClick={cycleGhostMode}
+ className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+ ghostMode !== 'off'
+ ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
+ : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
+ }`}
+ title="Arvoh Kursor (Ghost Pace): O'z rekordingiz yoki tanlangan tezlik bilan jonli poyga qiling"
+ >
+ <Ghost className="w-3.5 h-3.5"/>
+ <span>ghost: {ghostLabel}</span>
+ </button>
+ </div>
 
-        {/* Daily Challenge Sub-Strip */}
-        {mode === 'daily' && (
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]/70 text-[11px] font-mono text-[var(--sub-color)]">
-            <span className="flex items-center gap-1 text-amber-400 font-bold">
-              <Flame className="w-3.5 h-3.5" />
-              Bugungi Sinov ({dailyState.todayDate})
-            </span>
-            <span className="opacity-40">•</span>
-            <span>Streak: <strong className="text-[var(--text-color)]">{dailyState.streak} kun</strong></span>
-            {dailyState.todayCompleted && (
-              <>
-                <span className="opacity-40">•</span>
-                <span className="text-emerald-400 font-bold">
-                  Bugungi rekord: {dailyState.todayBestWpm} WPM ({dailyState.todayBestAcc}%)
-                </span>
-              </>
-            )}
-          </div>
-        )}
+ {/* Daily Challenge Sub-Strip */}
+ {mode === 'daily' && (
+ <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] text-[11px] font-mono text-[var(--sub-color)]">
+ <span className="flex items-center gap-1 text-amber-400 font-bold">
+ <Flame className="w-3.5 h-3.5"/>
+ Bugungi Sinov ({dailyState.todayDate})
+ </span>
+ <span className="opacity-40">•</span>
+ <span>Streak: <strong className="text-[var(--text-color)]">{dailyState.streak} kun</strong></span>
+ {dailyState.todayCompleted && (
+ <>
+ <span className="opacity-40">•</span>
+ <span className="text-emerald-400 font-bold">
+ Bugungi rekord: {dailyState.todayBestWpm} WPM ({dailyState.todayBestAcc}%)
+ </span>
+ </>
+ )}
+ </div>
+ )}
 
-        {/* Programmer Code Language Sub-Selector */}
-        {mode === 'code' && setCodeLanguage && (
-          <div className="mt-3">
-            <CodeLanguageSelector
-              currentLanguage={codeLanguage}
-              onSelectLanguage={(l) => {
-                setCodeLanguage(l);
-                onReset();
-              }}
-            />
-          </div>
-        )}
-      </div>
-  );
+ {/* Programmer Code Language Sub-Selector */}
+ {mode === 'code' && setCodeLanguage && (
+ <div className="mt-3">
+ <CodeLanguageSelector
+ currentLanguage={codeLanguage}
+ onSelectLanguage={(l) => {
+ setCodeLanguage(l);
+ onReset();
+ }}
+ />
+ </div>
+ )}
+ </div>
+ );
 });
