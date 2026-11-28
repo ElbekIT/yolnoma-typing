@@ -1,5 +1,5 @@
-import React from 'react';
-import { Heart, ArrowRight, Video, Languages, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Heart, ArrowRight, Video, Languages, Sparkles, Flame, CheckCircle2 } from 'lucide-react';
 import { HeroSection } from '../components/home/HeroSection';
 import { InteractiveModesHub } from '../components/home/InteractiveModesHub';
 import { FeaturesSection } from '../components/home/FeaturesSection';
@@ -8,9 +8,11 @@ import { HowItWorksSection } from '../components/home/HowItWorksSection';
 import { ThematicTests, ThematicActionType } from '../components/home/ThematicTests';
 import { SeoArticleSection } from '../components/seo/SeoArticleSection';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { getDailyChallengeState, DailyChallengeLocalState } from '../utils/dailyChallenge';
 
 interface HomePageProps {
   onStartTyping: (mode?: string) => void;
+  onStartDailyChallenge?: () => void;
   onGoToBattle: () => void;
   onGoToLessons: () => void;
   onGoToEnglish?: () => void;
@@ -22,6 +24,7 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({
   onStartTyping,
+  onStartDailyChallenge,
   onGoToBattle,
   onGoToLessons,
   onGoToEnglish,
@@ -30,6 +33,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGoToSupport,
   onGoToVideo
 }) => {
+  const [dailyState, setDailyState] = useState<DailyChallengeLocalState>(() => getDailyChallengeState());
+
+  useEffect(() => {
+    const syncDaily = () => setDailyState(getDailyChallengeState());
+    window.addEventListener('yolnoma_daily_updated', syncDaily);
+    return () => window.removeEventListener('yolnoma_daily_updated', syncDaily);
+  }, []);
   const handleThematicAction = (action: ThematicActionType) => {
     if (action === 'battle') {
       onGoToBattle();
@@ -85,6 +95,44 @@ export const HomePage: React.FC<HomePageProps> = ({
 
             <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs shrink-0 transition-colors group-hover:bg-emerald-400">
               <span>Boshlash</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </button>
+        )}
+
+        {/* Daily Challenge Strip (Bugungi Sinov + Streak) */}
+        {onStartDailyChallenge && (
+          <button
+            onClick={onStartDailyChallenge}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[var(--card-bg)] hover:bg-[var(--sub-alt)]/50 border border-[var(--sub-alt)]/70 transition-colors text-xs font-semibold group cursor-pointer"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+                <Flame className="w-4 h-4" />
+              </span>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[var(--text-color)] font-extrabold text-xs sm:text-sm">
+                    Bugungi Kunlik Sinov ({dailyState.todayDate})
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400">
+                    🔥 {dailyState.streak} kun streak
+                  </span>
+                  {dailyState.todayCompleted && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {dailyState.todayBestWpm} WPM
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[var(--sub-color)] hidden sm:block truncate">
+                  Bugun barcha foydalanuvchilar uchun bitta umumiy matn. Rekord o'rnating va kunlik olovni saqlang!
+                </p>
+              </div>
+            </div>
+
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 text-slate-950 font-extrabold text-xs shrink-0">
+              <span>{dailyState.todayCompleted ? 'Yana urinish' : 'Boshlash'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </button>

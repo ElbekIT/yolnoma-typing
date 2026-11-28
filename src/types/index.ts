@@ -6,7 +6,7 @@ export type LanguageCode =
   | 'te' | 'ml' | 'kn' | 'pa' | 'gu' | 'mr' | 'zh-hans' | 'zh-hant'
   | 'ja' | 'ko' | 'th' | 'vi' | 'id' | 'ms' | (string & {});
 
-export type TextMode = 'words' | 'sentences' | 'quotes' | 'code' | 'numbers' | 'symbols' | 'story' | 'custom';
+export type TextMode = 'words' | 'sentences' | 'quotes' | 'code' | 'numbers' | 'symbols' | 'story' | 'daily' | 'custom';
 export type TimeMode = 15 | 30 | 60 | 120 | 300 | 0; // 0 for custom/word-count
 export type WordCountMode = 100 | 200 | 300 | 400 | 500 | 10 | 25 | 50 | 0; // 0 for time-based
 export type DifficultyMode = 'easy' | 'medium' | 'hard' | 'expert';

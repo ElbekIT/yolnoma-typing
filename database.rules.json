@@ -172,6 +172,19 @@
         ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'yuldashivagavharoy@gmail.com')",
         ".validate": "newData.val() === 'like' || newData.val() === 'dislike' || !newData.exists()"
       }
+    },
+
+    "dailyChallenges": {
+      "$date": {
+        "leaderboard": {
+          ".read": true,
+          ".indexOn": ["wpm"],
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && !root.child('bannedUsers').child(auth.uid).exists()",
+            ".validate": "newData.child('wpm').isNumber() && newData.child('wpm').val() >= 0 && newData.child('wpm').val() <= 280 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() >= 0 && newData.child('accuracy').val() <= 100"
+          }
+        }
+      }
     }
   }
 }

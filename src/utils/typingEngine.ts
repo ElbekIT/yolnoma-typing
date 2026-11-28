@@ -3,6 +3,7 @@ import { getLanguageInfo, codeSnippets } from '../config/languages';
 import { getCustomTextsForLanguage } from './customContentStore';
 import { ALL_UZBEK_QUOTES, getRandomUzbekQuote } from '../data/uzbekQuotes';
 import { CODE_SNIPPETS, getRandomCodeSnippet, CodeLanguage } from '../data/codeSnippets';
+import { generateDailyChallengeText, getTodayDateKey } from './dailyChallenge';
 
 export interface GeneratedText {
   rawText: string;
@@ -94,6 +95,15 @@ export function generateTestText(
   customText?: string,
   targetCodeLang?: CodeLanguage
 ): GeneratedText {
+  // Daily Challenge Mode (Deterministic same text for everyone today)
+  if (mode === 'daily') {
+    const raw = generateDailyChallengeText(language, getTodayDateKey());
+    return {
+      rawText: raw,
+      wordsList: raw.split(/\s+/)
+    };
+  }
+
   // If explicitly in custom mode with customText provided
   if (mode === 'custom' && customText && customText.trim().length > 0) {
     const raw = customText.trim();

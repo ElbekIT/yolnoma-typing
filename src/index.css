@@ -274,6 +274,20 @@
   will-change: transform;
 }
 
+.ghost-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 8;
+  will-change: transform;
+  background-color: var(--sub-color, #64748b);
+  opacity: 0.55;
+  transition: transform 110ms linear;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *:not([class*="char-typed-"]):not([class*="anim-char-"]):not(.char-error-shake),
   *::before, *::after {

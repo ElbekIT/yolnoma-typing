@@ -11,14 +11,22 @@ import {
   Gift,
   Check,
   Calendar,
-  Swords
+  Swords,
+  Trophy
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import {
+  getDailyChallengeState,
+  fetchDailyChallengeLeaderboard,
+  DailyChallengeLocalState,
+  DailyLeaderboardEntry
+} from '../../utils/dailyChallenge';
 
 interface ChallengesViewProps {
   onStartChallenge: () => void;
+  onStartDailyChallenge?: () => void;
   onGoToBattle?: () => void;
 }
 
@@ -39,10 +47,31 @@ interface DailyQuest {
 
 export const ChallengesView: React.FC<ChallengesViewProps> = ({
   onStartChallenge,
+  onStartDailyChallenge,
   onGoToBattle
 }) => {
   const { profile, userResultsHistory, addXp } = useAuth();
   const { language } = useSettings();
+
+  const [dailyState, setDailyState] = useState<DailyChallengeLocalState>(() => getDailyChallengeState());
+  const [dailyLeaders, setDailyLeaders] = useState<DailyLeaderboardEntry[]>([]);
+  const [loadingDailyLeaders, setLoadingDailyLeaders] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchDailyChallengeLeaderboard().then((list) => {
+      if (mounted) {
+        setDailyLeaders(list);
+        setLoadingDailyLeaders(false);
+      }
+    });
+    const syncDaily = () => setDailyState(getDailyChallengeState());
+    window.addEventListener('yolnoma_daily_updated', syncDaily);
+    return () => {
+      mounted = false;
+      window.removeEventListener('yolnoma_daily_updated', syncDaily);
+    };
+  }, []);
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const storageKey = `yolnoma_claimed_quests_${todayStr}`;
@@ -174,7 +203,10 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     await addXp(rewardXP);
   };
 
-  const currentStreak = profile?.currentStreak || Number(localStorage.getItem('yolnoma_guest_streak') || 1);
+  const currentStreak = Math.max(
+    dailyState.streak || 0,
+    profile?.currentStreak || Number(localStorage.getItem('yolnoma_guest_streak') || 1)
+  );
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300 pb-12">
@@ -229,6 +261,77 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
               {quests.filter((q) => q.isCompleted).length} / {quests.length}
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* 1.5 Bugungi Umumiy Sinov (Daily Challenge + Top 10) */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] rounded-2xl p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>BUGUNGI UMUMIY SINOV • {dailyState.todayDate}</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-extrabold text-[var(--text-color)]">
+              Kunlik Tezkorlik Testi & Kunlik Reyting
+            </h3>
+            <p className="text-xs text-[var(--sub-color)]">
+              Bugun barcha ishtirokchilar uchun bitta umumiy matn beriladi. Uni yozib tugating va kunlik peshqadamlardan biriga aylaning!
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {dailyState.todayCompleted && (
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-mono font-bold">
+                ✅ Bugungi rekord: {dailyState.todayBestWpm} WPM ({dailyState.todayBestAcc}%)
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onStartDailyChallenge || onStartChallenge}
+              className="px-4 py-2.5 rounded-xl bg-[var(--main-color)] hover:brightness-110 text-slate-950 font-extrabold text-xs flex items-center gap-2 cursor-pointer transition-colors"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{dailyState.todayCompleted ? 'Natijani yaxshilash' : 'Bugungi sinovni boshlash'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Daily Top 10 */}
+        <div className="pt-3 border-t border-[var(--sub-alt)]/60">
+          <div className="flex items-center justify-between text-xs font-mono text-[var(--sub-color)] mb-2.5">
+            <span className="flex items-center gap-1.5 font-bold text-[var(--text-color)]">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              Bugungi Top Ishtirokchilar
+            </span>
+            <span>Eng yaxshi streak: {dailyState.bestStreak} kun</span>
+          </div>
+
+          {loadingDailyLeaders ? (
+            <div className="text-xs text-[var(--sub-color)] font-mono py-3">Kunlik reyting yuklanmoqda...</div>
+          ) : dailyLeaders.length === 0 ? (
+            <div className="text-xs text-[var(--sub-color)] py-3 bg-[var(--sub-alt)]/30 rounded-xl px-4">
+              Bugungi reyting hozircha bo'sh — birinchi bo'lib natija qo'ying!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {dailyLeaders.slice(0, 6).map((entry, idx) => (
+                <div
+                  key={entry.uid}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--sub-alt)]/35 border border-[var(--sub-alt)]/60 text-xs"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-5 text-center font-mono font-bold text-amber-400">#{idx + 1}</span>
+                    <span className="font-bold text-[var(--text-color)] truncate">{entry.displayName}</span>
+                    <span className="text-[10px] font-mono text-[var(--sub-color)]">🔥{entry.streak}</span>
+                  </div>
+                  <div className="font-mono font-bold text-[var(--main-color)] shrink-0">
+                    {entry.wpm} WPM <span className="text-[var(--sub-color)] font-normal">({entry.accuracy}%)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

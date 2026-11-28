@@ -92,6 +92,7 @@ import {
   TypingResult
 } from './types';
 import { generateTestText, calculateWpm, calculateRawWpm, calculateCpm, calculateAccuracy, extractMissedWords, areCharsEquivalent } from './utils/typingEngine';
+import { recordDailyChallengeResult } from './utils/dailyChallenge';
 import { CodeLanguage } from './data/codeSnippets';
 
 function MainAppContent() {
@@ -811,6 +812,17 @@ function MainAppContent() {
       }).catch((err) => {
         console.warn('Background save notice:', err);
       });
+
+      if (mode === 'daily') {
+        recordDailyChallengeResult({
+          wpm,
+          accuracy,
+          uid: user?.uid || null,
+          displayName: profile?.displayName || user?.displayName || undefined,
+          username: profile?.username || undefined,
+          avatarUrl: profile?.avatarUrl || undefined
+        }).catch(() => {});
+      }
     } catch (e) {
       console.warn('saveTestResult trigger error:', e);
     }
@@ -1053,6 +1065,18 @@ function MainAppContent() {
   }, []);
   const handleOpenOwner = useCallback(() => setActiveTab('owner'), []);
   const handleOpenAdmin = useCallback(() => setActiveTab('admin'), []);
+  const handleStartDailyChallenge = useCallback(() => {
+    setMode('daily');
+    setTimeMode(0);
+    setWordCountMode(0);
+    setFinalResult(null);
+    setIsTestFinished(false);
+    setActiveTab('typing');
+    setTimeout(() => {
+      const input = document.getElementById('typing-input-field') || document.querySelector('input[type="text"]');
+      if (input) (input as HTMLInputElement).focus();
+    }, 100);
+  }, []);
 
   // DevTools Security Gate
   if (isDevToolsBlocked) {
@@ -1175,7 +1199,7 @@ function MainAppContent() {
     setTypedInput(newInput);
 
     // Infinite Word Expansion for Time Mode
-    if (timeMode > 0 && mode !== 'custom') {
+    if (timeMode > 0 && mode !== 'custom' && mode !== 'daily') {
       const remainingChars = targetText.length - newInput.length;
       if (remainingChars < 120) {
         const extraBatch = generateTestText(mode, language, difficulty, 60);
@@ -1183,8 +1207,8 @@ function MainAppContent() {
       }
     }
 
-    // Finish test logic: for word count mode or custom text mode
-    if (timeMode === 0 || mode === 'custom') {
+    // Finish test logic: for word count mode, custom text mode, or daily challenge
+    if (timeMode === 0 || mode === 'custom' || mode === 'daily') {
       if (newInput.length >= targetText.length && targetText.length > 0) {
         finishTest();
       }
@@ -1281,6 +1305,7 @@ function MainAppContent() {
         {activeTab === 'home' && (
           <HomePage
             onStartTyping={handleStartHero}
+            onStartDailyChallenge={handleStartDailyChallenge}
             onGoToBattle={handleGoBattle}
             onGoToLessons={handleGoLessons}
             onGoToEnglish={handleGoEnglish}
@@ -1393,6 +1418,7 @@ function MainAppContent() {
           {activeTab === 'challenges' && (
             <ChallengesView
               onStartChallenge={handleGoTyping}
+              onStartDailyChallenge={handleStartDailyChallenge}
               onGoToBattle={handleGoBattle}
             />
           )}

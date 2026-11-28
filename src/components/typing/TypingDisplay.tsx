@@ -237,8 +237,8 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   liveWpm,
   isTestActive: propIsTestActive
 }) => {
-  const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize } = useSettings();
-  const { user } = useAuth();
+  const { language, caretStyle, smoothCaret, tapeMode, typingAnimation, soundProfile, fontFamily, fontSize, ghostMode } = useSettings();
+  const { user, profile } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tapeViewportRef = useRef<HTMLDivElement>(null);
@@ -255,6 +255,19 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
   const mouseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const caretElRef = useRef<HTMLDivElement | null>(null);
+  const ghostCaretElRef = useRef<HTMLDivElement | null>(null);
+  const ghostStartTimeRef = useRef<number>(0);
+  const currentTypedLenRef = useRef<number>(0);
+  currentTypedLenRef.current = typedInput.length;
+
+  const effectiveGhostWpm = useMemo(() => {
+    if (ghostMode === 'off') return 0;
+    if (ghostMode === 'pb') {
+      const pb = profile?.highestWpm || Number(typeof window !== 'undefined' ? localStorage.getItem('yolnoma_guest_best_wpm') || 0 : 0);
+      return pb > 0 ? Math.min(280, pb) : 45;
+    }
+    return Number(ghostMode) || 0;
+  }, [ghostMode, profile?.highestWpm]);
 
   const langInfo = languagesList.find((l) => l.code === language) || languagesList[0];
   const isRtl = langInfo.dir === 'rtl';
@@ -734,6 +747,59 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [updateCaretPosition]);
 
+  // Lightweight DOM-direct Ghost Pace Caret (100ms interval, zero React re-renders)
+  useEffect(() => {
+    const ghostEl = ghostCaretElRef.current;
+    if (!ghostEl) return;
+
+    if (effectiveGhostWpm <= 0 || isDrum || isTestFinished || !isTestActive) {
+      if (!isTestActive) {
+        ghostStartTimeRef.current = 0;
+      }
+      ghostEl.style.display = 'none';
+      return;
+    }
+
+    if (ghostStartTimeRef.current === 0) {
+      ghostStartTimeRef.current = Date.now();
+    }
+
+    const charsPerSecond = (effectiveGhostWpm * 5) / 60;
+
+    const updateGhostPosition = () => {
+      const wrapper = wordsWrapperRef.current;
+      const el = ghostCaretElRef.current;
+      if (!wrapper || !el) return;
+
+      const elapsedSec = (Date.now() - ghostStartTimeRef.current) / 1000;
+      const targetIdx = Math.min(
+        Math.max(0, targetText.length - 1),
+        Math.floor(elapsedSec * charsPerSecond)
+      );
+
+      const targetCharEl = charRefs.current[targetIdx] || charRefs.current[0];
+      if (!targetCharEl) return;
+
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const charRect = targetCharEl.getBoundingClientRect();
+      const left = charRect.left - wrapperRect.left;
+      const top = charRect.top - wrapperRect.top;
+      const height = charRect.height > 0 ? charRect.height : (measuredLineHeight || 32);
+
+      el.style.display = 'block';
+      el.style.height = `${height}px`;
+      el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+
+      // Subtle color cue: green if user is ahead of ghost, amber/sub if behind
+      const userAhead = currentTypedLenRef.current >= targetIdx;
+      el.style.backgroundColor = userAhead ? '#10b981' : 'var(--sub-color, #94a3b8)';
+    };
+
+    updateGhostPosition();
+    const timer = setInterval(updateGhostPosition, 100);
+    return () => clearInterval(timer);
+  }, [effectiveGhostWpm, isDrum, isTestFinished, isTestActive, targetText.length, measuredLineHeight]);
+
   return (
     <div
       ref={containerRef}
@@ -918,6 +984,20 @@ export const TypingDisplay: React.FC<TypingDisplayProps> = ({
                   zIndex: 10
                 }}
               />
+
+              {/* Ghost Pace Caret */}
+              <div
+                ref={ghostCaretElRef}
+                className="ghost-caret"
+                style={{
+                  display: 'none'
+                }}
+                aria-hidden="true"
+              >
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold px-1 rounded bg-[var(--sub-alt)] text-[var(--sub-color)] whitespace-nowrap">
+                  {ghostMode === 'pb' ? `PB ${effectiveGhostWpm}` : `${effectiveGhostWpm}`}
+                </span>
+              </div>
 
               {parsedWords.map((wordObj) => (
                 <WordItem

@@ -8,6 +8,7 @@ export type ModeBarWidth = 'compact' | 'standard' | 'wide' | 'full';
 export type ModeBarScale = 'small' | 'medium' | 'large';
 export type TypingAnimation = 'none' | 'pop' | 'bounce' | 'bounceUp' | 'bounceDown' | 'jump' | 'glow' | 'wave' | 'slide' | 'pulse';
 export type TypingAnimationSpeed = 'ultra_fast' | 'fast' | 'normal' | 'slow' | 'very_slow' | 'super_slow';
+export type GhostMode = 'off' | 'pb' | '40' | '60' | '80' | '100' | '120';
 
 interface SettingsContextType {
   theme: ThemeMode;
@@ -49,6 +50,8 @@ interface SettingsContextType {
   setShowLiveWpm: (show: boolean) => void;
   zenMode: boolean;
   setZenMode: (zen: boolean) => void;
+  ghostMode: GhostMode;
+  setGhostMode: (ghost: GhostMode) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -136,6 +139,22 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return false;
     }
   });
+  const [ghostMode, setGhostModeState] = useState<GhostMode>(() => {
+    try {
+      const saved = localStorage.getItem('yolnoma_ghost_mode') as GhostMode | null;
+      if (saved && ['off', 'pb', '40', '60', '80', '100', '120'].includes(saved)) {
+        return saved;
+      }
+    } catch {}
+    return 'off';
+  });
+
+  const setGhostMode = (ghost: GhostMode) => {
+    setGhostModeState(ghost);
+    try {
+      localStorage.setItem('yolnoma_ghost_mode', ghost);
+    } catch {}
+  };
 
   const setHandsGuide = (show: boolean) => {
     setHandsGuideState(show);
@@ -346,7 +365,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         showLiveWpm,
         setShowLiveWpm,
         zenMode,
-        setZenMode
+        setZenMode,
+        ghostMode,
+        setGhostMode
       }}
     >
       {children}

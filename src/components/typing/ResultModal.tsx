@@ -270,12 +270,20 @@ export const ResultModal: React.FC<ResultModalProps> = ({
             </div>
           </div>
 
-          {result.isPersonalBest && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold shrink-0">
-              <Trophy className="w-3.5 h-3.5 fill-amber-500" />
-              <span>Yangi Rekord!</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {result.mode === 'daily' && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Kunlik Sinov</span>
+              </div>
+            )}
+            {result.isPersonalBest && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold shrink-0">
+                <Trophy className="w-3.5 h-3.5 fill-amber-500" />
+                <span>Yangi Rekord!</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Primary Monkeytype-style Main Stats Display */}

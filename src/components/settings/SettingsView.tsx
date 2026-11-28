@@ -22,7 +22,7 @@ import {
   ChevronRight,
   Smartphone
 } from 'lucide-react';
-import { useSettings, TypingAnimation, TypingAnimationSpeed } from '../../context/SettingsContext';
+import { useSettings, TypingAnimation, TypingAnimationSpeed, GhostMode } from '../../context/SettingsContext';
 import { useDevice } from '../../context/DeviceContext';
 import { DEVICE_PROFILES } from '../../data/devices';
 import { useAuth } from '../../context/AuthContext';
@@ -67,7 +67,9 @@ export const SettingsView: React.FC = () => {
     handsGuide,
     setHandsGuide,
     showLiveWpm,
-    setShowLiveWpm
+    setShowLiveWpm,
+    ghostMode,
+    setGhostMode
   } = useSettings();
 
   const { currentDevice, recalibrate } = useDevice();
@@ -669,6 +671,34 @@ export const SettingsView: React.FC = () => {
             {tapeMode === 'drum' && 'Baraban (Rotary Drum) – Doiraviy aylanuvchi futuristik baraban'}
           </span>
         </div>
+      </div>
+
+      {/* Ghost Pace Caret (Arvoh Kursor bilan poyga) */}
+      <div className="bg-[var(--card-bg)] border border-[var(--sub-alt)] p-6 rounded-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <h3 className="text-sm font-bold text-[var(--text-color)] flex items-center gap-2 font-mono">
+            <span>👻 Arvoh Kursor (Ghost Pace)</span>
+          </h3>
+          <div className="flex flex-wrap items-center gap-1 bg-[var(--sub-alt)] p-1 rounded-xl">
+            {(['off', 'pb', '40', '60', '80', '100', '120'] as GhostMode[]).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGhostMode(g)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                  ghostMode === g
+                    ? 'bg-[var(--main-color)] text-white'
+                    : 'text-[var(--sub-color)] hover:text-[var(--text-color)]'
+                }`}
+              >
+                {g === 'off' ? "O'chiq" : g === 'pb' ? 'Rekord (PB)' : `${g} WPM`}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-[var(--sub-color)] font-mono leading-relaxed mt-1">
+          Yozayotganda ekranda o'zingizning shaxsiy rekordingiz (PB) yoki tanlangan WPM tezligida harakatlanuvchi ikkinchi kursor yuradi. Siz undan oldinda bo'lsangiz yashil rangda ko'rinadi.
+        </p>
       </div>
 
       {/* Harflar Yozilish Animatsiyalari (Typing Letter Animation Effects) */}

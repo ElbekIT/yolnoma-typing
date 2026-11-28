@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { Clock, Type, Layers, Globe, Sparkles, Film, BookOpen, Code, Disc } from 'lucide-react';
+import { Clock, Type, Layers, Globe, Sparkles, Film, BookOpen, Code, Disc, Flame, Ghost } from 'lucide-react';
 import { TextMode, TimeMode, WordCountMode, DifficultyMode } from '../../types';
-import { useSettings } from '../../context/SettingsContext';
+import { useSettings, GhostMode } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import { getAllLanguages } from '../../utils/customContentStore';
+import { getDailyChallengeState } from '../../utils/dailyChallenge';
 import { CodeLanguage } from '../../data/codeSnippets';
 import { CodeLanguageSelector } from './CodeLanguageSelector';
 
@@ -24,7 +26,7 @@ interface TypingHeaderProps {
   setCodeLanguage?: (l: CodeLanguage) => void;
 }
 
-export const TypingHeader: React.FC<TypingHeaderProps> = ({
+export const TypingHeader: React.FC<TypingHeaderProps> = React.memo(({
   mode,
   setMode,
   timeMode,
@@ -37,7 +39,11 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
   codeLanguage = 'javascript',
   setCodeLanguage
 }) => {
-  const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode, zenMode, setZenMode } = useSettings();
+  const { language, modeBarWidth, modeBarScale, tapeMode, setTapeMode, zenMode, setZenMode, ghostMode, setGhostMode } = useSettings();
+  const { profile } = useAuth();
+
+  const dailyState = useMemo(() => getDailyChallengeState(), [mode, isTestActive]);
+  const pbWpm = profile?.highestWpm || Number(typeof window !== 'undefined' ? localStorage.getItem('yolnoma_guest_best_wpm') || 0 : 0);
 
   const timeOptions: TimeMode[] = [15, 30, 60, 120];
   const wordOptions: WordCountMode[] = [100, 200, 300, 400, 500];
@@ -47,7 +53,21 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
     { id: 'quotes', label: 'Maqol & Adabiyot', icon: BookOpen },
     { id: 'code', label: 'Kod (Dev)', icon: Code },
     { id: 'story', label: 'Hikoyalar', icon: Sparkles },
+    { id: 'daily', label: 'Kunlik', icon: Flame },
   ];
+
+  const ghostOrder: GhostMode[] = ['off', 'pb', '40', '60', '80', '100', '120'];
+  const cycleGhostMode = () => {
+    const idx = ghostOrder.indexOf(ghostMode);
+    const next = ghostOrder[(idx + 1) % ghostOrder.length];
+    setGhostMode(next);
+  };
+  const ghostLabel =
+    ghostMode === 'off'
+      ? "o'chiq"
+      : ghostMode === 'pb'
+      ? `PB (${pbWpm > 0 ? pbWpm : 45})`
+      : `${ghostMode} wpm`;
 
   // Fast memoized languages list
   const languagesList = useMemo(() => {
@@ -107,6 +127,12 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
                   key={m.id}
                   onClick={() => {
                     setMode(m.id);
+                    if (m.id === 'daily') {
+                      setTimeMode(0);
+                      setWordCountMode(0);
+                    } else if (m.id === 'words' && timeMode === 0 && wordCountMode === 0) {
+                      setTimeMode(30);
+                    }
                     onReset();
                   }}
                   className={`flex items-center ${scaleConfig.button} rounded-xl transition-all whitespace-nowrap cursor-pointer ${
@@ -240,7 +266,7 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             onClick={() => setZenMode(!zenMode)}
             className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
               zenMode
-                ? 'text-emerald-400 font-semibold bg-emerald-500/10 ring-1 ring-emerald-500/20'
+                ? 'text-emerald-400 font-semibold bg-emerald-500/10'
                 : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
             }`}
             title="Zen Mode: Chalg'ituvchi ko'rsatkichlarsiz sokin yozish rejimi"
@@ -248,7 +274,42 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>zen: {zenMode ? 'yoqilgan' : 'oʻchiq'}</span>
           </button>
+
+          <span className="text-[var(--sub-color)] opacity-30 text-xs select-none">•</span>
+
+          <button
+            onClick={cycleGhostMode}
+            className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer font-mono py-0.5 px-2 rounded-lg hover:bg-[var(--sub-alt)]/40 ${
+              ghostMode !== 'off'
+                ? 'text-[var(--main-color)] font-semibold bg-[var(--main-color)]/10'
+                : 'text-[var(--sub-color)] opacity-80 hover:opacity-100'
+            }`}
+            title="Arvoh Kursor (Ghost Pace): O'z rekordingiz yoki tanlangan tezlik bilan jonli poyga qiling"
+          >
+            <Ghost className="w-3.5 h-3.5" />
+            <span>ghost: {ghostLabel}</span>
+          </button>
         </div>
+
+        {/* Daily Challenge Sub-Strip */}
+        {mode === 'daily' && (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3 py-1.5 rounded-xl bg-[var(--sub-alt)]/40 border border-[var(--sub-alt)]/70 text-[11px] font-mono text-[var(--sub-color)]">
+            <span className="flex items-center gap-1 text-amber-400 font-bold">
+              <Flame className="w-3.5 h-3.5" />
+              Bugungi Sinov ({dailyState.todayDate})
+            </span>
+            <span className="opacity-40">•</span>
+            <span>Streak: <strong className="text-[var(--text-color)]">{dailyState.streak} kun</strong></span>
+            {dailyState.todayCompleted && (
+              <>
+                <span className="opacity-40">•</span>
+                <span className="text-emerald-400 font-bold">
+                  Bugungi rekord: {dailyState.todayBestWpm} WPM ({dailyState.todayBestAcc}%)
+                </span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Programmer Code Language Sub-Selector */}
         {mode === 'code' && setCodeLanguage && (
@@ -264,4 +325,4 @@ export const TypingHeader: React.FC<TypingHeaderProps> = ({
         )}
       </div>
   );
-};
+});
